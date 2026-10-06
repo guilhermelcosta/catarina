@@ -1,0 +1,12 @@
+-rootPath
+/home/guilherme/katarina
+-cmake-output
+-output-file
+/home/guilherme/katarina/build/.qt/qml_imports/katarina_build.cmake
+-importPath
+/home/guilherme/katarina/build
+-importPath
+/usr/lib64/qt6/qml
+-qrcFiles
+/home/guilherme/katarina/build/.qt/rcc/qml.qrc
+/home/guilherme/katarina/build/.qt/rcc/appicon.qrc

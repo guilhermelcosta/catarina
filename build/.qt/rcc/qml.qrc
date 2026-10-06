@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="qml/Main.qml">/home/guilherme/katarina/qml/Main.qml</file>
+    <file alias="qml/KvTable.qml">/home/guilherme/katarina/qml/KvTable.qml</file>
+    <file alias="qml/FormTable.qml">/home/guilherme/katarina/qml/FormTable.qml</file>
+    <file alias="qml/JsonTree.qml">/home/guilherme/katarina/qml/JsonTree.qml</file>
+    <file alias="qml/VarCompleter.qml">/home/guilherme/katarina/qml/VarCompleter.qml</file>
+    <file alias="qml/ShortcutField.qml">/home/guilherme/katarina/qml/ShortcutField.qml</file>
+  </qresource>
+</RCC>
+

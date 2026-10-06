@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file alias="katarina.svg">/home/guilherme/katarina/icons/katarina.svg</file>
+  </qresource>
+</RCC>
+

@@ -1,0 +1,16 @@
+/home/guilherme/katarina/build/CMakeFiles/uninstall.dir
+/home/guilherme/katarina/build/CMakeFiles/fetch-translations.dir
+/home/guilherme/katarina/build/CMakeFiles/katarina.dir
+/home/guilherme/katarina/build/CMakeFiles/check_storage.dir
+/home/guilherme/katarina/build/CMakeFiles/katarina_qmlimportscan.dir
+/home/guilherme/katarina/build/CMakeFiles/test.dir
+/home/guilherme/katarina/build/CMakeFiles/edit_cache.dir
+/home/guilherme/katarina/build/CMakeFiles/rebuild_cache.dir
+/home/guilherme/katarina/build/CMakeFiles/list_install_components.dir
+/home/guilherme/katarina/build/CMakeFiles/install.dir
+/home/guilherme/katarina/build/CMakeFiles/install/local.dir
+/home/guilherme/katarina/build/CMakeFiles/install/strip.dir
+/home/guilherme/katarina/build/CMakeFiles/katarina_autogen_timestamp_deps.dir
+/home/guilherme/katarina/build/CMakeFiles/katarina_autogen.dir
+/home/guilherme/katarina/build/CMakeFiles/check_storage_autogen_timestamp_deps.dir
+/home/guilherme/katarina/build/CMakeFiles/check_storage_autogen.dir

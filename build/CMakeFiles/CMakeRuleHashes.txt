@@ -1,0 +1,12 @@
+# Hashes of file build rules.
+e7f2171e0a607f42bcf6c5b2e20b3e04 .qt/qml_imports/katarina_build.cmake
+4fded2bac4c8a2a36b69ec051192971c .qt/rcc/qrc_appicon.cpp
+35336ec694830d91bdca32593b114e52 .qt/rcc/qrc_qml.cpp
+8d9782d2824b5bc587d60a951954e038 CMakeFiles/check_storage_autogen
+c58e70568a6a78cd16d8dce49bf77475 CMakeFiles/fetch-translations
+8d9782d2824b5bc587d60a951954e038 CMakeFiles/katarina_autogen
+8d9782d2824b5bc587d60a951954e038 CMakeFiles/katarina_qmlimportscan
+3fffb0dbd251d13a915538f6fa61af18 CMakeFiles/uninstall
+37adc4325d6b14635d7ec0c3aa682eb6 check_storage_autogen/timestamp
+abfb48b4ec932c58828da1f004fd04a3 katarina_autogen/timestamp
+4152980bc901d6a6460dea5e90717001 releaseme
