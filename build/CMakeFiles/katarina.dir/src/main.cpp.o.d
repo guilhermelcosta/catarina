@@ -1,7 +1,8 @@
 CMakeFiles/katarina.dir/src/main.cpp.o: \
- /home/guilherme/katarina/src/main.cpp /usr/include/stdc-predef.h \
- /home/guilherme/katarina/src/backend.h /usr/include/qt6/QtCore/QList \
- /usr/include/qt6/QtCore/qlist.h \
+ /home/guilherme/Repositories/katarina/src/main.cpp \
+ /usr/include/stdc-predef.h \
+ /home/guilherme/Repositories/katarina/src/backend.h \
+ /usr/include/qt6/QtCore/QList /usr/include/qt6/QtCore/qlist.h \
  /usr/include/qt6/QtCore/qarraydatapointer.h \
  /usr/include/qt6/QtCore/qarraydataops.h \
  /usr/include/qt6/QtCore/qarraydata.h /usr/include/qt6/QtCore/qpair.h \
@@ -370,8 +371,9 @@ CMakeFiles/katarina.dir/src/main.cpp.o: \
  /usr/include/qt6/QtCore/qvariantlist.h \
  /usr/include/qt6/QtCore/QVariantMap \
  /usr/include/qt6/QtCore/qvariantmap.h /usr/include/qt6/QtCore/QMap \
- /home/guilherme/katarina/src/highlighter.h /usr/include/qt6/QtGui/QColor \
- /usr/include/qt6/QtGui/qcolor.h /usr/include/qt6/QtGui/qtguiglobal.h \
+ /home/guilherme/Repositories/katarina/src/highlighter.h \
+ /usr/include/qt6/QtGui/QColor /usr/include/qt6/QtGui/qcolor.h \
+ /usr/include/qt6/QtGui/qtguiglobal.h \
  /usr/include/qt6/QtGui/qtgui-config.h \
  /usr/include/qt6/QtGui/qtguiexports.h /usr/include/qt6/QtGui/qrgb.h \
  /usr/include/qt6/QtGui/qrgba64.h \
@@ -416,7 +418,7 @@ CMakeFiles/katarina.dir/src/main.cpp.o: \
  /usr/include/qt6/QtGui/qtextcursor.h \
  /usr/include/qt6/QtGui/qtextdocument.h \
  /usr/include/qt6/QtGui/QTextCharFormat \
- /home/guilherme/katarina/src/settings.h \
+ /home/guilherme/Repositories/katarina/src/settings.h \
  /usr/include/qt6/QtCore/QSettings /usr/include/qt6/QtCore/qsettings.h \
  /usr/include/qt6/QtGui/QGuiApplication \
  /usr/include/qt6/QtQml/QQmlApplicationEngine \

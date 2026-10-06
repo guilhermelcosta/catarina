@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -95,14 +95,14 @@ clean: CMakeFiles/check_storage_autogen.dir/clean
 CMakeFiles/uninstall.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uninstall.dir/build.make CMakeFiles/uninstall.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uninstall.dir/build.make CMakeFiles/uninstall.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Built target uninstall"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Built target uninstall"
 .PHONY : CMakeFiles/uninstall.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/uninstall.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/uninstall.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/uninstall.dir/rule
 
 # Convenience name for target.
@@ -112,7 +112,7 @@ uninstall: CMakeFiles/uninstall.dir/rule
 # codegen rule for target.
 CMakeFiles/uninstall.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uninstall.dir/build.make CMakeFiles/uninstall.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Finished codegen for target uninstall"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Finished codegen for target uninstall"
 .PHONY : CMakeFiles/uninstall.dir/codegen
 
 # clean rule for target.
@@ -127,14 +127,14 @@ CMakeFiles/uninstall.dir/clean:
 CMakeFiles/fetch-translations.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/fetch-translations.dir/build.make CMakeFiles/fetch-translations.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/fetch-translations.dir/build.make CMakeFiles/fetch-translations.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=6,7 "Built target fetch-translations"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=6,7 "Built target fetch-translations"
 .PHONY : CMakeFiles/fetch-translations.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/fetch-translations.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/fetch-translations.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/fetch-translations.dir/rule
 
 # Convenience name for target.
@@ -144,7 +144,7 @@ fetch-translations: CMakeFiles/fetch-translations.dir/rule
 # codegen rule for target.
 CMakeFiles/fetch-translations.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/fetch-translations.dir/build.make CMakeFiles/fetch-translations.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=6,7 "Finished codegen for target fetch-translations"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=6,7 "Finished codegen for target fetch-translations"
 .PHONY : CMakeFiles/fetch-translations.dir/codegen
 
 # clean rule for target.
@@ -161,14 +161,14 @@ CMakeFiles/katarina.dir/all: CMakeFiles/katarina_autogen_timestamp_deps.dir/all
 CMakeFiles/katarina.dir/all: CMakeFiles/katarina_autogen.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina.dir/build.make CMakeFiles/katarina.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina.dir/build.make CMakeFiles/katarina.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=8,9,10,11,12,13,14,15,16,17 "Built target katarina"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=8,9,10,11,12,13,14,15,16,17 "Built target katarina"
 .PHONY : CMakeFiles/katarina.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/katarina.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 12
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 12
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/katarina.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/katarina.dir/rule
 
 # Convenience name for target.
@@ -179,7 +179,7 @@ katarina: CMakeFiles/katarina.dir/rule
 CMakeFiles/katarina.dir/codegen: CMakeFiles/katarina_qmlimportscan.dir/all
 CMakeFiles/katarina.dir/codegen: CMakeFiles/katarina_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina.dir/build.make CMakeFiles/katarina.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=8,9,10,11,12,13,14,15,16,17 "Finished codegen for target katarina"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=8,9,10,11,12,13,14,15,16,17 "Finished codegen for target katarina"
 .PHONY : CMakeFiles/katarina.dir/codegen
 
 # clean rule for target.
@@ -195,14 +195,14 @@ CMakeFiles/check_storage.dir/all: CMakeFiles/check_storage_autogen_timestamp_dep
 CMakeFiles/check_storage.dir/all: CMakeFiles/check_storage_autogen.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage.dir/build.make CMakeFiles/check_storage.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage.dir/build.make CMakeFiles/check_storage.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=1,2,3,4 "Built target check_storage"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=1,2,3,4 "Built target check_storage"
 .PHONY : CMakeFiles/check_storage.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/check_storage.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/check_storage.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/check_storage.dir/rule
 
 # Convenience name for target.
@@ -212,7 +212,7 @@ check_storage: CMakeFiles/check_storage.dir/rule
 # codegen rule for target.
 CMakeFiles/check_storage.dir/codegen: CMakeFiles/check_storage_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage.dir/build.make CMakeFiles/check_storage.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target check_storage"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target check_storage"
 .PHONY : CMakeFiles/check_storage.dir/codegen
 
 # clean rule for target.
@@ -227,14 +227,14 @@ CMakeFiles/check_storage.dir/clean:
 CMakeFiles/katarina_qmlimportscan.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_qmlimportscan.dir/build.make CMakeFiles/katarina_qmlimportscan.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_qmlimportscan.dir/build.make CMakeFiles/katarina_qmlimportscan.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=19 "Built target katarina_qmlimportscan"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=19 "Built target katarina_qmlimportscan"
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/katarina_qmlimportscan.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/katarina_qmlimportscan.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/rule
 
 # Convenience name for target.
@@ -244,7 +244,7 @@ katarina_qmlimportscan: CMakeFiles/katarina_qmlimportscan.dir/rule
 # codegen rule for target.
 CMakeFiles/katarina_qmlimportscan.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_qmlimportscan.dir/build.make CMakeFiles/katarina_qmlimportscan.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=19 "Finished codegen for target katarina_qmlimportscan"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=19 "Finished codegen for target katarina_qmlimportscan"
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/codegen
 
 # clean rule for target.
@@ -259,14 +259,14 @@ CMakeFiles/katarina_qmlimportscan.dir/clean:
 CMakeFiles/katarina_autogen_timestamp_deps.dir/all: CMakeFiles/katarina_qmlimportscan.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen_timestamp_deps.dir/build.make CMakeFiles/katarina_autogen_timestamp_deps.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen_timestamp_deps.dir/build.make CMakeFiles/katarina_autogen_timestamp_deps.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Built target katarina_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Built target katarina_autogen_timestamp_deps"
 .PHONY : CMakeFiles/katarina_autogen_timestamp_deps.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/katarina_autogen_timestamp_deps.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/katarina_autogen_timestamp_deps.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/katarina_autogen_timestamp_deps.dir/rule
 
 # Convenience name for target.
@@ -276,7 +276,7 @@ katarina_autogen_timestamp_deps: CMakeFiles/katarina_autogen_timestamp_deps.dir/
 # codegen rule for target.
 CMakeFiles/katarina_autogen_timestamp_deps.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen_timestamp_deps.dir/build.make CMakeFiles/katarina_autogen_timestamp_deps.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Finished codegen for target katarina_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Finished codegen for target katarina_autogen_timestamp_deps"
 .PHONY : CMakeFiles/katarina_autogen_timestamp_deps.dir/codegen
 
 # clean rule for target.
@@ -291,14 +291,14 @@ CMakeFiles/katarina_autogen_timestamp_deps.dir/clean:
 CMakeFiles/katarina_autogen.dir/all: CMakeFiles/katarina_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen.dir/build.make CMakeFiles/katarina_autogen.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen.dir/build.make CMakeFiles/katarina_autogen.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=18 "Built target katarina_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=18 "Built target katarina_autogen"
 .PHONY : CMakeFiles/katarina_autogen.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/katarina_autogen.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/katarina_autogen.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/katarina_autogen.dir/rule
 
 # Convenience name for target.
@@ -308,7 +308,7 @@ katarina_autogen: CMakeFiles/katarina_autogen.dir/rule
 # codegen rule for target.
 CMakeFiles/katarina_autogen.dir/codegen: CMakeFiles/katarina_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/katarina_autogen.dir/build.make CMakeFiles/katarina_autogen.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=18 "Finished codegen for target katarina_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=18 "Finished codegen for target katarina_autogen"
 .PHONY : CMakeFiles/katarina_autogen.dir/codegen
 
 # clean rule for target.
@@ -323,14 +323,14 @@ CMakeFiles/katarina_autogen.dir/clean:
 CMakeFiles/check_storage_autogen_timestamp_deps.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen_timestamp_deps.dir/build.make CMakeFiles/check_storage_autogen_timestamp_deps.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen_timestamp_deps.dir/build.make CMakeFiles/check_storage_autogen_timestamp_deps.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Built target check_storage_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Built target check_storage_autogen_timestamp_deps"
 .PHONY : CMakeFiles/check_storage_autogen_timestamp_deps.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/check_storage_autogen_timestamp_deps.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/check_storage_autogen_timestamp_deps.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/check_storage_autogen_timestamp_deps.dir/rule
 
 # Convenience name for target.
@@ -340,7 +340,7 @@ check_storage_autogen_timestamp_deps: CMakeFiles/check_storage_autogen_timestamp
 # codegen rule for target.
 CMakeFiles/check_storage_autogen_timestamp_deps.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen_timestamp_deps.dir/build.make CMakeFiles/check_storage_autogen_timestamp_deps.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num= "Finished codegen for target check_storage_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num= "Finished codegen for target check_storage_autogen_timestamp_deps"
 .PHONY : CMakeFiles/check_storage_autogen_timestamp_deps.dir/codegen
 
 # clean rule for target.
@@ -355,14 +355,14 @@ CMakeFiles/check_storage_autogen_timestamp_deps.dir/clean:
 CMakeFiles/check_storage_autogen.dir/all: CMakeFiles/check_storage_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen.dir/build.make CMakeFiles/check_storage_autogen.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen.dir/build.make CMakeFiles/check_storage_autogen.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=5 "Built target check_storage_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=5 "Built target check_storage_autogen"
 .PHONY : CMakeFiles/check_storage_autogen.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/check_storage_autogen.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/check_storage_autogen.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/katarina/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/guilherme/Repositories/katarina/build/CMakeFiles 0
 .PHONY : CMakeFiles/check_storage_autogen.dir/rule
 
 # Convenience name for target.
@@ -372,7 +372,7 @@ check_storage_autogen: CMakeFiles/check_storage_autogen.dir/rule
 # codegen rule for target.
 CMakeFiles/check_storage_autogen.dir/codegen: CMakeFiles/check_storage_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/check_storage_autogen.dir/build.make CMakeFiles/check_storage_autogen.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=5 "Finished codegen for target check_storage_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=5 "Finished codegen for target check_storage_autogen"
 .PHONY : CMakeFiles/check_storage_autogen.dir/codegen
 
 # clean rule for target.

@@ -504,11 +504,21 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     timer.start();
     QNetworkReply *reply = nullptr;
 
-    auto attachReply = [this, timer, method, u, ignoreSsl](QNetworkReply *r) {
+    // snapshot do que foi realmente enviado (para a aba de rede)
+    QVariantList sentHeaders;
+    for (const QByteArray &name : req.rawHeaderList())
+        sentHeaders.append(QVariantMap{{QStringLiteral("name"), QString::fromUtf8(name)},
+                                       {QStringLiteral("value"), QString::fromUtf8(req.rawHeader(name))}});
+    const QString sentBody = (bodyType == QLatin1String("multipart")) ? QStringLiteral("(multipart)")
+                            : (bodyType == QLatin1String("urlencoded")) ? encodeForm(fields)
+                            : (bodyType == QLatin1String("none")) ? QString()
+                            : substitute(request.value(QStringLiteral("body")).toString(), vars);
+
+    auto attachReply = [this, timer, method, u, ignoreSsl, sentHeaders, sentBody](QNetworkReply *r) {
         if (ignoreSsl)
             connect(r, &QNetworkReply::sslErrors, r,
                     [r](const QList<QSslError> &) { r->ignoreSslErrors(); });
-        connect(r, &QNetworkReply::finished, this, [this, r, timer, method, u]() {
+        connect(r, &QNetworkReply::finished, this, [this, r, timer, method, u, sentHeaders, sentBody]() {
             if (r == m_currentReply)
                 m_currentReply = nullptr;
             r->deleteLater();
@@ -531,6 +541,24 @@ void Backend::send(const QVariantMap &request, const QString &collection)
             const QString text = doc.isNull() ? QString::fromUtf8(bytes)
                                               : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
             emit responseReady(status, statusText, respHeaders, text, int(timer.elapsed()), bytes.size());
+
+            // metadados de rede para a aba correspondente
+            const bool encrypted = r->attribute(QNetworkRequest::ConnectionEncryptedAttribute).toBool();
+            const bool http2 = r->attribute(QNetworkRequest::Http2WasUsedAttribute).toBool();
+            emit responseMeta({
+                {QStringLiteral("method"), method},
+                {QStringLiteral("url"), u.toString()},
+                {QStringLiteral("host"), u.host()},
+                {QStringLiteral("port"), u.port(u.scheme() == QLatin1String("https") ? 443 : 80)},
+                {QStringLiteral("status"), status},
+                {QStringLiteral("elapsedMs"), int(timer.elapsed())},
+                {QStringLiteral("sizeBytes"), bytes.size()},
+                {QStringLiteral("encrypted"), encrypted},
+                {QStringLiteral("http2"), http2},
+                {QStringLiteral("requestHeaders"), sentHeaders},
+                {QStringLiteral("requestBody"), sentBody},
+                {QStringLiteral("responseHeaders"), respHeaders}
+            });
             addHistory({{QStringLiteral("method"), method},
                         {QStringLiteral("url"), u.toString()},
                         {QStringLiteral("status"), status},

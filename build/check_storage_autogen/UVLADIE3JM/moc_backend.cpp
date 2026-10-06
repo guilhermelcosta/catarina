@@ -49,6 +49,9 @@ template <> constexpr inline auto Backend::qt_create_metaobjectdata<qt_meta_tag_
         "body",
         "elapsedMs",
         "sizeBytes",
+        "responseMeta",
+        "QVariantMap",
+        "meta",
         "error",
         "message",
         "started",
@@ -59,7 +62,6 @@ template <> constexpr inline auto Backend::qt_create_metaobjectdata<qt_meta_tag_
         "setStorageDir",
         "dir",
         "send",
-        "QVariantMap",
         "request",
         "collection",
         "cancel",
@@ -112,136 +114,140 @@ template <> constexpr inline auto Backend::qt_create_metaobjectdata<qt_meta_tag_
             { QMetaType::Int, 3 }, { QMetaType::QString, 4 }, { 0x80000000 | 5, 6 }, { QMetaType::QString, 7 },
             { QMetaType::Int, 8 }, { QMetaType::Int, 9 },
         }}),
+        // Signal 'responseMeta'
+        QtMocHelpers::SignalData<void(const QVariantMap &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { 0x80000000 | 11, 12 },
+        }}),
         // Signal 'error'
-        QtMocHelpers::SignalData<void(const QString &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 11 },
+        QtMocHelpers::SignalData<void(const QString &)>(13, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 14 },
         }}),
         // Signal 'started'
-        QtMocHelpers::SignalData<void()>(12, 2, QMC::AccessPublic, QMetaType::Void),
-        // Signal 'canceled'
-        QtMocHelpers::SignalData<void()>(13, 2, QMC::AccessPublic, QMetaType::Void),
-        // Signal 'collectionsChanged'
-        QtMocHelpers::SignalData<void()>(14, 2, QMC::AccessPublic, QMetaType::Void),
-        // Signal 'environmentsChanged'
         QtMocHelpers::SignalData<void()>(15, 2, QMC::AccessPublic, QMetaType::Void),
-        // Signal 'historyChanged'
+        // Signal 'canceled'
         QtMocHelpers::SignalData<void()>(16, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'collectionsChanged'
+        QtMocHelpers::SignalData<void()>(17, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'environmentsChanged'
+        QtMocHelpers::SignalData<void()>(18, 2, QMC::AccessPublic, QMetaType::Void),
+        // Signal 'historyChanged'
+        QtMocHelpers::SignalData<void()>(19, 2, QMC::AccessPublic, QMetaType::Void),
         // Method 'setStorageDir'
-        QtMocHelpers::MethodData<void(const QString &)>(17, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 18 },
+        QtMocHelpers::MethodData<void(const QString &)>(20, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 21 },
         }}),
         // Method 'send'
-        QtMocHelpers::MethodData<void(const QVariantMap &, const QString &)>(19, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { 0x80000000 | 20, 21 }, { QMetaType::QString, 22 },
+        QtMocHelpers::MethodData<void(const QVariantMap &, const QString &)>(22, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { 0x80000000 | 11, 23 }, { QMetaType::QString, 24 },
         }}),
         // Method 'cancel'
-        QtMocHelpers::MethodData<void()>(23, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::MethodData<void()>(25, 2, QMC::AccessPublic, QMetaType::Void),
         // Method 'missingVariables'
-        QtMocHelpers::MethodData<QStringList(const QVariantMap &, const QString &) const>(24, 2, QMC::AccessPublic, QMetaType::QStringList, {{
-            { 0x80000000 | 20, 21 }, { QMetaType::QString, 22 },
+        QtMocHelpers::MethodData<QStringList(const QVariantMap &, const QString &) const>(26, 2, QMC::AccessPublic, QMetaType::QStringList, {{
+            { 0x80000000 | 11, 23 }, { QMetaType::QString, 24 },
         }}),
         // Method 'variableNoteFor'
-        QtMocHelpers::MethodData<QString(const QString &, const QString &) const>(25, 2, QMC::AccessPublic, QMetaType::QString, {{
-            { QMetaType::QString, 26 }, { QMetaType::QString, 22 },
+        QtMocHelpers::MethodData<QString(const QString &, const QString &) const>(27, 2, QMC::AccessPublic, QMetaType::QString, {{
+            { QMetaType::QString, 28 }, { QMetaType::QString, 24 },
         }}),
         // Method 'collectionTree'
-        QtMocHelpers::MethodData<QVariantList() const>(27, 2, QMC::AccessPublic, 0x80000000 | 5),
+        QtMocHelpers::MethodData<QVariantList() const>(29, 2, QMC::AccessPublic, 0x80000000 | 5),
         // Method 'loadRequest'
-        QtMocHelpers::MethodData<QVariantMap(const QString &) const>(28, 2, QMC::AccessPublic, 0x80000000 | 20, {{
-            { QMetaType::QString, 29 },
+        QtMocHelpers::MethodData<QVariantMap(const QString &) const>(30, 2, QMC::AccessPublic, 0x80000000 | 11, {{
+            { QMetaType::QString, 31 },
         }}),
         // Method 'saveRequest'
-        QtMocHelpers::MethodData<bool(const QString &, const QVariantMap &)>(30, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 29 }, { 0x80000000 | 20, 31 },
+        QtMocHelpers::MethodData<bool(const QString &, const QVariantMap &)>(32, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 31 }, { 0x80000000 | 11, 33 },
         }}),
         // Method 'deleteEntry'
-        QtMocHelpers::MethodData<bool(const QString &)>(32, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 29 },
+        QtMocHelpers::MethodData<bool(const QString &)>(34, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 31 },
         }}),
         // Method 'createFolder'
-        QtMocHelpers::MethodData<bool(const QString &)>(33, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 29 },
+        QtMocHelpers::MethodData<bool(const QString &)>(35, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 31 },
         }}),
         // Method 'moveEntry'
-        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(34, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 35 }, { QMetaType::QString, 36 },
+        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(36, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 37 }, { QMetaType::QString, 38 },
         }}),
         // Method 'renameEntry'
-        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(37, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 29 }, { QMetaType::QString, 38 },
+        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(39, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 31 }, { QMetaType::QString, 40 },
         }}),
         // Method 'duplicateEntry'
-        QtMocHelpers::MethodData<bool(const QString &)>(39, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 29 },
+        QtMocHelpers::MethodData<bool(const QString &)>(41, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 31 },
         }}),
         // Method 'collectionVariables'
-        QtMocHelpers::MethodData<QVariantList(const QString &) const>(40, 2, QMC::AccessPublic, 0x80000000 | 5, {{
-            { QMetaType::QString, 22 },
+        QtMocHelpers::MethodData<QVariantList(const QString &) const>(42, 2, QMC::AccessPublic, 0x80000000 | 5, {{
+            { QMetaType::QString, 24 },
         }}),
         // Method 'saveCollectionVariables'
-        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(41, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 22 }, { 0x80000000 | 5, 42 },
+        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(43, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 24 }, { 0x80000000 | 5, 44 },
         }}),
         // Method 'collectionHeaders'
-        QtMocHelpers::MethodData<QVariantList(const QString &) const>(43, 2, QMC::AccessPublic, 0x80000000 | 5, {{
-            { QMetaType::QString, 22 },
+        QtMocHelpers::MethodData<QVariantList(const QString &) const>(45, 2, QMC::AccessPublic, 0x80000000 | 5, {{
+            { QMetaType::QString, 24 },
         }}),
         // Method 'saveCollectionHeaders'
-        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(44, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 22 }, { 0x80000000 | 5, 6 },
+        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(46, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 24 }, { 0x80000000 | 5, 6 },
         }}),
         // Method 'environments'
-        QtMocHelpers::MethodData<QVariantList() const>(45, 2, QMC::AccessPublic, 0x80000000 | 5),
+        QtMocHelpers::MethodData<QVariantList() const>(47, 2, QMC::AccessPublic, 0x80000000 | 5),
         // Method 'environmentVariables'
-        QtMocHelpers::MethodData<QVariantList(const QString &) const>(46, 2, QMC::AccessPublic, 0x80000000 | 5, {{
-            { QMetaType::QString, 26 },
+        QtMocHelpers::MethodData<QVariantList(const QString &) const>(48, 2, QMC::AccessPublic, 0x80000000 | 5, {{
+            { QMetaType::QString, 28 },
         }}),
         // Method 'saveEnvironment'
-        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(47, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 26 }, { 0x80000000 | 5, 48 },
+        QtMocHelpers::MethodData<bool(const QString &, const QVariantList &)>(49, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 28 }, { 0x80000000 | 5, 50 },
         }}),
         // Method 'deleteEnvironment'
-        QtMocHelpers::MethodData<bool(const QString &)>(49, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 26 },
+        QtMocHelpers::MethodData<bool(const QString &)>(51, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 28 },
         }}),
         // Method 'renameEnvironment'
-        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(50, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 51 }, { QMetaType::QString, 38 },
+        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(52, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 53 }, { QMetaType::QString, 40 },
         }}),
         // Method 'setActiveEnvironment'
-        QtMocHelpers::MethodData<void(const QString &)>(52, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 26 },
+        QtMocHelpers::MethodData<void(const QString &)>(54, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 28 },
         }}),
         // Method 'secretValue'
-        QtMocHelpers::MethodData<QString(const QString &) const>(53, 2, QMC::AccessPublic, QMetaType::QString, {{
-            { QMetaType::QString, 54 },
+        QtMocHelpers::MethodData<QString(const QString &) const>(55, 2, QMC::AccessPublic, QMetaType::QString, {{
+            { QMetaType::QString, 56 },
         }}),
         // Method 'saveSecret'
-        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(55, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 54 }, { QMetaType::QString, 56 },
+        QtMocHelpers::MethodData<bool(const QString &, const QString &)>(57, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 56 }, { QMetaType::QString, 58 },
         }}),
         // Method 'removeSecret'
-        QtMocHelpers::MethodData<bool(const QString &)>(57, 2, QMC::AccessPublic, QMetaType::Bool, {{
-            { QMetaType::QString, 54 },
+        QtMocHelpers::MethodData<bool(const QString &)>(59, 2, QMC::AccessPublic, QMetaType::Bool, {{
+            { QMetaType::QString, 56 },
         }}),
         // Method 'history'
-        QtMocHelpers::MethodData<QVariantList() const>(58, 2, QMC::AccessPublic, 0x80000000 | 5),
+        QtMocHelpers::MethodData<QVariantList() const>(60, 2, QMC::AccessPublic, 0x80000000 | 5),
         // Method 'clearHistory'
-        QtMocHelpers::MethodData<void()>(59, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::MethodData<void()>(61, 2, QMC::AccessPublic, QMetaType::Void),
         // Method 'effectiveVariables'
-        QtMocHelpers::MethodData<QVariantMap(const QString &, const QVariantList &) const>(60, 2, QMC::AccessPublic, 0x80000000 | 20, {{
-            { QMetaType::QString, 22 }, { 0x80000000 | 5, 61 },
+        QtMocHelpers::MethodData<QVariantMap(const QString &, const QVariantList &) const>(62, 2, QMC::AccessPublic, 0x80000000 | 11, {{
+            { QMetaType::QString, 24 }, { 0x80000000 | 5, 63 },
         }}),
         // Method 'resolvedVariables'
-        QtMocHelpers::MethodData<QVariantList(const QString &, const QVariantList &) const>(62, 2, QMC::AccessPublic, 0x80000000 | 5, {{
-            { QMetaType::QString, 22 }, { 0x80000000 | 5, 61 },
+        QtMocHelpers::MethodData<QVariantList(const QString &, const QVariantList &) const>(64, 2, QMC::AccessPublic, 0x80000000 | 5, {{
+            { QMetaType::QString, 24 }, { 0x80000000 | 5, 63 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
         // property 'storageDir'
-        QtMocHelpers::PropertyData<QString>(63, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Constant),
+        QtMocHelpers::PropertyData<QString>(65, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Constant),
         // property 'activeEnvironment'
-        QtMocHelpers::PropertyData<QString>(64, QMetaType::QString, QMC::DefaultPropertyFlags, 5),
+        QtMocHelpers::PropertyData<QString>(66, QMetaType::QString, QMC::DefaultPropertyFlags, 6),
     };
     QtMocHelpers::UintData qt_enums {
     };
@@ -264,66 +270,67 @@ void Backend::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, voi
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->responseReady((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[3])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[4])),(*reinterpret_cast<std::add_pointer_t<int>>(_a[5])),(*reinterpret_cast<std::add_pointer_t<int>>(_a[6]))); break;
-        case 1: _t->error((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 2: _t->started(); break;
-        case 3: _t->canceled(); break;
-        case 4: _t->collectionsChanged(); break;
-        case 5: _t->environmentsChanged(); break;
-        case 6: _t->historyChanged(); break;
-        case 7: _t->setStorageDir((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 8: _t->send((*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
-        case 9: _t->cancel(); break;
-        case 10: { QStringList _r = _t->missingVariables((*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 1: _t->responseMeta((*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[1]))); break;
+        case 2: _t->error((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 3: _t->started(); break;
+        case 4: _t->canceled(); break;
+        case 5: _t->collectionsChanged(); break;
+        case 6: _t->environmentsChanged(); break;
+        case 7: _t->historyChanged(); break;
+        case 8: _t->setStorageDir((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 9: _t->send((*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 10: _t->cancel(); break;
+        case 11: { QStringList _r = _t->missingVariables((*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<QStringList*>(_a[0]) = std::move(_r); }  break;
-        case 11: { QString _r = _t->variableNoteFor((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 12: { QString _r = _t->variableNoteFor((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<QString*>(_a[0]) = std::move(_r); }  break;
-        case 12: { QVariantList _r = _t->collectionTree();
+        case 13: { QVariantList _r = _t->collectionTree();
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 13: { QVariantMap _r = _t->loadRequest((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 14: { QVariantMap _r = _t->loadRequest((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<QVariantMap*>(_a[0]) = std::move(_r); }  break;
-        case 14: { bool _r = _t->saveRequest((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[2])));
+        case 15: { bool _r = _t->saveRequest((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantMap>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 15: { bool _r = _t->deleteEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 16: { bool _r = _t->deleteEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 16: { bool _r = _t->createFolder((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 17: { bool _r = _t->createFolder((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 17: { bool _r = _t->moveEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 18: { bool _r = _t->moveEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 18: { bool _r = _t->renameEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 19: { bool _r = _t->renameEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 19: { bool _r = _t->duplicateEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 20: { bool _r = _t->duplicateEntry((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 20: { QVariantList _r = _t->collectionVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 21: { QVariantList _r = _t->collectionVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 21: { bool _r = _t->saveCollectionVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
+        case 22: { bool _r = _t->saveCollectionVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 22: { QVariantList _r = _t->collectionHeaders((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 23: { QVariantList _r = _t->collectionHeaders((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 23: { bool _r = _t->saveCollectionHeaders((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
+        case 24: { bool _r = _t->saveCollectionHeaders((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 24: { QVariantList _r = _t->environments();
+        case 25: { QVariantList _r = _t->environments();
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 25: { QVariantList _r = _t->environmentVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 26: { QVariantList _r = _t->environmentVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 26: { bool _r = _t->saveEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
+        case 27: { bool _r = _t->saveEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 27: { bool _r = _t->deleteEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 28: { bool _r = _t->deleteEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 28: { bool _r = _t->renameEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 29: { bool _r = _t->renameEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 29: _t->setActiveEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 30: { QString _r = _t->secretValue((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 30: _t->setActiveEnvironment((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 31: { QString _r = _t->secretValue((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<QString*>(_a[0]) = std::move(_r); }  break;
-        case 31: { bool _r = _t->saveSecret((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
+        case 32: { bool _r = _t->saveSecret((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 32: { bool _r = _t->removeSecret((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
+        case 33: { bool _r = _t->removeSecret((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
-        case 33: { QVariantList _r = _t->history();
+        case 34: { QVariantList _r = _t->history();
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
-        case 34: _t->clearHistory(); break;
-        case 35: { QVariantMap _r = _t->effectiveVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
+        case 35: _t->clearHistory(); break;
+        case 36: { QVariantMap _r = _t->effectiveVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
             if (_a[0]) *reinterpret_cast<QVariantMap*>(_a[0]) = std::move(_r); }  break;
-        case 36: { QVariantList _r = _t->resolvedVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
+        case 37: { QVariantList _r = _t->resolvedVariables((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QVariantList>>(_a[2])));
             if (_a[0]) *reinterpret_cast<QVariantList*>(_a[0]) = std::move(_r); }  break;
         default: ;
         }
@@ -331,17 +338,19 @@ void Backend::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, voi
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (Backend::*)(int , const QString & , const QVariantList & , const QString & , int , int )>(_a, &Backend::responseReady, 0))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)(const QString & )>(_a, &Backend::error, 1))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)(const QVariantMap & )>(_a, &Backend::responseMeta, 1))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::started, 2))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)(const QString & )>(_a, &Backend::error, 2))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::canceled, 3))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::started, 3))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::collectionsChanged, 4))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::canceled, 4))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::environmentsChanged, 5))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::collectionsChanged, 5))
             return;
-        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::historyChanged, 6))
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::environmentsChanged, 6))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (Backend::*)()>(_a, &Backend::historyChanged, 7))
             return;
     }
     if (_c == QMetaObject::ReadProperty) {
@@ -373,14 +382,14 @@ int Backend::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 37)
+        if (_id < 38)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 37;
+        _id -= 38;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 37)
+        if (_id < 38)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 37;
+        _id -= 38;
     }
     if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty
             || _c == QMetaObject::ResetProperty || _c == QMetaObject::BindableProperty
@@ -398,38 +407,44 @@ void Backend::responseReady(int _t1, const QString & _t2, const QVariantList & _
 }
 
 // SIGNAL 1
-void Backend::error(const QString & _t1)
+void Backend::responseMeta(const QVariantMap & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 1, nullptr, _t1);
 }
 
 // SIGNAL 2
-void Backend::started()
+void Backend::error(const QString & _t1)
 {
-    QMetaObject::activate(this, &staticMetaObject, 2, nullptr);
+    QMetaObject::activate<void>(this, &staticMetaObject, 2, nullptr, _t1);
 }
 
 // SIGNAL 3
-void Backend::canceled()
+void Backend::started()
 {
     QMetaObject::activate(this, &staticMetaObject, 3, nullptr);
 }
 
 // SIGNAL 4
-void Backend::collectionsChanged()
+void Backend::canceled()
 {
     QMetaObject::activate(this, &staticMetaObject, 4, nullptr);
 }
 
 // SIGNAL 5
-void Backend::environmentsChanged()
+void Backend::collectionsChanged()
 {
     QMetaObject::activate(this, &staticMetaObject, 5, nullptr);
 }
 
 // SIGNAL 6
-void Backend::historyChanged()
+void Backend::environmentsChanged()
 {
     QMetaObject::activate(this, &staticMetaObject, 6, nullptr);
+}
+
+// SIGNAL 7
+void Backend::historyChanged()
+{
+    QMetaObject::activate(this, &staticMetaObject, 7, nullptr);
 }
 QT_WARNING_POP

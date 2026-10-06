@@ -1,16 +1,16 @@
 {
-	"BUILD_DIR" : "/home/guilherme/katarina/build/check_storage_autogen",
-	"CMAKE_BINARY_DIR" : "/home/guilherme/katarina/build",
-	"CMAKE_CURRENT_BINARY_DIR" : "/home/guilherme/katarina/build",
-	"CMAKE_CURRENT_SOURCE_DIR" : "/home/guilherme/katarina",
+	"BUILD_DIR" : "/home/guilherme/Repositories/katarina/build/check_storage_autogen",
+	"CMAKE_BINARY_DIR" : "/home/guilherme/Repositories/katarina/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/guilherme/Repositories/katarina/build",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/guilherme/Repositories/katarina",
 	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
 	"CMAKE_LIST_FILES" : 
 	[
-		"/home/guilherme/katarina/CMakeLists.txt",
-		"/home/guilherme/katarina/build/CMakeFiles/4.3.0/CMakeSystem.cmake",
+		"/home/guilherme/Repositories/katarina/CMakeLists.txt",
+		"/home/guilherme/Repositories/katarina/build/CMakeFiles/4.3.0/CMakeSystem.cmake",
 		"/usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake",
 		"/usr/share/cmake/Modules/Platform/Linux-Initialize.cmake",
-		"/home/guilherme/katarina/build/CMakeFiles/4.3.0/CMakeCXXCompiler.cmake",
+		"/home/guilherme/Repositories/katarina/build/CMakeFiles/4.3.0/CMakeCXXCompiler.cmake",
 		"/usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake",
 		"/usr/share/cmake/Modules/CMakeGenericSystem.cmake",
 		"/usr/share/cmake/Modules/CMakeInitializeConfigs.cmake",
@@ -1269,25 +1269,25 @@
 		"/usr/share/cmake/Modules/GNUInstallDirs.cmake",
 		"/usr/lib64/cmake/Qt6Core/Qt6CoreConfigureFileTemplate.in",
 		"/usr/lib64/cmake/Qt6Core/Qt6CoreConfigureFileTemplate.in",
-		"/home/guilherme/katarina/packaging/org.katarina.Katarina.desktop.cmake",
-		"/home/guilherme/katarina/build/.qt/qml_imports/katarina_conf.cmake"
+		"/home/guilherme/Repositories/katarina/packaging/org.katarina.Katarina.desktop.cmake",
+		"/home/guilherme/Repositories/katarina/build/.qt/qml_imports/katarina_conf.cmake"
 	],
-	"CMAKE_SOURCE_DIR" : "/home/guilherme/katarina",
+	"CMAKE_SOURCE_DIR" : "/home/guilherme/Repositories/katarina",
 	"CROSS_CONFIG" : false,
-	"DEP_FILE" : "/home/guilherme/katarina/build/check_storage_autogen/deps",
+	"DEP_FILE" : "/home/guilherme/Repositories/katarina/build/check_storage_autogen/deps",
 	"DEP_FILE_RULE_NAME" : "check_storage_autogen/timestamp",
 	"HEADERS" : 
 	[
 		[
-			"/home/guilherme/katarina/src/backend.h",
+			"/home/guilherme/Repositories/katarina/src/backend.h",
 			"MU",
 			"UVLADIE3JM/moc_backend.cpp",
 			null
 		]
 	],
 	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
-	"INCLUDE_DIR" : "/home/guilherme/katarina/build/check_storage_autogen/include",
-	"MOC_COMPILATION_FILE" : "/home/guilherme/katarina/build/check_storage_autogen/mocs_compilation.cpp",
+	"INCLUDE_DIR" : "/home/guilherme/Repositories/katarina/build/check_storage_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/guilherme/Repositories/katarina/build/check_storage_autogen/mocs_compilation.cpp",
 	"MOC_DEFINITIONS" : [ "QT_CORE_LIB", "QT_NETWORK_LIB" ],
 	"MOC_DEPEND_FILTERS" : 
 	[
@@ -1298,9 +1298,9 @@
 	],
 	"MOC_INCLUDES" : 
 	[
-		"/home/guilherme/katarina/build",
-		"/home/guilherme/katarina",
-		"/home/guilherme/katarina/src",
+		"/home/guilherme/Repositories/katarina/build",
+		"/home/guilherme/Repositories/katarina",
+		"/home/guilherme/Repositories/katarina/src",
 		"/usr/include/qt6/QtCore",
 		"/usr/include/qt6",
 		"/usr/lib64/qt6/mkspecs/linux-g++",
@@ -1331,34 +1331,38 @@
 		"-E",
 		"/usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp"
 	],
-	"MOC_PREDEFS_FILE" : "/home/guilherme/katarina/build/check_storage_autogen/moc_predefs.h",
+	"MOC_PREDEFS_FILE" : "/home/guilherme/Repositories/katarina/build/check_storage_autogen/moc_predefs.h",
 	"MOC_RELAXED_MODE" : false,
 	"MOC_SKIP" : 
 	[
-		"/home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp",
-		"/home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp",
-		"/home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp"
+		"/home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp",
+		"/home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp",
+		"/home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp"
 	],
 	"MULTI_CONFIG" : false,
 	"PARALLEL" : 6,
-	"PARSE_CACHE_FILE" : "/home/guilherme/katarina/build/CMakeFiles/check_storage_autogen.dir/ParseCache.txt",
+	"PARSE_CACHE_FILE" : "/home/guilherme/Repositories/katarina/build/CMakeFiles/check_storage_autogen.dir/ParseCache.txt",
 	"QT_MOC_EXECUTABLE" : "/usr/lib64/qt6/libexec/moc",
 	"QT_UIC_EXECUTABLE" : "",
 	"QT_VERSION_MAJOR" : 6,
 	"QT_VERSION_MINOR" : 11,
-	"SETTINGS_FILE" : "/home/guilherme/katarina/build/CMakeFiles/check_storage_autogen.dir/AutogenUsed.txt",
+	"SETTINGS_FILE" : "/home/guilherme/Repositories/katarina/build/CMakeFiles/check_storage_autogen.dir/AutogenUsed.txt",
 	"SOURCES" : 
 	[
-		[ "/home/guilherme/katarina/src/backend.cpp", "MU", null ],
-		[ "/home/guilherme/katarina/tests/check_storage.cpp", "MU", null ]
+		[ "/home/guilherme/Repositories/katarina/src/backend.cpp", "MU", null ],
+		[
+			"/home/guilherme/Repositories/katarina/tests/check_storage.cpp",
+			"MU",
+			null
+		]
 	],
 	"UIC_OPTIONS" : [],
 	"UIC_SEARCH_PATHS" : [],
 	"UIC_SKIP" : 
 	[
-		"/home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp",
-		"/home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp",
-		"/home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp"
+		"/home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp",
+		"/home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp",
+		"/home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp"
 	],
 	"UIC_UI_FILES" : [],
 	"USE_BETTER_GRAPH" : true,

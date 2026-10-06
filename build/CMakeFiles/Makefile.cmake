@@ -7,11 +7,11 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
-  "/home/guilherme/katarina/CMakeLists.txt"
+  "/home/guilherme/Repositories/katarina/CMakeLists.txt"
   ".qt/qml_imports/katarina_conf.cmake"
   "CMakeFiles/4.3.0/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.3.0/CMakeSystem.cmake"
-  "/home/guilherme/katarina/packaging/org.katarina.Katarina.desktop.cmake"
+  "/home/guilherme/Repositories/katarina/packaging/org.katarina.Katarina.desktop.cmake"
   "/usr/lib64/cmake/KF6Kirigami/KF6KirigamiConfig.cmake"
   "/usr/lib64/cmake/KF6Kirigami/KF6KirigamiConfigVersion.cmake"
   "/usr/lib64/cmake/KF6Kirigami/KF6KirigamiMacros.cmake"

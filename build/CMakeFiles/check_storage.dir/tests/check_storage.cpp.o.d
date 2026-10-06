@@ -1,6 +1,7 @@
 CMakeFiles/check_storage.dir/tests/check_storage.cpp.o: \
- /home/guilherme/katarina/tests/check_storage.cpp \
- /usr/include/stdc-predef.h /home/guilherme/katarina/src/backend.h \
+ /home/guilherme/Repositories/katarina/tests/check_storage.cpp \
+ /usr/include/stdc-predef.h \
+ /home/guilherme/Repositories/katarina/src/backend.h \
  /usr/include/qt6/QtCore/QList /usr/include/qt6/QtCore/qlist.h \
  /usr/include/qt6/QtCore/qarraydatapointer.h \
  /usr/include/qt6/QtCore/qarraydataops.h \

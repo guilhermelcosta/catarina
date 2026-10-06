@@ -1,8 +1,10 @@
 CMakeFiles/katarina.dir/src/highlighter.cpp.o: \
- /home/guilherme/katarina/src/highlighter.cpp /usr/include/stdc-predef.h \
- /home/guilherme/katarina/src/highlighter.h /usr/include/qt6/QtGui/QColor \
- /usr/include/qt6/QtGui/qcolor.h /usr/include/qt6/QtGui/qtguiglobal.h \
- /usr/include/qt6/QtCore/qglobal.h /usr/include/c++/16/type_traits \
+ /home/guilherme/Repositories/katarina/src/highlighter.cpp \
+ /usr/include/stdc-predef.h \
+ /home/guilherme/Repositories/katarina/src/highlighter.h \
+ /usr/include/qt6/QtGui/QColor /usr/include/qt6/QtGui/qcolor.h \
+ /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
+ /usr/include/c++/16/type_traits \
  /usr/include/c++/16/x86_64-redhat-linux/bits/c++config.h \
  /usr/include/bits/wordsize.h \
  /usr/include/c++/16/x86_64-redhat-linux/bits/os_defines.h \

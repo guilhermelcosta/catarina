@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Utility rule file for katarina_qmlimportscan.
 
@@ -71,8 +71,8 @@ CMakeFiles/katarina_qmlimportscan: .qt/qml_imports/katarina_build.cmake
 .qt/qml_imports/katarina_build.cmake: /usr/lib64/qt6/libexec/qmlimportscanner
 .qt/qml_imports/katarina_build.cmake: .qt/rcc/qml.qrc
 .qt/qml_imports/katarina_build.cmake: .qt/rcc/appicon.qrc
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running qmlimportscanner for katarina"
-	cd /home/guilherme/katarina && /usr/lib64/qt6/libexec/qmlimportscanner @/home/guilherme/katarina/build/.qt/qml_imports/katarina_build.rsp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running qmlimportscanner for katarina"
+	cd /home/guilherme/Repositories/katarina && /usr/lib64/qt6/libexec/qmlimportscanner @/home/guilherme/Repositories/katarina/build/.qt/qml_imports/katarina_build.rsp
 
 CMakeFiles/katarina_qmlimportscan.dir/codegen:
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/codegen
@@ -91,6 +91,6 @@ CMakeFiles/katarina_qmlimportscan.dir/clean:
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/clean
 
 CMakeFiles/katarina_qmlimportscan.dir/depend:
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/katarina_qmlimportscan.dir/DependInfo.cmake "--color=$(COLOR)" katarina_qmlimportscan
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/katarina_qmlimportscan.dir/DependInfo.cmake "--color=$(COLOR)" katarina_qmlimportscan
 .PHONY : CMakeFiles/katarina_qmlimportscan.dir/depend
 

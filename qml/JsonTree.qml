@@ -28,15 +28,17 @@ Item {
         return String(v);
     }
     function colorOf(t) {
-        if (t === "string") return Kirigami.Theme.positiveTextColor;
-        if (t === "number" || t === "boolean") return Kirigami.Theme.neutralTextColor;
-        if (t === "null") return Kirigami.Theme.disabledTextColor;
+        var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
+        if (t === "string") return dark ? "#98c379" : "#2e7d32";
+        if (t === "number") return dark ? "#d19a66" : "#b26a00";
+        if (t === "boolean" || t === "null") return dark ? "#d19a66" : "#b26a00";
         return Kirigami.Theme.textColor;
     }
     function addRow(key, value, depth, path) {
         var t = typeOf(value);
         var expandable = (t === "object" || t === "array");
-        var isOpen = expanded[path] === true;
+        // padrão: os 2 primeiros níveis vêm abertos; clique guarda estado explícito
+        var isOpen = (expanded[path] === undefined) ? (depth < 2) : (expanded[path] === true);
         nodes.append({ key: key, preview: previewOf(value, t), vtype: t, depth: depth,
                        expandable: expandable, open: isOpen, path: path });
         if (expandable && isOpen) {
@@ -68,9 +70,16 @@ Item {
         rebuild();
     }
     function toggle(path) {
-        expanded[path] = !(expanded[path] === true);
-        expanded = expanded;   // notifica
+        var currently = isOpenAt(path);
+        expanded[path] = !currently;   // grava estado explícito
+        expanded = expanded;           // notifica
         rebuild();
+    }
+    // descobre se está aberto agora (explícito ou padrão)
+    function isOpenAt(path) {
+        for (var i = 0; i < nodes.count; i++)
+            if (nodes.get(i).path === path) return nodes.get(i).open;
+        return false;
     }
 
     ScrollView {
@@ -79,21 +88,30 @@ Item {
         ListView {
             id: view
             model: nodes
-            delegate: RowLayout {
+            delegate: Row {
                 width: view.width
+                height: 22
                 spacing: 4
-                Item { Layout.preferredWidth: model.depth * 14; Layout.preferredHeight: 1 }
+                Item { width: model.depth * 14; height: 1 }
                 ToolButton {
                     visible: model.expandable
-                    implicitWidth: 16; implicitHeight: 16
+                    width: 16; height: 16
+                    y: 3
                     icon.name: model.open ? "arrow-down" : "arrow-right"
                     onClicked: treeRoot.toggle(model.path)
                 }
-                Label { visible: !model.expandable; Layout.preferredWidth: 16; text: " " }
-                Label { text: model.key; font.bold: true; color: Kirigami.Theme.textColor }
-                Label { text: ":"; opacity: 0.5 }
+                Item { visible: !model.expandable; width: 16; height: 1 }
                 Label {
-                    Layout.fillWidth: true
+                    id: keyLabel
+                    y: 2
+                    text: model.key
+                    font.bold: true
+                    color: Kirigami.Theme.textColor
+                }
+                Label { y: 2; text: ":"; opacity: 0.5 }
+                Label {
+                    y: 2
+                    width: Math.max(50, view.width - (model.depth * 14 + 70))
                     text: model.preview
                     color: treeRoot.colorOf(model.vtype)
                     elide: Text.ElideRight

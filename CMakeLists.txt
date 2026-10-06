@@ -37,6 +37,8 @@ qt_add_resources(katarina "qml"
         qml/KvTable.qml
         qml/FormTable.qml
         qml/JsonTree.qml
+        qml/HeaderTable.qml
+        qml/NetworkView.qml
         qml/VarCompleter.qml
         qml/ShortcutField.qml
 )

@@ -92,6 +92,8 @@ public:
 signals:
     void responseReady(int status, const QString &statusText, const QVariantList &headers,
                        const QString &body, int elapsedMs, int sizeBytes);
+    // metadados para a aba de rede/timeline (protocolo, ip, tls, request enviado)
+    void responseMeta(const QVariantMap &meta);
     void error(const QString &message);
     void started();                     // request despachado
     void canceled();                    // request abortado pelo usuário

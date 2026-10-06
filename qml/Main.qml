@@ -44,6 +44,10 @@ Kirigami.ApplicationWindow {
     property bool sending: false
     property bool responseIsHtml: false
     property string responseHtml: ""
+    property string responseHeadersText: ""
+    property var netMeta: ({})
+    property string responseHint: ""
+    property bool htmlPreviewOn: false
 
     // ---- ambientes ----
     property var envList: []
@@ -271,27 +275,64 @@ Kirigami.ApplicationWindow {
         resolvedVars = res;
         currentDirty = tabsModel.get(currentTab).dirty;
     }
-    function findNext() {
-        var q = searchField.text;
-        if (q.length === 0) return;
-        var body = responseBody.text;
-        var idx = body.indexOf(q, responseBody.selectionEnd);
-        if (idx < 0) idx = body.indexOf(q, 0);
-        if (idx < 0) { notify("Não encontrado: " + q); return; }
-        responseBody.select(idx, idx + q.length);
+    // ---- buscar na resposta (Ctrl+F): barra embutida, não sobrepõe o conteúdo ----
+    property bool findVisible: false
+    property int findMatchIndex: 0
+    property int findMatchTotal: 0
+    function hint(text) { root.responseHint = text; }
+    function openFind() {
+        if (responseBody.text.length === 0) return;
+        findVisible = true;
+        findField.forceActiveFocus();
+        findField.selectAll();
+    }
+    function closeFind() { findVisible = false; findMatchIndex = 0; findMatchTotal = 0; }
+    function countMatches(q) {
+        if (q.length === 0) return [];
+        var body = responseBody.text, out = [], i = body.indexOf(q);
+        while (i >= 0) { out.push(i); i = body.indexOf(q, i + q.length); }
+        return out;
+    }
+    function updateFindCounter() {
+        var q = findField.text;
+        var all = countMatches(q);
+        findMatchTotal = all.length;
+        findMatchIndex = 0;
+    }
+    function findNext(backwards) {
+        var q = findField.text;
+        if (q.length === 0) { findMatchTotal = 0; findMatchIndex = 0; return; }
+        var all = countMatches(q);
+        findMatchTotal = all.length;
+        if (all.length === 0) { findMatchIndex = 0; notify("Não encontrado: " + q); return; }
+        var cur = backwards ? responseBody.selectionStart - 1 : responseBody.selectionEnd;
+        var idx;
+        if (backwards) {
+            idx = all[all.length - 1];
+            for (var i = all.length - 1; i >= 0; i--) if (all[i] <= cur) { idx = all[i]; break; }
+        } else {
+            idx = all[0];
+            for (var j = 0; j < all.length; j++) if (all[j] >= cur) { idx = all[j]; break; }
+        }
+        findMatchIndex = all.indexOf(idx) + 1;
+        var end = idx + q.length;
+        responseBody.deselect(0, responseBody.length);
+        responseBody.select(idx, end);
+        var r = responseBody.positionToRectangle(idx);
+        var targetY = r.y - (bodyScroll.height / 2 - r.height / 2);
+        bodyScroll.contentItem.contentY = Math.max(0, Math.min(targetY,
+            Math.max(0, responseBody.contentHeight - bodyScroll.height + Kirigami.Units.smallSpacing)));
+        bodyScroll.contentItem.contentX = 0;
     }
     function loadHtmlPreview() {
+        if (!root.responseIsHtml || root.responseHtml.length === 0) return;
         htmlPreview.loadHtml(root.responseHtml, "about:blank");
     }
     function setResponseBody(body) {
         responseBody.text = body;
         root.responseIsHtml = root.looksLikeHtml(body);
-        if (root.responseIsHtml) {
-            root.responseHtml = body;
-            if (respTabBar.currentIndex === 4) htmlPreview.loadHtml(body, "about:blank");
-        } else {
-            root.responseHtml = "";
-        }
+        root.responseHtml = root.responseIsHtml ? body : "";
+        root.htmlPreviewOn = false;      // desligado ao chegar resposta nova
     }
     function looksLikeHtml(body) {
         var t = body.trim().toLowerCase();
@@ -305,7 +346,7 @@ Kirigami.ApplicationWindow {
         var r = relPath.length > 0 ? responses[relPath] : undefined;
         if (r === undefined) {
             setResponseBody("");
-            responseHeaders.text = "";
+            responseHeadersText = "";
             responseCookies = "";
             jsonTree.load("");
             statusLabel.text = "";
@@ -315,7 +356,7 @@ Kirigami.ApplicationWindow {
             statusLabel.text = r.status + " " + r.statusText;
             timeLabel.text = r.time;
             sizeLabel.text = r.size;
-            responseHeaders.text = r.headers;
+            responseHeadersText = r.headers;
             responseCookies = r.cookies !== undefined ? r.cookies : "";
             setResponseBody(r.body);
             jsonTree.load(r.body);
@@ -521,7 +562,7 @@ Kirigami.ApplicationWindow {
         if (urlField.text.length === 0) { notify("Informe uma URL"); return; }
         if (settings.autoSaveOnSend && currentDirty) saveCurrent();
         var t = tabsModel.get(currentTab);
-        responseBody.text = ""; responseHeaders.text = "";
+        responseBody.text = ""; responseHeadersText = "";
         backend.send(collectRequest(), collectionOf(t.relPath));
     }
     function persistSession() {
@@ -774,7 +815,8 @@ Kirigami.ApplicationWindow {
         { id: "prevTab", label: "Aba anterior", def: "Alt+Left" },
         { id: "nextTab", label: "Próxima aba", def: "Alt+Right" },
         { id: "reopenTab", label: "Reabrir aba fechada", def: "Ctrl+Shift+T" },
-        { id: "palette", label: "Paleta de comandos", def: "Ctrl+K" }
+        { id: "palette", label: "Paleta de comandos", def: "Ctrl+K" },
+        { id: "findInResponse", label: "Buscar na resposta", def: "Ctrl+F" }
     ]
     function shortcutSeq(id) {
         var def = "";
@@ -793,6 +835,7 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("reopenTab"); onActivated: root.reopenClosed() }
     Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("newRequest"); onActivated: newReqDialog.openIn(root.targetFolder()) }
     Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("palette"); onActivated: cmdPalette.openPalette() }
+    Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("findInResponse"); onActivated: root.openFind() }
     Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("prevTab"); onActivated: root.prevTab() }
     Shortcut { enabled: !root.recordingShortcut; sequence: root.shortcutSeq("nextTab"); onActivated: root.nextTab() }
     property bool forceQuit: false
@@ -1499,7 +1542,7 @@ Kirigami.ApplicationWindow {
                                 visible: root.responseVisible
                                 SplitView.preferredWidth: 330
                                 SplitView.minimumWidth: 230
-                                spacing: Kirigami.Units.smallSpacing
+                                spacing: 0
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -1530,41 +1573,58 @@ Kirigami.ApplicationWindow {
                                         icon.name: "edit-copy"; text: "Copiar"
                                         display: AbstractButton.TextBesideIcon
                                         onClicked: { responseBody.selectAll(); responseBody.copy(); responseBody.cursorPosition = 0; root.notify("Resposta copiada"); }
-                                        ToolTip.text: "Copiar a resposta"; ToolTip.visible: hovered
+                                        onHoveredChanged: root.hint(hovered ? "Copiar a resposta para a área de transferência" : "")
                                     }
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Layout.leftMargin: Kirigami.Units.smallSpacing
-                                    Layout.rightMargin: Kirigami.Units.smallSpacing
-                                    spacing: Kirigami.Units.smallSpacing
-                                    visible: responseBody.text.length > 0
-                                    TextField {
-                                        id: searchField
-                                        Layout.fillWidth: true
-                                        placeholderText: "Buscar na resposta…"
-                                        onAccepted: root.findNext()
-                                    }
-                                    ToolButton { icon.name: "edit-find"; onClicked: root.findNext(); ToolTip.text: "Próxima"; ToolTip.visible: hovered }
                                     ToolButton {
-                                        icon.name: "checkbox"; checkable: true; checked: true
-                                        onClicked: responseBody.wrapMode = checked ? TextEdit.Wrap : TextEdit.NoWrap
-                                        ToolTip.text: "Quebrar linhas"; ToolTip.visible: hovered
+                                        visible: responseBody.text.length > 0
+                                        icon.name: "edit-find"
+                                        onClicked: root.openFind()
+                                        onHoveredChanged: root.hint(hovered ? "Buscar na resposta (Ctrl+F)" : "")
                                     }
                                 }
 
                                 TabBar {
                                     id: respTabBar
                                     Layout.fillWidth: true
-                                    TabButton { text: "Corpo" }
-                                    TabButton { text: "Árvore" }
-                                    TabButton { text: "Cabeçalhos" }
-                                    TabButton { text: "Cookies" }
-                                    TabButton {
-                                        text: "Renderizar"
-                                        visible: root.responseIsHtml
-                                        onClicked: { respTabBar.currentIndex = 4; root.loadHtmlPreview(); }
+                                    TabButton { text: "Corpo"; onHoveredChanged: root.hint(hovered ? "Corpo da resposta" : "") }
+                                    TabButton { text: "Árvore"; onHoveredChanged: root.hint(hovered ? "Explorar o JSON em árvore" : "") }
+                                    TabButton { text: "Cabeçalhos"; onHoveredChanged: root.hint(hovered ? "Cabeçalhos da resposta" : "") }
+                                    TabButton { text: "Cookies"; onHoveredChanged: root.hint(hovered ? "Cookies da resposta" : "") }
+                                    TabButton { text: "Rede"; onHoveredChanged: root.hint(hovered ? "Detalhes da conexão e do request enviado" : "") }
+                                }
+
+                                // busca embutida (Ctrl+F) — só aparece quando acionada
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: Kirigami.Units.smallSpacing
+                                    Layout.rightMargin: Kirigami.Units.smallSpacing
+                                    spacing: Kirigami.Units.smallSpacing
+                                    visible: root.findVisible
+                                    TextField {
+                                        id: findField
+                                        Layout.fillWidth: true
+                                        placeholderText: "Buscar na resposta…"
+                                        onAccepted: root.findNext(false)
+                                        onTextChanged: { if (text.length > 0) root.findNext(false); else root.updateFindCounter(); }
+                                        Keys.onEscapePressed: root.closeFind()
+                                    }
+                                    Label {
+                                        visible: root.findMatchTotal > 0
+                                        text: root.findMatchIndex + "/" + root.findMatchTotal
+                                        opacity: 0.75
+                                        font.family: "monospace"
+                                    }
+                                    ToolButton {
+                                        icon.name: "go-up"; onClicked: root.findNext(true)
+                                        onHoveredChanged: root.hint(hovered ? "Ocorrência anterior" : "")
+                                    }
+                                    ToolButton {
+                                        icon.name: "go-down"; onClicked: root.findNext(false)
+                                        onHoveredChanged: root.hint(hovered ? "Próxima ocorrência" : "")
+                                    }
+                                    ToolButton {
+                                        icon.name: "window-close"; onClicked: root.closeFind()
+                                        onHoveredChanged: root.hint(hovered ? "Fechar busca" : "")
                                     }
                                 }
                                 Item {
@@ -1573,26 +1633,77 @@ Kirigami.ApplicationWindow {
                                     StackLayout {
                                         anchors.fill: parent
                                         currentIndex: respTabBar.currentIndex
-                                        ScrollView {
+                                        // ---- Corpo (com toggle Renderizar quando for HTML) ----
+                                        ColumnLayout {
                                             Layout.fillWidth: true; Layout.fillHeight: true
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
-                                            TextArea { id: responseBody; readOnly: true; font.family: "monospace"; font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize; wrapMode: TextEdit.Wrap }
+                                            spacing: 0
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                Layout.leftMargin: Kirigami.Units.smallSpacing
+                                                Layout.rightMargin: Kirigami.Units.smallSpacing
+                                                Layout.topMargin: Kirigami.Units.smallSpacing
+                                                visible: root.responseIsHtml
+                                                spacing: Kirigami.Units.smallSpacing
+                                                CheckBox {
+                                                    text: "Renderizar"
+                                                    checked: root.htmlPreviewOn
+                                                    onToggled: {
+                                                        root.htmlPreviewOn = checked;
+                                                        if (checked) htmlPreview.loadHtml(root.responseHtml, "about:blank");
+                                                    }
+                                                }
+                                                Item { Layout.fillWidth: true }
+                                                Label {
+                                                    visible: root.htmlPreviewOn
+                                                    opacity: 0.6
+                                                    text: "pré-visualização HTML"
+                                                }
+                                            }
+                                            StackLayout {
+                                                Layout.fillWidth: true; Layout.fillHeight: true
+                                                currentIndex: root.htmlPreviewOn ? 1 : 0
+                                                ScrollView {
+                                                    id: bodyScroll
+                                                    Layout.fillWidth: true; Layout.fillHeight: true
+                                                    Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
+                                                    TextArea {
+                                                        id: responseBody
+                                                        readOnly: true
+                                                        font.family: "monospace"
+                                                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                                                        wrapMode: TextEdit.Wrap
+                                                        selectionColor: Kirigami.Theme.highlightColor
+                                                        selectedTextColor: Kirigami.Theme.highlightedTextColor
+                                                        Component.onCompleted: {
+                                                            var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
+                                                            varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
+                                                                dark ? "#98c379" : "#2e7d32",
+                                                                dark ? "#d19a66" : "#b26a00",
+                                                                dark ? "#d19a66" : "#b26a00");
+                                                        }
+                                                    }
+                                                }
+                                                WebEngineView {
+                                                    id: htmlPreview
+                                                    Layout.fillWidth: true; Layout.fillHeight: true
+                                                }
+                                            }
                                         }
                                         JsonTree { id: jsonTree; Layout.fillWidth: true; Layout.fillHeight: true }
-                                        ScrollView {
+                                        HeaderTable {
+                                            id: responseHeadersTable
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
-                                            TextArea { id: responseHeaders; readOnly: true; font.family: "monospace"; font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize; wrapMode: TextEdit.NoWrap }
+                                            headersText: root.responseHeadersText
                                         }
                                         ScrollView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
                                             TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: root.responseCookies; placeholderText: "Sem cookies." }
                                         }
-                                        WebEngineView {
-                                            id: htmlPreview
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
+                                        NetworkView {
+                                            Layout.fillWidth: true; Layout.fillHeight: true
+                                            meta: root.netMeta
                                         }
                                     }
                                     // estado vazio (ainda sem resposta)
@@ -1637,6 +1748,25 @@ Kirigami.ApplicationWindow {
                                             }
                                             Label { text: "abre a paleta de comandos"; opacity: 0.7 }
                                         }
+                                    }
+                                }
+
+                                // faixa de status/hint do painel (substitui tooltips flutuantes)
+                                Kirigami.Separator { Layout.fillWidth: true }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: hintLabel.implicitHeight + Kirigami.Units.smallSpacing * 2
+                                    color: Kirigami.Theme.alternateBackgroundColor
+                                    Label {
+                                        id: hintLabel
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Kirigami.Units.smallSpacing
+                                        anchors.rightMargin: Kirigami.Units.smallSpacing
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        font.pixelSize: Kirigami.Theme.smallFont.pointSize
+                                        opacity: 0.75
+                                        text: root.responseHint
                                     }
                                 }
                             }
@@ -2700,7 +2830,7 @@ Kirigami.ApplicationWindow {
             statusLabel.text = status + " " + statusText;
             timeLabel.text = rec.time;
             sizeLabel.text = rec.size;
-            responseHeaders.text = rec.headers;
+            responseHeadersText = rec.headers;
             responseCookies = rec.cookies;
             setResponseBody(body);
             jsonTree.load(body);
@@ -2709,6 +2839,9 @@ Kirigami.ApplicationWindow {
             root.sending = false;
             statusLabel.text = "Erro: " + message;
             timeLabel.text = ""; sizeLabel.text = "";
+        }
+        function onResponseMeta(meta) {
+            root.netMeta = meta;
         }
         function onCollectionsChanged() { root.reloadTree(); }
         function onEnvironmentsChanged() { root.reloadEnvs(); root.refreshResolved(); }

@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Utility rule file for uninstall.
 
@@ -67,7 +67,7 @@ include CMakeFiles/uninstall.dir/compiler_depend.make
 include CMakeFiles/uninstall.dir/progress.make
 
 CMakeFiles/uninstall:
-	/usr/bin/cmake -P /home/guilherme/katarina/build/ecm_uninstall.cmake
+	/usr/bin/cmake -P /home/guilherme/Repositories/katarina/build/ecm_uninstall.cmake
 
 CMakeFiles/uninstall.dir/codegen:
 .PHONY : CMakeFiles/uninstall.dir/codegen
@@ -85,6 +85,6 @@ CMakeFiles/uninstall.dir/clean:
 .PHONY : CMakeFiles/uninstall.dir/clean
 
 CMakeFiles/uninstall.dir/depend:
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
 .PHONY : CMakeFiles/uninstall.dir/depend
 

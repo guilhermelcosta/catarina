@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"/home/guilherme/katarina/build/cmake_install.cmake"
+		"/home/guilherme/Repositories/katarina/build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Utility rule file for fetch-translations.
 
@@ -67,14 +67,14 @@ include CMakeFiles/fetch-translations.dir/compiler_depend.make
 include CMakeFiles/fetch-translations.dir/progress.make
 
 CMakeFiles/fetch-translations: releaseme
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Downloading translations for katarina branch trunk..."
-	git -C /home/guilherme/katarina/build/releaseme pull
-	cmake -E remove_directory /home/guilherme/katarina/build/po
-	cmake -E remove_directory /home/guilherme/katarina/build/poqm
-	ruby /home/guilherme/katarina/build/releaseme/fetchpo.rb --origin trunk --project katarina --output-dir /home/guilherme/katarina/build/po --output-poqm-dir /home/guilherme/katarina/build/poqm /home/guilherme/katarina
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Downloading translations for katarina branch trunk..."
+	git -C /home/guilherme/Repositories/katarina/build/releaseme pull
+	cmake -E remove_directory /home/guilherme/Repositories/katarina/build/po
+	cmake -E remove_directory /home/guilherme/Repositories/katarina/build/poqm
+	ruby /home/guilherme/Repositories/katarina/build/releaseme/fetchpo.rb --origin trunk --project katarina --output-dir /home/guilherme/Repositories/katarina/build/po --output-poqm-dir /home/guilherme/Repositories/katarina/build/poqm /home/guilherme/Repositories/katarina
 
 releaseme:
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Fetching releaseme scripts to download translations..."
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Fetching releaseme scripts to download translations..."
 	git clone --depth 1 https://invent.kde.org/sdk/releaseme.git
 
 CMakeFiles/fetch-translations.dir/codegen:
@@ -94,6 +94,6 @@ CMakeFiles/fetch-translations.dir/clean:
 .PHONY : CMakeFiles/fetch-translations.dir/clean
 
 CMakeFiles/fetch-translations.dir/depend:
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/fetch-translations.dir/DependInfo.cmake "--color=$(COLOR)" fetch-translations
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/fetch-translations.dir/DependInfo.cmake "--color=$(COLOR)" fetch-translations
 .PHONY : CMakeFiles/fetch-translations.dir/depend
 

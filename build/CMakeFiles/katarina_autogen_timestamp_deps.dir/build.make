@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Utility rule file for katarina_autogen_timestamp_deps.
 
@@ -81,6 +81,6 @@ CMakeFiles/katarina_autogen_timestamp_deps.dir/clean:
 .PHONY : CMakeFiles/katarina_autogen_timestamp_deps.dir/clean
 
 CMakeFiles/katarina_autogen_timestamp_deps.dir/depend:
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/katarina_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)" katarina_autogen_timestamp_deps
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/katarina_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)" katarina_autogen_timestamp_deps
 .PHONY : CMakeFiles/katarina_autogen_timestamp_deps.dir/depend
 

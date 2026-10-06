@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Utility rule file for katarina_autogen.
 
@@ -70,9 +70,9 @@ CMakeFiles/katarina_autogen: katarina_autogen/timestamp
 
 katarina_autogen/timestamp: /usr/lib64/qt6/libexec/moc
 katarina_autogen/timestamp: CMakeFiles/katarina_autogen.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC and UIC for target katarina"
-	/usr/bin/cmake -E cmake_autogen /home/guilherme/katarina/build/CMakeFiles/katarina_autogen.dir/AutogenInfo.json Debug
-	/usr/bin/cmake -E touch /home/guilherme/katarina/build/katarina_autogen/timestamp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC and UIC for target katarina"
+	/usr/bin/cmake -E cmake_autogen /home/guilherme/Repositories/katarina/build/CMakeFiles/katarina_autogen.dir/AutogenInfo.json Debug
+	/usr/bin/cmake -E touch /home/guilherme/Repositories/katarina/build/katarina_autogen/timestamp
 
 CMakeFiles/katarina_autogen.dir/codegen:
 .PHONY : CMakeFiles/katarina_autogen.dir/codegen
@@ -91,6 +91,6 @@ CMakeFiles/katarina_autogen.dir/clean:
 .PHONY : CMakeFiles/katarina_autogen.dir/clean
 
 CMakeFiles/katarina_autogen.dir/depend:
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/katarina_autogen.dir/DependInfo.cmake "--color=$(COLOR)" katarina_autogen
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/katarina_autogen.dir/DependInfo.cmake "--color=$(COLOR)" katarina_autogen
 .PHONY : CMakeFiles/katarina_autogen.dir/depend
 

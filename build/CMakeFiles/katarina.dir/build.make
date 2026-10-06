@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/guilherme/katarina
+CMAKE_SOURCE_DIR = /home/guilherme/Repositories/katarina
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/guilherme/katarina/build
+CMAKE_BINARY_DIR = /home/guilherme/Repositories/katarina/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/katarina.dir/depend.make
@@ -69,22 +69,24 @@ include CMakeFiles/katarina.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/katarina.dir/flags.make
 
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/Main.qml
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/KvTable.qml
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/FormTable.qml
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/JsonTree.qml
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/VarCompleter.qml
-.qt/rcc/qrc_qml.cpp: /home/guilherme/katarina/qml/ShortcutField.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/Main.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/KvTable.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/FormTable.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/JsonTree.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/HeaderTable.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/NetworkView.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/VarCompleter.qml
+.qt/rcc/qrc_qml.cpp: /home/guilherme/Repositories/katarina/qml/ShortcutField.qml
 .qt/rcc/qrc_qml.cpp: .qt/rcc/qml.qrc
 .qt/rcc/qrc_qml.cpp: /usr/lib64/qt6/libexec/rcc
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running rcc for resource qml"
-	/usr/lib64/qt6/libexec/rcc --output /home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp --name qml /home/guilherme/katarina/build/.qt/rcc/qml.qrc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running rcc for resource qml"
+	/usr/lib64/qt6/libexec/rcc --output /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp --name qml /home/guilherme/Repositories/katarina/build/.qt/rcc/qml.qrc
 
-.qt/rcc/qrc_appicon.cpp: /home/guilherme/katarina/icons/katarina.svg
+.qt/rcc/qrc_appicon.cpp: /home/guilherme/Repositories/katarina/icons/katarina.svg
 .qt/rcc/qrc_appicon.cpp: .qt/rcc/appicon.qrc
 .qt/rcc/qrc_appicon.cpp: /usr/lib64/qt6/libexec/rcc
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Running rcc for resource appicon"
-	/usr/lib64/qt6/libexec/rcc --output /home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp --name appicon /home/guilherme/katarina/build/.qt/rcc/appicon.qrc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Running rcc for resource appicon"
+	/usr/lib64/qt6/libexec/rcc --output /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp --name appicon /home/guilherme/Repositories/katarina/build/.qt/rcc/appicon.qrc
 
 CMakeFiles/katarina.dir/codegen:
 .PHONY : CMakeFiles/katarina.dir/codegen
@@ -92,100 +94,100 @@ CMakeFiles/katarina.dir/codegen:
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: CMakeFiles/katarina.dir/flags.make
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: katarina_autogen/mocs_compilation.cpp
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o -MF CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o -c /home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o -MF CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o -c /home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp
 
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp > CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp > CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.i
 
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp -o CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp -o CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.s
 
 CMakeFiles/katarina.dir/src/main.cpp.o: CMakeFiles/katarina.dir/flags.make
-CMakeFiles/katarina.dir/src/main.cpp.o: /home/guilherme/katarina/src/main.cpp
+CMakeFiles/katarina.dir/src/main.cpp.o: /home/guilherme/Repositories/katarina/src/main.cpp
 CMakeFiles/katarina.dir/src/main.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/katarina.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/main.cpp.o -MF CMakeFiles/katarina.dir/src/main.cpp.o.d -o CMakeFiles/katarina.dir/src/main.cpp.o -c /home/guilherme/katarina/src/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/katarina.dir/src/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/main.cpp.o -MF CMakeFiles/katarina.dir/src/main.cpp.o.d -o CMakeFiles/katarina.dir/src/main.cpp.o -c /home/guilherme/Repositories/katarina/src/main.cpp
 
 CMakeFiles/katarina.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/src/main.cpp > CMakeFiles/katarina.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/src/main.cpp > CMakeFiles/katarina.dir/src/main.cpp.i
 
 CMakeFiles/katarina.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/src/main.cpp -o CMakeFiles/katarina.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/src/main.cpp -o CMakeFiles/katarina.dir/src/main.cpp.s
 
 CMakeFiles/katarina.dir/src/backend.cpp.o: CMakeFiles/katarina.dir/flags.make
-CMakeFiles/katarina.dir/src/backend.cpp.o: /home/guilherme/katarina/src/backend.cpp
+CMakeFiles/katarina.dir/src/backend.cpp.o: /home/guilherme/Repositories/katarina/src/backend.cpp
 CMakeFiles/katarina.dir/src/backend.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/katarina.dir/src/backend.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/backend.cpp.o -MF CMakeFiles/katarina.dir/src/backend.cpp.o.d -o CMakeFiles/katarina.dir/src/backend.cpp.o -c /home/guilherme/katarina/src/backend.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/katarina.dir/src/backend.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/backend.cpp.o -MF CMakeFiles/katarina.dir/src/backend.cpp.o.d -o CMakeFiles/katarina.dir/src/backend.cpp.o -c /home/guilherme/Repositories/katarina/src/backend.cpp
 
 CMakeFiles/katarina.dir/src/backend.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/src/backend.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/src/backend.cpp > CMakeFiles/katarina.dir/src/backend.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/src/backend.cpp > CMakeFiles/katarina.dir/src/backend.cpp.i
 
 CMakeFiles/katarina.dir/src/backend.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/src/backend.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/src/backend.cpp -o CMakeFiles/katarina.dir/src/backend.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/src/backend.cpp -o CMakeFiles/katarina.dir/src/backend.cpp.s
 
 CMakeFiles/katarina.dir/src/highlighter.cpp.o: CMakeFiles/katarina.dir/flags.make
-CMakeFiles/katarina.dir/src/highlighter.cpp.o: /home/guilherme/katarina/src/highlighter.cpp
+CMakeFiles/katarina.dir/src/highlighter.cpp.o: /home/guilherme/Repositories/katarina/src/highlighter.cpp
 CMakeFiles/katarina.dir/src/highlighter.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/katarina.dir/src/highlighter.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/highlighter.cpp.o -MF CMakeFiles/katarina.dir/src/highlighter.cpp.o.d -o CMakeFiles/katarina.dir/src/highlighter.cpp.o -c /home/guilherme/katarina/src/highlighter.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/katarina.dir/src/highlighter.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/highlighter.cpp.o -MF CMakeFiles/katarina.dir/src/highlighter.cpp.o.d -o CMakeFiles/katarina.dir/src/highlighter.cpp.o -c /home/guilherme/Repositories/katarina/src/highlighter.cpp
 
 CMakeFiles/katarina.dir/src/highlighter.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/src/highlighter.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/src/highlighter.cpp > CMakeFiles/katarina.dir/src/highlighter.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/src/highlighter.cpp > CMakeFiles/katarina.dir/src/highlighter.cpp.i
 
 CMakeFiles/katarina.dir/src/highlighter.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/src/highlighter.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/src/highlighter.cpp -o CMakeFiles/katarina.dir/src/highlighter.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/src/highlighter.cpp -o CMakeFiles/katarina.dir/src/highlighter.cpp.s
 
 CMakeFiles/katarina.dir/src/settings.cpp.o: CMakeFiles/katarina.dir/flags.make
-CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/settings.cpp
+CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/Repositories/katarina/src/settings.cpp
 CMakeFiles/katarina.dir/src/settings.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/katarina.dir/src/settings.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/settings.cpp.o -MF CMakeFiles/katarina.dir/src/settings.cpp.o.d -o CMakeFiles/katarina.dir/src/settings.cpp.o -c /home/guilherme/katarina/src/settings.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/katarina.dir/src/settings.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/src/settings.cpp.o -MF CMakeFiles/katarina.dir/src/settings.cpp.o.d -o CMakeFiles/katarina.dir/src/settings.cpp.o -c /home/guilherme/Repositories/katarina/src/settings.cpp
 
 CMakeFiles/katarina.dir/src/settings.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/src/settings.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/src/settings.cpp > CMakeFiles/katarina.dir/src/settings.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/src/settings.cpp > CMakeFiles/katarina.dir/src/settings.cpp.i
 
 CMakeFiles/katarina.dir/src/settings.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/src/settings.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/src/settings.cpp -o CMakeFiles/katarina.dir/src/settings.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/src/settings.cpp -o CMakeFiles/katarina.dir/src/settings.cpp.s
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o: CMakeFiles/katarina.dir/flags.make
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o: .qt/rcc/qrc_qml.cpp
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o -MF CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o.d -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o -c /home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o -MF CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o.d -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o -c /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp > CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp > CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.i
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/build/.qt/rcc/qrc_qml.cpp -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_qml.cpp -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.s
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o: CMakeFiles/katarina.dir/flags.make
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o: .qt/rcc/qrc_appicon.cpp
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o: CMakeFiles/katarina.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o -MF CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o.d -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o -c /home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o -MF CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o.d -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.o -c /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp > CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp > CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.i
 
 CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/katarina/build/.qt/rcc/qrc_appicon.cpp -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/guilherme/Repositories/katarina/build/.qt/rcc/qrc_appicon.cpp -o CMakeFiles/katarina.dir/build/.qt/rcc/qrc_appicon.cpp.s
 
 # Object files for target katarina
 katarina_OBJECTS = \
@@ -211,7 +213,7 @@ bin/katarina: CMakeFiles/katarina.dir/build.make
 bin/katarina: /usr/lib64/libGLX.so
 bin/katarina: /usr/lib64/libOpenGL.so
 bin/katarina: CMakeFiles/katarina.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/guilherme/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable bin/katarina"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/guilherme/Repositories/katarina/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable bin/katarina"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/katarina.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -224,6 +226,6 @@ CMakeFiles/katarina.dir/clean:
 
 CMakeFiles/katarina.dir/depend: .qt/rcc/qrc_appicon.cpp
 CMakeFiles/katarina.dir/depend: .qt/rcc/qrc_qml.cpp
-	cd /home/guilherme/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/katarina /home/guilherme/katarina /home/guilherme/katarina/build /home/guilherme/katarina/build /home/guilherme/katarina/build/CMakeFiles/katarina.dir/DependInfo.cmake "--color=$(COLOR)" katarina
+	cd /home/guilherme/Repositories/katarina/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build /home/guilherme/Repositories/katarina/build/CMakeFiles/katarina.dir/DependInfo.cmake "--color=$(COLOR)" katarina
 .PHONY : CMakeFiles/katarina.dir/depend
 

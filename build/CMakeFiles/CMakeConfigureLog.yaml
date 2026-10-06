@@ -210,7 +210,7 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
       
       The CXX compiler identification is GNU, found in:
-        /home/guilherme/katarina/build/CMakeFiles/4.3.0/CompilerIdCXX/a.out
+        /home/guilherme/Repositories/katarina/build/CMakeFiles/4.3.0/CompilerIdCXX/a.out
       
   -
     kind: "find-v1"
@@ -802,8 +802,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC"
-      binary: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC"
+      source: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY"
+      binary: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -814,13 +814,13 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC'
+        Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9ce6e/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_9ce6e.dir/build.make CMakeFiles/cmTC_9ce6e.dir/build
-        gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC'
-        Building CXX object CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o
-        /usr/bin/c++   -v -o CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_518a7/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_518a7.dir/build.make CMakeFiles/cmTC_518a7.dir/build
+        gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY'
+        Building CXX object CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -v -o CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -830,8 +830,8 @@ events:
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
         gcc version 16.2.1 20260819 (Red Hat 16.2.1-2) (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/'
-         /usr/libexec/gcc/x86_64-redhat-linux/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_9ce6e.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -mtls-dialect=gnu2 -version -o /tmp/ccNU42Do.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/'
+         /usr/libexec/gcc/x86_64-redhat-linux/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_518a7.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -mtls-dialect=gnu2 -version -o /tmp/ccsc2MxH.s
         GNU C++20 (GCC) version 16.2.1 20260819 (Red Hat 16.2.1-2) (x86_64-redhat-linux)
         	compiled by GNU C version 16.2.1 20260819 (Red Hat 16.2.1-2), GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.4.1, isl version isl-0.24-GMP
         
@@ -848,14 +848,14 @@ events:
          /usr/include
         End of search list.
         Compiler executable checksum: 65ab9aa42e0ee60985a3e473fe6610c4
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/'
-         as -v --64 -o CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccNU42Do.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/'
+         as -v --64 -o CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccsc2MxH.s
         GNU assembler version 2.46.1 (x86_64-redhat-linux) using BFD version version 2.46.1-1.fc44
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.'
-        Linking CXX executable cmTC_9ce6e
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9ce6e.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_518a7
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_518a7.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper
@@ -868,14 +868,14 @@ events:
         gcc version 16.2.1 20260819 (Red Hat 16.2.1-2) (GCC) 
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9ce6e' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_9ce6e.'
-         /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8OP1bK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9ce6e /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_518a7' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_518a7.'
+         /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccZFdgpO.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_518a7 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o
         collect2 version 16.2.1 20260819 (Red Hat 16.2.1-2)
-        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8OP1bK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9ce6e /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o
+        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccZFdgpO.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_518a7 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o
         GNU ld version 2.46.1-1.fc44
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9ce6e' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_9ce6e.'
-        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_9ce6e
-        gmake[1]: Leaving directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_518a7' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_518a7.'
+        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_518a7
+        gmake[1]: Leaving directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY'
         
       exitCode: 0
   -
@@ -914,13 +914,13 @@ events:
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
-        ignore line: [Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC']
+        ignore line: [Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9ce6e/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_9ce6e.dir/build.make CMakeFiles/cmTC_9ce6e.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-hjxgGC']
-        ignore line: [Building CXX object CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o]
-        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_518a7/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_518a7.dir/build.make CMakeFiles/cmTC_518a7.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-uLcPUY']
+        ignore line: [Building CXX object CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -930,8 +930,8 @@ events:
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
         ignore line: [gcc version 16.2.1 20260819 (Red Hat 16.2.1-2) (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/']
-        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_9ce6e.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -mtls-dialect=gnu2 -version -o /tmp/ccNU42Do.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/']
+        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_518a7.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -mtls-dialect=gnu2 -version -o /tmp/ccsc2MxH.s]
         ignore line: [GNU C++20 (GCC) version 16.2.1 20260819 (Red Hat 16.2.1-2) (x86_64-redhat-linux)]
         ignore line: [	compiled by GNU C version 16.2.1 20260819 (Red Hat 16.2.1-2)  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.4.1  isl version isl-0.24-GMP]
         ignore line: []
@@ -948,14 +948,14 @@ events:
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
         ignore line: [Compiler executable checksum: 65ab9aa42e0ee60985a3e473fe6610c4]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccNU42Do.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccsc2MxH.s]
         ignore line: [GNU assembler version 2.46.1 (x86_64-redhat-linux) using BFD version version 2.46.1-1.fc44]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.']
-        ignore line: [Linking CXX executable cmTC_9ce6e]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9ce6e.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_518a7]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_518a7.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper]
@@ -968,13 +968,13 @@ events:
         ignore line: [gcc version 16.2.1 20260819 (Red Hat 16.2.1-2) (GCC) ]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9ce6e' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_9ce6e.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8OP1bK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9ce6e /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_518a7' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-dumpdir' 'cmTC_518a7.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccZFdgpO.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_518a7 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/16/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/cc8OP1bK.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccZFdgpO.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-latomic_asneeded] ==> ignore
@@ -990,7 +990,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_9ce6e] ==> ignore
+          arg [cmTC_518a7] ==> ignore
           arg [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o]
@@ -1002,7 +1002,7 @@ events:
           arg [-L/lib] ==> dir [/lib]
           arg [-L/usr/lib] ==> dir [/usr/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
           arg [-lstdc++] ==> lib [stdc++]
           arg [-lm] ==> lib [m]
           arg [-lgcc_s] ==> lib [gcc_s]
@@ -1014,7 +1014,7 @@ events:
           arg [/usr/lib/gcc/x86_64-redhat-linux/16/crtend.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/16/crtend.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o]
         ignore line: [collect2 version 16.2.1 20260819 (Red Hat 16.2.1-2)]
-        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8OP1bK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9ce6e /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9ce6e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o]
+        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccZFdgpO.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_518a7 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_518a7.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o]
         linker tool for 'CXX': /usr/bin/ld
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
@@ -1086,35 +1086,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/ECMConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/ECMConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/ecm-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/ecm-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/ECM.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/ECM.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/ecm.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/ecm.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/ECM.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/ECM.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/ecm.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/ecm.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/ECM.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/ECM.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/ecm.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/ecm.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -1390,8 +1390,8 @@ events:
       - "/usr/share/ECM/kde-modules/KDEInstallDirs.cmake:17 (include)"
       - "CMakeLists.txt:7 (include)"
     directories:
-      source: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC"
-      binary: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC"
+      source: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY"
+      binary: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -1402,17 +1402,17 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC'
+        Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_e677f/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_e677f.dir/build.make CMakeFiles/cmTC_e677f.dir/build
-        gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC'
-        Building CXX object CMakeFiles/cmTC_e677f.dir/src.cxx.o
-        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_e677f.dir/src.cxx.o -c /home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC/src.cxx
-        Linking CXX executable cmTC_e677f
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e677f.dir/link.txt --verbose=1
-        /usr/bin/c++ CMakeFiles/cmTC_e677f.dir/src.cxx.o -o cmTC_e677f
-        gmake[1]: Leaving directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-yZ6YbC'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_21a48/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_21a48.dir/build.make CMakeFiles/cmTC_21a48.dir/build
+        gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY'
+        Building CXX object CMakeFiles/cmTC_21a48.dir/src.cxx.o
+        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_21a48.dir/src.cxx.o -c /home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY/src.cxx
+        Linking CXX executable cmTC_21a48
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_21a48.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_21a48.dir/src.cxx.o -o cmTC_21a48
+        gmake[1]: Leaving directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-FtxdKY'
         
       exitCode: 0
   -
@@ -1463,35 +1463,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6CoreToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6CoreToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6coretools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6coretools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6CoreTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6CoreTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6coretools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6coretools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6CoreTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6CoreTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6coretools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6coretools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6CoreTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6CoreTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6coretools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6coretools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -1576,35 +1576,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6Config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6Config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -3228,8 +3228,8 @@ events:
     checks:
       - "Performing Test HAVE_STDATOMIC"
     directories:
-      source: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO"
-      binary: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO"
+      source: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A"
+      binary: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -3241,17 +3241,17 @@ events:
       variable: "HAVE_STDATOMIC"
       cached: true
       stdout: |
-        Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO'
+        Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6ea3c/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_6ea3c.dir/build.make CMakeFiles/cmTC_6ea3c.dir/build
-        gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO'
-        Building CXX object CMakeFiles/cmTC_6ea3c.dir/src.cxx.o
-        /usr/bin/c++ -DHAVE_STDATOMIC   -o CMakeFiles/cmTC_6ea3c.dir/src.cxx.o -c /home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO/src.cxx
-        Linking CXX executable cmTC_6ea3c
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6ea3c.dir/link.txt --verbose=1
-        /usr/bin/c++ CMakeFiles/cmTC_6ea3c.dir/src.cxx.o -o cmTC_6ea3c
-        gmake[1]: Leaving directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-DBpmzO'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3d96c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_3d96c.dir/build.make CMakeFiles/cmTC_3d96c.dir/build
+        gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A'
+        Building CXX object CMakeFiles/cmTC_3d96c.dir/src.cxx.o
+        /usr/bin/c++ -DHAVE_STDATOMIC   -o CMakeFiles/cmTC_3d96c.dir/src.cxx.o -c /home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A/src.cxx
+        Linking CXX executable cmTC_3d96c
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d96c.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_3d96c.dir/src.cxx.o -o cmTC_3d96c
+        gmake[1]: Leaving directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-Hmyh7A'
         
       exitCode: 0
   -
@@ -3301,35 +3301,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6CoreConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6CoreConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6core-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6core-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6core.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6core.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -4886,35 +4886,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6GuiToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6GuiToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6guitools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6guitools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6GuiTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6GuiTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6guitools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6guitools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6GuiTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6GuiTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6guitools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6guitools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6GuiTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6GuiTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6guitools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6guitools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -5221,35 +5221,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6DBusToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6DBusToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6dbustools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6dbustools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6DBusTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6DBusTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6dbustools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6dbustools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBusTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBusTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbustools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbustools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBusTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBusTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6dbustools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6dbustools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -5553,35 +5553,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6DBusConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6DBusConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6dbus-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6dbus-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6DBus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6DBus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6dbus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6dbus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6dbus.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6dbus.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -5679,35 +5679,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6GuiConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6GuiConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6gui-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6gui-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6gui.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -5809,35 +5809,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmltools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmltools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmltools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmltools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmltools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmltools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmltools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmltools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6141,35 +6141,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlIntegrationConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlIntegrationConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmlintegration-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmlintegration-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlIntegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlIntegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlintegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlintegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlIntegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlIntegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlintegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlintegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlIntegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlIntegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlintegration.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlintegration.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6257,35 +6257,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6NetworkConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6NetworkConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6network-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6network-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Network.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6network.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Network.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6network.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Network.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6network.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6network.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6375,35 +6375,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlCompilerPlusPrivateToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlCompilerPlusPrivateToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmlcompilerplusprivatetools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmlcompilerplusprivatetools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlCompilerPlusPrivateTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlCompilerPlusPrivateTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlcompilerplusprivatetools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlcompilerplusprivatetools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlCompilerPlusPrivateTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlCompilerPlusPrivateTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlcompilerplusprivatetools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlcompilerplusprivatetools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlCompilerPlusPrivateTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlCompilerPlusPrivateTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlcompilerplusprivatetools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlcompilerplusprivatetools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6762,35 +6762,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qml-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qml-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qml.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qml.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7044,35 +7044,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickToolsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6quicktools-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6quicktools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quicktools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quicktools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quicktools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quicktools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickTools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quicktools.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quicktools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7376,35 +7376,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlModelsConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlModelsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmlmodels-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmlmodels-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlModels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlModels.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlmodels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlmodels.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlModels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlModels.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlmodels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlmodels.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlModels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlModels.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlmodels.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlmodels.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7505,35 +7505,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlWorkerScriptConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlWorkerScriptConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmlworkerscript-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmlworkerscript-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlWorkerScript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlWorkerScript.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlworkerscript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlworkerscript.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlWorkerScript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlWorkerScript.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlworkerscript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlworkerscript.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlWorkerScript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlWorkerScript.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlworkerscript.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlworkerscript.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7629,35 +7629,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlMetaConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QmlMetaConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6qmlmeta-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6qmlmeta-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlMeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QmlMeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlmeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6qmlmeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlMeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QmlMeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlmeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6qmlmeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlMeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QmlMeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlmeta.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6qmlmeta.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7753,35 +7753,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6OpenGLConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6OpenGLConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6opengl-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6opengl-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6OpenGL.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6OpenGL.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6opengl.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6opengl.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6OpenGL.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6OpenGL.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6opengl.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6opengl.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6OpenGL.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6OpenGL.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6opengl.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6opengl.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -7879,35 +7879,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6quick-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6quick-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quick.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quick.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -8411,35 +8411,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickTemplates2Config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickTemplates2Config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6quicktemplates2-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6quicktemplates2-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickTemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickTemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quicktemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quicktemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickTemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickTemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quicktemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quicktemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickTemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickTemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quicktemplates2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quicktemplates2.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -8529,35 +8529,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickControls2Config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6QuickControls2Config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6quickcontrols2-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6quickcontrols2-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickControls2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6QuickControls2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quickcontrols2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6quickcontrols2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickControls2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6QuickControls2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quickcontrols2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6quickcontrols2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickControls2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6QuickControls2.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quickcontrols2.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6quickcontrols2.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -8831,35 +8831,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/Qt6ConcurrentConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/Qt6ConcurrentConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/qt6concurrent-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/qt6concurrent-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/Qt6Concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/qt6concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/qt6concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/Qt6Concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6concurrent.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/qt6concurrent.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -9131,8 +9131,8 @@ events:
       - "CMakeLists.txt:11 (find_package)"
     description: "Detecting CXX OpenMP compiler info"
     directories:
-      source: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA"
-      binary: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA"
+      source: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV"
+      binary: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -9144,15 +9144,15 @@ events:
       variable: "OpenMP_COMPILE_RESULT_CXX_fopenmp"
       cached: true
       stdout: |
-        Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA'
+        Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_726d4/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_726d4.dir/build.make CMakeFiles/cmTC_726d4.dir/build
-        gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA'
-        Building CXX object CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o
-        /usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o -c /home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA/OpenMPTryFlag.cpp
-        Linking CXX executable cmTC_726d4
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_726d4.dir/link.txt --verbose=1
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3c21c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_3c21c.dir/build.make CMakeFiles/cmTC_3c21c.dir/build
+        gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV'
+        Building CXX object CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o
+        /usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o -c /home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV/OpenMPTryFlag.cpp
+        Linking CXX executable cmTC_3c21c
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3c21c.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper
@@ -9166,11 +9166,11 @@ events:
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/
         Reading specs from /usr/lib/gcc/x86_64-redhat-linux/16/libgomp.spec
-        COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_726d4' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_726d4.'
-         /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccVP5DtK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lpthread -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_726d4 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o -lstdc++ -lm -lgomp -lgcc_s -lgcc -latomic_asneeded -lpthread -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadend.o
-        COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_726d4' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_726d4.'
-        /usr/bin/c++  -fopenmp -v CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o -o cmTC_726d4
-        gmake[1]: Leaving directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA'
+        COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_3c21c' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_3c21c.'
+         /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccqidxIR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lpthread -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3c21c /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o -lstdc++ -lm -lgomp -lgcc_s -lgcc -latomic_asneeded -lpthread -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadend.o
+        COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_3c21c' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_3c21c.'
+        /usr/bin/c++  -fopenmp -v CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o -o cmTC_3c21c
+        gmake[1]: Leaving directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV'
         
       exitCode: 0
   -
@@ -9185,15 +9185,15 @@ events:
     message: |
       Parsed CXX OpenMP implicit link information from above output:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
-        ignore line: [Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA']
+        ignore line: [Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_726d4/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_726d4.dir/build.make CMakeFiles/cmTC_726d4.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA']
-        ignore line: [Building CXX object CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o]
-        ignore line: [/usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o -c /home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-pslFdA/OpenMPTryFlag.cpp]
-        ignore line: [Linking CXX executable cmTC_726d4]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_726d4.dir/link.txt --verbose=1]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3c21c/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_3c21c.dir/build.make CMakeFiles/cmTC_3c21c.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV']
+        ignore line: [Building CXX object CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o]
+        ignore line: [/usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o -c /home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-3PFdUV/OpenMPTryFlag.cpp]
+        ignore line: [Linking CXX executable cmTC_3c21c]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3c21c.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper]
@@ -9207,13 +9207,13 @@ events:
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/16/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/16/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/16/../../../:/lib/:/usr/lib/]
         ignore line: [Reading specs from /usr/lib/gcc/x86_64-redhat-linux/16/libgomp.spec]
-        ignore line: [COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_726d4' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_726d4.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccVP5DtK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lpthread -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_726d4 /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o -lstdc++ -lm -lgomp -lgcc_s -lgcc -latomic_asneeded -lpthread -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadend.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-fopenmp' '-v' '-o' 'cmTC_3c21c' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-mtls-dialect=gnu2' '-pthread' '-dumpdir' 'cmTC_3c21c.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/16/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccqidxIR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lpthread -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3c21c /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/16 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/16/../../.. -L/lib -L/usr/lib CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o -lstdc++ -lm -lgomp -lgcc_s -lgcc -latomic_asneeded -lpthread -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o /usr/lib/gcc/x86_64-redhat-linux/16/crtoffloadend.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/16/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/16/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/16/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/ccVP5DtK.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccqidxIR.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-latomic_asneeded] ==> ignore
@@ -9230,7 +9230,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_726d4] ==> ignore
+          arg [cmTC_3c21c] ==> ignore
           arg [-L/usr/lib/gcc/x86_64-redhat-linux/16] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/16]
           arg [-L/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64]
           arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
@@ -9238,7 +9238,7 @@ events:
           arg [-L/usr/lib/gcc/x86_64-redhat-linux/16/../../..] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/16/../../..]
           arg [-L/lib] ==> dir [/lib]
           arg [-L/usr/lib] ==> dir [/usr/lib]
-          arg [CMakeFiles/cmTC_726d4.dir/OpenMPTryFlag.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_3c21c.dir/OpenMPTryFlag.cpp.o] ==> ignore
           arg [-lstdc++] ==> lib [stdc++]
           arg [-lm] ==> lib [m]
           arg [-lgomp] ==> lib [gomp]
@@ -9417,8 +9417,8 @@ events:
       - "CMakeLists.txt:11 (find_package)"
     description: "Detecting CXX OpenMP version"
     directories:
-      source: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5"
-      binary: "/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5"
+      source: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL"
+      binary: "/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -9430,17 +9430,17 @@ events:
       variable: "OpenMP_SPECTEST_CXX_"
       cached: true
       stdout: |
-        Change Dir: '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5'
+        Change Dir: '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_dcdda/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_dcdda.dir/build.make CMakeFiles/cmTC_dcdda.dir/build
-        gmake[1]: Entering directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5'
-        Building CXX object CMakeFiles/cmTC_dcdda.dir/OpenMPCheckVersion.cpp.o
-        /usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_dcdda.dir/OpenMPCheckVersion.cpp.o -c /home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5/OpenMPCheckVersion.cpp
-        Linking CXX executable cmTC_dcdda
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dcdda.dir/link.txt --verbose=1
-        /usr/bin/c++  -fopenmp CMakeFiles/cmTC_dcdda.dir/OpenMPCheckVersion.cpp.o -o cmTC_dcdda
-        gmake[1]: Leaving directory '/home/guilherme/katarina/build/CMakeFiles/CMakeScratch/TryCompile-8OIta5'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3ff7b/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_3ff7b.dir/build.make CMakeFiles/cmTC_3ff7b.dir/build
+        gmake[1]: Entering directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL'
+        Building CXX object CMakeFiles/cmTC_3ff7b.dir/OpenMPCheckVersion.cpp.o
+        /usr/bin/c++   -fopenmp -o CMakeFiles/cmTC_3ff7b.dir/OpenMPCheckVersion.cpp.o -c /home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL/OpenMPCheckVersion.cpp
+        Linking CXX executable cmTC_3ff7b
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ff7b.dir/link.txt --verbose=1
+        /usr/bin/c++  -fopenmp CMakeFiles/cmTC_3ff7b.dir/OpenMPCheckVersion.cpp.o -o cmTC_3ff7b
+        gmake[1]: Leaving directory '/home/guilherme/Repositories/katarina/build/CMakeFiles/CMakeScratch/TryCompile-SBqfNL'
         
       exitCode: 0
   -
@@ -9490,35 +9490,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/KF6KirigamiPlatformConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/KF6KirigamiPlatformConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/kf6kirigamiplatform-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/kf6kirigamiplatform-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/KF6KirigamiPlatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/KF6KirigamiPlatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/kf6kirigamiplatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/kf6kirigamiplatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/KF6KirigamiPlatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/KF6KirigamiPlatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/kf6kirigamiplatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/kf6kirigamiplatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/KF6KirigamiPlatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/KF6KirigamiPlatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/kf6kirigamiplatform.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/kf6kirigamiplatform.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -9821,35 +9821,35 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/KF6KirigamiConfig.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/KF6KirigamiConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/kf6kirigami-config.cmake"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/kf6kirigami-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/KF6Kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/KF6Kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/kf6kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib64/cps/kf6kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/KF6Kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/KF6Kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/lib/cps/kf6kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/lib/cps/kf6kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/KF6Kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/KF6Kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/guilherme/katarina/build/CMakeFiles/pkgRedirects/share/cps/kf6kirigami.cps"
+        path: "/home/guilherme/Repositories/katarina/build/CMakeFiles/pkgRedirects/share/cps/kf6kirigami.cps"
         mode: "cps"
         reason: "no_exist"
       -

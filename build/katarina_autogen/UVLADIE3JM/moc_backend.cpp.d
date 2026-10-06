@@ -1,5 +1,5 @@
-/home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/moc_backend.cpp: /home/guilherme/katarina/src/backend.h \
-  /home/guilherme/katarina/build/katarina_autogen/moc_predefs.h \
+/home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/moc_backend.cpp: /home/guilherme/Repositories/katarina/src/backend.h \
+  /home/guilherme/Repositories/katarina/build/katarina_autogen/moc_predefs.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \

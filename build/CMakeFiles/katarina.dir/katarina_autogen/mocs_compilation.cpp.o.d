@@ -1,8 +1,8 @@
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: \
- /home/guilherme/katarina/build/katarina_autogen/mocs_compilation.cpp \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/mocs_compilation.cpp \
  /usr/include/stdc-predef.h \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/moc_backend.cpp \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/backend.h \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/moc_backend.cpp \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/backend.h \
  /usr/include/qt6/QtCore/QList /usr/include/qt6/QtCore/qlist.h \
  /usr/include/qt6/QtCore/qarraydatapointer.h \
  /usr/include/qt6/QtCore/qarraydataops.h \
@@ -376,8 +376,8 @@ CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtCore/qtmochelpers.h \
  /usr/include/qt6/QtCore/qtmocconstants.h \
  /usr/include/qt6/QtCore/q20algorithm.h \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/moc_highlighter.cpp \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/highlighter.h \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/moc_highlighter.cpp \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/highlighter.h \
  /usr/include/qt6/QtGui/QColor /usr/include/qt6/QtGui/qcolor.h \
  /usr/include/qt6/QtGui/qtguiglobal.h \
  /usr/include/qt6/QtGui/qtgui-config.h \
@@ -424,6 +424,6 @@ CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtGui/qtextcursor.h \
  /usr/include/qt6/QtGui/qtextdocument.h \
  /usr/include/qt6/QtGui/QTextCharFormat \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/moc_settings.cpp \
- /home/guilherme/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/settings.h \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/moc_settings.cpp \
+ /home/guilherme/Repositories/katarina/build/katarina_autogen/UVLADIE3JM/../../../src/settings.h \
  /usr/include/qt6/QtCore/QSettings /usr/include/qt6/QtCore/qsettings.h

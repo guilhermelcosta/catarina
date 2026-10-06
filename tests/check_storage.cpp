@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     CHECK(c.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t"));
 
     // o arquivo versionado NÃO pode conter o valor do segredo
-    QFile ef(QDir::homePath() + QStringLiteral("/katarina-collections/.katarina/environments.json"));
+    QFile ef(b.storageDir() + QStringLiteral("/.katarina/environments.json"));
     CHECK(ef.open(QIODevice::ReadOnly));
     CHECK(!QString::fromUtf8(ef.readAll()).contains(QStringLiteral("s3cr3t")));
 

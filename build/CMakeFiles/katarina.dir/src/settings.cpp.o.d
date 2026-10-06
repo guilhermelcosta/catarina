@@ -1,7 +1,9 @@
 CMakeFiles/katarina.dir/src/settings.cpp.o: \
- /home/guilherme/katarina/src/settings.cpp /usr/include/stdc-predef.h \
- /home/guilherme/katarina/src/settings.h /usr/include/qt6/QtCore/QObject \
- /usr/include/qt6/QtCore/qobject.h /usr/include/qt6/QtCore/qobjectdefs.h \
+ /home/guilherme/Repositories/katarina/src/settings.cpp \
+ /usr/include/stdc-predef.h \
+ /home/guilherme/Repositories/katarina/src/settings.h \
+ /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/qobject.h \
+ /usr/include/qt6/QtCore/qobjectdefs.h \
  /usr/include/qt6/QtCore/qnamespace.h /usr/include/qt6/QtCore/qglobal.h \
  /usr/include/c++/16/type_traits \
  /usr/include/c++/16/x86_64-redhat-linux/bits/c++config.h \

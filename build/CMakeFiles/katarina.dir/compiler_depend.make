@@ -8,9 +8,9 @@ CMakeFiles/katarina.dir/build/.qt/rcc/qrc_qml.cpp.o: .qt/rcc/qrc_qml.cpp \
   /usr/include/stdc-predef.h
 
 CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: katarina_autogen/mocs_compilation.cpp \
-  /home/guilherme/katarina/src/backend.h \
-  /home/guilherme/katarina/src/highlighter.h \
-  /home/guilherme/katarina/src/settings.h \
+  /home/guilherme/Repositories/katarina/src/backend.h \
+  /home/guilherme/Repositories/katarina/src/highlighter.h \
+  /home/guilherme/Repositories/katarina/src/settings.h \
   katarina_autogen/UVLADIE3JM/moc_backend.cpp \
   katarina_autogen/UVLADIE3JM/moc_highlighter.cpp \
   katarina_autogen/UVLADIE3JM/moc_settings.cpp \
@@ -596,8 +596,8 @@ CMakeFiles/katarina.dir/katarina_autogen/mocs_compilation.cpp.o: katarina_autoge
   /usr/lib/gcc/x86_64-redhat-linux/16/include/stdint.h \
   /usr/lib/gcc/x86_64-redhat-linux/16/include/syslimits.h
 
-CMakeFiles/katarina.dir/src/backend.cpp.o: /home/guilherme/katarina/src/backend.cpp \
-  /home/guilherme/katarina/src/backend.h \
+CMakeFiles/katarina.dir/src/backend.cpp.o: /home/guilherme/Repositories/katarina/src/backend.cpp \
+  /home/guilherme/Repositories/katarina/src/backend.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -1163,8 +1163,8 @@ CMakeFiles/katarina.dir/src/backend.cpp.o: /home/guilherme/katarina/src/backend.
   /usr/lib/gcc/x86_64-redhat-linux/16/include/stdint.h \
   /usr/lib/gcc/x86_64-redhat-linux/16/include/syslimits.h
 
-CMakeFiles/katarina.dir/src/highlighter.cpp.o: /home/guilherme/katarina/src/highlighter.cpp \
-  /home/guilherme/katarina/src/highlighter.h \
+CMakeFiles/katarina.dir/src/highlighter.cpp.o: /home/guilherme/Repositories/katarina/src/highlighter.cpp \
+  /home/guilherme/Repositories/katarina/src/highlighter.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -1750,10 +1750,10 @@ CMakeFiles/katarina.dir/src/highlighter.cpp.o: /home/guilherme/katarina/src/high
   /usr/lib/gcc/x86_64-redhat-linux/16/include/stdint.h \
   /usr/lib/gcc/x86_64-redhat-linux/16/include/syslimits.h
 
-CMakeFiles/katarina.dir/src/main.cpp.o: /home/guilherme/katarina/src/main.cpp \
-  /home/guilherme/katarina/src/backend.h \
-  /home/guilherme/katarina/src/highlighter.h \
-  /home/guilherme/katarina/src/settings.h \
+CMakeFiles/katarina.dir/src/main.cpp.o: /home/guilherme/Repositories/katarina/src/main.cpp \
+  /home/guilherme/Repositories/katarina/src/backend.h \
+  /home/guilherme/Repositories/katarina/src/highlighter.h \
+  /home/guilherme/Repositories/katarina/src/settings.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -2388,8 +2388,8 @@ CMakeFiles/katarina.dir/src/main.cpp.o: /home/guilherme/katarina/src/main.cpp \
   /usr/lib/gcc/x86_64-redhat-linux/16/include/stdint.h \
   /usr/lib/gcc/x86_64-redhat-linux/16/include/syslimits.h
 
-CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/settings.cpp \
-  /home/guilherme/katarina/src/settings.h \
+CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/Repositories/katarina/src/settings.cpp \
+  /home/guilherme/Repositories/katarina/src/settings.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -2899,7 +2899,7 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 
 /usr/include/qt6/QtGui/QKeySequence:
 
-/home/guilherme/katarina/src/settings.cpp:
+/home/guilherme/Repositories/katarina/src/settings.cpp:
 
 /usr/lib/gcc/x86_64-redhat-linux/16/include/float.h:
 
@@ -2908,6 +2908,8 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 /usr/include/qt6/QtQuick/qquickwindow.h:
 
 /usr/include/qt6/QtQml/qqmlinfo.h:
+
+/usr/include/qt6/QtQml/qqmlcontext.h:
 
 /usr/include/qt6/QtQml/qqmlapplicationengine.h:
 
@@ -2937,7 +2939,7 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 
 /usr/include/qt6/QtCore/QEvent:
 
-/home/guilherme/katarina/src/main.cpp:
+/home/guilherme/Repositories/katarina/src/main.cpp:
 
 /usr/include/qt6/QtQuick/QQuickTextDocument:
 
@@ -2979,9 +2981,7 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 
 /usr/include/c++/16/source_location:
 
-/usr/include/qt6/QtQml/qqmlcontext.h:
-
-/home/guilherme/katarina/src/highlighter.cpp:
+/home/guilherme/Repositories/katarina/src/highlighter.cpp:
 
 /usr/include/qt6/QtNetwork/qhttpmultipart.h:
 
@@ -3034,8 +3034,6 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 /usr/include/c++/16/bits/quoted_string.h:
 
 /usr/include/c++/16/bits/fs_path.h:
-
-/home/guilherme/katarina/src/backend.cpp:
 
 /usr/lib/gcc/x86_64-redhat-linux/16/include/syslimits.h:
 
@@ -3159,8 +3157,6 @@ CMakeFiles/katarina.dir/src/settings.cpp.o: /home/guilherme/katarina/src/setting
 
 /usr/include/c++/16/bits/unique_ptr.h:
 
-/home/guilherme/katarina/src/settings.h:
-
 /usr/include/c++/16/bits/unicode-data.h:
 
 /usr/include/bits/endian.h:
@@ -3271,8 +3267,6 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 
 /usr/include/qt6/QtCore/qstringlist.h:
 
-/usr/include/c++/16/bits/locale_facets.tcc:
-
 /usr/include/c++/16/bits/locale_facets.h:
 
 /usr/include/bits/struct_mutex.h:
@@ -3367,8 +3361,6 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 
 /usr/include/bits/waitstatus.h:
 
-/usr/include/bits/select.h:
-
 /usr/include/c++/16/bits/stl_construct.h:
 
 /usr/include/bits/xopen_lim.h:
@@ -3392,10 +3384,6 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 /usr/include/c++/16/cctype:
 
 /usr/include/bits/posix1_lim.h:
-
-/usr/include/qt6/QtCore/q26numeric.h:
-
-/usr/include/qt6/QtCore/qvariant.h:
 
 /usr/include/c++/16/bits/ptr_traits.h:
 
@@ -3437,6 +3425,8 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 
 /usr/include/qt6/QtCore/qdatastream.h:
 
+/usr/include/bits/long-double.h:
+
 /usr/include/bits/floatn.h:
 
 /usr/include/c++/16/bits/vector.tcc:
@@ -3446,6 +3436,16 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 /usr/include/bits/posix2_lim.h:
 
 /usr/include/c++/16/bits/cxxabi_init_exception.h:
+
+/usr/include/c++/16/bits/std_function.h:
+
+/usr/include/qt6/QtCore/qstringbuilder.h:
+
+/usr/include/c++/16/bits/stl_numeric.h:
+
+/usr/include/qt6/QtGui/qregion.h:
+
+/usr/include/c++/16/bits/atomic_wait.h:
 
 /usr/include/c++/16/backward/auto_ptr.h:
 
@@ -3469,31 +3469,35 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 
 /usr/include/asm/errno.h:
 
+/usr/include/c++/16/bits/locale_facets.tcc:
+
+/home/guilherme/Repositories/katarina/src/highlighter.h:
+
 /usr/include/c++/16/bits/streambuf_iterator.h:
 
 .qt/rcc/qrc_appicon.cpp:
 
-/usr/include/bits/long-double.h:
+/usr/include/bits/types/clockid_t.h:
 
-/usr/include/qt6/QtNetwork/qsslcertificate.h:
+/usr/include/c++/16/bits/stl_heap.h:
 
-/usr/include/bits/mathcalls-macros.h:
+/usr/include/c++/16/bits/codecvt.h:
 
-/usr/include/c++/16/version:
+/usr/include/c++/16/x86_64-redhat-linux/bits/gthr.h:
 
-/usr/include/qt6/QtCore/qdatetime.h:
+/usr/include/qt6/QtCore/qbytearray.h:
 
-/usr/include/qt6/QtCore/qxptype_traits.h:
+/usr/include/qt6/QtCore/q26numeric.h:
 
-/usr/include/c++/16/bits/requires_hosted.h:
+/usr/include/qt6/QtCore/qvariant.h:
 
-/usr/include/qt6/QtCore/qeventloop.h:
+/usr/include/bits/select.h:
 
-/usr/include/c++/16/experimental/source_location:
+/home/guilherme/Repositories/katarina/src/backend.h:
 
-/usr/include/bits/byteswap.h:
+.qt/rcc/qrc_qml.cpp:
 
-/usr/include/c++/16/stdlib.h:
+/usr/include/qt6/QtCore/qhash.h:
 
 /usr/include/sched.h:
 
@@ -3509,10 +3513,6 @@ katarina_autogen/UVLADIE3JM/moc_highlighter.cpp:
 
 /usr/include/bits/types/struct_FILE.h:
 
-.qt/rcc/qrc_qml.cpp:
-
-/usr/include/qt6/QtCore/qhash.h:
-
 /usr/include/c++/16/bits/move.h:
 
 katarina_autogen/UVLADIE3JM/moc_settings.cpp:
@@ -3521,6 +3521,10 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 
 /usr/include/c++/16/bits/exception_ptr.h:
 
+/usr/include/c++/16/bits/exception.h:
+
+/usr/include/c++/16/bits/chrono_io.h:
+
 /usr/include/qt6/QtCore/qsharedpointer.h:
 
 /usr/include/qt6/QtGui/qclipboard.h:
@@ -3528,6 +3532,16 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 /usr/include/c++/16/bits/stl_set.h:
 
 /usr/include/asm/posix_types_64.h:
+
+/usr/include/qt6/QtNetwork/qsslcertificate.h:
+
+/usr/include/bits/mathcalls-macros.h:
+
+/usr/include/c++/16/version:
+
+/usr/include/qt6/QtCore/qdatetime.h:
+
+/usr/include/qt6/QtCore/qxptype_traits.h:
 
 /usr/include/asm/bitsperlong.h:
 
@@ -3547,35 +3561,17 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 
 /usr/include/qt6/QtCore/qcontainertools_impl.h:
 
-/usr/include/c++/16/bits/atomic_wait.h:
-
 /usr/include/c++/16/bits/stl_multiset.h:
 
-/usr/include/c++/16/bits/chrono_io.h:
+/usr/include/c++/16/bits/requires_hosted.h:
 
-/usr/include/c++/16/bits/exception.h:
+/usr/include/qt6/QtCore/qeventloop.h:
 
-/usr/include/c++/16/bits/std_function.h:
+/usr/include/c++/16/experimental/source_location:
 
-/usr/include/qt6/QtCore/qstringbuilder.h:
+/usr/include/bits/byteswap.h:
 
-/usr/include/c++/16/bits/stl_numeric.h:
-
-/usr/include/qt6/QtGui/qregion.h:
-
-/home/guilherme/katarina/src/highlighter.h:
-
-/usr/include/qt6/QtCore/qexceptionhandling.h:
-
-/usr/include/bits/types/clockid_t.h:
-
-/usr/include/c++/16/bits/stl_heap.h:
-
-/usr/include/c++/16/bits/codecvt.h:
-
-/usr/include/c++/16/x86_64-redhat-linux/bits/gthr.h:
-
-/usr/include/qt6/QtCore/qbytearray.h:
+/usr/include/c++/16/stdlib.h:
 
 /usr/include/c++/16/bits/allocated_ptr.h:
 
@@ -3641,10 +3637,6 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 
 /usr/include/qt6/QtCore/qtaggedpointer.h:
 
-/home/guilherme/katarina/src/backend.h:
-
-/usr/include/qt6/QtCore/qline.h:
-
 /usr/include/bits/flt-eval-method.h:
 
 /usr/include/c++/16/bits/unordered_set.h:
@@ -3664,6 +3656,8 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 /usr/include/c++/16/bits/binders.h:
 
 /usr/include/qt6/QtCore/qarraydata.h:
+
+/home/guilherme/Repositories/katarina/src/backend.cpp:
 
 /usr/include/bits/types/__fpos64_t.h:
 
@@ -3698,6 +3692,16 @@ katarina_autogen/UVLADIE3JM/moc_settings.cpp:
 /usr/include/c++/16/bits/stl_tempbuf.h:
 
 /usr/include/ctype.h:
+
+/home/guilherme/Repositories/katarina/src/settings.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/qt6/QtGui/qbitmap.h:
+
+/usr/include/c++/16/bits/locale_facets_nonio.h:
+
+/usr/include/qt6/QtCore/qcoreevent.h:
 
 /usr/include/bits/types/locale_t.h:
 
@@ -3997,14 +4001,6 @@ katarina_autogen/UVLADIE3JM/moc_backend.cpp:
 
 /usr/include/linux/errno.h:
 
-/usr/include/linux/limits.h:
-
-/usr/include/qt6/QtGui/qbitmap.h:
-
-/usr/include/c++/16/bits/locale_facets_nonio.h:
-
-/usr/include/qt6/QtCore/qcoreevent.h:
-
 /usr/include/bits/fp-logb.h:
 
 /usr/include/c++/16/vector:
@@ -4121,6 +4117,8 @@ katarina_autogen/UVLADIE3JM/moc_backend.cpp:
 
 /usr/include/qt6/QtCore/qendian.h:
 
+/usr/include/qt6/QtCore/qexceptionhandling.h:
+
 /usr/include/qt6/QtCore/qfloat16.h:
 
 /usr/include/c++/16/cstdlib:
@@ -4142,6 +4140,8 @@ katarina_autogen/UVLADIE3JM/moc_backend.cpp:
 /usr/include/qt6/QtCore/qminmax.h:
 
 /usr/include/qt6/QtCore/qiterator.h:
+
+/usr/include/qt6/QtCore/qline.h:
 
 /usr/include/bits/stdint-uintn.h:
 
@@ -4181,6 +4181,10 @@ katarina_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtCore/qobject_impl.h:
 
+/usr/include/qt6/QtCore/qstringconverter.h:
+
+/usr/include/qt6/QtCore/qregularexpression.h:
+
 /usr/include/qt6/QtCore/qglobalstatic.h:
 
 /usr/include/limits.h:
@@ -4216,10 +4220,6 @@ katarina_autogen/mocs_compilation.cpp:
 /usr/include/qt6/QtCore/qshareddata.h:
 
 /usr/include/qt6/QtCore/qstring.h:
-
-/usr/include/qt6/QtCore/qregularexpression.h:
-
-/usr/include/qt6/QtCore/qstringconverter.h:
 
 /usr/include/assert.h:
 

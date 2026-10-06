@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DQT_CORE_LIB -DQT_NETWORK_LIB
 
-CXX_INCLUDES = -I/home/guilherme/katarina/build -I/home/guilherme/katarina -I/home/guilherme/katarina/build/check_storage_autogen/include -I/home/guilherme/katarina/src -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib64/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtNetwork
+CXX_INCLUDES = -I/home/guilherme/Repositories/katarina/build -I/home/guilherme/Repositories/katarina -I/home/guilherme/Repositories/katarina/build/check_storage_autogen/include -I/home/guilherme/Repositories/katarina/src -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib64/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtNetwork
 
 CXX_FLAGS = -g
 
