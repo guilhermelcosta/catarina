@@ -121,10 +121,10 @@ Item {
         }
     }
 
-    Label {
+    EmptyState {
         anchors.centerIn: parent
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+        message: treeRoot.text.length === 0 ? "Sem resposta." : "Resposta não é JSON válido."
         visible: nodes.count === 0
-        text: treeRoot.text.length === 0 ? "Sem resposta." : "Resposta não é JSON válido."
-        opacity: 0.6
     }
 }

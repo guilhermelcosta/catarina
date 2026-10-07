@@ -22,13 +22,14 @@ Item {
     property bool scopeColumn: false
     property var resolved: []
     property string collection: ""
-    property var scopeText: null     // function(index) -> texto do botão de escopo
-    property var scopeIcon: null     // function(index) -> nome do ícone do escopo
+    property var scopeText: null     // function(index) -> texto do chip de escopo
+    property var scopeIcon: null     // function(index) -> nome do ícone do chip de escopo
+    property var scopeTooltip: null  // function(index) -> tooltip (ex.: nomes completos)
     property var rowFilter: null     // function(index) -> bool (mostra/esconde a linha)
     signal addRequested()
     signal edited()
     signal pickFile(int index)
-    signal scopeRequested(int index)
+    signal scopeRequested(int index, real gx, real gy)
 
     // remoção de linha com confirmação, seguindo a config global (settings.confirmDelete)
     function tryRemove(i) {
@@ -168,13 +169,45 @@ Item {
                         table.edited();
                     }
                 }
-                Button {
-                    Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum
+                // escopo: chip compacto (Global / N coleções) que abre um popover
+                Rectangle {
                     visible: table.scopeColumn
-                    icon.name: table.scopeIcon !== null ? table.scopeIcon(index) : ""
-                    display: AbstractButton.TextBesideIcon
-                    text: table.scopeText !== null ? table.scopeText(index) : ""
-                    onClicked: table.scopeRequested(index)
+                    Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum
+                    implicitHeight: scopeRow.implicitHeight + 8
+                    radius: 4
+                    color: Kirigami.Theme.alternateBackgroundColor
+                    border.width: 1
+                    border.color: Kirigami.Theme.disabledTextColor
+                    RowLayout {
+                        id: scopeRow
+                        anchors.fill: parent
+                        anchors.leftMargin: 6
+                        anchors.rightMargin: 6
+                        spacing: 4
+                        Kirigami.Icon {
+                            visible: table.scopeIcon !== null
+                            source: table.scopeIcon !== null ? table.scopeIcon(index) : ""
+                            implicitWidth: 14; implicitHeight: 14
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        Label {
+                            text: table.scopeText !== null ? table.scopeText(index) : ""
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            var g = mapToItem(null, width / 2, height);
+                            table.scopeRequested(index, g.x, g.y);
+                        }
+                        ToolTip.text: table.scopeTooltip !== null ? table.scopeTooltip(index) : ""
+                        ToolTip.visible: containsMouse
+                    }
                 }
                 CheckBox {
                     Layout.preferredWidth: table.secretColWidth; Layout.minimumWidth: table.secretColWidth; Layout.maximumWidth: table.secretColWidth
@@ -196,18 +229,13 @@ Item {
             visible: table.empty
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ColumnLayout {
+            EmptyState {
                 anchors.centerIn: parent
-                spacing: table.colSpacing
-                Label { Layout.alignment: Qt.AlignHCenter; text: "Nada aqui ainda."; opacity: 0.6 }
-                ToolButton {
-                    Layout.alignment: Qt.AlignHCenter
-                    icon.name: "list-add"
-                    text: "Adicionar"
-                    display: AbstractButton.TextBesideIcon
-                    highlighted: true
-                    onClicked: { table.addRequested(); table.edited(); }
-                }
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                title: "Nada aqui ainda."
+                actionText: "Adicionar"
+                actionIcon: "list-add"
+                onActionTriggered: { table.addRequested(); table.edited(); }
             }
         }
 

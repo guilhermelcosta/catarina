@@ -120,10 +120,10 @@ Item {
         }
     }
 
-    Label {
+    EmptyState {
         anchors.centerIn: parent
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+        message: "Envie uma requisição para ver os dados de rede."
         visible: net.meta.method === undefined
-        text: "Envie uma requisição para ver os dados de rede."
-        opacity: 0.6
     }
 }

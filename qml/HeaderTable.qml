@@ -63,14 +63,12 @@ Item {
                 }
             }
         }
-        Text {
-            width: parent.width
-            visible: table.headers.length === 0
-            horizontalAlignment: Text.AlignHCenter
-            topPadding: Kirigami.Units.largeSpacing
-            text: "Sem cabeçalhos."
-            opacity: 0.6
-            color: Kirigami.Theme.textColor
-        }
+    }
+
+    EmptyState {
+        anchors.centerIn: parent
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+        message: "Sem cabeçalhos."
+        visible: table.headers.length === 0
     }
 }

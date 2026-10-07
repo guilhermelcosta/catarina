@@ -52,6 +52,9 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
 - **Diálogos**: sempre `Cancelar` à esquerda e a ação primária (`highlighted`) à direita.
+- **Editor contextual pequeno**: prefira um **popover ancorado e não-modal** (aplica ao vivo), em vez
+  de um diálogo modal; a célula que o abre pode ser um **chip** (ícone + texto,
+  `alternateBackgroundColor`, borda `disabledTextColor`, `radius: 4`). Ex.: escopo da variável.
 - **Seção editável** (título + "alterações não salvas" + Reverter + Salvar): use **`SaveBar.qml`**.
   Não recrie esse cabeçalho à mão.
 
@@ -87,6 +90,10 @@ Todos em `qml/`:
   criar outra tabela.
 - **`SaveBar.qml`** — cabeçalho de seção com indicador de rascunho + Reverter + Salvar;
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
+- **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
+  título, mensagem (`opacity 0.6`), atalho e ação opcional (`highlighted`). Fundo transparente
+  (herda o painel). **Todo placeholder usa este componente** — centralize com
+  `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta).
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
 - **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}`.

@@ -9,9 +9,10 @@ Ele define o padrão de espaçamento, opacidades, botões, ícones e os componen
 (`KvTable`, `SaveBar`, `HeaderTable`, `JsonTree`, `VarCompleter`, `NetworkView`, `Util.js`).
 
 Regras rápidas:
-- Reutilize componentes compartilhados; não reimplemente localmente algo que se repete.
+- **Reuse componentes**; não reimplemente localmente algo que se repete.
 - Toda tabela editável usa `KvTable` (estenda com uma opção nova se precisar).
 - Seções editáveis usam `SaveBar` (título + "alterações não salvas" + Reverter + Salvar).
+- Estados vazios usam `EmptyState` (ícone/título/mensagem/ação; fundo transparente).
 - Padding de painel: `Kirigami.Units.largeSpacing`; entre controles: `Kirigami.Units.smallSpacing`.
 - `StackLayout` ignora `Layout.margins` — use `anchors.margins` (via `Item`) ou `ScrollView.padding`.
 - Confirme que todo ícone Breeze existe no tema antes de usar.
