@@ -24,6 +24,7 @@ Item {
     property string collection: ""
     property var scopeText: null     // function(index) -> texto do chip de escopo
     property var scopeIcon: null     // function(index) -> nome do ícone do chip de escopo
+    property var scopeColor: null    // function(index) -> cor do chip (por escopo); null = neutro
     property var scopeTooltip: null  // function(index) -> tooltip (ex.: nomes completos)
     property var rowFilter: null     // function(index) -> bool (mostra/esconde a linha)
     signal addRequested()
@@ -162,13 +163,17 @@ Item {
                 }
                 // escopo: chip compacto (Global / N coleções) que abre um popover
                 Rectangle {
+                    id: scopeChip
+                    objectName: "scopeChip"
                     visible: table.scopeColumn
                     Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum
                     implicitHeight: scopeRow.implicitHeight + 8
                     radius: 4
-                    color: Kirigami.Theme.alternateBackgroundColor
+                    readonly property color tint: table.scopeColor !== null ? table.scopeColor(index) : Kirigami.Theme.textColor
+                    color: table.scopeColor !== null
+                           ? Qt.rgba(tint.r, tint.g, tint.b, 0.15) : Kirigami.Theme.alternateBackgroundColor
                     border.width: 1
-                    border.color: Kirigami.Theme.disabledTextColor
+                    border.color: table.scopeColor !== null ? tint : Kirigami.Theme.disabledTextColor
                     RowLayout {
                         id: scopeRow
                         anchors.fill: parent
@@ -178,11 +183,13 @@ Item {
                         Kirigami.Icon {
                             visible: table.scopeIcon !== null
                             source: table.scopeIcon !== null ? table.scopeIcon(index) : ""
+                            color: scopeChip.tint
                             implicitWidth: 14; implicitHeight: 14
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Label {
                             text: table.scopeText !== null ? table.scopeText(index) : ""
+                            color: scopeChip.tint
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter

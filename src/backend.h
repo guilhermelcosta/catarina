@@ -44,7 +44,6 @@ public:
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
     Q_INVOKABLE void send(const QVariantMap &request, const QString &collection);
     Q_INVOKABLE void cancel();          // aborta o request em andamento
-    Q_INVOKABLE QStringList missingVariables(const QVariantMap &request, const QString &collection) const;
     // por que "name" não resolve nesta coleção: "" (resolve), "restrita a: ..." ou "não definida"
     Q_INVOKABLE QString variableNoteFor(const QString &name, const QString &collection) const;
 
@@ -93,8 +92,6 @@ public:
     Q_INVOKABLE void clearHistory();
 
     // variáveis efetivas visíveis a uma coleção, já com valores de segredo resolvidos
-    Q_INVOKABLE QVariantMap effectiveVariables(const QString &collection,
-                                               const QVariantList &requestVars) const;
     // como acima, mas com a origem de cada variável (request/coleção/global) — para a UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;

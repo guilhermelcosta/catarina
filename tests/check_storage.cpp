@@ -35,6 +35,17 @@ static QVariantMap item(const QString &name, const QVariant &value,
             {QStringLiteral("enabled"), enabled}, {QStringLiteral("secret"), secret}};
 }
 
+// mapa efetivo / lista de faltantes via variablesState (API única de resolução)
+static QVariantMap effective(Backend &b, const QString &collection, const QVariantList &requestVars)
+{
+    return b.variablesState({{QStringLiteral("vars"), requestVars}}, collection)
+        .value(QStringLiteral("effective")).toMap();
+}
+static QStringList missing(Backend &b, const QVariantMap &request, const QString &collection)
+{
+    return b.variablesState(request, collection).value(QStringLiteral("missing")).toStringList();
+}
+
 int main(int argc, char **argv)
 {
     QTemporaryDir tmp;
@@ -141,14 +152,14 @@ int main(int argc, char **argv)
     CHECK(b.saveEnvironment(QStringLiteral("__e1__"), ev));
     b.setActiveEnvironment(QStringLiteral("__e1__"));
 
-    const QVariantMap a = b.effectiveVariables(QStringLiteral("colA"), {});
+    const QVariantMap a = effective(b, QStringLiteral("colA"), {});
     CHECK(a.contains(QStringLiteral("pub")) && a.contains(QStringLiteral("priv")));
     CHECK(a.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t")); // veio do cofre
     CHECK(!a.contains(QStringLiteral("des")));                                    // desabilitada não resolve
     CHECK(b.variableNoteFor(QStringLiteral("des"), QStringLiteral("colA"))
           == QStringLiteral("desabilitada"));
 
-    const QVariantMap c = b.effectiveVariables(QStringLiteral("colB"), {});
+    const QVariantMap c = effective(b, QStringLiteral("colB"), {});
     CHECK(!c.contains(QStringLiteral("priv")));                                  // escopo respeitado
     CHECK(c.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t"));
 
@@ -159,13 +170,13 @@ int main(int argc, char **argv)
     ef.close();
 
     // precedência: request > coleção > global
-    const QVariantMap over = b.effectiveVariables(
+    const QVariantMap over = effective(b, 
         QStringLiteral("colA"),
         {item(QStringLiteral("pub"), QStringLiteral("req"))});
     CHECK(over.value(QStringLiteral("pub")).toString() == QStringLiteral("req"));
 
     // desabilitada no request não sobrescreve: cai para a global
-    const QVariantMap offReq = b.effectiveVariables(
+    const QVariantMap offReq = effective(b, 
         QStringLiteral("colA"),
         {item(QStringLiteral("pub"), QStringLiteral("req"), false)});
     CHECK(offReq.value(QStringLiteral("pub")).toString() == QStringLiteral("1"));
@@ -182,7 +193,7 @@ int main(int argc, char **argv)
 
     // variável usada mas inexistente => bloqueia
     const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/x/{{nope}}")}};
-    CHECK(b.missingVariables(req, QStringLiteral("colA")) == QStringList{QStringLiteral("nope")});
+    CHECK(missing(b, req, QStringLiteral("colA")) == QStringList{QStringLiteral("nope")});
 
     // nota de escopo (usada pela UI)
     CHECK(b.variableNoteFor(QStringLiteral("pub"), QStringLiteral("colB")).isEmpty());
@@ -214,14 +225,14 @@ int main(int argc, char **argv)
 
     // nome e valor podem referenciar outra variável: {{pub}} no nome vira o VALOR de pub
     {
-        const QVariantMap interp = b.effectiveVariables(
+        const QVariantMap interp = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("{{pub}}"), QStringLiteral("req2"))});
         CHECK(!interp.contains(QStringLiteral("{{pub}}")));                       // nome resolvido
         CHECK(interp.value(QStringLiteral("1")).toString() == QStringLiteral("req2"));
         CHECK(interp.value(QStringLiteral("pub")).toString() == QStringLiteral("1")); // global intacta
 
-        const QVariantMap valRef = b.effectiveVariables(
+        const QVariantMap valRef = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("alias"), QStringLiteral("{{pub}}!"))});
         CHECK(valRef.value(QStringLiteral("alias")).toString() == QStringLiteral("1!"));
@@ -229,7 +240,7 @@ int main(int argc, char **argv)
         // encadeado: o nome referencia um nome que só passa a existir após outra
         // resolução. variavel-1=valor 1; {{variavel-1}}=valor 2 (vira "valor 1");
         // {{valor 1}}=valor 3 (vira "valor 2").
-        const QVariantMap chainRef = b.effectiveVariables(
+        const QVariantMap chainRef = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
              item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
@@ -242,7 +253,7 @@ int main(int argc, char **argv)
     // cadeia longa (5 níveis), como a do app: cada nome referencia o nome já resolvido
     // da anterior
     {
-        const QVariantMap c5 = b.effectiveVariables(
+        const QVariantMap c5 = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
              item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
@@ -285,7 +296,7 @@ int main(int argc, char **argv)
             {QVariantMap{{QStringLiteral("name"), QStringLiteral("teste")},
                          {QStringLiteral("value"), QStringLiteral("testevalor")}}}));
         b.setActiveEnvironment(QStringLiteral("__echain__"));
-        const QVariantMap ce = b.effectiveVariables(
+        const QVariantMap ce = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
              item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
@@ -307,7 +318,7 @@ int main(int argc, char **argv)
     // dados reais (arquivo do app): nomes com TAB nas pontas/dentro das chaves não
     // podem quebrar a cadeia — o nome tem que ser aparado antes de virar chave
     {
-        const QVariantMap ct = b.effectiveVariables(
+        const QVariantMap ct = effective(b, 
             QStringLiteral("colA"),
             {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
              item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
@@ -320,12 +331,12 @@ int main(int argc, char **argv)
         CHECK(ct.value(QStringLiteral("teste")).toString() == QStringLiteral("apirito"));
     }
 
-    // missingVariables varre url, body, headers, fields e auth
+    // missing varre url, body, headers, fields e auth
     {
         const QVariantMap r{{QStringLiteral("url"), QStringLiteral("{{pub}}")},
                             {QStringLiteral("body"), QStringLiteral("{{body_var}}")},
                             {QStringLiteral("headers"), QVariantList{item(QStringLiteral("X"), QStringLiteral("{{hdr}}"))}}};
-        CHECK(b.missingVariables(r, QStringLiteral("colA"))
+        CHECK(missing(b, r, QStringLiteral("colA"))
               == QStringList({QStringLiteral("body_var"), QStringLiteral("hdr")}));
     }
 
@@ -393,13 +404,13 @@ int main(int argc, char **argv)
                                      item(QStringLiteral("cvoff"), QStringLiteral("8"), false)}));
     CHECK(b.collectionVariables(QStringLiteral("__col__")).size() == 2);
     {
-        const QVariantMap colEff = b.effectiveVariables(QStringLiteral("__col__"), {});
+        const QVariantMap colEff = effective(b, QStringLiteral("__col__"), {});
         CHECK(colEff.value(QStringLiteral("cv")).toString() == QStringLiteral("7"));
         CHECK(!colEff.contains(QStringLiteral("cvoff")));   // desabilitada na coleção não resolve
     }
     CHECK(b.variableNoteFor(QStringLiteral("cvoff"), QStringLiteral("__col__"))
           == QStringLiteral("desabilitada"));
-    CHECK(b.missingVariables({{QStringLiteral("url"), QStringLiteral("{{cvoff}}")}},
+    CHECK(missing(b, {{QStringLiteral("url"), QStringLiteral("{{cvoff}}")}},
                              QStringLiteral("__col__"))
           == QStringList{QStringLiteral("cvoff")});
     CHECK(b.saveCollectionHeaders(QStringLiteral("__col__"),
@@ -518,15 +529,15 @@ int main(int argc, char **argv)
                                              {QStringLiteral("scope"), QStringLiteral("collections")},
                                              {QStringLiteral("collections"), QStringList{QStringLiteral("__scopeOld__")}}}}));
         b.setActiveEnvironment(QStringLiteral("__e2__"));
-        CHECK(b.effectiveVariables(QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
-        CHECK(!b.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+        CHECK(effective(b, QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
+        CHECK(!effective(b, QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
 
         CHECK(b.renameEntry(QStringLiteral("__scopeOld__"), QStringLiteral("__scopeNew__")));
-        CHECK(!b.effectiveVariables(QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
-        CHECK(b.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+        CHECK(!effective(b, QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
+        CHECK(effective(b, QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
 
         Backend b4;   // persistiu: outra instância lê o escopo já atualizado
-        CHECK(b4.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+        CHECK(effective(b4, QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
         b4.deleteEnvironment(QStringLiteral("__e2__"));
         b.deleteEntry(QStringLiteral("__scopeNew__"));
     }
@@ -576,7 +587,7 @@ int main(int argc, char **argv)
                          {QStringLiteral("value"), QStringLiteral("{{base}}/s3cr3t")},
                          {QStringLiteral("secret"), true}}}));
         b.setActiveEnvironment(QStringLiteral("__eref__"));
-        const QVariantMap eff3 = b.effectiveVariables(QStringLiteral("colA"), {});
+        const QVariantMap eff3 = effective(b, QStringLiteral("colA"), {});
         CHECK(eff3.value(QStringLiteral("tok")).toString() == QStringLiteral("http://h/s3cr3t"));
         QFile f3(b.storageDir() + QStringLiteral("/.katarina/environments.json"));
         CHECK(f3.open(QIODevice::ReadOnly));

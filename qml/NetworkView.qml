@@ -74,25 +74,13 @@ Item {
 
             // ---- request headers ----
             Label { text: "Requisição enviada"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
-            RowLayout {
-                visible: net.meta.requestHeaders !== undefined && net.meta.requestHeaders.length > 0
+            HeaderTable {
                 Layout.fillWidth: true
                 Layout.leftMargin: Kirigami.Units.smallSpacing
                 Layout.rightMargin: Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.smallSpacing
-                Label { Layout.preferredWidth: 180; text: "Cabeçalho"; font.bold: true; opacity: 0.65 }
-                Label { Layout.fillWidth: true; text: "Valor"; font.bold: true; opacity: 0.65 }
-            }
-            Repeater {
-                model: net.meta.requestHeaders
-                delegate: RowLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: Kirigami.Units.smallSpacing
-                    Layout.rightMargin: Kirigami.Units.smallSpacing
-                    spacing: Kirigami.Units.smallSpacing
-                    Label { Layout.preferredWidth: 180; text: modelData.name; font.family: "monospace"; font.bold: true; elide: Text.ElideRight }
-                    Label { Layout.fillWidth: true; text: modelData.value; font.family: "monospace"; wrapMode: Text.Wrap }
-                }
+                visible: net.meta.requestHeaders !== undefined && net.meta.requestHeaders.length > 0
+                headers: net.meta.requestHeaders !== undefined ? net.meta.requestHeaders : []
+                onCopyRequested: function (text) { varSupport.copyText(text) }
             }
             Label {
                 visible: !net.meta.requestHeaders || net.meta.requestHeaders.length === 0

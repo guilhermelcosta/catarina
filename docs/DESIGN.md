@@ -129,9 +129,10 @@ Todos em `qml/`:
 
 - **`KvTable.qml`** — tabela editável chave/valor (params, cabeçalhos, campos, variáveis de
   request/coleção/ambiente). Opções: `secretColumn`, `allowFiles`, `scopeColumn`
-  (+ `scopeText`/`scopeIcon`/`scopeRequested`), `rowFilter`, `resolved`/`collection`.
-  **Toda tabela editável nova usa este componente** — estenda com uma opção nova em vez de
-  criar outra tabela.
+  (+ `scopeText`/`scopeIcon`/`scopeColor`/`scopeRequested`), `rowFilter`, `resolved`/`collection`.
+  O `scopeColor(index)` pinta o chip de escopo por escopo (verde = global, azul = restrita a
+  coleções; **null** = neutro). **Toda tabela editável nova usa este componente** — estenda com
+  uma opção nova em vez de criar outra tabela.
 - **`SaveBar.qml`** — cabeçalho de seção com indicador de rascunho + Reverter + Salvar;
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
@@ -140,6 +141,8 @@ Todos em `qml/`:
   `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
 - **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
+  A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
+  origem (global → coleção → request) e depois por nome.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
 - **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`).
 - **`VarField.qml`** — campo de texto de uma linha com `{{variavel}}` **embutido** (highlight +

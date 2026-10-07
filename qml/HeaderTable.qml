@@ -11,6 +11,8 @@ Item {
     signal copyRequested(string text)
     readonly property real nameWidth: Math.max(80, width * 0.33)
     readonly property int copyColWidth: 36   // espaço à direita reservado ao botão copiar
+    // altura natural (cabeçalho + linhas) — permite usar embutido sem altura explícita
+    implicitHeight: 29 + view.contentHeight
 
     function allHeadersText() {
         var out = [];

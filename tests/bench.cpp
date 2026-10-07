@@ -67,28 +67,14 @@ int main(int argc, char **argv)
 
     // ---- refresh de variáveis (uma passada, como a UI faz hoje) ----
     for (int i = 0; i < WARM; ++i) {
-#ifdef BENCH_AFTER
         const auto st = b.variablesState(req, QStringLiteral("col0"));
         Q_UNUSED(st);
-#else
-        const auto miss = b.missingVariables(req, QStringLiteral("col0"));
-        const auto res = b.resolvedVariables(QStringLiteral("col0"), {});
-        Q_UNUSED(miss);
-        Q_UNUSED(res);
-#endif
     }
     QElapsedTimer t;
     t.start();
     for (int i = 0; i < N; ++i) {
-#ifdef BENCH_AFTER
         const auto st = b.variablesState(req, QStringLiteral("col0"));
         Q_UNUSED(st);
-#else
-        const auto miss = b.missingVariables(req, QStringLiteral("col0"));
-        const auto res = b.resolvedVariables(QStringLiteral("col0"), {});
-        Q_UNUSED(miss);
-        Q_UNUSED(res);
-#endif
     }
     std::printf("resolve        x%d: %lld ms\n", N, static_cast<long long>(t.elapsed()));
 
@@ -98,18 +84,9 @@ int main(int argc, char **argv)
     const int BURSTS = 20;
     t.restart();
     for (int burst = 0; burst < BURSTS; ++burst) {
-#ifdef BENCH_AFTER
         // teclas só marcam "dirty"; o debounce dispara uma vez após a rajada
         const auto st = b.variablesState(req, QStringLiteral("col0"));
         Q_UNUSED(st);
-#else
-        for (int k = 0; k < KEYS; ++k) {
-            const auto miss = b.missingVariables(req, QStringLiteral("col0"));
-            const auto res = b.resolvedVariables(QStringLiteral("col0"), {});
-            Q_UNUSED(miss);
-            Q_UNUSED(res);
-        }
-#endif
     }
     std::printf("digitar %dx%d teclas: %lld ms\n", BURSTS, KEYS,
                 static_cast<long long>(t.elapsed()));

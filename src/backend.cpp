@@ -353,7 +353,7 @@ void Backend::addHistory(const QVariantMap &entry)
 
 // Cadeia única de variáveis (global → coleção → request), já resolvida:
 // escopo por variável, segredos e flag enabled. Fonte da verdade para
-// effectiveVariables e resolvedVariables.
+// variablesState e resolvedVariables.
 QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
                                                    const QVariantList &requestVars) const
 {
@@ -414,15 +414,6 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     }
 
     return chain;
-}
-
-QVariantMap Backend::effectiveVariables(const QString &collection, const QVariantList &requestVars) const
-{
-    QVariantMap out;
-    for (const ResolvedVar &r : variableChain(collection, requestVars))
-        if (r.enabled)                       // desabilitada não participa da resolução
-            out.insert(r.name, r.value);     // precedência: o último da cadeia vence
-    return out;
 }
 
 QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
@@ -507,11 +498,6 @@ QString Backend::variableNoteFor(const QString &name, const QString &collection)
     if (note(collectionVariables(collection), false, &out))
         return out;
     return QStringLiteral("não definida");
-}
-
-QStringList Backend::missingVariables(const QVariantMap &request, const QString &collection) const
-{
-    return variablesState(request, collection).value(QStringLiteral("missing")).toStringList();
 }
 
 // ---------------------------------------------------------------- requisição
@@ -631,14 +617,12 @@ void Backend::send(const QVariantMap &request, const QString &collection)
                 {QStringLiteral("url"), u.toString()},
                 {QStringLiteral("host"), u.host()},
                 {QStringLiteral("port"), u.port(u.scheme() == QLatin1String("https") ? 443 : 80)},
-                {QStringLiteral("status"), status},
                 {QStringLiteral("elapsedMs"), int(timer.elapsed())},
                 {QStringLiteral("sizeBytes"), bytes.size()},
                 {QStringLiteral("encrypted"), encrypted},
                 {QStringLiteral("http2"), http2},
                 {QStringLiteral("requestHeaders"), sentHeaders},
-                {QStringLiteral("requestBody"), sentBody},
-                {QStringLiteral("responseHeaders"), respHeaders}
+                {QStringLiteral("requestBody"), sentBody}
             });
             addHistory({{QStringLiteral("method"), method},
                         {QStringLiteral("url"), u.toString()},

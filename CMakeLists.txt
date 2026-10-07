@@ -12,12 +12,19 @@ find_package(KF6Kirigami REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(katarina
-    src/main.cpp
+# core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
+qt_add_library(katarina_core OBJECT
     src/backend.cpp
-    src/highlighter.cpp
     src/settings.cpp
 )
+target_include_directories(katarina_core PRIVATE src)
+target_link_libraries(katarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+
+qt_add_executable(katarina
+    src/main.cpp
+    src/highlighter.cpp
+)
+target_sources(katarina PRIVATE $<TARGET_OBJECTS:katarina_core>)
 target_include_directories(katarina PRIVATE src)
 
 target_link_libraries(katarina PRIVATE
@@ -54,15 +61,16 @@ qt_add_resources(katarina "appicon"
 )
 
 # Autochecagem da lógica do Backend (sem rede), hermética.
-qt_add_executable(check_storage tests/check_storage.cpp src/backend.cpp src/settings.cpp)
+qt_add_executable(check_storage tests/check_storage.cpp)
+target_sources(check_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
 target_include_directories(check_storage PRIVATE src)
 target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
 
 # Benchmark dos caminhos quentes (não é teste; roda à mão).
-qt_add_executable(bench_storage tests/bench.cpp src/backend.cpp src/settings.cpp)
+qt_add_executable(bench_storage tests/bench.cpp)
+target_sources(bench_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
 target_include_directories(bench_storage PRIVATE src)
 target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
-target_compile_definitions(bench_storage PRIVATE BENCH_AFTER)
 
 # ---- testes (ctest) ----
 find_package(Qt6 REQUIRED COMPONENTS QuickTest)

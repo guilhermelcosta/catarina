@@ -70,6 +70,13 @@ TestCase {
     KvTable { id: kvFiles; model: fileModel; allowFiles: true; width: 800; height: 300 }
     KvTable { id: kvFilter; model: filterModel; width: 800; height: 200
               rowFilter: function (i) { return false; } }
+    ListModel {
+        id: scopeModel
+        ListElement { name: "s"; value: "v"; enabled: true; secret: false; type: "text"; fileName: ""; scope: "collections"; collections: "" }
+    }
+    KvTable { id: kvScope; model: scopeModel; scopeColumn: true; width: 800; height: 300
+              scopeText: function (i) { return "x" }
+              scopeColor: function (i) { return "#ff0000" } }
     VarField { id: vf; resolved: vfVars }
     property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
@@ -77,6 +84,19 @@ TestCase {
     function test_resolved_vars_filters_disabled() {
         compare(rvt.count, 1);
         compare(rvt.activeVars[0].name, "a");
+    }
+
+    // ordena por origem (global → coleção → request) e, dentro dela, por nome
+    function test_resolved_vars_order_by_source() {
+        rvt.vars = [
+            { name: "z", value: "1", source: "request", enabled: true },
+            { name: "b", value: "2", source: "global", enabled: true },
+            { name: "m", value: "4", source: "coleção", enabled: true },
+            { name: "c", value: "5", source: "request", enabled: true },
+            { name: "off", value: "6", source: "global", enabled: false }
+        ];
+        compare(rvt.activeVars.map(function (v) { return v.name; }).join(","), "b,m,c,z");
+        rvt.vars = [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }];
     }
 
     // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
@@ -406,6 +426,18 @@ TestCase {
         compare(row.shown, false, "linha filtrada");
         compare(row.height, 0, "altura zero quando filtrada");
         filterModel.clear();
+    }
+
+    // chip de escopo usa a cor vinda do callback scopeColor
+    function test_kvtable_scope_color() {
+        wait(50);
+        var lv = findChild(kvScope, "kvList");
+        verify(lv !== null);
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        var chip = findChild(row, "scopeChip");
+        verify(chip !== null, "scopeChip não encontrado");
+        compare(String(chip.tint), "#ff0000");
     }
 
     function test_util_q() {

@@ -10,10 +10,36 @@ import org.kde.kirigami as Kirigami
 ColumnLayout {
     id: root
     property var vars: []
-    // só as que realmente resolvem (desabilitadas não aparecem nesta visualização)
-    readonly property var activeVars: vars ? vars.filter(function (v) { return v.enabled !== false; }) : []
+    // só as que realmente resolvem (desabilitadas não aparecem nesta visualização);
+    // ordena por origem (global → coleção → request) e, dentro dela, por nome
+    readonly property var activeVars: {
+        var list = vars ? vars.filter(function (v) { return v.enabled !== false; }) : [];
+        list.sort(function (a, b) {
+            var d = sourceRank(a.source) - sourceRank(b.source);
+            return d !== 0 ? d : String(a.name).localeCompare(String(b.name));
+        });
+        return list;
+    }
     readonly property int count: activeVars.length
     spacing: Kirigami.Units.smallSpacing
+
+    // origem → rank de ordenação, cor e ícone (identidade visual por escopo)
+    function sourceRank(s) {
+        if (s === "global") return 0;
+        if (s === "coleção") return 1;
+        if (s === "request") return 2;
+        return 3;
+    }
+    function sourceColor(s) {
+        if (s === "global") return Kirigami.Theme.positiveTextColor;
+        if (s === "coleção") return Kirigami.Theme.activeTextColor;
+        return Kirigami.Theme.neutralTextColor;
+    }
+    function sourceIcon(s) {
+        if (s === "global") return "globe";
+        if (s === "coleção") return "folder-documents";
+        return "document-send";
+    }
 
     readonly property int sourceColWidth: 84
     readonly property int nameColPreferred: 140
@@ -46,8 +72,24 @@ ColumnLayout {
             Rectangle {
                 Layout.preferredWidth: root.sourceColWidth; Layout.minimumWidth: root.sourceColWidth; Layout.maximumWidth: root.sourceColWidth
                 implicitHeight: 16; radius: 3
-                color: Kirigami.Theme.alternateBackgroundColor
-                Text { anchors.centerIn: parent; text: modelData.source; font.pixelSize: 9; opacity: 0.8; color: Kirigami.Theme.textColor }
+                color: Qt.rgba(root.sourceColor(modelData.source).r,
+                               root.sourceColor(modelData.source).g,
+                               root.sourceColor(modelData.source).b, 0.15)
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 3
+                    Kirigami.Icon {
+                        source: root.sourceIcon(modelData.source)
+                        color: root.sourceColor(modelData.source)
+                        implicitWidth: 11; implicitHeight: 11
+                    }
+                    Text {
+                        text: modelData.source !== undefined ? modelData.source : ""
+                        font.pixelSize: 9
+                        font.bold: true
+                        color: root.sourceColor(modelData.source)
+                    }
+                }
             }
             Label { Layout.fillWidth: true; Layout.preferredWidth: root.nameColPreferred; Layout.minimumWidth: root.nameColMinimum
                     text: modelData.name; font.bold: true; elide: Text.ElideRight }

@@ -826,7 +826,6 @@ Kirigami.ApplicationWindow {
     }
     function applyStorageDir(dir) {
         backend.setStorageDir(dir);
-        settings.setStorageDir(dir);
         tabsModel.clear();
         currentTab = -1;
         clearEditor();
@@ -917,13 +916,19 @@ Kirigami.ApplicationWindow {
     }
 
     // ================= cURL =================
+    // acha um caminho de request livre dentro de folder, sufixando -N se já existir
+    function uniqueRequestPath(folder, base) {
+        var prefix = folder.length > 0 ? folder + "/" : "";
+        var path = prefix + base;
+        var n = 1;
+        while (backend.loadRequest(path).method !== undefined)
+            path = prefix + base + "-" + (++n);
+        return path;
+    }
     function importCurl(text) {
         var r = Util.parseCurl(text);
         if (r.url.length === 0) { curlImportDialog.hint = "Não achei uma URL no comando."; return; }
-        var path = (targetFolder().length > 0 ? targetFolder() + "/" : "")
-                   + "curl-import";
-        var n = 1;
-        while (backend.loadRequest(path).method !== undefined) { path = parentOf(path) + (parentOf(path).length ? "/" : "") + "curl-import-" + (++n); }
+        var path = uniqueRequestPath(targetFolder(), "curl-import");
         var data = { method: r.method, url: r.url, params: [], headers: r.headers, fields: [],
                      body: r.body, bodyType: r.bodyType, auth: r.auth, vars: [] };
         if (backend.saveRequest(path, data)) {
@@ -969,28 +974,18 @@ Kirigami.ApplicationWindow {
         return { method: r.method, url: r.url, headers: headers, body: hasBody ? body : "" };
     }
 
-    function copyRequest() {
-        if (currentTab < 0) return;
-        varSupport.copyText(JSON.stringify(collectRequest(), null, 2));
+    function copyRequest(relPath) {
+        var o = (relPath !== undefined && relPath.length > 0) ? backend.loadRequest(relPath) : collectRequest();
+        if (o.method === undefined) return;
+        varSupport.copyText(JSON.stringify(o, null, 2));
         notify("Request copiado");
     }
     function pasteRequest() {
         var o = null;
         try { o = JSON.parse(varSupport.clipboardText()); } catch (e) { o = null; }
         if (!o || o.url === undefined) { notify("A área de transferência não tem um request"); return; }
-        var folder = targetFolder();
-        var base = "request-colado";
-        var path = (folder.length > 0 ? folder + "/" : "") + base;
-        var n = 1;
-        while (backend.loadRequest(path).method !== undefined)
-            path = (folder.length > 0 ? folder + "/" : "") + base + "-" + (++n);
+        var path = uniqueRequestPath(targetFolder(), "request-colado");
         if (backend.saveRequest(path, o)) { reloadTree(); openRequest(path); }
-    }
-    function copyTreeRequest(relPath) {
-        var o = backend.loadRequest(relPath);
-        if (o.method === undefined) return;
-        varSupport.copyText(JSON.stringify(o, null, 2));
-        notify("Request copiado");
     }
 
     // ================= ciclo de vida =================
@@ -2393,7 +2388,14 @@ Kirigami.ApplicationWindow {
                                         }
                                         scopeIcon: function(i) {
                                             var v = envVarsModel.get(i);
-                                            return (v && v.scope === "collections") ? "lock" : "globe";
+                                            return (v && v.scope === "collections") ? "folder-documents" : "globe";
+                                        }
+                                        // cor por escopo: global (verde) / restrita a coleções (azul)
+                                        scopeColor: function(i) {
+                                            var v = envVarsModel.get(i);
+                                            return (v && v.scope === "collections")
+                                                   ? Kirigami.Theme.activeTextColor
+                                                   : Kirigami.Theme.positiveTextColor;
                                         }
                                         scopeText: function(i) {
                                             var v = envVarsModel.get(i);
@@ -2563,7 +2565,7 @@ Kirigami.ApplicationWindow {
             onTriggered: { root.selectedPath = root.targetFolder(); root.selectedIsFolder = root.selectedPath.length > 0; folderDialog.open(); }
         }
         MenuSeparator {}
-        MenuItem { text: "Copiar request"; icon.name: "edit-copy"; enabled: root.selectedPath.length > 0 && !root.selectedIsFolder; onTriggered: root.copyTreeRequest(root.selectedPath) }
+        MenuItem { text: "Copiar request"; icon.name: "edit-copy"; enabled: root.selectedPath.length > 0 && !root.selectedIsFolder; onTriggered: root.copyRequest(root.selectedPath) }
         MenuItem { text: "Mover para…"; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
         MenuItem { text: "Renomear…"; icon.name: "edit-rename"; enabled: root.selectedPath.length > 0; onTriggered: renameDialog.openFor(root.selectedPath) }
         MenuItem { text: "Duplicar"; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
