@@ -8,13 +8,7 @@ import org.kde.kirigami as Kirigami
 Item {
     id: net
     property var meta: ({})      // vindo do Backend::responseMeta
-
-    function rows(list) {
-        var out = [];
-        if (!list) return out;
-        for (var i = 0; i < list.length; i++) out.push(list[i]);
-        return out;
-    }
+    property var formatter: null  // expõe fmtSize (root do Main.qml)
 
     ScrollView {
         anchors.fill: parent
@@ -73,7 +67,7 @@ Item {
                 Label { text: "Criptografado"; opacity: 0.7 }
                 Label { text: net.meta.encrypted === true ? "Sim (TLS)" : "Não"; font.family: "monospace" }
                 Label { text: "Tamanho"; opacity: 0.7 }
-                Label { text: net.meta.sizeBytes !== undefined ? net.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
+                Label { text: net.meta.sizeBytes !== undefined ? net.formatter.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
             }
 
             Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
@@ -81,7 +75,7 @@ Item {
             // ---- request headers ----
             Label { text: "Requisição enviada"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
             Repeater {
-                model: net.rows(net.meta.requestHeaders)
+                model: net.meta.requestHeaders
                 delegate: RowLayout {
                     Layout.fillWidth: true
                     Layout.leftMargin: Kirigami.Units.smallSpacing
@@ -122,11 +116,5 @@ Item {
         visible: net.meta.method === undefined
         text: "Envie uma requisição para ver os dados de rede."
         opacity: 0.5
-    }
-
-    function fmtSize(b) {
-        if (b < 1024) return b + " B";
-        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
-        return (b / (1024 * 1024)).toFixed(2) + " MB";
     }
 }

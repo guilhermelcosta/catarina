@@ -35,7 +35,6 @@ qt_add_resources(katarina "qml"
     FILES
         qml/Main.qml
         qml/KvTable.qml
-        qml/FormTable.qml
         qml/JsonTree.qml
         qml/HeaderTable.qml
         qml/NetworkView.qml
@@ -50,9 +49,9 @@ qt_add_resources(katarina "appicon"
 )
 
 # Autochecagem da lógica de armazenamento.
-qt_add_executable(check_storage tests/check_storage.cpp src/backend.cpp)
+qt_add_executable(check_storage tests/check_storage.cpp src/backend.cpp src/settings.cpp)
 target_include_directories(check_storage PRIVATE src)
-target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Network)
+target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
 
 # ---- instalação: binário, ícone e lançador ----
 install(TARGETS katarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

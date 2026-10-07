@@ -1,28 +1,11 @@
 import QtQuick
-import QtQuick.Controls
 import org.kde.kirigami as Kirigami
 
 // Tabela simples de cabeçalhos HTTP (nome/valor) para a resposta.
 Item {
     id: table
-    property string headersText: ""      // "Nome: valor\n..."
+    property var headers: []            // [{ name, value }]
     readonly property real nameWidth: Math.max(80, width * 0.33)
-
-    ListModel { id: rows }
-
-    function reload() {
-        rows.clear();
-        var lines = headersText.split("\n");
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            if (line.length === 0) continue;
-            var idx = line.indexOf(": ");
-            if (idx < 0) continue;
-            rows.append({ name: line.substring(0, idx), value: line.substring(idx + 2) });
-        }
-    }
-    onHeadersTextChanged: reload()
-    Component.onCompleted: reload()
 
     Column {
         anchors.fill: parent
@@ -47,7 +30,7 @@ Item {
             width: parent.width
             height: parent.height - 29
             clip: true
-            model: rows
+            model: table.headers
             delegate: Rectangle {
                 width: view.width
                 height: Math.max(30, nameLabel.paintedHeight + Kirigami.Units.smallSpacing * 2)
@@ -57,7 +40,7 @@ Item {
                     x: Kirigami.Units.smallSpacing
                     width: table.nameWidth
                     anchors.verticalCenter: parent.verticalCenter
-                    text: model.name
+                    text: modelData.name
                     font.family: "monospace"
                     font.bold: true
                     color: Kirigami.Theme.textColor
@@ -72,7 +55,7 @@ Item {
                     x: Kirigami.Units.smallSpacing * 2 + table.nameWidth
                     width: parent.width - table.nameWidth - Kirigami.Units.smallSpacing * 3
                     anchors.verticalCenter: parent.verticalCenter
-                    text: model.value
+                    text: modelData.value
                     font.family: "monospace"
                     color: Kirigami.Theme.textColor
                     wrapMode: Text.Wrap
@@ -81,7 +64,7 @@ Item {
         }
         Text {
             width: parent.width
-            visible: rows.count === 0
+            visible: table.headers.length === 0
             horizontalAlignment: Text.AlignHCenter
             topPadding: Kirigami.Units.largeSpacing
             text: "Sem cabeçalhos."

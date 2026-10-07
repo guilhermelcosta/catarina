@@ -9,6 +9,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include "settings.h"
+
 class QNetworkReply;
 
 // Backend: envia requests (variáveis resolvidas por escopo, params, auth, multipart)
@@ -108,7 +110,6 @@ private:
     };
 
     QString requestPath(const QString &relPath) const;
-    QString secretsPath() const;
     QString historyPath() const;
     void addHistory(const QVariantMap &entry);
     void loadEnvironments();
@@ -117,6 +118,7 @@ private:
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
+    Settings m_settings;                       // mesma config do app (storageDir/timeout/ignoreSsl)
     QString m_dir;         // ~/katarina-collections
     QString m_envFile;     // <dir>/.katarina/environments.json
     QString m_appData;     // ~/.local/share/katarina

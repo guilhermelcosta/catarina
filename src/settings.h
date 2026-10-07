@@ -14,7 +14,6 @@ class Settings : public QObject
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY settingsChanged)
     Q_PROPERTY(bool confirmDelete READ confirmDelete WRITE setConfirmDelete NOTIFY settingsChanged)
     Q_PROPERTY(bool autoSaveOnSend READ autoSaveOnSend WRITE setAutoSaveOnSend NOTIFY settingsChanged)
-    Q_PROPERTY(QString exportFormat READ exportFormat WRITE setExportFormat NOTIFY settingsChanged)
     Q_PROPERTY(int timeoutSec READ timeoutSec WRITE setTimeoutSec NOTIFY settingsChanged)
     Q_PROPERTY(bool ignoreSsl READ ignoreSsl WRITE setIgnoreSsl NOTIFY settingsChanged)
     Q_PROPERTY(QVariantMap shortcuts READ shortcuts NOTIFY shortcutsChanged)
@@ -33,8 +32,6 @@ public:
     void setConfirmDelete(bool v);
     bool autoSaveOnSend() const;
     void setAutoSaveOnSend(bool v);
-    QString exportFormat() const;
-    void setExportFormat(const QString &v);
     int timeoutSec() const;
     void setTimeoutSec(int v);
     bool ignoreSsl() const;
@@ -59,6 +56,5 @@ signals:
     void shortcutsChanged();
 
 private:
-    void migrateLegacyConfig();
     mutable QSettings m_s;
 };
