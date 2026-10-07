@@ -27,6 +27,7 @@ Item {
         Kirigami.Separator { width: parent.width }
         ListView {
             id: view
+            objectName: "headerList"
             width: parent.width
             height: parent.height - 29
             clip: true

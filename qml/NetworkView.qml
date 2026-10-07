@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Util.js" as Util
 
 // Visão da rede: o que foi enviado (request) e como foi a conexão.
 // O Qt não expõe DNS/TLS por fase; mostramos o que ele fornece.
 Item {
     id: net
     property var meta: ({})      // vindo do Backend::responseMeta
-    property var formatter: null  // expõe fmtSize (root do Main.qml)
 
     ScrollView {
         anchors.fill: parent
@@ -67,7 +67,7 @@ Item {
                 Label { text: "Criptografado"; opacity: 0.7 }
                 Label { text: net.meta.encrypted === true ? "Sim (TLS)" : "Não"; font.family: "monospace" }
                 Label { text: "Tamanho"; opacity: 0.7 }
-                Label { text: net.meta.sizeBytes !== undefined ? net.formatter.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
+                Label { text: net.meta.sizeBytes !== undefined ? Util.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
             }
 
             Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }

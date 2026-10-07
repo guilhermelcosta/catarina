@@ -24,6 +24,7 @@ ColumnLayout {
 
     ListView {
         id: view
+        objectName: "kvList"
         visible: !table.empty
         Layout.fillWidth: true
         Layout.fillHeight: true

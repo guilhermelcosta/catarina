@@ -34,6 +34,7 @@ qt_add_resources(katarina "qml"
     PREFIX "/"
     FILES
         qml/Main.qml
+        qml/Util.js
         qml/KvTable.qml
         qml/JsonTree.qml
         qml/HeaderTable.qml
@@ -48,10 +49,29 @@ qt_add_resources(katarina "appicon"
     FILES icons/katarina.svg
 )
 
-# Autochecagem da lógica de armazenamento.
+# Autochecagem da lógica do Backend (sem rede), hermética.
 qt_add_executable(check_storage tests/check_storage.cpp src/backend.cpp src/settings.cpp)
 target_include_directories(check_storage PRIVATE src)
 target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+
+# ---- testes (ctest) ----
+find_package(Qt6 REQUIRED COMPONENTS QuickTest)
+
+add_test(NAME check_storage COMMAND check_storage)
+
+# componentes reutilizáveis (KvTable/HeaderTable/JsonTree)
+qt_add_executable(tst_components tests/tst_components.cpp)
+target_link_libraries(tst_components PRIVATE Qt6::Quick Qt6::QuickTest)
+target_compile_definitions(tst_components PRIVATE
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
+add_test(NAME tst_components COMMAND tst_components)
+
+# garante que o Main.qml carrega sem erros de QML
+add_test(NAME qml_smoke
+         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:katarina>)
+
+set_tests_properties(check_storage tst_components qml_smoke PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ---- instalação: binário, ícone e lançador ----
 install(TARGETS katarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

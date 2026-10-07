@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Util.js" as Util
 
 Kirigami.ApplicationWindow {
     id: root
@@ -85,11 +86,6 @@ Kirigami.ApplicationWindow {
         }
     }
     function methodBg(m) { var c = methodColor(m); return Qt.rgba(c.r, c.g, c.b, 0.18); }
-    function fmtSize(n) {
-        if (n < 1024) return n + " B";
-        if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
-        return (n / 1048576).toFixed(1) + " MB";
-    }
     function parentOf(p) { var i = p.lastIndexOf("/"); return i < 0 ? "" : p.substring(0, i); }
     function collectionOf(p) { var i = p.indexOf("/"); return i < 0 ? p : p.substring(0, i); }
     function collectionNames() {
@@ -549,45 +545,8 @@ Kirigami.ApplicationWindow {
     }
 
     // ================= cURL =================
-    function tokenizeCurl(s) {
-        s = s.replace(/\\\r?\n/g, " ");
-        var tokens = [], cur = "", quote = null;
-        for (var i = 0; i < s.length; i++) {
-            var c = s[i];
-            if (quote) { if (c === quote) quote = null; else cur += c; }
-            else if (c === "'" || c === '"') quote = c;
-            else if (/\s/.test(c)) { if (cur.length) { tokens.push(cur); cur = ""; } }
-            else cur += c;
-        }
-        if (cur.length) tokens.push(cur);
-        return tokens;
-    }
-    function parseCurl(text) {
-        var t = tokenizeCurl(text);
-        var r = { method: "", url: "", headers: [], body: "", auth: { type: "none" } };
-        for (var i = 0; i < t.length; i++) {
-            var a = t[i];
-            if (a === "curl") continue;
-            if (a === "-X" || a === "--request") r.method = t[++i];
-            else if (a === "-H" || a === "--header") {
-                var h = t[++i], p = h.indexOf(":");
-                if (p > 0) r.headers.push({ name: h.slice(0, p).trim(), value: h.slice(p + 1).trim(), enabled: true });
-            } else if (a === "-d" || a === "--data" || a === "--data-raw" || a === "--data-binary" || a === "--data-urlencode") r.body = t[++i];
-            else if (a === "-u" || a === "--user") { var up = t[++i].split(":"); r.auth = { type: "basic", user: up[0] || "", pass: up[1] || "" }; }
-            else if (a === "--url") r.url = t[++i];
-            else if (a === "-I" || a === "--head") r.method = "HEAD";
-            else if (a.charAt(0) === "-") { /* ignora flags desconhecidas */ }
-            else if (r.url === "") r.url = a;
-        }
-        if (r.method === "") r.method = r.body.length > 0 ? "POST" : "GET";
-        var ct = "";
-        for (var j = 0; j < r.headers.length; j++)
-            if (r.headers[j].name.toLowerCase() === "content-type") ct = r.headers[j].value.toLowerCase();
-        r.bodyType = r.body.length === 0 ? "none" : (ct.indexOf("json") >= 0 ? "json" : "text");
-        return r;
-    }
     function importCurl(text) {
-        var r = parseCurl(text);
+        var r = Util.parseCurl(text);
         if (r.url.length === 0) { curlImportDialog.hint = "Não achei uma URL no comando."; return; }
         var path = (targetFolder().length > 0 ? targetFolder() + "/" : "")
                    + "curl-import";
@@ -601,10 +560,7 @@ Kirigami.ApplicationWindow {
             curlImportDialog.close();
         }
     }
-    // ponytail: Qt.btoa(string) codifica UTF-8 (bom p/ Basic auth), mas está
-    // deprecado no Qt 6.11+; migrar para o overload de byte-array quando avisar.
-    function b64(s) { return Qt.btoa(s); }
-    function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
+    // ponytail: base64/formatação/parse de cURL vivem em Util.js (domínio puro).
 
     function requestParts() {
         var r = collectRequest();
@@ -616,7 +572,7 @@ Kirigami.ApplicationWindow {
         if (a.type === "bearer" && a.token.length > 0)
             headers.push({ name: "Authorization", value: "Bearer " + a.token });
         else if (a.type === "basic")
-            headers.push({ name: "Authorization", value: "Basic " + b64(a.user + ":" + a.pass) });
+            headers.push({ name: "Authorization", value: "Basic " + Util.b64(a.user + ":" + a.pass) });
         else if (a.type === "apikey" && a.key.length > 0)
             headers.push({ name: a.key, value: a.value });
         function hasCT() {
@@ -639,15 +595,6 @@ Kirigami.ApplicationWindow {
         }
         var hasBody = (r.bodyType === "json" || r.bodyType === "text" || r.bodyType === "urlencoded") && body.length > 0;
         return { method: r.method, url: r.url, headers: headers, body: hasBody ? body : "" };
-    }
-
-    function exportCode() {
-        var p = requestParts();
-        var hs = p.headers;
-        var s = "curl -X " + p.method + " " + q(p.url);
-        for (var a = 0; a < hs.length; a++) s += " \\\n  -H " + q(hs[a].name + ": " + hs[a].value);
-        if (p.body.length > 0) s += " \\\n  -d " + q(p.body);
-        return s;
     }
 
     function copyRequest() {
@@ -1317,8 +1264,9 @@ Kirigami.ApplicationWindow {
 
                                     ColumnLayout {
                                         spacing: Kirigami.Units.smallSpacing
-                                        Layout.margins: Kirigami.Units.smallSpacing
                                         RowLayout {
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.topMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
                                             Label { text: "Tipo:" }
                                             ComboBox {
@@ -1330,13 +1278,15 @@ Kirigami.ApplicationWindow {
                                                     { text: "Básico (usuário/senha)", value: "basic" },
                                                     { text: "Chave de API", value: "apikey" }
                                                 ]
-                                                implicitWidth: 200
+                                                implicitWidth: 170
                                                 onActivated: root.markDirty()
                                             }
                                         }
                                         TextArea {
                                             id: bearerToken
                                             Layout.fillWidth: true
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
                                             visible: authTypeBox.currentValue === "bearer"
                                             placeholderText: "Token"
                                             wrapMode: TextEdit.NoWrap
@@ -1350,12 +1300,16 @@ Kirigami.ApplicationWindow {
                                         }
                                         RowLayout {
                                             visible: authTypeBox.currentValue === "basic"
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
                                             TextField { id: basicUser; Layout.fillWidth: true; placeholderText: "Usuário"; onTextEdited: root.markDirty() }
                                             TextField { id: basicPass; Layout.fillWidth: true; placeholderText: "Senha"; echoMode: TextInput.Password; onTextEdited: root.markDirty() }
                                         }
                                         RowLayout {
                                             visible: authTypeBox.currentValue === "apikey"
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
                                             TextField { id: apiKeyName; Layout.fillWidth: true; placeholderText: "Nome do cabeçalho"; onTextEdited: root.markDirty() }
                                             TextArea {
@@ -1372,7 +1326,7 @@ Kirigami.ApplicationWindow {
                                                 VarCompleter { id: apiValueCompleter; anchors.fill: parent; target: apiKeyValue; resolved: root.resolvedVars; collection: root.currentCollection }
                                             }
                                         }
-                                        Label { visible: authTypeBox.currentValue === "none"; text: "Sem autenticação."; opacity: 0.7 }
+                                        Label { visible: authTypeBox.currentValue === "none"; text: "Sem autenticação."; opacity: 0.7; Layout.leftMargin: Kirigami.Units.smallSpacing }
                                         Item { Layout.fillHeight: true }
                                     }
 
@@ -1559,7 +1513,6 @@ Kirigami.ApplicationWindow {
                                         NetworkView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             meta: root.netMeta
-                                            formatter: root
                                         }
                                     }
                                     // estado vazio (ainda sem resposta)
@@ -2028,7 +1981,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: curlExportDialog
         title: "Exportar código"; anchors.centerIn: parent; modal: true; width: 640; height: 400
-        function refresh() { curlExportArea.text = root.exportCode(); }
+        function refresh() { curlExportArea.text = Util.exportCode(root.requestParts()); }
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
@@ -2660,7 +2613,7 @@ Kirigami.ApplicationWindow {
                     cookieLines.push(headers[i].value);
             }
             var rec = { status: status, statusText: statusText, time: elapsedMs + " ms",
-                        size: root.fmtSize(sizeBytes), headers: headers,
+                        size: Util.fmtSize(sizeBytes), headers: headers,
                         cookies: cookieLines.join("\n"), body: body };
             if (root.currentTab >= 0 && root.currentTab < tabsModel.count)
                 root.responses[tabsModel.get(root.currentTab).relPath] = rec;
