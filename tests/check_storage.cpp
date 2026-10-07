@@ -126,12 +126,19 @@ int main(int argc, char **argv)
                           {QStringLiteral("value"), QStringLiteral("s3cr3t")},
                           {QStringLiteral("scope"), QStringLiteral("all")},
                           {QStringLiteral("secret"), true}});
+    ev.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("des")},
+                          {QStringLiteral("value"), QStringLiteral("9")},
+                          {QStringLiteral("scope"), QStringLiteral("all")},
+                          {QStringLiteral("enabled"), false}});
     CHECK(b.saveEnvironment(QStringLiteral("__e1__"), ev));
     b.setActiveEnvironment(QStringLiteral("__e1__"));
 
     const QVariantMap a = b.effectiveVariables(QStringLiteral("colA"), {});
     CHECK(a.contains(QStringLiteral("pub")) && a.contains(QStringLiteral("priv")));
     CHECK(a.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t")); // veio do cofre
+    CHECK(!a.contains(QStringLiteral("des")));                                    // desabilitada não resolve
+    CHECK(b.variableNoteFor(QStringLiteral("des"), QStringLiteral("colA"))
+          == QStringLiteral("desabilitada"));
 
     const QVariantMap c = b.effectiveVariables(QStringLiteral("colB"), {});
     CHECK(!c.contains(QStringLiteral("priv")));                                  // escopo respeitado
@@ -148,6 +155,22 @@ int main(int argc, char **argv)
         QStringLiteral("colA"),
         {item(QStringLiteral("pub"), QStringLiteral("req"))});
     CHECK(over.value(QStringLiteral("pub")).toString() == QStringLiteral("req"));
+
+    // desabilitada no request não sobrescreve: cai para a global
+    const QVariantMap offReq = b.effectiveVariables(
+        QStringLiteral("colA"),
+        {item(QStringLiteral("pub"), QStringLiteral("req"), false)});
+    CHECK(offReq.value(QStringLiteral("pub")).toString() == QStringLiteral("1"));
+    {
+        const QVariantList rv = b.resolvedVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("pub"), QStringLiteral("req"), false)});
+        for (const QVariant &v : rv)
+            if (v.toMap().value(QStringLiteral("name")) == QStringLiteral("pub")) {
+                CHECK(v.toMap().value(QStringLiteral("enabled")).toBool() == true);
+                CHECK(v.toMap().value(QStringLiteral("source")) == QStringLiteral("global"));
+            }
+    }
 
     // variável usada mas inexistente => bloqueia
     const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/x/{{nope}}")}};
@@ -175,6 +198,8 @@ int main(int argc, char **argv)
                 seenTok = true;
                 CHECK(m.value(QStringLiteral("secret")).toBool() == true);
             }
+            if (m.value(QStringLiteral("name")) == QStringLiteral("des"))
+                CHECK(m.value(QStringLiteral("enabled")).toBool() == false);
         }
         CHECK(seenPub && seenTok);
     }
@@ -186,6 +211,46 @@ int main(int argc, char **argv)
                             {QStringLiteral("headers"), QVariantList{item(QStringLiteral("X"), QStringLiteral("{{hdr}}"))}}};
         CHECK(b.missingVariables(r, QStringLiteral("colA"))
               == QStringList({QStringLiteral("body_var"), QStringLiteral("hdr")}));
+    }
+
+    // variablesState: resolved + missing + effective numa única passada
+    {
+        const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/{{nope}}")},
+                              {QStringLiteral("vars"), QVariantList{}}};
+        const QVariantMap st = b.variablesState(req, QStringLiteral("colA"));
+        CHECK(st.value(QStringLiteral("missing")).toStringList() == QStringList{QStringLiteral("nope")});
+        CHECK(st.value(QStringLiteral("effective")).toMap().value(QStringLiteral("pub")).toString()
+              == QStringLiteral("1"));
+        CHECK(!st.value(QStringLiteral("resolved")).toList().isEmpty());
+    }
+
+    // segredos: persistência entre instâncias (cache + arquivo)
+    {
+        b.saveSecret(QStringLiteral("__sid__"), QStringLiteral("sv"));
+        Backend b3;
+        CHECK(b3.secretValue(QStringLiteral("__sid__")) == QStringLiteral("sv"));
+        CHECK(b3.removeSecret(QStringLiteral("__sid__")));
+        CHECK(b3.secretValue(QStringLiteral("__sid__")).isEmpty());
+    }
+
+    // collectionTree: hasChildren calculado em O(n)
+    {
+        b.deleteEntry(QStringLiteral("__tree__"));
+        b.createFolder(QStringLiteral("__tree__/sub"));
+        b.saveRequest(QStringLiteral("__tree__/r"), {{QStringLiteral("method"), QStringLiteral("POST")}});
+        const QVariantList t = b.collectionTree();
+        bool folderSeen = false, subSeen = false;
+        for (const QVariant &v : t) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("relPath")) == QStringLiteral("__tree__")) {
+                folderSeen = true;
+                CHECK(m.value(QStringLiteral("hasChildren")).toBool() == true);
+            }
+            if (m.value(QStringLiteral("relPath")) == QStringLiteral("__tree__/sub"))
+                subSeen = true;
+        }
+        CHECK(folderSeen && subSeen);
+        b.deleteEntry(QStringLiteral("__tree__"));
     }
 
     // ambientes: renomear/duplicar/persistir
@@ -208,13 +273,32 @@ int main(int argc, char **argv)
     // ---------------------------------------------------------------- coleção
     b.deleteEntry(QStringLiteral("__col__"));
     CHECK(b.saveCollectionVariables(QStringLiteral("__col__"),
-                                    {item(QStringLiteral("cv"), QStringLiteral("7"))}));
-    CHECK(b.collectionVariables(QStringLiteral("__col__")).size() == 1);
+                                    {item(QStringLiteral("cv"), QStringLiteral("7")),
+                                     item(QStringLiteral("cvoff"), QStringLiteral("8"), false)}));
+    CHECK(b.collectionVariables(QStringLiteral("__col__")).size() == 2);
+    {
+        const QVariantMap colEff = b.effectiveVariables(QStringLiteral("__col__"), {});
+        CHECK(colEff.value(QStringLiteral("cv")).toString() == QStringLiteral("7"));
+        CHECK(!colEff.contains(QStringLiteral("cvoff")));   // desabilitada na coleção não resolve
+    }
+    CHECK(b.variableNoteFor(QStringLiteral("cvoff"), QStringLiteral("__col__"))
+          == QStringLiteral("desabilitada"));
+    CHECK(b.missingVariables({{QStringLiteral("url"), QStringLiteral("{{cvoff}}")}},
+                             QStringLiteral("__col__"))
+          == QStringList{QStringLiteral("cvoff")});
     CHECK(b.saveCollectionHeaders(QStringLiteral("__col__"),
                                   {item(QStringLiteral("X-Test"), QStringLiteral("abc"))}));
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 1);
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).first().toMap()
               .value(QStringLiteral("value")) == QStringLiteral("abc"));
+    // cache invalidado ao salvar de novo (vars e headers)
+    CHECK(b.saveCollectionVariables(QStringLiteral("__col__"),
+                                    {item(QStringLiteral("cv"), QStringLiteral("9"))}));
+    CHECK(b.collectionVariables(QStringLiteral("__col__")).size() == 1);
+    CHECK(b.saveCollectionHeaders(QStringLiteral("__col__"),
+                                  {item(QStringLiteral("A"), QStringLiteral("1")),
+                                   item(QStringLiteral("B"), QStringLiteral("2"))}));
+    CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 2);
     b.deleteEntry(QStringLiteral("__col__"));
 
     // ---------------------------------------------------------------- requests
@@ -248,8 +332,34 @@ int main(int argc, char **argv)
         CHECK(!id.isEmpty());
         CHECK(vars.first().toMap().value(QStringLiteral("value")).toString().isEmpty());
         CHECK(b.secretValue(id) == QStringLiteral("topsecret"));
-        CHECK(b.removeSecret(id));
+
+        // carregar traz o valor real do cofre (para o usuário editar/ver)
+        const QVariantList resolved = b.withResolvedSecrets(vars);
+        CHECK(resolved.first().toMap().value(QStringLiteral("value")).toString()
+              == QStringLiteral("topsecret"));
+
+        // re-salvar com o valor resolvido NÃO apaga o segredo
+        CHECK(b.saveRequest(sr, {{QStringLiteral("method"), QStringLiteral("GET")},
+                                 {QStringLiteral("url"), QStringLiteral("http://x")},
+                                 {QStringLiteral("vars"), resolved}}));
+        CHECK(b.secretValue(id) == QStringLiteral("topsecret"));
+
+        // desmarcar "segredo": grava em claro e limpa o cofre (sem segredo órfão)
+        QVariantList plain = resolved;
+        QVariantMap pm = plain.first().toMap();
+        pm[QStringLiteral("secret")] = false;
+        plain[0] = pm;
+        CHECK(b.saveRequest(sr, {{QStringLiteral("method"), QStringLiteral("GET")},
+                                 {QStringLiteral("url"), QStringLiteral("http://x")},
+                                 {QStringLiteral("vars"), plain}}));
         CHECK(b.secretValue(id).isEmpty());
+        {
+            QFile f2(b.storageDir() + QStringLiteral("/__secret__/r.json"));
+            CHECK(f2.open(QIODevice::ReadOnly));
+            const QByteArray raw2 = f2.readAll();
+            f2.close();
+            CHECK(raw2.contains("topsecret"));   // agora em claro (o usuário desmarcou segredo)
+        }
         b.deleteEntry(QStringLiteral("__secret__"));
     }
 

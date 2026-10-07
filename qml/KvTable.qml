@@ -18,6 +18,12 @@ ColumnLayout {
     signal edited()
     signal pickFile(int index)
 
+    // remoção de linha com confirmação, seguindo a config global (settings.confirmDelete)
+    function tryRemove(i) {
+        if (settings.confirmDelete) { confirmRemove.pendingIndex = i; confirmRemove.open(); }
+        else { table.model.remove(i); table.edited(); }
+    }
+
     readonly property bool empty: model === undefined || model === null || model.count === 0
 
     spacing: Kirigami.Units.smallSpacing
@@ -35,6 +41,7 @@ ColumnLayout {
         model: table.model
         delegate: RowLayout {
             width: view.width
+            opacity: model.enabled === false ? 0.45 : 1   // linha desabilitada fica esmaecida
             CheckBox {
                 checked: model.enabled
                 onToggled: { model.enabled = checked; table.edited(); }
@@ -103,7 +110,7 @@ ColumnLayout {
             }
             ToolButton {
                 icon.name: "list-remove"
-                onClicked: { table.model.remove(index); table.edited(); }
+                onClicked: table.tryRemove(index)
                 ToolTip.text: "Remover linha"
                 ToolTip.visible: hovered
             }
@@ -137,5 +144,38 @@ ColumnLayout {
         Layout.leftMargin: Kirigami.Units.smallSpacing
         Layout.bottomMargin: Kirigami.Units.smallSpacing
         onClicked: { table.addRequested(); table.edited(); }
+    }
+
+    // confirmação de remoção de linha (mesma config global de exclusão)
+    Dialog {
+        id: confirmRemove
+        objectName: "confirmRemoveDialog"
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        title: "Remover"
+        modal: true
+        width: 380
+        property int pendingIndex: -1
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Kirigami.Units.smallSpacing
+            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Remover esta linha?" }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.fillWidth: true
+                Item { Layout.fillWidth: true }
+                Button { text: "Cancelar"; onClicked: confirmRemove.close() }
+                Button {
+                    text: "Remover"; highlighted: true
+                    onClicked: {
+                        if (confirmRemove.pendingIndex >= 0) {
+                            table.model.remove(confirmRemove.pendingIndex);
+                            table.edited();
+                        }
+                        confirmRemove.close();
+                    }
+                }
+            }
+        }
     }
 }

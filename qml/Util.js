@@ -63,3 +63,23 @@ function exportCode(p) {
     if (p.body.length > 0) s += " \\\n  -d " + q(p.body);
     return s;
 }
+
+// Reordenação de abas: dado o ponto de inserção "to" (0..count), devolve o
+// índice de destino para ListModel.move() e o novo índice da aba ativa.
+// Devolve null quando não há mudança.
+function tabMove(count, from, to, current) {
+    if (from < 0 || from >= count)
+        return null;
+    if (to < 0) to = 0;
+    if (to > count) to = count;
+    var dest = to > from ? to - 1 : to;   // após a remoção o índice desloca
+    if (dest === from)
+        return null;
+    if (current === from)
+        current = dest;
+    else if (from < current && current <= dest)
+        --current;
+    else if (dest <= current && current < from)
+        ++current;
+    return { dest: dest, current: current };
+}

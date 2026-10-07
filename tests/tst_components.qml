@@ -17,6 +17,12 @@ TestCase {
         function clipboardText() { return ""; }
     }
 
+    // stub de settings: o KvTable consulta settings.confirmDelete ao remover linha
+    QtObject {
+        id: settings
+        property bool confirmDelete: false
+    }
+
     ListModel { id: kvModel }
     HeaderTable { id: ht }
     JsonTree { id: tree }
@@ -82,6 +88,31 @@ TestCase {
         compare(lv.count, 0);
     }
 
+    // com confirmação ligada, tryRemove NÃO remove até confirmar
+    function test_kvtable_remove_needs_confirm() {
+        settings.confirmDelete = true;
+        kvModel.clear();
+        kvModel.append({ name: "x", value: "1", enabled: true });
+        wait(50);
+        kv.tryRemove(0);
+        wait(50);
+        compare(kvModel.count, 1);           // aguarda confirmação
+        var dlg = findChild(kv, "confirmRemoveDialog");
+        if (dlg) dlg.close();
+        kvModel.clear();
+    }
+
+    // com confirmação desligada, tryRemove remove direto
+    function test_kvtable_remove_direct() {
+        settings.confirmDelete = false;
+        kvModel.clear();
+        kvModel.append({ name: "x", value: "1", enabled: true });
+        wait(50);
+        compare(kvModel.count, 1);
+        kv.tryRemove(0);
+        compare(kvModel.count, 0);
+    }
+
     // ---- Util.js: domínio puro ----
     function test_util_b64() {
         compare(Util.b64("a"), "YQ==");
@@ -127,5 +158,25 @@ TestCase {
         var withBody = Util.exportCode({ method: "POST", url: "https://x/y",
                                          headers: [], body: "oi" });
         verify(withBody.indexOf("-d 'oi'") >= 0);
+    }
+
+    // [A,B,C,D]: B(1) -> inserir antes de D(to=3) => [A,C,B,D]
+    function test_util_tabMove() {
+        var m = Util.tabMove(4, 1, 3, 1);
+        compare(m.dest, 2);
+        compare(m.current, 2);          // a própria aba movida segue ativa
+        compare(Util.tabMove(4, 1, 3, 2).current, 1);   // C foi para a esquerda
+        compare(Util.tabMove(4, 1, 3, 3).current, 3);   // D não se move
+        compare(Util.tabMove(4, 1, 3, 0).current, 0);   // A não se move
+
+        // [A,B,C,D]: D(3) -> inserir antes de B(to=1) => [A,D,B,C]
+        compare(Util.tabMove(4, 3, 1, 3).dest, 1);
+        compare(Util.tabMove(4, 3, 1, 1).current, 2);
+        compare(Util.tabMove(4, 3, 1, 2).current, 3);
+
+        // no-op: inserir logo depois de si mesmo
+        compare(Util.tabMove(4, 1, 2, 0), null);
+        // limites: inserir no fim
+        compare(Util.tabMove(4, 0, 4, 0).dest, 3);
     }
 }

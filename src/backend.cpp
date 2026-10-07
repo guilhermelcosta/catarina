@@ -15,6 +15,7 @@
 #include <QSslError>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QSet>
 #include <QStandardPaths>
 #include <QUrlQuery>
 #include <QUuid>
@@ -76,6 +77,9 @@ void Backend::setStorageDir(const QString &dir)
     m_settings.setStorageDir(dir);
     m_dir = dir;
     m_envFile = m_dir + QStringLiteral("/.katarina/environments.json");
+    m_methodCache.clear();
+    m_colVarsCache.clear();
+    m_colHeadersCache.clear();
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
     loadEnvironments();
@@ -184,26 +188,25 @@ QString Backend::encodeForm(const QVariantList &fields)
 
 // ---------------------------------------------------------------- segredos
 
-QString Backend::secretValue(const QString &id) const
+// secrets.json é lido uma única vez e mantido em memória; save/remove mantêm o cache.
+void Backend::ensureSecrets() const
 {
-    if (id.isEmpty())
-        return {};
+    if (m_secretsLoaded)
+        return;
+    m_secretsLoaded = true;
     QFile f(m_secretsFile);
     if (!f.open(QIODevice::ReadOnly))
-        return {};
-    return QJsonDocument::fromJson(f.readAll()).object().value(id).toString();
+        return;
+    const QJsonObject obj = QJsonDocument::fromJson(f.readAll()).object();
+    for (auto it = obj.constBegin(); it != obj.constEnd(); ++it)
+        m_secretsCache.insert(it.key(), it.value().toString());
 }
 
-bool Backend::saveSecret(const QString &id, const QString &value)
+bool Backend::writeSecrets() const
 {
-    if (id.isEmpty())
-        return false;
-    QFile rf(m_secretsFile);
     QJsonObject obj;
-    if (rf.open(QIODevice::ReadOnly))
-        obj = QJsonDocument::fromJson(rf.readAll()).object();
-    obj.insert(id, value);
-
+    for (auto it = m_secretsCache.constBegin(); it != m_secretsCache.constEnd(); ++it)
+        obj.insert(it.key(), it.value());
     QSaveFile f(m_secretsFile);
     if (!f.open(QIODevice::WriteOnly))
         return false;
@@ -214,20 +217,72 @@ bool Backend::saveSecret(const QString &id, const QString &value)
     return ok;
 }
 
+QString Backend::secretValue(const QString &id) const
+{
+    if (id.isEmpty())
+        return {};
+    ensureSecrets();
+    return m_secretsCache.value(id);
+}
+
+bool Backend::saveSecret(const QString &id, const QString &value)
+{
+    if (id.isEmpty())
+        return false;
+    ensureSecrets();
+    m_secretsCache.insert(id, value);
+    return writeSecrets();
+}
+
 bool Backend::removeSecret(const QString &id)
 {
-    QFile rf(m_secretsFile);
-    if (!rf.open(QIODevice::ReadOnly))
+    if (id.isEmpty())
         return false;
-    QJsonObject obj = QJsonDocument::fromJson(rf.readAll()).object();
-    if (!obj.contains(id))
+    ensureSecrets();
+    if (!m_secretsCache.contains(id))
         return false;
-    obj.remove(id);
-    QSaveFile f(m_secretsFile);
-    if (!f.open(QIODevice::WriteOnly))
-        return false;
-    f.write(QJsonDocument(obj).toJson());
-    return f.commit();
+    m_secretsCache.remove(id);
+    return writeSecrets();
+}
+
+QVariantList Backend::withResolvedSecrets(const QVariantList &vars) const
+{
+    QVariantList out = vars;
+    for (QVariant &v : out) {
+        QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("secret")).toBool()) {
+            const QString id = m.value(QStringLiteral("secretId")).toString();
+            if (!id.isEmpty())                 // sem id = segredo novo, mantém o que foi digitado
+                m[QStringLiteral("value")] = secretValue(id);
+        }
+        v = m;
+    }
+    return out;
+}
+
+QVariantList Backend::sanitizeSecrets(const QVariantList &vars)
+{
+    QVariantList out = vars;
+    for (QVariant &v : out) {
+        QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("secret")).toBool()) {
+            QString id = m.value(QStringLiteral("secretId")).toString();
+            if (id.isEmpty()) {
+                id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                m[QStringLiteral("secretId")] = id;
+            }
+            saveSecret(id, m.value(QStringLiteral("value")).toString());
+            m[QStringLiteral("value")] = QString();       // nunca vai pro arquivo
+        } else {
+            const QString oldId = m.value(QStringLiteral("secretId")).toString();
+            if (!oldId.isEmpty()) {
+                removeSecret(oldId);                       // deixou de ser segredo: limpa o cofre
+                m[QStringLiteral("secretId")] = QString();
+            }
+        }
+        v = m;
+    }
+    return out;
 }
 
 // ---------------------------------------------------------------- histórico
@@ -275,167 +330,157 @@ void Backend::addHistory(const QVariantMap &entry)
         emit historyChanged();
 }
 
-void Backend::resolveSecrets(QVariantList &vars) const
-{
-    for (QVariant &v : vars) {
-        QVariantMap m = v.toMap();
-        if (m.value(QStringLiteral("secret")).toBool()) {
-            const QString id = m.value(QStringLiteral("secretId")).toString();
-            m[QStringLiteral("value")] = secretValue(id);
-        }
-        v = m;
-    }
-}
-
 // ---------------------------------------------------------------- variáveis
+
+// Cadeia única de variáveis (global → coleção → request), já resolvida:
+// escopo por variável, segredos e flag enabled. Fonte da verdade para
+// effectiveVariables e resolvedVariables.
+QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
+                                                   const QVariantList &requestVars) const
+{
+    QList<ResolvedVar> chain;
+    auto add = [&](const QVariantList &vars, const QString &source, bool global) {
+        for (const QVariant &v : vars) {
+            const QVariantMap m = v.toMap();
+            const QString name = m.value(QStringLiteral("name")).toString();
+            if (name.isEmpty())
+                continue;
+            if (global) {
+                const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
+                if (scope == QLatin1String("collections")) {
+                    const QStringList list = m.value(QStringLiteral("collections")).toStringList();
+                    if (!collection.isEmpty() && !list.contains(collection))
+                        continue;
+                }
+            }
+            const bool secret = m.value(QStringLiteral("secret")).toBool();
+            chain.append({name,
+                          secret ? secretValue(m.value(QStringLiteral("secretId")).toString())
+                                 : m.value(QStringLiteral("value")).toString(),
+                          source, secret,
+                          m.value(QStringLiteral("enabled"), true).toBool()});
+        }
+    };
+
+    for (const Env &e : m_envs)
+        if (e.name == m_activeEnv)
+            add(e.variables, QStringLiteral("global"), true);
+    add(collectionVariables(collection), QStringLiteral("coleção"), false);
+    add(requestVars, QStringLiteral("request"), false);
+    return chain;
+}
 
 QVariantMap Backend::effectiveVariables(const QString &collection, const QVariantList &requestVars) const
 {
     QVariantMap out;
+    for (const ResolvedVar &r : variableChain(collection, requestVars))
+        if (r.enabled)                       // desabilitada não participa da resolução
+            out.insert(r.name, r.value);     // precedência: o último da cadeia vence
+    return out;
+}
 
-    // 1) globais (ambiente ativo), respeitando o escopo por variável
-    for (const Env &e : m_envs) {
-        if (e.name != m_activeEnv)
-            continue;
-        for (const QVariant &v : e.variables) {
-            QVariantMap m = v.toMap();
-            const QString name = m.value(QStringLiteral("name")).toString();
-            if (name.isEmpty())
-                continue;
-            const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
-            if (scope == QLatin1String("collections")) {
-                const QStringList list = m.value(QStringLiteral("collections")).toStringList();
-                if (!collection.isEmpty() && !list.contains(collection))
-                    continue;
-            }
-            if (m.value(QStringLiteral("secret")).toBool())
-                m[QStringLiteral("value")] = secretValue(m.value(QStringLiteral("secretId")).toString());
-            out.insert(name, m.value(QStringLiteral("value")));
+QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
+{
+    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
+    const QList<ResolvedVar> chain =
+        variableChain(collection, request.value(QStringLiteral("vars")).toList());
+
+    QMap<QString, QVariantMap> byName;   // melhor precedência por nome
+    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
+    for (const ResolvedVar &r : chain) {
+        if (r.enabled)
+            effective.insert(r.name, r.value);
+        if (byName.contains(r.name) && !r.enabled)
+            continue;                    // desabilitada não sobrescreve o que já resolve
+        byName.insert(r.name, {{QStringLiteral("name"), r.name},
+                               {QStringLiteral("value"), r.value},
+                               {QStringLiteral("secret"), r.secret},
+                               {QStringLiteral("source"), r.source},
+                               {QStringLiteral("enabled"), r.enabled}});
+    }
+    QVariantList resolved;
+    for (auto it = byName.constBegin(); it != byName.constEnd(); ++it)
+        resolved.append(it.value());
+
+    QStringList missing;
+    for (const QString &text : collectTexts(request)) {
+        for (const QString &name : variableRefs(text)) {
+            if (!effective.contains(name) && !missing.contains(name))
+                missing.append(name);
         }
     }
 
-    // 2) da coleção
-    QVariantList colVars = collectionVariables(collection);
-    resolveSecrets(colVars);
-    for (const QVariant &v : colVars) {
-        const QVariantMap m = v.toMap();
-        const QString name = m.value(QStringLiteral("name")).toString();
-        if (!name.isEmpty())
-            out.insert(name, m.value(QStringLiteral("value")));
-    }
-
-    // 3) do request (maior precedência)
-    QVariantList reqVars = requestVars;
-    resolveSecrets(reqVars);
-    for (const QVariant &v : reqVars) {
-        const QVariantMap m = v.toMap();
-        const QString name = m.value(QStringLiteral("name")).toString();
-        if (!name.isEmpty())
-            out.insert(name, m.value(QStringLiteral("value")));
-    }
-
-    return out;
+    return {{QStringLiteral("resolved"), resolved},
+            {QStringLiteral("missing"), missing},
+            {QStringLiteral("effective"), effective}};
 }
 
 QVariantList Backend::resolvedVariables(const QString &collection, const QVariantList &requestVars) const
 {
-    QMap<QString, QVariantMap> byName;
-
-    auto put = [&](const QString &name, const QString &value, bool secret, const QString &source) {
-        if (!name.isEmpty())
-            byName.insert(name, {{QStringLiteral("name"), name}, {QStringLiteral("value"), value},
-                                 {QStringLiteral("secret"), secret}, {QStringLiteral("source"), source}});
-    };
-
-    for (const Env &e : m_envs) {
-        if (e.name != m_activeEnv)
-            continue;
-        for (const QVariant &v : e.variables) {
-            const QVariantMap m = v.toMap();
-            const QString name = m.value(QStringLiteral("name")).toString();
-            if (name.isEmpty())
-                continue;
-            const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
-            if (scope == QLatin1String("collections")) {
-                const QStringList list = m.value(QStringLiteral("collections")).toStringList();
-                if (!collection.isEmpty() && !list.contains(collection))
-                    continue;
-            }
-            const bool secret = m.value(QStringLiteral("secret")).toBool();
-            put(name, secret ? secretValue(m.value(QStringLiteral("secretId")).toString())
-                             : m.value(QStringLiteral("value")).toString(),
-                secret, QStringLiteral("global"));
-        }
-    }
-    for (const QVariant &v : collectionVariables(collection)) {
-        const QVariantMap m = v.toMap();
-        const bool secret = m.value(QStringLiteral("secret")).toBool();
-        put(m.value(QStringLiteral("name")).toString(),
-            secret ? secretValue(m.value(QStringLiteral("secretId")).toString())
-                   : m.value(QStringLiteral("value")).toString(),
-            secret, QStringLiteral("coleção"));
-    }
-    for (const QVariant &v : requestVars) {
-        const QVariantMap m = v.toMap();
-        const bool secret = m.value(QStringLiteral("secret")).toBool();
-        put(m.value(QStringLiteral("name")).toString(),
-            secret ? secretValue(m.value(QStringLiteral("secretId")).toString())
-                   : m.value(QStringLiteral("value")).toString(),
-            secret, QStringLiteral("request"));
-    }
-
-    QVariantList out;
-    for (auto it = byName.constBegin(); it != byName.constEnd(); ++it)
-        out.append(it.value());
-    return out;
+    return variablesState({{QStringLiteral("vars"), requestVars}}, collection)
+        .value(QStringLiteral("resolved"))
+        .toList();
 }
 
 QString Backend::variableNoteFor(const QString &name, const QString &collection) const
 {
-    for (const Env &e : m_envs) {
-        if (e.name != m_activeEnv)
-            continue;
-        for (const QVariant &v : e.variables) {
+    // Explica por que "name" não resolve: desabilitada, fora de escopo ou inexistente.
+    auto note = [&](const QVariantList &vars, bool global, QString *out) {
+        for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();
             if (m.value(QStringLiteral("name")).toString() != name)
                 continue;
-            const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
-            if (scope == QLatin1String("collections")) {
-                const QStringList list = m.value(QStringLiteral("collections")).toStringList();
-                if (!collection.isEmpty() && !list.contains(collection))
-                    return QStringLiteral("restrita a: ") + list.join(QStringLiteral(", "));
+            if (!m.value(QStringLiteral("enabled"), true).toBool()) {
+                *out = QStringLiteral("desabilitada");
+            } else if (global) {
+                const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
+                if (scope == QLatin1String("collections")) {
+                    const QStringList list = m.value(QStringLiteral("collections")).toStringList();
+                    if (!collection.isEmpty() && !list.contains(collection))
+                        *out = QStringLiteral("restrita a: ") + list.join(QStringLiteral(", "));
+                    else
+                        *out = QString();
+                } else {
+                    *out = QString();
+                }
+            } else {
+                *out = QString();
             }
-            return {};   // visível nesta coleção
+            return true;
         }
+        return false;
+    };
+
+    QString out;
+    for (const Env &e : m_envs) {
+        if (e.name != m_activeEnv)
+            continue;
+        if (note(e.variables, true, &out))
+            return out;
     }
+    if (note(collectionVariables(collection), false, &out))
+        return out;
     return QStringLiteral("não definida");
 }
 
 QStringList Backend::missingVariables(const QVariantMap &request, const QString &collection) const
 {
-    const QVariantMap vars = effectiveVariables(collection, request.value(QStringLiteral("vars")).toList());
-    QStringList missing;
-    for (const QString &text : collectTexts(request)) {
-        for (const QString &name : variableRefs(text)) {
-            if (!vars.contains(name) && !missing.contains(name))
-                missing.append(name);
-        }
-    }
-    return missing;
+    return variablesState(request, collection).value(QStringLiteral("missing")).toStringList();
 }
 
 // ---------------------------------------------------------------- requisição
 
 void Backend::send(const QVariantMap &request, const QString &collection)
 {
-    const QStringList missing = missingVariables(request, collection);
+    const QVariantMap state = variablesState(request, collection);
+    const QStringList missing = state.value(QStringLiteral("missing")).toStringList();
     if (!missing.isEmpty()) {
         emit error(QStringLiteral("Variável não resolvida: ") +
                    missing.join(QStringLiteral(", ")));
         return;
     }
 
-    const QVariantMap vars = effectiveVariables(collection, request.value(QStringLiteral("vars")).toList());
+    const QVariantMap vars = state.value(QStringLiteral("effective")).toMap();
     const QString method = request.value(QStringLiteral("method")).toString();
     const QString bodyType = request.value(QStringLiteral("bodyType")).toString();
     const QUrl u = buildUrl(substitute(request.value(QStringLiteral("url")).toString(), vars),
@@ -619,9 +664,9 @@ QString Backend::requestPath(const QString &relPath) const
     return m_dir + QLatin1Char('/') + safe + QStringLiteral(".json");
 }
 
-static void walk(const QString &root, const QString &rel, int depth, QVariantList &out)
+void Backend::walkCollection(const QString &rel, int depth, QVariantList &out) const
 {
-    const QString abs = root + (rel.isEmpty() ? QString() : QLatin1Char('/') + rel);
+    const QString abs = m_dir + (rel.isEmpty() ? QString() : QLatin1Char('/') + rel);
     QDir dir(abs);
     for (const QString &sub : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
         if (sub.startsWith(QLatin1Char('.')))   // .katarina e afins ficam fora da árvore
@@ -631,7 +676,7 @@ static void walk(const QString &root, const QString &rel, int depth, QVariantLis
                                {QStringLiteral("relPath"), childRel},
                                {QStringLiteral("isFolder"), true},
                                {QStringLiteral("depth"), depth}});
-        walk(root, childRel, depth + 1, out);
+        walkCollection(childRel, depth + 1, out);
     }
     for (const QString &file : dir.entryList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
         if (file.startsWith(QLatin1Char('.')))
@@ -639,10 +684,20 @@ static void walk(const QString &root, const QString &rel, int depth, QVariantLis
         QString base = file;
         base.chop(5);
         const QString childRel = rel.isEmpty() ? base : rel + QLatin1Char('/') + base;
-        QString method = QStringLiteral("GET");
-        QFile f(root + QLatin1Char('/') + childRel + QStringLiteral(".json"));
-        if (f.open(QIODevice::ReadOnly))
-            method = QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("method")).toString(method);
+        // method com cache (mtime): evita reabrir/parsear cada request a cada reload
+        const QString absFile = m_dir + QLatin1Char('/') + childRel + QStringLiteral(".json");
+        const qint64 mt = QFileInfo(absFile).lastModified().toMSecsSinceEpoch();
+        QString method;
+        auto it = m_methodCache.constFind(childRel);
+        if (it != m_methodCache.constEnd() && it->first == mt) {
+            method = it->second;
+        } else {
+            method = QStringLiteral("GET");
+            QFile f(absFile);
+            if (f.open(QIODevice::ReadOnly))
+                method = QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("method")).toString(method);
+            m_methodCache.insert(childRel, {mt, method});
+        }
         out.append(QVariantMap{{QStringLiteral("name"), base},
                                {QStringLiteral("relPath"), childRel},
                                {QStringLiteral("isFolder"), false},
@@ -654,7 +709,22 @@ static void walk(const QString &root, const QString &rel, int depth, QVariantLis
 QVariantList Backend::collectionTree() const
 {
     QVariantList out;
-    walk(m_dir, QString(), 0, out);
+    walkCollection(QString(), 0, out);
+    // hasChildren em O(n): marca os ancestrais de cada entrada
+    QSet<QString> parents;
+    for (const QVariant &v : out) {
+        QString rp = v.toMap().value(QStringLiteral("relPath")).toString();
+        for (int idx = rp.lastIndexOf(QLatin1Char('/')); idx > 0; idx = rp.lastIndexOf(QLatin1Char('/'))) {
+            rp.truncate(idx);
+            parents.insert(rp);
+        }
+    }
+    for (QVariant &v : out) {
+        QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("isFolder")).toBool())
+            m[QStringLiteral("hasChildren")] = parents.contains(m.value(QStringLiteral("relPath")).toString());
+        v = m;
+    }
     return out;
 }
 
@@ -666,6 +736,13 @@ QVariantMap Backend::loadRequest(const QString &relPath) const
     return QJsonDocument::fromJson(f.readAll()).object().toVariantMap();
 }
 
+bool Backend::isCollection(const QString &relPath) const
+{
+    if (relPath.isEmpty())
+        return false;
+    return QFileInfo(m_dir + QLatin1Char('/') + relPath).isDir();
+}
+
 bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
 {
     const QString path = requestPath(relPath);
@@ -673,20 +750,7 @@ bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
     QJsonObject obj = QJsonObject::fromVariantMap(data);
     // segredos das variáveis do request nunca vão pro arquivo
     if (obj.contains(QStringLiteral("vars"))) {
-        QVariantList vars = obj.value(QStringLiteral("vars")).toArray().toVariantList();
-        for (QVariant &v : vars) {
-            QVariantMap m = v.toMap();
-            if (m.value(QStringLiteral("secret")).toBool()) {
-                QString id = m.value(QStringLiteral("secretId")).toString();
-                if (id.isEmpty()) {
-                    id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-                    m[QStringLiteral("secretId")] = id;
-                }
-                saveSecret(id, m.value(QStringLiteral("value")).toString());
-                m[QStringLiteral("value")] = QString();
-            }
-            v = m;
-        }
+        const QVariantList vars = sanitizeSecrets(obj.value(QStringLiteral("vars")).toArray().toVariantList());
         obj.insert(QStringLiteral("vars"), QJsonArray::fromVariantList(vars));
     }
     QSaveFile f(path);
@@ -819,14 +883,27 @@ bool Backend::moveEntry(const QString &from, const QString &toFolder)
 
 // ---------------------------------------------------------------- vars de coleção
 
+// lê um .json (com cache validado por mtime); escrever o arquivo invalida sozinho
+QVariantList Backend::cachedJsonList(const QString &path, const QString &key, CachedList &slot) const
+{
+    const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
+    if (slot.mtime == mt)
+        return slot.list;
+    QVariantList list;
+    QFile f(path);
+    if (f.open(QIODevice::ReadOnly))
+        list = QJsonDocument::fromJson(f.readAll()).object().value(key).toArray().toVariantList();
+    slot.mtime = mt;
+    slot.list = list;
+    return list;
+}
+
 QVariantList Backend::collectionVariables(const QString &collection) const
 {
     if (collection.isEmpty())
         return {};
-    QFile f(m_dir + QLatin1Char('/') + collection + QStringLiteral("/.variables.json"));
-    if (!f.open(QIODevice::ReadOnly))
-        return {};
-    return QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("vars")).toArray().toVariantList();
+    const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.variables.json");
+    return cachedJsonList(path, QStringLiteral("vars"), m_colVarsCache[collection]);
 }
 
 bool Backend::saveCollectionVariables(const QString &collection, const QVariantList &vars)
@@ -835,28 +912,17 @@ bool Backend::saveCollectionVariables(const QString &collection, const QVariantL
         return false;
     const QString dir = m_dir + QLatin1Char('/') + collection;
     QDir().mkpath(dir);
-    QVariantList sanitized = vars;
-    for (QVariant &v : sanitized) {
-        QVariantMap m = v.toMap();
-        if (m.value(QStringLiteral("secret")).toBool()) {
-            QString id = m.value(QStringLiteral("secretId")).toString();
-            if (id.isEmpty()) {
-                id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-                m[QStringLiteral("secretId")] = id;
-            }
-            saveSecret(id, m.value(QStringLiteral("value")).toString());
-            m[QStringLiteral("value")] = QString();
-        }
-        v = m;
-    }
+    const QVariantList sanitized = sanitizeSecrets(vars);
     QSaveFile f(dir + QStringLiteral("/.variables.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
     const QJsonObject obj{{QStringLiteral("vars"), QJsonArray::fromVariantList(sanitized)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
-    if (ok)
+    if (ok) {
+        m_colVarsCache[collection].mtime = -1;   // força releitura (mtime pode ter granularidade grossa)
         emit collectionsChanged();
+    }
     return ok;
 }
 
@@ -864,10 +930,8 @@ QVariantList Backend::collectionHeaders(const QString &collection) const
 {
     if (collection.isEmpty())
         return {};
-    QFile f(m_dir + QLatin1Char('/') + collection + QStringLiteral("/.headers.json"));
-    if (!f.open(QIODevice::ReadOnly))
-        return {};
-    return QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("headers")).toArray().toVariantList();
+    const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.headers.json");
+    return cachedJsonList(path, QStringLiteral("headers"), m_colHeadersCache[collection]);
 }
 
 bool Backend::saveCollectionHeaders(const QString &collection, const QVariantList &headers)
@@ -882,8 +946,10 @@ bool Backend::saveCollectionHeaders(const QString &collection, const QVariantLis
     const QJsonObject obj{{QStringLiteral("headers"), QJsonArray::fromVariantList(headers)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
-    if (ok)
+    if (ok) {
+        m_colHeadersCache[collection].mtime = -1;
         emit collectionsChanged();
+    }
     return ok;
 }
 
@@ -944,20 +1010,7 @@ bool Backend::saveEnvironment(const QString &name, const QVariantList &variables
 {
     if (name.isEmpty())
         return false;
-    QVariantList sanitized = variables;
-    for (QVariant &v : sanitized) {
-        QVariantMap m = v.toMap();
-        if (m.value(QStringLiteral("secret")).toBool()) {
-            QString id = m.value(QStringLiteral("secretId")).toString();
-            if (id.isEmpty()) {
-                id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-                m[QStringLiteral("secretId")] = id;
-            }
-            saveSecret(id, m.value(QStringLiteral("value")).toString());
-            m[QStringLiteral("value")] = QString();
-        }
-        v = m;
-    }
+    const QVariantList sanitized = sanitizeSecrets(variables);
     for (Env &e : m_envs) {
         if (e.name == name) {
             e.variables = sanitized;

@@ -14,7 +14,7 @@ Item {
     function matchingNames() {
         var out = [];
         for (var i = 0; i < resolved.length; i++)
-            if (resolved[i].name.indexOf(partial) === 0)
+            if (resolved[i].enabled !== false && resolved[i].name.indexOf(partial) === 0)
                 out.push(resolved[i].name);
         out.sort();
         return out;
@@ -123,6 +123,7 @@ Item {
     // ---------------- valor no hover ----------------
     function updateHover(x, y) {
         if (!target) { hoverPop.close(); return; }
+        if (target.text.indexOf("{{") < 0) { hoverPop.close(); return; }   // sem variável: não roda regex/positionAt
         var pos = target.positionAt(x, y);
         if (pos < 0) { hoverPop.close(); return; }
         var tok = tokenAt(pos);
@@ -131,7 +132,9 @@ Item {
         if (v === null) {
             var note = backend.variableNoteFor(tok.name, collection);
             hoverLabel.text = tok.name + "  (" + (note.length > 0 ? note : "não definida") + ")";
-        } else if (v.secret)
+        } else if (v.enabled === false)
+            hoverLabel.text = tok.name + "  (desabilitada · " + v.source + ")";
+        else if (v.secret)
             hoverLabel.text = tok.name + " = ••••••   (" + v.source + ")";
         else
             hoverLabel.text = tok.name + " = " + v.value + "   (" + v.source + ")";

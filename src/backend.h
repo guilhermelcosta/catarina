@@ -1,8 +1,10 @@
 #pragma once
 
+#include <QHash>
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QObject>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -48,6 +50,7 @@ public:
 
     // ---- coleções ----
     Q_INVOKABLE QVariantList collectionTree() const;
+    Q_INVOKABLE bool isCollection(const QString &relPath) const;   // é pasta/coleção?
     Q_INVOKABLE QVariantMap loadRequest(const QString &relPath) const;
     Q_INVOKABLE bool saveRequest(const QString &relPath, const QVariantMap &data);
     Q_INVOKABLE bool deleteEntry(const QString &relPath);
@@ -79,6 +82,9 @@ public:
     Q_INVOKABLE QString secretValue(const QString &id) const;
     Q_INVOKABLE bool saveSecret(const QString &id, const QString &value);
     Q_INVOKABLE bool removeSecret(const QString &id);
+    // preenche `value` das variáveis secretas a partir do cofre (para edição; o
+    // valor nunca é escrito no arquivo versionado — isso continua sendo no save)
+    Q_INVOKABLE QVariantList withResolvedSecrets(const QVariantList &vars) const;
 
     // ---- histórico ----
     Q_INVOKABLE QVariantList history() const;
@@ -90,6 +96,9 @@ public:
     // como acima, mas com a origem de cada variável (request/coleção/global) — para a UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;
+    // resolve tudo numa passada: { "resolved": [...], "missing": [...] }
+    Q_INVOKABLE QVariantMap variablesState(const QVariantMap &request,
+                                           const QString &collection) const;
 
 signals:
     void responseReady(int status, const QString &statusText, const QVariantList &headers,
@@ -109,12 +118,36 @@ private:
         QVariantList variables;
     };
 
+    // item já resolvido da cadeia global → coleção → request
+    struct ResolvedVar {
+        QString name;
+        QString value;
+        QString source;
+        bool secret = false;
+        bool enabled = true;
+    };
+
     QString requestPath(const QString &relPath) const;
     QString historyPath() const;
     void addHistory(const QVariantMap &entry);
     void loadEnvironments();
     void saveEnvironments() const;
-    void resolveSecrets(QVariantList &vars) const;   // preenche value a partir de secretId
+    // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
+    QList<ResolvedVar> variableChain(const QString &collection, const QVariantList &requestVars) const;
+    // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
+    void walkCollection(const QString &rel, int depth, QVariantList &out) const;
+
+    void ensureSecrets() const;    // carrega secrets.json uma única vez
+    bool writeSecrets() const;     // persiste o cache de segredos
+    // tira os segredos do arquivo (vão pro cofre); limpa o cofre se deixou de ser segredo
+    QVariantList sanitizeSecrets(const QVariantList &vars);
+
+    // cache de .variables.json / .headers.json por coleção, validado por mtime
+    struct CachedList {
+        qint64 mtime = -1;
+        QVariantList list;
+    };
+    QVariantList cachedJsonList(const QString &path, const QString &key, CachedList &slot) const;
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
@@ -123,6 +156,12 @@ private:
     QString m_envFile;     // <dir>/.katarina/environments.json
     QString m_appData;     // ~/.local/share/katarina
     QString m_secretsFile; // <m_appData>/secrets.json
+
+    mutable bool m_secretsLoaded = false;
+    mutable QHash<QString, QString> m_secretsCache;              // id -> valor
+    mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
+    mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis
+    mutable QHash<QString, CachedList> m_colHeadersCache;        // coleção -> cabeçalhos
 
     QList<Env> m_envs;
     QString m_activeEnv;

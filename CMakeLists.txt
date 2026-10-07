@@ -54,6 +54,12 @@ qt_add_executable(check_storage tests/check_storage.cpp src/backend.cpp src/sett
 target_include_directories(check_storage PRIVATE src)
 target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
 
+# Benchmark dos caminhos quentes (não é teste; roda à mão).
+qt_add_executable(bench_storage tests/bench.cpp src/backend.cpp src/settings.cpp)
+target_include_directories(bench_storage PRIVATE src)
+target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+target_compile_definitions(bench_storage PRIVATE BENCH_AFTER)
+
 # ---- testes (ctest) ----
 find_package(Qt6 REQUIRED COMPONENTS QuickTest)
 
