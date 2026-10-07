@@ -222,4 +222,92 @@ TestCase {
         // limites: inserir no fim
         compare(Util.tabMove(4, 0, 4, 0).dest, 3);
     }
+
+    // fixar/desfixar (VS Code): desfixar devolve a aba ao preview e mantém só um
+    function test_util_tabPin() {
+        // fixar a aba preview -> deixa de ser preview
+        var m = Util.tabPin([{ pinned: false, preview: true }, { pinned: false, preview: false }], 0);
+        compare(m.length, 1);
+        compare(m[0].index, 0);
+        compare(m[0].pinned, true);
+        compare(m[0].preview, false);
+
+        // desfixar -> volta a preview
+        m = Util.tabPin([{ pinned: true, preview: false }], 0);
+        compare(m.length, 1);
+        compare(m[0].pinned, false);
+        compare(m[0].preview, true);
+
+        // desfixar com outra preview aberta -> só uma preview sobra (a última)
+        m = Util.tabPin([{ pinned: true, preview: false }, { pinned: false, preview: true }], 0);
+        compare(m.length, 2);
+        compare(m[0].preview, true);
+        compare(m[1].index, 1);
+        compare(m[1].preview, false);
+
+        // fixar uma aba que não é preview -> não mexe na preview ativa
+        m = Util.tabPin([{ pinned: false, preview: false }, { pinned: false, preview: true }], 0);
+        compare(m.length, 1);
+        compare(m[0].pinned, true);
+
+        // índice inválido
+        compare(Util.tabPin([], 0).length, 0);
+    }
+
+    // sessão persistida: só abas fixadas voltam ao reabrir o app
+    function test_util_sessionPaths() {
+        // fixada no meio, não-fixadas descartadas; ativa remapeada p/ a posição salva
+        var s = Util.sessionPaths([
+            { relPath: "a", pinned: true },
+            { relPath: "b", pinned: false },
+            { relPath: "c", pinned: true }
+        ], 2);
+        compare(s.paths.length, 2);
+        compare(s.paths[0], "a");
+        compare(s.paths[1], "c");
+        compare(s.current, 1);
+
+        // ativa era não-fixada → cai para 0
+        s = Util.sessionPaths([{ relPath: "a", pinned: true }, { relPath: "b", pinned: false }], 1);
+        compare(s.paths.length, 1);
+        compare(s.current, 0);
+
+        // nenhuma fixada → lista vazia
+        s = Util.sessionPaths([{ relPath: "b", pinned: false }], 0);
+        compare(s.paths.length, 0);
+        compare(s.current, 0);
+    }
+
+    // ListModel + delegate: uma role criada por setProperty DEPOIS que o delegate já
+    // existe não chega ao delegate (model.pinned fica undefined para sempre). Foi a
+    // causa de a aba fixada voltar a mostrar o X depois de restaurar a sessão: o append
+    // não declarava "pinned"/"preview". Por isso TODO append declara as duas roles.
+    ListModel { id: roleModelTarde }
+    ListModel { id: roleModelCedo }
+    ListView {
+        id: roleViewTarde
+        width: 100; height: 60
+        model: roleModelTarde
+        delegate: Text { text: String(model.pinned) }
+    }
+    ListView {
+        id: roleViewCedo
+        width: 100; height: 60
+        model: roleModelCedo
+        delegate: Text { text: String(model.pinned) }
+    }
+
+    function test_listmodel_roles_declaradas() {
+        roleModelTarde.append({ name: "a" });            // sem declarar "pinned"
+        wait(30);
+        roleModelTarde.setProperty(0, "pinned", true);   // role criada tarde
+        wait(50);
+        compare(roleViewTarde.itemAtIndex(0).text, "undefined");   // delegate não vê a role tardia
+
+        roleModelCedo.append({ name: "b", pinned: false });        // role declarada no append
+        wait(30);
+        roleModelCedo.setProperty(0, "pinned", true);
+        wait(50);
+        compare(roleViewCedo.itemAtIndex(0).text, "true");         // delegate acompanha
+    }
 }

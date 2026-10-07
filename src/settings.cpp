@@ -52,6 +52,19 @@ void Settings::saveSession(const QStringList &paths, int current)
     m_s.setValue(QStringLiteral("openTabIndex"), current);
 }
 
+QStringList Settings::pinnedTabs() const
+{
+    return m_s.value(QStringLiteral("pinnedTabs")).toStringList();
+}
+void Settings::savePinnedTabs(const QStringList &paths)
+{
+    // lista vazia vira @Invalid() no .ini; remove a chave para ficar limpo
+    if (paths.isEmpty())
+        m_s.remove(QStringLiteral("pinnedTabs"));
+    else
+        m_s.setValue(QStringLiteral("pinnedTabs"), paths);
+}
+
 QVariantMap Settings::shortcuts() const
 {
     return m_s.value(QStringLiteral("shortcuts")).toMap();

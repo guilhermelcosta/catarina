@@ -64,6 +64,23 @@ function exportCode(p) {
     return s;
 }
 
+// Fixação de abas (modelo do VS Code): fixada = permanente; desfixar devolve a
+// aba ao estado "preview" (transiente, a próxima request abre sobre ela) e garante
+// que só exista um preview. Recebe o estado atual [{pinned, preview}] e o índice
+// clicado; devolve só as mudanças [{index, pinned, preview}] a aplicar.
+function tabPin(tabs, i) {
+    if (i < 0 || i >= tabs.length)
+        return [];
+    var nowPinned = !(tabs[i].pinned === true);
+    var changes = [{ index: i, pinned: nowPinned, preview: !nowPinned }];
+    if (!nowPinned) {
+        for (var j = 0; j < tabs.length; j++)
+            if (j !== i && tabs[j].preview === true)
+                changes.push({ index: j, pinned: tabs[j].pinned === true, preview: false });
+    }
+    return changes;
+}
+
 // Reordenação de abas: dado o ponto de inserção "to" (0..count), devolve o
 // índice de destino para ListModel.move() e o novo índice da aba ativa.
 // Devolve null quando não há mudança.
@@ -82,4 +99,17 @@ function tabMove(count, from, to, current) {
     else if (dest <= current && current < from)
         ++current;
     return { dest: dest, current: current };
+}
+
+// Sessão persistida: só abas fixadas sobrevivem ao restart (as demais são
+// transientes). Recebe os tabs [{ relPath, pinned }] e o índice ativo; devolve
+// a lista de paths a salvar e o índice ativo remapeado (0 se a ativa sumiu).
+function sessionPaths(tabs, current) {
+    var paths = [], idx = 0;
+    for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].pinned !== true) continue;
+        if (i === current) idx = paths.length;
+        paths.push(tabs[i].relPath);
+    }
+    return { paths: paths, current: idx };
 }

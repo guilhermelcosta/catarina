@@ -21,6 +21,36 @@ Filhos de um `StackLayout` **não** respeitam `Layout.margins` (verificado). Par
   `ColumnLayout`/`RowLayout` interna; **ou**
 - use `padding: <valor>` em `ScrollView`.
 
+### ⚠️ `StackLayout` espreme filho que é `Layout` com `ScrollView`
+O `StackLayout` dimensiona o filho atual com `newSize.expandedTo(min).boundedTo(max)`; num
+filho que é `ColumnLayout`/`RowLayout` (layout aninhado) contendo um `ScrollView`, o `max`
+calculado sai pequeno e o conteúdo aparece **espremido** (ex.: o corpo do payload virava uma
+linha só ao trocar para a aba). Verificado no app (xcb).
+- No filho `Layout` do `StackLayout`, defina `Layout.maximumHeight: Number.POSITIVE_INFINITY`
+  (ou `Layout.maximumWidth`, no eixo correspondente).
+- Filhos que são `Item`, `KvTable` ou `ScrollView` direto não sofrem disso.
+- Com o máximo liberado, o `ColumnLayout` passa a ocupar a altura toda do `StackLayout`; se
+  nenhum filho visível tiver `Layout.fillHeight: true`, o Qt **redistribui** o espaço sobrando
+  entre os filhos comuns e o cabeçalho "estica" (o combo ia parar no meio da página). Termine o
+  `ColumnLayout` com um `Item { Layout.fillHeight: true }`, deixando-o `visible` só quando
+  nenhum outro filho preenche (ex.: corpo em "nenhum", variáveis efetivas vazias).
+
+### ⚠️ `ListModel`: declare as roles no `append`, não via `setProperty`
+Uma role criada por `setProperty` **depois** que o delegate já existe **não chega ao
+delegate**: `model.<role>` fica `undefined` para sempre (o `get(i)` até enxerga o valor, mas
+a UI não). Já quebrou o pino das abas — ao restaurar a sessão as abas eram inseridas sem
+`pinned`/`preview`, e `setProperty(k, "pinned", true)` não aparecia na aba (o X continuava).
+- Sempre inclua **todas** as roles em **todo** `append` (ex.: `pinned: false, preview: false`).
+- Teste de regressão em `tests/tst_components.qml` (`test_listmodel_roles_declaradas`).
+
+### ⚠️ `ToolTip.visible: hovered` rouba o clique
+Mostrar tooltip no hover de um item que precisa ser **clicado** (pino/X de aba, botões de
+ícone) faz o popup do tooltip engolir o clique — o `TapHandler`/`MouseArea` do item não
+dispara. Verificado em `qmltestrunner` (offscreen e xcb).
+- Preferir `ToolButton` (control) com `ToolTip.text` + `ToolTip.delay` (tooltip nativo, não
+  quebra o clique); **ou**
+- simplesmente não auto-mostrar tooltip nesses itens.
+
 ---
 
 ## 2. Opacidades (valores padrão)
@@ -52,6 +82,9 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
 - **Diálogos**: sempre `Cancelar` à esquerda e a ação primária (`highlighted`) à direita.
+  Com `RowLayout` de botões própria, a `height` fixa precisa caber o conteúdo — senão os botões
+  extravasam o fundo do diálogo (foi o caso do "Renomear": 150→175). Prefira `standardButtons`
+  quando der.
 - **Editor contextual pequeno**: prefira um **popover ancorado e não-modal** (aplica ao vivo), em vez
   de um diálogo modal; a célula que o abre pode ser um **chip** (ícone + texto,
   `alternateBackgroundColor`, borda `disabledTextColor`, `radius: 4`). Ex.: escopo da variável.
@@ -119,6 +152,10 @@ Todos em `qml/`:
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
+- **Sessão**: só abas **fixadas** voltam ao reabrir o app (`Util.sessionPaths`); preview e demais
+  não-fixadas são transientes. `restoreSessionTabs` recria as fixadas já com o pino.
+- **Renomear coleção**: reaponta o escopo (`collections`) das variáveis de ambiente que a
+  referenciam (`Backend::renameCollectionScope`), senão o escopo fica órfão.
 - **Idioma da UI**: português (pt-BR).
 
 ---

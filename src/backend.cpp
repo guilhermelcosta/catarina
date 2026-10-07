@@ -821,9 +821,42 @@ bool Backend::renameEntry(const QString &relPath, const QString &newName)
 
     const bool ok = isDir ? QDir().rename(srcAbs, dstAbs)
                           : QFile::rename(srcAbs + QStringLiteral(".json"), dstAbs + QStringLiteral(".json"));
-    if (ok)
+    if (ok) {
+        // renomear uma coleção (pasta de topo) precisa reapontar o escopo das
+        // variáveis de ambiente que a referenciam pelo nome
+        if (isDir && !relPath.contains(QLatin1Char('/')))
+            renameCollectionScope(relPath, newName);
         emit collectionsChanged();
+    }
     return ok;
+}
+
+// Troca oldName por newName na lista "collections" das variáveis de ambiente com
+// escopo "collections", para o escopo sobreviver ao rename da coleção.
+bool Backend::renameCollectionScope(const QString &oldName, const QString &newName)
+{
+    bool changed = false;
+    for (Env &e : m_envs) {
+        for (QVariant &v : e.variables) {
+            QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("scope")).toString() != QLatin1String("collections"))
+                continue;
+            QStringList list = m.value(QStringLiteral("collections")).toStringList();
+            if (!list.contains(oldName))
+                continue;
+            for (QString &s : list)
+                if (s == oldName)
+                    s = newName;
+            m.insert(QStringLiteral("collections"), list);
+            v = m;
+            changed = true;
+        }
+    }
+    if (changed) {
+        saveEnvironments();
+        emit environmentsChanged();
+    }
+    return changed;
 }
 
 bool Backend::duplicateEntry(const QString &relPath)

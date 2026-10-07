@@ -388,6 +388,33 @@ int main(int argc, char **argv)
     CHECK(!b.loadRequest(QStringLiteral("__rn__/b copy")).isEmpty());
     b.deleteEntry(QStringLiteral("__rn__"));
 
+    // ---------------------------------------------------------------- escopo ao renomear coleção
+    // renomear uma coleção (pasta de topo) reaponta o escopo "collections" das
+    // variáveis de ambiente que a referenciam (senão o escopo fica órfão)
+    {
+        b.deleteEntry(QStringLiteral("__scopeOld__"));
+        b.deleteEntry(QStringLiteral("__scopeNew__"));
+        CHECK(b.createFolder(QStringLiteral("__scopeOld__")));
+        b.deleteEnvironment(QStringLiteral("__e2__"));
+        CHECK(b.saveEnvironment(QStringLiteral("__e2__"),
+                                {QVariantMap{{QStringLiteral("name"), QStringLiteral("s")},
+                                             {QStringLiteral("value"), QStringLiteral("1")},
+                                             {QStringLiteral("scope"), QStringLiteral("collections")},
+                                             {QStringLiteral("collections"), QStringList{QStringLiteral("__scopeOld__")}}}}));
+        b.setActiveEnvironment(QStringLiteral("__e2__"));
+        CHECK(b.effectiveVariables(QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
+        CHECK(!b.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+
+        CHECK(b.renameEntry(QStringLiteral("__scopeOld__"), QStringLiteral("__scopeNew__")));
+        CHECK(!b.effectiveVariables(QStringLiteral("__scopeOld__"), {}).contains(QStringLiteral("s")));
+        CHECK(b.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+
+        Backend b4;   // persistiu: outra instância lê o escopo já atualizado
+        CHECK(b4.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
+        b4.deleteEnvironment(QStringLiteral("__e2__"));
+        b.deleteEntry(QStringLiteral("__scopeNew__"));
+    }
+
     // ---------------------------------------------------------------- histórico
     b.clearHistory();
     CHECK(b.history().isEmpty());

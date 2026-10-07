@@ -408,11 +408,33 @@ Kirigami.ApplicationWindow {
         }
         return -1;
     }
+    // índice da aba "preview" (transiente) de request, ou -1
+    function previewTabIndex() {
+        for (var i = 0; i < tabsModel.count; i++)
+            if (tabsModel.get(i).preview === true) return i;
+        return -1;
+    }
+    // fixa/desfixa uma aba: fixadas não são substituídas; desfixar volta a prévia
+    // (transiente) para a próxima request abrir sobre ela (modelo do VS Code).
+    function pinTab(i) {
+        var tabs = [];
+        for (var k = 0; k < tabsModel.count; k++) {
+            var t = tabsModel.get(k);
+            tabs.push({ pinned: t.pinned === true, preview: t.preview === true });
+        }
+        var changes = Util.tabPin(tabs, i);
+        for (var c = 0; c < changes.length; c++) {
+            tabsModel.setProperty(changes[c].index, "pinned", changes[c].pinned);
+            tabsModel.setProperty(changes[c].index, "preview", changes[c].preview);
+        }
+    }
     function markDirty() {
         if (currentTab >= 0 && currentTab < tabsModel.count
                 && !tabsModel.get(currentTab).isCollection && !tabsModel.get(currentTab).isEnvironment
-                && !tabsModel.get(currentTab).isSettings)
+                && !tabsModel.get(currentTab).isSettings) {
             tabsModel.setProperty(currentTab, "dirty", true);
+            tabsModel.setProperty(currentTab, "preview", false);   // editar tira a aba da prévia (fica permanente), como no VS Code
+        }
         currentDirty = true;
         resolvedDebounce.restart();   // debounce: não re-resolve a cada tecla
     }
@@ -431,17 +453,41 @@ Kirigami.ApplicationWindow {
     }
     function openRequest(relPath) {
         revealPath(relPath);           // seleciona na árvore e expande as pastas acima
-        snapshotCurrent();
+        // já aberta? vai para ela (não abre de novo)
         for (var i = 0; i < tabsModel.count; i++) {
-            if (!tabsModel.get(i).isCollection && tabsModel.get(i).relPath === relPath) { switchTab(i); return; }
+            var t = tabsModel.get(i);
+            if (!t.isCollection && !t.isEnvironment && !t.isSettings && t.relPath === relPath) { switchTab(i); return; }
         }
         var r = backend.loadRequest(relPath);
         if (r.method === undefined) return;
         r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
-        tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
-                           method: r.method, dirty: false, dataJson: JSON.stringify(r),
-                           isCollection: false, isEnvironment: false, isSettings: false });
-        currentTab = tabsModel.count - 1;
+
+        // reutiliza a aba "preview" (transiente); se tiver edições, fixa-a antes
+        var target = -1;
+        var prev = previewTabIndex();
+        if (prev >= 0) {
+            if (tabsModel.get(prev).dirty === true) {
+                tabsModel.setProperty(prev, "pinned", true);   // não perde as edições
+                tabsModel.setProperty(prev, "preview", false);
+            } else {
+                target = prev;
+            }
+        }
+        snapshotCurrent();
+        if (target >= 0) {
+            tabsModel.setProperty(target, "relPath", relPath);
+            tabsModel.setProperty(target, "name", relPath.split("/").pop());
+            tabsModel.setProperty(target, "method", r.method);
+            tabsModel.setProperty(target, "dataJson", JSON.stringify(r));
+            tabsModel.setProperty(target, "dirty", false);
+            currentTab = target;
+        } else {
+            tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
+                               method: r.method, dirty: false, dataJson: JSON.stringify(r),
+                               isCollection: false, isEnvironment: false, isSettings: false,
+                               pinned: false, preview: true });
+            currentTab = tabsModel.count - 1;
+        }
         applyRequest(r, relPath);
         showingCollection = false;
         showingEnv = false;
@@ -480,7 +526,8 @@ Kirigami.ApplicationWindow {
         if (idx < 0) {
             snapshotCurrent();
             tabsModel.append({ relPath: "__environment__", name: "Ambientes", method: "",
-                               dirty: false, dataJson: "", isCollection: false, isEnvironment: true });
+                               dirty: false, dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
+                               pinned: false, preview: false });
             idx = tabsModel.count - 1;
         }
         switchTab(idx);
@@ -496,7 +543,8 @@ Kirigami.ApplicationWindow {
         if (idx < 0) {
             snapshotCurrent();
             tabsModel.append({ relPath: "__settings__", name: "Configurações", method: "",
-                               dirty: false, dataJson: "", isCollection: false, isEnvironment: false, isSettings: true });
+                               dirty: false, dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
+                               pinned: false, preview: false });
             idx = tabsModel.count - 1;
         }
         switchTab(idx);
@@ -536,22 +584,26 @@ Kirigami.ApplicationWindow {
     }
     // restaura as abas salvas sem aplicar cada uma no editor (só a ativa é aplicada depois)
     function restoreSessionTabs(paths) {
+        var pinnedList = settings.pinnedTabs;
         for (var i = 0; i < paths.length; i++) {
             var rp = paths[i];
             if (rp.length === 0) continue;
             if (rp === "__environment__") {
                 tabsModel.append({ relPath: rp, name: "Ambientes", method: "", dirty: false,
-                                   dataJson: "", isCollection: false, isEnvironment: true, isSettings: false });
+                                   dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
+                                   pinned: false, preview: false });
                 continue;
             }
             if (rp === "__settings__") {
                 tabsModel.append({ relPath: rp, name: "Configurações", method: "", dirty: false,
-                                   dataJson: "", isCollection: false, isEnvironment: false, isSettings: true });
+                                   dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
+                                   pinned: false, preview: false });
                 continue;
             }
             if (backend.isCollection(rp)) {
                 tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
-                                   method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false });
+                                   method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false,
+                                   pinned: false, preview: false });
                 continue;
             }
             var r = backend.loadRequest(rp);
@@ -559,7 +611,15 @@ Kirigami.ApplicationWindow {
             r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
             tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
                                method: r.method, dirty: false, dataJson: JSON.stringify(r),
-                               isCollection: false, isEnvironment: false, isSettings: false });
+                               isCollection: false, isEnvironment: false, isSettings: false,
+                               pinned: false, preview: false });
+        }
+        // restaura o estado "fixada" (sobrevive ao restart)
+        for (var k = 0; k < tabsModel.count; k++) {
+            if (pinnedList.indexOf(tabsModel.get(k).relPath) >= 0) {
+                tabsModel.setProperty(k, "pinned", true);
+                tabsModel.setProperty(k, "preview", false);
+            }
         }
     }
     // ---- reordenar abas por drag and drop ----
@@ -629,7 +689,8 @@ Kirigami.ApplicationWindow {
         if (existing >= 0) { switchTab(existing); return; }
         snapshotCurrent();
         tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
-                           method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false });
+                           method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false,
+                           pinned: false, preview: false });
         currentTab = tabsModel.count - 1;
         loadCollection(relPath);
     }
@@ -814,9 +875,12 @@ Kirigami.ApplicationWindow {
         backend.send(collectRequest(), collectionOf(t.relPath));
     }
     function persistSession() {
-        var paths = [];
-        for (var i = 0; i < tabsModel.count; i++) paths.push(tabsModel.get(i).relPath);
-        settings.saveSession(paths, currentTab);
+        // só abas fixadas voltam na próxima sessão (preview/não-fixadas são transientes)
+        var arr = [];
+        for (var i = 0; i < tabsModel.count; i++) arr.push(tabsModel.get(i));
+        var s = Util.sessionPaths(arr, currentTab);
+        settings.saveSession(s.paths, s.current);
+        settings.savePinnedTabs(s.paths);   // tudo que sobra é fixado → restore reaplica o pino
     }
 
     function hasDirtyTabs() {
@@ -943,10 +1007,9 @@ Kirigami.ApplicationWindow {
             var idx = settings.openTabIndex;
             if (idx < 0 || idx >= tabsModel.count) idx = 0;
             switchTab(idx);
-        } else if (treeModel.count > 0) {
-            var e = treeModel.get(0);
-            if (e.isFolder) openCollection(e.relPath); else openRequest(e.relPath);
         }
+        // sem abas salvas: ficamos no placeholder "Nenhum request aberto"
+        // (não abrimos a primeira coleção da árvore automaticamente)
     }
 
     property var shortcutDefs: [
@@ -1282,9 +1345,10 @@ Kirigami.ApplicationWindow {
                                     delegate: Item {
                                         id: tabItem
                                         height: tabRow.height
-                                        width: tabContent.implicitWidth + 52
+                                        width: tabContent.implicitWidth + 74
                                         property bool isTabDelegate: true
                                         opacity: (root.dragging && root.tabDragIndex === index) ? 0.4 : 1
+                                        HoverHandler { id: tabHover }
                                         Rectangle {
                                             anchors.fill: parent
                                             color: index === root.currentTab ? Kirigami.Theme.backgroundColor : "transparent"
@@ -1324,7 +1388,7 @@ Kirigami.ApplicationWindow {
                                                 color: Kirigami.Theme.textColor
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
-                                            Label { text: model.name; font.bold: index === root.currentTab; elide: Text.ElideRight; Layout.maximumWidth: 180 }
+                                            Label { text: model.name; font.bold: index === root.currentTab; font.italic: model.preview === true; elide: Text.ElideRight; Layout.maximumWidth: 180 }
                                             Kirigami.Icon {
                                                 visible: model.dirty
                                                          || (model.isCollection && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty))
@@ -1378,8 +1442,27 @@ Kirigami.ApplicationWindow {
                                                 else root.switchTab(index);
                                             }
                                         }
+                                        Kirigami.Icon {
+                                            id: pinBtn
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: model.pinned === true ? 6 : 26
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            implicitWidth: 20
+                                            implicitHeight: 20
+                                            source: "pin"
+                                            // hover azul (como o × fica vermelho); fixada já aparece azul
+                                            color: (pinHover.hovered || model.pinned === true) ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                                            opacity: (pinHover.hovered || model.pinned === true) ? 1.0 : 0.6
+                                            visible: !model.isCollection && !model.isEnvironment && !model.isSettings
+                                                     && (tabHover.hovered || model.pinned === true)
+                                            HoverHandler { id: pinHover }
+                                            TapHandler { onTapped: root.pinTab(index) }
+                                            // ponytail: NÃO usar ToolTip.visible:hovered aqui — o popup
+                                            // do tooltip rouba o clique (pino e × deixam de responder)
+                                        }
                                         Label {
                                             id: closeBtn
+                                            visible: model.pinned !== true
                                             anchors.right: parent.right
                                             anchors.rightMargin: 6
                                             anchors.verticalCenter: parent.verticalCenter
@@ -1390,8 +1473,7 @@ Kirigami.ApplicationWindow {
                                             opacity: closeHover.hovered ? 1.0 : 0.6
                                             HoverHandler { id: closeHover }
                                             TapHandler { onTapped: root.closeTab(index) }
-                                            ToolTip.text: "Fechar aba"
-                                            ToolTip.visible: closeHover.hovered
+                                            // idem pino: tooltip aqui rouba o clique do ×
                                         }
                                     }
                                 }
@@ -1522,6 +1604,12 @@ Kirigami.ApplicationWindow {
                                     KvTable { model: headersModel; keyPlaceholder: "Cabeçalho"; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
 
                                     ColumnLayout {
+                                        // O StackLayout limita o filho atual pela altura máxima que
+                                        // calcula (newSize.expandedTo(min).boundedTo(max)) e, num
+                                        // ColumnLayout aninhado com ScrollView, esse máximo sai
+                                        // pequeno — o corpo do payload ficava "espremido" ao trocar
+                                        // de aba. Liberar o máximo resolve. Ver DESIGN.md.
+                                        Layout.maximumHeight: Number.POSITIVE_INFINITY
                                         spacing: Kirigami.Units.smallSpacing
                                         RowLayout {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
@@ -1655,6 +1743,14 @@ Kirigami.ApplicationWindow {
                                                 }
                                             }
                                         }
+                                        // com maximumHeight liberado, o ColumnLayout ocupa a altura
+                                        // inteira do StackLayout; sem filho que preencha, o Qt
+                                        // redistribui o espaço e o cabeçalho "estica". Este filler
+                                        // (só em "nenhum") âncora o topo, como na Autenticação.
+                                        Item {
+                                            Layout.fillHeight: true
+                                            visible: bodyTypeBox.currentValue === "none"
+                                        }
                                     }
 
                                     ColumnLayout {
@@ -1764,6 +1860,12 @@ Kirigami.ApplicationWindow {
                                                     opacity: 0.6
                                                     wrapMode: Text.WordWrap
                                                     Layout.fillWidth: true
+                                                }
+                                                // sem tabela (count 0) nada preenche; o filler segura
+                                                // os labels no topo em vez de redistribuir o espaço.
+                                                Item {
+                                                    Layout.fillHeight: true
+                                                    visible: requestResolvedTable.count === 0
                                                 }
                                             }
                                         }
@@ -2696,7 +2798,7 @@ Kirigami.ApplicationWindow {
     // ---- renomear ----
     Dialog {
         id: renameDialog
-        title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 150
+        title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 175
         property string relPath: ""
         function openFor(p) {
             relPath = p;
@@ -2988,7 +3090,14 @@ Kirigami.ApplicationWindow {
             }
         }
         function onCollectionsChanged() { root.reloadTree(); }
-        function onEnvironmentsChanged() { root.reloadEnvs(); root.refreshResolved(); }
+        // recarrega também as variáveis em edição (se não houver alterações não salvas),
+        // para o escopo refletir um rename de coleção sem fechar a aba
+        function onEnvironmentsChanged() {
+            root.reloadEnvs();
+            root.refreshResolved();
+            if (!envScreen.envVarsDirty)
+                envScreen.loadVars(envScreen.editing);
+        }
     }
 
     // ---- paleta de comandos (Ctrl+K) ----

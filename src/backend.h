@@ -58,6 +58,8 @@ public:
     // move um request ou pasta para dentro de toFolder ("" = raiz)
     Q_INVOKABLE bool moveEntry(const QString &from, const QString &toFolder);
     // renomeia mantendo o mesmo pai (newName é o nome-base, sem .json)
+    // renomear uma coleção (pasta de topo) também reaponta o escopo das variáveis
+    // de ambiente que a referenciam
     Q_INVOKABLE bool renameEntry(const QString &relPath, const QString &newName);
     // duplica request ou pasta como "<nome> copy"
     Q_INVOKABLE bool duplicateEntry(const QString &relPath);
@@ -132,6 +134,8 @@ private:
     void addHistory(const QVariantMap &entry);
     void loadEnvironments();
     void saveEnvironments() const;
+    // troca oldName por newName no escopo "collections" das variáveis de ambiente
+    bool renameCollectionScope(const QString &oldName, const QString &newName);
     // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
     QList<ResolvedVar> variableChain(const QString &collection, const QVariantList &requestVars) const;
     // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
