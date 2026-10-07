@@ -14,6 +14,10 @@ Regra de ouro: se um elemento se repete (ou pode se repetir) em mais de um lugar
 - **Padding de um painel/aba**: `Kirigami.Units.largeSpacing` em todas as bordas.
 - **Entre controles** e margens internas de linhas/cabeçalhos de tabela: `Kirigami.Units.smallSpacing`.
 - **Colunas de tabela**: espaçamento `smallSpacing` (no `KvTable`, `colSpacing`).
+- **Rótulo de estado vazio abaixo de um `ComboBox`** ("Sem corpo.", "Sem autenticação."): a
+  distância vertical vem **só** do `spacing` do `ColumnLayout` (`smallSpacing`) — use apenas
+  `Layout.leftMargin` para alinhar. **Não** some `Layout.topMargin` (o "Sem corpo." somava e
+  ficava com o dobro da distância do "Sem autenticação.").
 
 ### ⚠️ `StackLayout` ignora `Layout.margins`
 Filhos de um `StackLayout` **não** respeitam `Layout.margins` (verificado). Para dar respiro:

@@ -22,6 +22,7 @@ TextArea {
 
     VarCompleter {
         id: completer
+        objectName: "varCompleter"
         anchors.fill: parent
         target: root
         resolved: root.resolved

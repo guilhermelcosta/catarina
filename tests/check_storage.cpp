@@ -62,6 +62,14 @@ int main(int argc, char **argv)
                                {QStringLiteral("id"), 7}})
           == QStringLiteral("http://x/u/7"));
     CHECK(Backend::substitute(QStringLiteral("nada"), {}) == QStringLiteral("nada"));
+    // aceita espaços dentro de {{ nome }} (mesmo padrão de variableRefs)
+    CHECK(Backend::substitute(QStringLiteral("{{ base }}/{{id}}"),
+                              {{QStringLiteral("base"), QStringLiteral("http://x")},
+                               {QStringLiteral("id"), 7}})
+          == QStringLiteral("http://x/7"));
+    // nome que não existe fica literal, não vira vazio
+    CHECK(Backend::substitute(QStringLiteral("{{nao}}"), {{QStringLiteral("x"), QStringLiteral("1")}})
+          == QStringLiteral("{{nao}}"));
 
     CHECK(Backend::defaultContentType(QStringLiteral("json")) == QStringLiteral("application/json"));
     CHECK(Backend::defaultContentType(QStringLiteral("urlencoded"))
@@ -229,6 +237,87 @@ int main(int argc, char **argv)
         CHECK(chainRef.value(QStringLiteral("variavel-1")).toString() == QStringLiteral("valor 1"));
         CHECK(chainRef.value(QStringLiteral("valor 1")).toString() == QStringLiteral("valor 2"));
         CHECK(chainRef.value(QStringLiteral("valor 2")).toString() == QStringLiteral("valor 3"));
+    }
+
+    // cadeia longa (5 níveis), como a do app: cada nome referencia o nome já resolvido
+    // da anterior
+    {
+        const QVariantMap c5 = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
+             item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
+             item(QStringLiteral("{{valor 1}}"), QStringLiteral("novo valor")),
+             item(QStringLiteral("{{valor 2}}"), QStringLiteral("teste")),
+             item(QStringLiteral("{{novo valor}}"), QStringLiteral("piriri"))});
+        CHECK(c5.value(QStringLiteral("variavel-1")).toString() == QStringLiteral("valor 1"));
+        CHECK(c5.value(QStringLiteral("valor 1")).toString() == QStringLiteral("valor 2"));
+        CHECK(c5.value(QStringLiteral("valor 2")).toString() == QStringLiteral("novo valor"));
+        CHECK(c5.value(QStringLiteral("novo valor")).toString() == QStringLiteral("teste"));
+        CHECK(c5.value(QStringLiteral("teste")).toString() == QStringLiteral("piriri"));
+        CHECK(!c5.contains(QStringLiteral("{{novo valor}}")));
+
+        // mesma cadeia pelo caminho da UI (variablesState -> resolved)
+        const QVariantMap req5{
+            {QStringLiteral("vars"),
+             QVariantList{item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
+                          item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
+                          item(QStringLiteral("{{valor 1}}"), QStringLiteral("novo valor")),
+                          item(QStringLiteral("{{valor 2}}"), QStringLiteral("teste")),
+                          item(QStringLiteral("{{novo valor}}"), QStringLiteral("piriri"))}}};
+        bool seenTeste = false, seenRaw = false;
+        for (const QVariant &v : b.variablesState(req5, QStringLiteral("colA"))
+                                     .value(QStringLiteral("resolved")).toList()) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("name")) == QStringLiteral("teste")) {
+                seenTeste = true;
+                CHECK(m.value(QStringLiteral("value")).toString() == QStringLiteral("piriri"));
+            }
+            if (m.value(QStringLiteral("name")) == QStringLiteral("{{novo valor}}"))
+                seenRaw = true;
+        }
+        CHECK(seenTeste && !seenRaw);
+    }
+
+    // reprodução do caso do app: global "teste" + vars simples + {{novo valor}} por último
+    {
+        b.deleteEnvironment(QStringLiteral("__echain__"));
+        CHECK(b.saveEnvironment(QStringLiteral("__echain__"),
+            {QVariantMap{{QStringLiteral("name"), QStringLiteral("teste")},
+                         {QStringLiteral("value"), QStringLiteral("testevalor")}}}));
+        b.setActiveEnvironment(QStringLiteral("__echain__"));
+        const QVariantMap ce = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
+             item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
+             item(QStringLiteral("{{valor 1}}"), QStringLiteral("novo valor")),
+             item(QStringLiteral("{{valor 2}}"), QStringLiteral("teste")),
+             item(QStringLiteral("teste24"), QStringLiteral("123")),
+             item(QStringLiteral("teste343"), QStringLiteral("123")),
+             item(QStringLiteral("teste4534"), QStringLiteral("134")),
+             item(QStringLiteral("fgdg"), QStringLiteral("2313")),
+             item(QStringLiteral("fgd"), QStringLiteral("3232")),
+             item(QStringLiteral("{{novo valor}}"), QStringLiteral("apirito"))});
+        // "novo valor" (Row4) = "teste" ⇒ {{novo valor}} vira "teste" (sobrepõe a global)
+        CHECK(!ce.contains(QStringLiteral("{{novo valor}}")));
+        CHECK(ce.value(QStringLiteral("novo valor")).toString() == QStringLiteral("teste"));
+        CHECK(ce.value(QStringLiteral("teste")).toString() == QStringLiteral("apirito"));
+        b.deleteEnvironment(QStringLiteral("__echain__"));
+    }
+
+    // dados reais (arquivo do app): nomes com TAB nas pontas/dentro das chaves não
+    // podem quebrar a cadeia — o nome tem que ser aparado antes de virar chave
+    {
+        const QVariantMap ct = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
+             item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
+             item(QStringLiteral("{{valor 1}}"), QStringLiteral("novo valor")),
+             item(QStringLiteral("{{valor 2}}\t"), QStringLiteral("teste")),
+             item(QStringLiteral("{{novo valor\t}}\t"), QStringLiteral("apirito"))});
+        CHECK(!ct.contains(QStringLiteral("{{novo valor\t}}\t")));
+        CHECK(ct.value(QStringLiteral("valor 2")).toString() == QStringLiteral("novo valor"));
+        CHECK(ct.value(QStringLiteral("novo valor")).toString() == QStringLiteral("teste"));
+        CHECK(ct.value(QStringLiteral("teste")).toString() == QStringLiteral("apirito"));
     }
 
     // missingVariables varre url, body, headers, fields e auth
@@ -440,6 +529,60 @@ int main(int argc, char **argv)
         CHECK(b4.effectiveVariables(QStringLiteral("__scopeNew__"), {}).contains(QStringLiteral("s")));
         b4.deleteEnvironment(QStringLiteral("__e2__"));
         b.deleteEntry(QStringLiteral("__scopeNew__"));
+    }
+
+    // ---------------------------------------------------------------- storageDir
+    // trocar o diretório de coleções persiste e outra instância enxerga
+    {
+        const QString d2 = tmp.path() + QStringLiteral("/collections2");
+        Backend b5;
+        b5.setStorageDir(d2);
+        CHECK(b5.storageDir() == d2);
+        Backend b6;
+        CHECK(b6.storageDir() == d2);                                    // persistiu
+        b6.setStorageDir(tmp.path() + QStringLiteral("/collections"));   // restaura
+    }
+
+    // ---------------------------------------------------------------- duplicar pasta
+    {
+        b.deleteEntry(QStringLiteral("__dupf__"));
+        b.createFolder(QStringLiteral("__dupf__/sub"));
+        b.saveRequest(QStringLiteral("__dupf__/sub/r"),
+                      {{QStringLiteral("method"), QStringLiteral("POST")}});
+        CHECK(b.duplicateEntry(QStringLiteral("__dupf__/sub")));
+        CHECK(b.loadRequest(QStringLiteral("__dupf__/sub copy/r"))
+                  .value(QStringLiteral("method")).toString() == QStringLiteral("POST"));
+        b.deleteEntry(QStringLiteral("__dupf__"));
+    }
+
+    // ---------------------------------------------------------------- mover (casos-limite)
+    {
+        b.deleteEntry(QStringLiteral("__mv2__"));
+        b.createFolder(QStringLiteral("__mv2__/a/b"));
+        b.saveRequest(QStringLiteral("__mv2__/a/r"), {{QStringLiteral("method"), QStringLiteral("GET")}});
+        CHECK(!b.moveEntry(QStringLiteral("__mv2__/a"), QStringLiteral("__mv2__/a/b"))); // p/ dentro de si
+        b.createFolder(QStringLiteral("__mv2__/c/a"));                                   // colisão no destino
+        CHECK(!b.moveEntry(QStringLiteral("__mv2__/a"), QStringLiteral("__mv2__/c")));
+        b.deleteEntry(QStringLiteral("__mv2__"));
+    }
+
+    // ---------------------------------------------------------------- segredo que referencia variável
+    {
+        b.deleteEnvironment(QStringLiteral("__eref__"));
+        CHECK(b.saveEnvironment(QStringLiteral("__eref__"),
+            {QVariantMap{{QStringLiteral("name"), QStringLiteral("base")},
+                         {QStringLiteral("value"), QStringLiteral("http://h")}},
+             QVariantMap{{QStringLiteral("name"), QStringLiteral("tok")},
+                         {QStringLiteral("value"), QStringLiteral("{{base}}/s3cr3t")},
+                         {QStringLiteral("secret"), true}}}));
+        b.setActiveEnvironment(QStringLiteral("__eref__"));
+        const QVariantMap eff3 = b.effectiveVariables(QStringLiteral("colA"), {});
+        CHECK(eff3.value(QStringLiteral("tok")).toString() == QStringLiteral("http://h/s3cr3t"));
+        QFile f3(b.storageDir() + QStringLiteral("/.katarina/environments.json"));
+        CHECK(f3.open(QIODevice::ReadOnly));
+        CHECK(!QString::fromUtf8(f3.readAll()).contains(QStringLiteral("s3cr3t")));   // segredo não vaza
+        f3.close();
+        b.deleteEnvironment(QStringLiteral("__eref__"));
     }
 
     // ---------------------------------------------------------------- histórico

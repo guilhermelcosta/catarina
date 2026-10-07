@@ -53,6 +53,25 @@ TestCase {
         id: rvt
         vars: [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }]
     }
+    // ramos do KvTable exercitados por testes (segredo, arquivo, filtro de linha)
+    ListModel {
+        id: secretModel
+        ListElement { name: "s"; value: "v"; enabled: true; secret: true; type: "text"; fileName: "" }
+    }
+    ListModel {
+        id: fileModel
+        ListElement { name: "f"; value: "caminho"; enabled: true; secret: false; type: "file"; fileName: "/tmp/a.txt" }
+    }
+    ListModel {
+        id: filterModel
+        ListElement { name: "f"; value: "1"; enabled: true }
+    }
+    KvTable { id: kvSecret; model: secretModel; secretColumn: true; width: 800; height: 300 }
+    KvTable { id: kvFiles; model: fileModel; allowFiles: true; width: 800; height: 300 }
+    KvTable { id: kvFilter; model: filterModel; width: 800; height: 200
+              rowFilter: function (i) { return false; } }
+    VarField { id: vf; resolved: vfVars }
+    property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
     // a visualização de variáveis efetivas não mostra as desabilitadas
     function test_resolved_vars_filters_disabled() {
@@ -148,6 +167,7 @@ TestCase {
     }
 
     function test_kvtable_rows() {
+        kvModel.clear();
         kvModel.append({ name: "a", value: "1", enabled: true });
         wait(50);
         var lv = findChild(kv, "kvList");
@@ -341,5 +361,75 @@ TestCase {
         roleModelCedo.setProperty(0, "pinned", true);
         wait(50);
         compare(roleViewCedo.itemAtIndex(0).text, "true");         // delegate acompanha
+    }
+
+    // VarField embute o VarCompleter e propaga `resolved` (o bug do font.family
+    // passou batido por não haver teste de instanciação)
+    function test_varfield_wiring() {
+        var c = findChild(vf, "varCompleter");
+        verify(c !== null, "VarCompleter não anexado ao VarField");
+        verify(c.target === vf, "target do completer deve ser o VarField");
+        compare(c.resolved.length, 1);
+        compare(c.resolved[0].name, "x");
+    }
+
+    // coluna Segredo: campo mascarado (echoMode Password) + editor normal associado
+    function test_kvtable_secret_column() {
+        wait(50);
+        var lv = findChild(kvSecret, "kvList");
+        verify(lv !== null);
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        compare(row.children.length, 9, "nº de filhos do delegate");
+        compare(row.children[3].echoMode, TextInput.Password, "campo mascarado");
+        compare(row.children[4].placeholderText, "valor", "editor normal");
+    }
+
+    // modo campos: botão de arquivo no lugar do editor de valor
+    function test_kvtable_file_column() {
+        wait(50);
+        var lv = findChild(kvFiles, "kvList");
+        verify(lv !== null);
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        compare(row.children[2].icon.name, "document-open", "botão de arquivo");
+    }
+
+    function test_kvtable_row_filter() {
+        filterModel.clear();
+        filterModel.append({ name: "f", value: "1", enabled: true });
+        wait(50);
+        var lv = findChild(kvFilter, "kvList");
+        verify(lv !== null);
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        compare(row.shown, false, "linha filtrada");
+        compare(row.height, 0, "altura zero quando filtrada");
+        filterModel.clear();
+    }
+
+    function test_util_q() {
+        compare(Util.q("simples"), "'simples'");
+        compare(Util.q("a'b"), "'a'\\''b'");   // escapa apóstrofo pro shell
+    }
+
+    function test_util_tokenizeCurl() {
+        compare(JSON.stringify(Util.tokenizeCurl("a 'b c' d")), '["a","b c","d"]');
+        compare(JSON.stringify(Util.tokenizeCurl('x "y z"')), '["x","y z"]');
+        compare(JSON.stringify(Util.tokenizeCurl("a \\\nb")), '["a","b"]');   // continuação de linha
+    }
+
+    function test_jsontree_empty() {
+        compare(tree.previewOf([], "array"), "[0]");
+        compare(tree.previewOf({}, "object"), "{0}");
+        compare(tree.typeOf([]), "array");
+        compare(tree.typeOf({}), "object");
+    }
+
+    function test_jsontree_deep() {
+        tree.load('{"a":{"b":{"c":1}}}');
+        wait(50);
+        compare(tree.isOpenAt("$.a"), true);
+        compare(tree.isOpenAt("$.a.b"), true);   // depth 1 ainda abre por padrão
     }
 }

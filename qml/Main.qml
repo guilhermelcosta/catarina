@@ -1645,7 +1645,6 @@ Kirigami.ApplicationWindow {
                                             text: "Sem corpo."
                                             opacity: 0.7
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.topMargin: Kirigami.Units.smallSpacing
                                         }
                                         KvTable {
                                             Layout.fillWidth: true
@@ -1816,12 +1815,17 @@ Kirigami.ApplicationWindow {
                                         Item { Layout.fillHeight: true }
                                     }
 
-                                    ColumnLayout {
-                                        spacing: Kirigami.Units.smallSpacing
+                                    // variáveis editáveis (topo) + efetivas (embaixo), com divisor
+                                    // arrastável — no máximo metade da altura da aba.
+                                    SplitView {
+                                        id: requestVarsSplit
+                                        orientation: Qt.Vertical
+                                        handle: SplitHandle {}
+
                                         KvTable {
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            Layout.minimumHeight: Kirigami.Units.gridUnit * 3
+                                            SplitView.fillWidth: true
+                                            SplitView.fillHeight: true
+                                            SplitView.minimumHeight: Kirigami.Units.gridUnit * 3
                                             model: requestVarsModel
                                             keyPlaceholder: "variável"
                                             secretColumn: true
@@ -1830,15 +1834,20 @@ Kirigami.ApplicationWindow {
                                             onAddRequested: requestVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
                                             onEdited: root.markDirty()
                                         }
-                                        Kirigami.Separator { Layout.fillWidth: true }
                                         Item {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: 190
-                                            Layout.minimumHeight: 60
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.rightMargin: Kirigami.Units.smallSpacing
+                                            id: requestResolvedPane
+                                            // abre neste tamanho e não deixa encolher abaixo dele
+                                            readonly property int defaultHeight: 190
+                                            SplitView.fillWidth: true
+                                            SplitView.preferredHeight: defaultHeight
+                                            SplitView.minimumHeight: defaultHeight
+                                            // teto = metade da altura; guarda o 0 do primeiro layout
+                                            SplitView.maximumHeight: requestVarsSplit.height > 0
+                                                                    ? requestVarsSplit.height / 2 : 10000
                                             ColumnLayout {
                                                 anchors.fill: parent
+                                                anchors.leftMargin: Kirigami.Units.smallSpacing
+                                                anchors.rightMargin: Kirigami.Units.smallSpacing
                                                 spacing: Kirigami.Units.smallSpacing
                                                 Label { text: "Variáveis efetivas"; font.bold: true; Layout.topMargin: Kirigami.Units.smallSpacing }
                                                 ResolvedVarsTable {

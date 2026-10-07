@@ -99,9 +99,21 @@ QString Backend::activeEnvironment() const { return m_activeEnv; }
 
 QString Backend::substitute(const QString &text, const QVariantMap &vars)
 {
-    QString out = text;
-    for (auto it = vars.constBegin(); it != vars.constEnd(); ++it)
-        out.replace(QStringLiteral("{{") + it.key() + QStringLiteral("}}"), it.value().toString());
+    // Um passe só, aceitando espaços em "{{ nome }}" (mesmo padrão de variableRefs).
+    // Nome que não resolve fica literal (não some nem vira vazio).
+    static const QRegularExpression re(QStringLiteral("\\{\\{\\s*([^{}]+?)\\s*\\}\\}"));
+    QString out;
+    out.reserve(text.size());
+    int last = 0;
+    auto it = re.globalMatch(text);
+    while (it.hasNext()) {
+        const QRegularExpressionMatch m = it.next();
+        out += text.mid(last, m.capturedStart() - last);
+        const QString name = m.captured(1);
+        out += vars.contains(name) ? vars.value(name).toString() : m.captured(0);
+        last = m.capturedEnd();
+    }
+    out += text.mid(last);
     return out;
 }
 
@@ -349,7 +361,9 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     auto add = [&](const QVariantList &vars, const QString &source, bool global) {
         for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();
-            const QString name = m.value(QStringLiteral("name")).toString();
+            // nome sempre "aparado": espaços/tabs nas pontas quebram a referência
+            // {{nome}} (o substitute captura o nome já sem espaços). Ver check_storage.
+            const QString name = m.value(QStringLiteral("name")).toString().trimmed();
             if (name.isEmpty())
                 continue;
             if (global) {
@@ -390,7 +404,7 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
         for (ResolvedVar &r : chain) {
             if (!r.enabled)
                 continue;
-            const QString nn = substitute(r.name, vals);
+            const QString nn = substitute(r.name, vals).trimmed();
             const QString nv = substitute(r.value, vals);
             if (nn != r.name) { r.name = nn; changed = true; }
             if (nv != r.value) { r.value = nv; changed = true; }
