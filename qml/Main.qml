@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import QtWebEngine
 import org.kde.kirigami as Kirigami
 
 Kirigami.ApplicationWindow {
@@ -42,12 +41,9 @@ Kirigami.ApplicationWindow {
     property var closedTabs: []
     property var responses: ({})       // relPath -> { status, statusText, time, size, headers, body }
     property bool sending: false
-    property bool responseIsHtml: false
-    property string responseHtml: ""
-    property string responseHeadersText: ""
+    property var responseHeaders: []
     property var netMeta: ({})
     property string responseHint: ""
-    property bool htmlPreviewOn: false
 
     // ---- ambientes ----
     property var envList: []
@@ -88,6 +84,7 @@ Kirigami.ApplicationWindow {
         default:       return Kirigami.Theme.textColor;
         }
     }
+    function methodBg(m) { var c = methodColor(m); return Qt.rgba(c.r, c.g, c.b, 0.18); }
     function fmtSize(n) {
         if (n < 1024) return n + " B";
         if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
@@ -170,15 +167,17 @@ Kirigami.ApplicationWindow {
         if (selectedPath.length === 0) return "";
         return selectedIsFolder ? selectedPath : parentOf(selectedPath);
     }
+    function entryOf(o) {
+        return { name: o.name !== undefined ? o.name : "",
+                 value: o.value !== undefined ? o.value : "",
+                 enabled: o.enabled !== undefined ? o.enabled : true,
+                 secret: o.secret === true, secretId: o.secretId !== undefined ? o.secretId : "",
+                 type: o.type !== undefined ? o.type : "text",
+                 fileName: o.fileName !== undefined ? o.fileName : "" };
+    }
     function modelToArray(model) {
         var out = [];
-        for (var i = 0; i < model.count; i++) {
-            var m = model.get(i);
-            out.push({ name: m.name, value: m.value, enabled: m.enabled !== false,
-                       secret: m.secret === true, secretId: m.secretId !== undefined ? m.secretId : "",
-                       type: m.type !== undefined ? m.type : "text",
-                       fileName: m.fileName !== undefined ? m.fileName : "" });
-        }
+        for (var i = 0; i < model.count; i++) out.push(entryOf(model.get(i)));
         return out;
     }
     function currentAuth() {
@@ -194,33 +193,21 @@ Kirigami.ApplicationWindow {
                  auth: currentAuth(),
                  vars: modelToArray(requestVarsModel) };
     }
-    function fillModels(list, model, withExtras) {
+    function fillModels(list, model) {
         model.clear();
         var a = list !== undefined ? list : [];
-        for (var i = 0; i < a.length; i++) {
-            var it = {
-                name: a[i].name !== undefined ? a[i].name : "",
-                value: a[i].value !== undefined ? a[i].value : "",
-                enabled: a[i].enabled !== undefined ? a[i].enabled : true
-            };
-            if (withExtras) {
-                it.secret = a[i].secret === true;
-                it.secretId = a[i].secretId !== undefined ? a[i].secretId : "";
-                it.type = a[i].type !== undefined ? a[i].type : "text";
-                it.fileName = a[i].fileName !== undefined ? a[i].fileName : "";
-            }
-            model.append(it);
-        }
+        for (var i = 0; i < a.length; i++)
+            model.append(entryOf(a[i]));
     }
 
     function applyRequest(r, relPath) {
         var idx = methodBox.find(r.method !== undefined ? r.method : "GET");
         methodBox.currentIndex = idx >= 0 ? idx : 0;
         urlField.text = r.url !== undefined ? r.url : "";
-        fillModels(r.params, paramsModel, false);
-        fillModels(r.headers, headersModel, false);
-        fillModels(r.fields, fieldsModel, true);
-        fillModels(r.vars, requestVarsModel, true);
+        fillModels(r.params, paramsModel);
+        fillModels(r.headers, headersModel);
+        fillModels(r.fields, fieldsModel);
+        fillModels(r.vars, requestVarsModel);
         bodyArea.text = r.body !== undefined ? r.body : "";
         var bt = bodyTypeBox.indexOfValue(r.bodyType !== undefined ? r.bodyType : "none");
         bodyTypeBox.currentIndex = bt >= 0 ? bt : 0;
@@ -324,29 +311,14 @@ Kirigami.ApplicationWindow {
             Math.max(0, responseBody.contentHeight - bodyScroll.height + Kirigami.Units.smallSpacing)));
         bodyScroll.contentItem.contentX = 0;
     }
-    function loadHtmlPreview() {
-        if (!root.responseIsHtml || root.responseHtml.length === 0) return;
-        htmlPreview.loadHtml(root.responseHtml, "about:blank");
-    }
     function setResponseBody(body) {
         responseBody.text = body;
-        root.responseIsHtml = root.looksLikeHtml(body);
-        root.responseHtml = root.responseIsHtml ? body : "";
-        root.htmlPreviewOn = false;      // desligado ao chegar resposta nova
-    }
-    function looksLikeHtml(body) {
-        var t = body.trim().toLowerCase();
-        if (t.length === 0) return false;
-        return t.indexOf("<!doctype html") === 0 || t.indexOf("<html") === 0
-            || t.indexOf("<head") === 0 || t.indexOf("<body") === 0
-            || t.indexOf("<div") === 0 || t.indexOf("<meta") === 0
-            || (t.indexOf("</") >= 0 && t.indexOf("<") === 0);
     }
     function restoreResponse(relPath) {
         var r = relPath.length > 0 ? responses[relPath] : undefined;
         if (r === undefined) {
             setResponseBody("");
-            responseHeadersText = "";
+            responseHeaders = [];
             responseCookies = "";
             jsonTree.load("");
             statusLabel.text = "";
@@ -356,7 +328,7 @@ Kirigami.ApplicationWindow {
             statusLabel.text = r.status + " " + r.statusText;
             timeLabel.text = r.time;
             sizeLabel.text = r.size;
-            responseHeadersText = r.headers;
+            responseHeaders = r.headers !== undefined ? r.headers : [];
             responseCookies = r.cookies !== undefined ? r.cookies : "";
             setResponseBody(r.body);
             jsonTree.load(r.body);
@@ -438,16 +410,6 @@ Kirigami.ApplicationWindow {
         openRequest(closedTabs.pop());
     }
 
-    function openPath(relPath) {
-        for (var i = 0; i < treeModel.count; i++) {
-            var e = treeModel.get(i);
-            if (e.relPath === relPath) {
-                if (e.isFolder) openCollection(relPath); else openRequest(relPath);
-                return;
-            }
-        }
-        openCollection(relPath);
-    }
     function openCollection(relPath) {
         reloadTree();
         collectionPath = relPath;
@@ -467,8 +429,8 @@ Kirigami.ApplicationWindow {
             collectionVarsModel.clear();       // pasta não tem variáveis: elas pertencem à coleção
             collectionHeadersModel.clear();
         } else {
-            fillModels(backend.collectionVariables(relPath), collectionVarsModel, true);
-            fillModels(backend.collectionHeaders(relPath), collectionHeadersModel, false);
+            fillModels(backend.collectionVariables(relPath), collectionVarsModel);
+            fillModels(backend.collectionHeaders(relPath), collectionHeadersModel);
         }
         collectionResolvedVars = backend.resolvedVariables(collectionOf(relPath), []);
         collectionVarsDirty = false;
@@ -562,7 +524,7 @@ Kirigami.ApplicationWindow {
         if (urlField.text.length === 0) { notify("Informe uma URL"); return; }
         if (settings.autoSaveOnSend && currentDirty) saveCurrent();
         var t = tabsModel.get(currentTab);
-        responseBody.text = ""; responseHeadersText = "";
+        responseBody.text = ""; responseHeaders = [];
         backend.send(collectRequest(), collectionOf(t.relPath));
     }
     function persistSession() {
@@ -639,24 +601,10 @@ Kirigami.ApplicationWindow {
             curlImportDialog.close();
         }
     }
-    function b64(s) {
-        var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        var str = unescape(encodeURIComponent(s)), out = "", i = 0;
-        while (i < str.length) {
-            var c1 = str.charCodeAt(i++);
-            var c2 = i < str.length ? str.charCodeAt(i++) : NaN;
-            var c3 = i < str.length ? str.charCodeAt(i++) : NaN;
-            var e1 = c1 >> 2;
-            var e2 = ((c1 & 3) << 4) | (isNaN(c2) ? 0 : c2 >> 4);
-            var e3 = isNaN(c2) ? 64 : ((c2 & 15) << 2) | (isNaN(c3) ? 0 : c3 >> 6);
-            var e4 = isNaN(c3) ? 64 : c3 & 63;
-            out += chars.charAt(e1) + chars.charAt(e2)
-                 + (e3 === 64 ? "=" : chars.charAt(e3)) + (e4 === 64 ? "=" : chars.charAt(e4));
-        }
-        return out;
-    }
+    // ponytail: Qt.btoa(string) codifica UTF-8 (bom p/ Basic auth), mas está
+    // deprecado no Qt 6.11+; migrar para o overload de byte-array quando avisar.
+    function b64(s) { return Qt.btoa(s); }
     function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
-    function dq(s) { return "\"" + s.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\n/g, "\\n") + "\""; }
 
     function requestParts() {
         var r = collectRequest();
@@ -693,69 +641,13 @@ Kirigami.ApplicationWindow {
         return { method: r.method, url: r.url, headers: headers, body: hasBody ? body : "" };
     }
 
-    function exportCode(fmt) {
+    function exportCode() {
         var p = requestParts();
-        var hs = [];
-        for (var i = 0; i < p.headers.length; i++)
-            hs.push({ n: p.headers[i].name, v: p.headers[i].value });
-
-        if (fmt === "cURL") {
-            var s = "curl -X " + p.method + " " + q(p.url);
-            for (var a = 0; a < hs.length; a++) s += " \\\n  -H " + q(hs[a].n + ": " + hs[a].v);
-            if (p.body.length > 0) s += " \\\n  -d " + q(p.body);
-            return s;
-        }
-        if (fmt === "Python (requests)") {
-            var hd = "{}";
-            if (hs.length > 0) {
-                var pp = [];
-                for (var b = 0; b < hs.length; b++) pp.push(dq(hs[b].n) + ": " + dq(hs[b].v));
-                hd = "{\n    " + pp.join(",\n    ") + "\n}";
-            }
-            var ln = "import requests\n\nresp = requests.request(" + dq(p.method) + ", " + dq(p.url) + ",\n    headers=" + hd;
-            if (p.body.length > 0) ln += ",\n    data=" + dq(p.body);
-            ln += ")\nprint(resp.status_code)\nprint(resp.text)";
-            return ln;
-        }
-        if (fmt === "JavaScript (fetch)") {
-            var hd2 = "{}";
-            if (hs.length > 0) {
-                var pp2 = [];
-                for (var c = 0; c < hs.length; c++) pp2.push("      " + dq(hs[c].n) + ": " + dq(hs[c].v));
-                hd2 = "{\n" + pp2.join(",\n") + "\n    }";
-            }
-            var s2 = "const resp = await fetch(" + dq(p.url) + ", {\n  method: " + dq(p.method) + ",\n  headers: " + hd2;
-            if (p.body.length > 0) s2 += ",\n  body: " + dq(p.body);
-            return s2 + "\n});\nconsole.log(await resp.text());";
-        }
-        if (fmt === "Go") {
-            var s3 = "req, _ := http.NewRequest(" + dq(p.method) + ", " + dq(p.url);
-            s3 += (p.body.length > 0 ? ", strings.NewReader(" + dq(p.body) + ")" : ", nil") + ")\n";
-            for (var d = 0; d < hs.length; d++) s3 += "req.Header.Set(" + dq(hs[d].n) + ", " + dq(hs[d].v) + ")\n";
-            return s3 + "resp, _ := http.DefaultClient.Do(req)\ndefer resp.Body.Close()\nbody, _ := io.ReadAll(resp.Body)\nfmt.Println(string(body))";
-        }
-        if (fmt === "PHP") {
-            var s4 = "<?php\n$ch = curl_init(" + dq(p.url) + ");\n$headers = [\n";
-            for (var e = 0; e < hs.length; e++) s4 += "    " + dq(hs[e].n + ": " + hs[e].v) + ",\n";
-            s4 += "];\ncurl_setopt($ch, CURLOPT_CUSTOMREQUEST, " + dq(p.method) + ");\ncurl_setopt($ch, CURLOPT_HTTPHEADER, $headers);\n";
-            if (p.body.length > 0) s4 += "curl_setopt($ch, CURLOPT_POSTFIELDS, " + dq(p.body) + ");\n";
-            return s4 + "$resp = curl_exec($ch);\ncurl_close($ch);";
-        }
-        if (fmt === "Ruby") {
-            var s5 = "require 'net/http'\nrequire 'uri'\n\nuri = URI(" + dq(p.url) + ")\n";
-            s5 += "req = Net::HTTP::" + p.method.charAt(0) + p.method.slice(1).toLowerCase() + ".new(uri)\n";
-            for (var f = 0; f < hs.length; f++) s5 += "req[" + dq(hs[f].n) + "] = " + dq(hs[f].v) + "\n";
-            if (p.body.length > 0) s5 += "req.body = " + dq(p.body) + "\n";
-            return s5 + "puts Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |h| h.request(req) }";
-        }
-        if (fmt === "HTTPie") {
-            var s6 = "http " + p.method + " " + q(p.url);
-            for (var g = 0; g < hs.length; g++)
-                if (hs[g].n.toLowerCase() !== "content-type")
-                    s6 += " " + q(hs[g].n + ":" + hs[g].v);
-            return s6;
-        }
-        return "";
+        var hs = p.headers;
+        var s = "curl -X " + p.method + " " + q(p.url);
+        for (var a = 0; a < hs.length; a++) s += " \\\n  -H " + q(hs[a].name + ": " + hs[a].value);
+        if (p.body.length > 0) s += " \\\n  -d " + q(p.body);
+        return s;
     }
 
     function copyRequest() {
@@ -783,10 +675,6 @@ Kirigami.ApplicationWindow {
     }
 
     // ================= ciclo de vida =================
-    function hasCollection() {
-        for (var i = 0; i < treeModel.count; i++) return true;
-        return false;
-    }
     Component.onCompleted: {
         reloadTree();
         reloadEnvs();
@@ -998,7 +886,7 @@ Kirigami.ApplicationWindow {
                                 Rectangle {
                                     visible: !model.isFolder
                                     implicitWidth: badge.implicitWidth + 8; implicitHeight: 16; radius: 3
-                                    color: Qt.rgba(root.methodColor(model.method).r, root.methodColor(model.method).g, root.methodColor(model.method).b, 0.18)
+                                    color: root.methodBg(model.method)
                                     Text { id: badge; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 9; font.bold: true }
                                 }
                                 Label { Layout.fillWidth: true; text: model.name; elide: Text.ElideRight }
@@ -1137,7 +1025,7 @@ Kirigami.ApplicationWindow {
                                             spacing: 6
                                             Rectangle {
                                                 implicitWidth: tabBadge.implicitWidth + 8; implicitHeight: 14; radius: 3
-                                                color: Qt.rgba(root.methodColor(model.method).r, root.methodColor(model.method).g, root.methodColor(model.method).b, 0.18)
+                                                color: root.methodBg(model.method)
                                                 Text { id: tabBadge; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 8; font.bold: true }
                                             }
                                             Label { text: model.name; font.bold: index === root.currentTab; elide: Text.ElideRight; Layout.maximumWidth: 180 }
@@ -1328,11 +1216,12 @@ Kirigami.ApplicationWindow {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.topMargin: Kirigami.Units.smallSpacing
                                         }
-                                        FormTable {
+                                        KvTable {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             visible: bodyTypeBox.currentValue === "multipart" || bodyTypeBox.currentValue === "urlencoded"
                                             model: fieldsModel
+                                            keyPlaceholder: "campo"
                                             allowFiles: bodyTypeBox.currentValue === "multipart"
                                             onAddRequested: fieldsModel.append({ name: "", value: "", type: "text", fileName: "", enabled: true })
                                             onEdited: root.markDirty()
@@ -1633,59 +1522,25 @@ Kirigami.ApplicationWindow {
                                     StackLayout {
                                         anchors.fill: parent
                                         currentIndex: respTabBar.currentIndex
-                                        // ---- Corpo (com toggle Renderizar quando for HTML) ----
-                                        ColumnLayout {
+                                        // ---- Corpo ----
+                                        ScrollView {
+                                            id: bodyScroll
                                             Layout.fillWidth: true; Layout.fillHeight: true
-                                            spacing: 0
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                Layout.leftMargin: Kirigami.Units.smallSpacing
-                                                Layout.rightMargin: Kirigami.Units.smallSpacing
-                                                Layout.topMargin: Kirigami.Units.smallSpacing
-                                                visible: root.responseIsHtml
-                                                spacing: Kirigami.Units.smallSpacing
-                                                CheckBox {
-                                                    text: "Renderizar"
-                                                    checked: root.htmlPreviewOn
-                                                    onToggled: {
-                                                        root.htmlPreviewOn = checked;
-                                                        if (checked) htmlPreview.loadHtml(root.responseHtml, "about:blank");
-                                                    }
-                                                }
-                                                Item { Layout.fillWidth: true }
-                                                Label {
-                                                    visible: root.htmlPreviewOn
-                                                    opacity: 0.6
-                                                    text: "pré-visualização HTML"
-                                                }
-                                            }
-                                            StackLayout {
-                                                Layout.fillWidth: true; Layout.fillHeight: true
-                                                currentIndex: root.htmlPreviewOn ? 1 : 0
-                                                ScrollView {
-                                                    id: bodyScroll
-                                                    Layout.fillWidth: true; Layout.fillHeight: true
-                                                    Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
-                                                    TextArea {
-                                                        id: responseBody
-                                                        readOnly: true
-                                                        font.family: "monospace"
-                                                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
-                                                        wrapMode: TextEdit.Wrap
-                                                        selectionColor: Kirigami.Theme.highlightColor
-                                                        selectedTextColor: Kirigami.Theme.highlightedTextColor
-                                                        Component.onCompleted: {
-                                                            var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
-                                                            varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
-                                                                dark ? "#98c379" : "#2e7d32",
-                                                                dark ? "#d19a66" : "#b26a00",
-                                                                dark ? "#d19a66" : "#b26a00");
-                                                        }
-                                                    }
-                                                }
-                                                WebEngineView {
-                                                    id: htmlPreview
-                                                    Layout.fillWidth: true; Layout.fillHeight: true
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
+                                            TextArea {
+                                                id: responseBody
+                                                readOnly: true
+                                                font.family: "monospace"
+                                                font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                                                wrapMode: TextEdit.Wrap
+                                                selectionColor: Kirigami.Theme.highlightColor
+                                                selectedTextColor: Kirigami.Theme.highlightedTextColor
+                                                Component.onCompleted: {
+                                                    var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
+                                                    varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
+                                                        dark ? "#98c379" : "#2e7d32",
+                                                        dark ? "#d19a66" : "#b26a00",
+                                                        dark ? "#d19a66" : "#b26a00");
                                                 }
                                             }
                                         }
@@ -1694,7 +1549,7 @@ Kirigami.ApplicationWindow {
                                             id: responseHeadersTable
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
-                                            headersText: root.responseHeadersText
+                                            headers: root.responseHeaders
                                         }
                                         ScrollView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
@@ -1704,6 +1559,7 @@ Kirigami.ApplicationWindow {
                                         NetworkView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             meta: root.netMeta
+                                            formatter: root
                                         }
                                     }
                                     // estado vazio (ainda sem resposta)
@@ -1870,7 +1726,7 @@ Kirigami.ApplicationWindow {
                                                 spacing: 6
                                                 Rectangle {
                                                     implicitWidth: rbadge.implicitWidth + 8; implicitHeight: 16; radius: 3
-                                                    color: Qt.rgba(root.methodColor(modelData.method).r, root.methodColor(modelData.method).g, root.methodColor(modelData.method).b, 0.18)
+                                                    color: root.methodBg(modelData.method)
                                                     Text { id: rbadge; anchors.centerIn: parent; text: modelData.method; color: root.methodColor(modelData.method); font.pixelSize: 9; font.bold: true }
                                                 }
                                                 Label { Layout.fillWidth: true; text: modelData.name }
@@ -2172,20 +2028,13 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: curlExportDialog
         title: "Exportar código"; anchors.centerIn: parent; modal: true; width: 640; height: 400
-        function refresh() { curlExportArea.text = root.exportCode(exportFormat.currentText); }
+        function refresh() { curlExportArea.text = root.exportCode(); }
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
-                Label { text: "Formato:" }
-                ComboBox {
-                    id: exportFormat
-                    implicitWidth: 200
-                    model: ["cURL", "Python (requests)", "JavaScript (fetch)", "Go", "PHP", "Ruby", "HTTPie"]
-                    currentIndex: Math.max(0, model.indexOf(settings.exportFormat))
-                    onActivated: { settings.exportFormat = currentText; curlExportDialog.refresh(); }
-                }
+                Label { text: "cURL"; font.bold: true }
                 Item { Layout.fillWidth: true }
                 Button {
                     icon.name: "edit-copy"; text: "Copiar"
@@ -2261,17 +2110,6 @@ Kirigami.ApplicationWindow {
                     Label { text: "Comportamento"; font.bold: true }
                     CheckBox { text: "Confirmar antes de excluir"; checked: settings.confirmDelete; onToggled: settings.confirmDelete = checked }
                     CheckBox { text: "Salvar automaticamente ao enviar"; checked: settings.autoSaveOnSend; onToggled: settings.autoSaveOnSend = checked }
-                    RowLayout {
-                        spacing: Kirigami.Units.smallSpacing
-                        Label { text: "Formato padrão de exportação:"; Layout.preferredWidth: 220 }
-                        ComboBox {
-                            id: exportFormatBox
-                            implicitWidth: 180
-                            model: ["cURL", "Python (requests)", "JavaScript (fetch)", "Go", "PHP", "Ruby", "HTTPie"]
-                            currentIndex: Math.max(0, model.indexOf(settings.exportFormat))
-                            onActivated: settings.exportFormat = currentText
-                        }
-                    }
 
                     Kirigami.Separator { Layout.fillWidth: true }
                     Label { text: "Atalhos"; font.bold: true }
@@ -2455,7 +2293,7 @@ Kirigami.ApplicationWindow {
                         spacing: 6
                         Rectangle {
                             implicitWidth: hb.implicitWidth + 8; implicitHeight: 16; radius: 3
-                            color: Qt.rgba(root.methodColor(model.method).r, root.methodColor(model.method).g, root.methodColor(model.method).b, 0.18)
+                            color: root.methodBg(model.method)
                             Text { id: hb; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 9; font.bold: true }
                         }
                         Label { Layout.fillWidth: true; text: model.url; elide: Text.ElideMiddle }
@@ -2816,21 +2654,20 @@ Kirigami.ApplicationWindow {
         }
         function onResponseReady(status, statusText, headers, body, elapsedMs, sizeBytes) {
             root.sending = false;
-            var lines = [], cookieLines = [];
+            var cookieLines = [];
             for (var i = 0; i < headers.length; i++) {
-                lines.push(headers[i].name + ": " + headers[i].value);
                 if (headers[i].name.toLowerCase() === "set-cookie")
                     cookieLines.push(headers[i].value);
             }
             var rec = { status: status, statusText: statusText, time: elapsedMs + " ms",
-                        size: root.fmtSize(sizeBytes), headers: lines.join("\n"),
+                        size: root.fmtSize(sizeBytes), headers: headers,
                         cookies: cookieLines.join("\n"), body: body };
             if (root.currentTab >= 0 && root.currentTab < tabsModel.count)
                 root.responses[tabsModel.get(root.currentTab).relPath] = rec;
             statusLabel.text = status + " " + statusText;
             timeLabel.text = rec.time;
             sizeLabel.text = rec.size;
-            responseHeadersText = rec.headers;
+            responseHeaders = rec.headers;
             responseCookies = rec.cookies;
             setResponseBody(body);
             jsonTree.load(body);

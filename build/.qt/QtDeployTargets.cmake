@@ -1,4 +1,0 @@
-set(__QT_DEPLOY_TARGET_katarina_FILE /home/guilherme/Repositories/katarina/build/bin/katarina)
-set(__QT_DEPLOY_TARGET_katarina_TYPE EXECUTABLE)
-set(__QT_DEPLOY_TARGET_check_storage_FILE /home/guilherme/Repositories/katarina/build/bin/check_storage)
-set(__QT_DEPLOY_TARGET_check_storage_TYPE EXECUTABLE)
