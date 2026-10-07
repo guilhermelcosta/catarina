@@ -32,6 +32,16 @@ TestCase {
     HeaderTable { id: ht }
     JsonTree { id: tree }
     KvTable { id: kv; model: kvModel; width: 800; height: 400 }
+    ResolvedVarsTable {
+        id: rvt
+        vars: [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }]
+    }
+
+    // a visualização de variáveis efetivas não mostra as desabilitadas
+    function test_resolved_vars_filters_disabled() {
+        compare(rvt.count, 1);
+        compare(rvt.activeVars[0].name, "a");
+    }
 
     // cabeçalho e linha precisam usar a MESMA largura por coluna (o bug era o fillWidth
     // com preferred implícito; agora usam preferred/minimum explícitos e iguais)
@@ -53,6 +63,12 @@ TestCase {
         // as três "caras" da coluna valor compartilham a mesma largura
         compare(row.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
         compare(row.children[3].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
+    }
+
+    function test_headertable_copy_text() {
+        ht.headers = [{ name: "A", value: "1" }, { name: "B", value: "2" }];
+        compare(ht.allHeadersText(), "A: 1\nB: 2");
+        ht.headers = [];
     }
 
     function test_headertable_rows() {

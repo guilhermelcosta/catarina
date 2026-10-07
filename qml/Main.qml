@@ -1525,6 +1525,7 @@ Kirigami.ApplicationWindow {
                                         spacing: Kirigami.Units.smallSpacing
                                         RowLayout {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
                                             Layout.topMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
                                             Label { text: "Tipo:" }
@@ -1660,6 +1661,7 @@ Kirigami.ApplicationWindow {
                                         spacing: Kirigami.Units.smallSpacing
                                         RowLayout {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
                                             Layout.topMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
                                             Label { text: "Tipo:" }
@@ -1729,6 +1731,7 @@ Kirigami.ApplicationWindow {
                                         KvTable {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
+                                            Layout.minimumHeight: Kirigami.Units.gridUnit * 3
                                             model: requestVarsModel
                                             keyPlaceholder: "variável"
                                             secretColumn: true
@@ -1738,39 +1741,31 @@ Kirigami.ApplicationWindow {
                                             onEdited: root.markDirty()
                                         }
                                         Kirigami.Separator { Layout.fillWidth: true }
-                                        Label {
-                                            text: "Variáveis efetivas (request > coleção > global)"
-                                            font.bold: true
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                        }
-                                        ListView {
+                                        Item {
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: 150
-                                            clip: true
-                                            model: root.resolvedVars
-                                            delegate: RowLayout {
-                                                width: ListView.view.width
+                                            Layout.preferredHeight: 190
+                                            Layout.minimumHeight: 60
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
+                                            ColumnLayout {
+                                                anchors.fill: parent
                                                 spacing: Kirigami.Units.smallSpacing
-                                                opacity: modelData.enabled === false ? 0.4 : 1
-                                                Rectangle {
-                                                    implicitWidth: srcLabel.implicitWidth + 10
-                                                    implicitHeight: 16
-                                                    radius: 3
-                                                    color: Kirigami.Theme.alternateBackgroundColor
-                                                    Text { id: srcLabel; anchors.centerIn: parent; text: modelData.source; font.pixelSize: 9; opacity: 0.8 }
+                                                Label { text: "Variáveis efetivas"; font.bold: true; Layout.topMargin: Kirigami.Units.smallSpacing }
+                                                ResolvedVarsTable {
+                                                    id: requestResolvedTable
+                                                    visible: requestResolvedTable.count > 0
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    vars: root.resolvedVars
                                                 }
-                                                Label { text: modelData.name; font.bold: true }
-                                                Label { text: "="; opacity: 0.5 }
-                                                Label { Layout.fillWidth: true; text: modelData.secret ? "••••••" : modelData.value; elide: Text.ElideRight; opacity: 0.9 }
+                                                Label {
+                                                    visible: requestResolvedTable.count === 0
+                                                    text: "Nenhuma variável definida."
+                                                    opacity: 0.6
+                                                    wrapMode: Text.WordWrap
+                                                    Layout.fillWidth: true
+                                                }
                                             }
-                                        }
-                                        Label {
-                                            visible: root.resolvedVars.length === 0
-                                            text: "Nenhuma variável definida (nem no request, nem na coleção, nem global)."
-                                            opacity: 0.5
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            wrapMode: Text.WordWrap
-                                            Layout.fillWidth: true
                                         }
                                     }
                                 }
@@ -1901,6 +1896,7 @@ Kirigami.ApplicationWindow {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
                                             headers: root.responseHeaders
+                                            onCopyRequested: function (text) { varSupport.copyText(text); root.notify("Cabeçalhos copiados"); }
                                         }
                                         ScrollView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
@@ -2003,34 +1999,19 @@ Kirigami.ApplicationWindow {
                                     }
                                     Label {
                                         visible: !root.collectionIsSubfolder
-                                        text: "Variáveis efetivas (coleção > ambiente)"
+                                        text: "Variáveis efetivas"
                                         font.bold: true
                                         font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1
                                     }
-                                    ListView {
-                                        visible: !root.collectionIsSubfolder && root.collectionResolvedVars.length > 0
+                                    ResolvedVarsTable {
+                                        id: collectionResolvedTable
+                                        visible: !root.collectionIsSubfolder && collectionResolvedTable.count > 0
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: Math.min(200, root.collectionResolvedVars.length * 26)
-                                        clip: true
-                                        model: root.collectionResolvedVars
-                                        delegate: RowLayout {
-                                            width: ListView.view.width
-                                            spacing: Kirigami.Units.smallSpacing
-                                            opacity: modelData.enabled === false ? 0.4 : 1
-                                            Rectangle {
-                                                implicitWidth: ovSrc.implicitWidth + 10
-                                                implicitHeight: 16
-                                                radius: 3
-                                                color: Kirigami.Theme.alternateBackgroundColor
-                                                Text { id: ovSrc; anchors.centerIn: parent; text: modelData.source; font.pixelSize: 9; opacity: 0.8 }
-                                            }
-                                            Label { text: modelData.name; font.bold: true }
-                                            Label { text: "="; opacity: 0.5 }
-                                            Label { Layout.fillWidth: true; text: modelData.secret ? "••••••" : modelData.value; elide: Text.ElideRight; opacity: 0.9 }
-                                        }
+                                        Layout.preferredHeight: Math.min(200, 24 + collectionResolvedTable.count * 24)
+                                        vars: root.collectionResolvedVars
                                     }
                                     Label {
-                                        visible: !root.collectionIsSubfolder && root.collectionResolvedVars.length === 0
+                                        visible: !root.collectionIsSubfolder && collectionResolvedTable.count === 0
                                         text: "Nenhuma variável definida nesta coleção."
                                         opacity: 0.6
                                     }

@@ -38,6 +38,7 @@ qt_add_resources(katarina "qml"
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
+        qml/ResolvedVarsTable.qml
         qml/JsonTree.qml
         qml/HeaderTable.qml
         qml/NetworkView.qml

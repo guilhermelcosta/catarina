@@ -94,7 +94,8 @@ Todos em `qml/`:
   título, mensagem (`opacity 0.6`), atalho e ação opcional (`highlighted`). Fundo transparente
   (herda o painel). **Todo placeholder usa este componente** — centralize com
   `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
-- **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta).
+- **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
+- **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
 - **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}`.
 - **`NetworkView.qml`** — aba "Rede".
