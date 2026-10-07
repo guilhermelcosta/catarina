@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtTest
 import "../qml"
 import "../qml/Util.js" as Util
@@ -23,10 +24,36 @@ TestCase {
         property bool confirmDelete: false
     }
 
-    ListModel { id: kvModel }
+    // já com uma linha: a ListView precisa estar visível no layout inicial do teste
+    ListModel {
+        id: kvModel
+        ListElement { name: "chave-x"; value: "valor-x"; enabled: true }
+    }
     HeaderTable { id: ht }
     JsonTree { id: tree }
-    KvTable { id: kv; model: kvModel }
+    KvTable { id: kv; model: kvModel; width: 800; height: 400 }
+
+    // cabeçalho e linha precisam usar a MESMA largura por coluna (o bug era o fillWidth
+    // com preferred implícito; agora usam preferred/minimum explícitos e iguais)
+    function test_kvtable_columns_aligned() {
+        var hdr = findChild(kv, "kvHeader");
+        var lv = findChild(kv, "kvList");
+        verify(hdr !== null, "kvHeader não encontrado");
+        verify(lv !== null, "kvList não encontrado");
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        // header: [ativo, chave, valor, tipo, escopo, segredo, remover]
+        // row:    [ativo, chave, arquivo, valor-segredo, valor, tipo, escopo, segredo, remover]
+        compare(hdr.children[0].Layout.preferredWidth, row.children[0].Layout.preferredWidth);   // ativo
+        compare(hdr.children[1].Layout.preferredWidth, row.children[1].Layout.preferredWidth);   // chave
+        compare(hdr.children[1].Layout.minimumWidth, row.children[1].Layout.minimumWidth);
+        compare(hdr.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);   // valor
+        compare(hdr.children[2].Layout.minimumWidth, row.children[4].Layout.minimumWidth);
+        compare(hdr.children[6].Layout.preferredWidth, row.children[8].Layout.preferredWidth);   // remover
+        // as três "caras" da coluna valor compartilham a mesma largura
+        compare(row.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
+        compare(row.children[3].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
+    }
 
     function test_headertable_rows() {
         ht.headers = [{ name: "A", value: "1" }, { name: "B", value: "2" }];

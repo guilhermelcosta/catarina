@@ -125,6 +125,6 @@ Item {
         anchors.centerIn: parent
         visible: nodes.count === 0
         text: treeRoot.text.length === 0 ? "Sem resposta." : "Resposta não é JSON válido."
-        opacity: 0.5
+        opacity: 0.6
     }
 }

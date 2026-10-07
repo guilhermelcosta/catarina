@@ -16,6 +16,8 @@ Kirigami.ApplicationWindow {
     property string selectedPath: ""
     property bool selectedIsFolder: false
     property bool showingCollection: false
+    property bool showingEnv: false
+    readonly property bool envTabDirty: envScreen.envVarsDirty   // estado não-salvo da aba de ambientes
     property bool sidebarVisible: true
     property bool responseVisible: true
     property string collectionPath: ""
@@ -27,6 +29,7 @@ Kirigami.ApplicationWindow {
     property string dragFrom: ""
     property string dragLabel: ""
     property string dragMethod: ""
+    property bool dragIsCollection: false
     property int tabDragIndex: -1
     property int tabDropIndex: -1
     property real ghostX: 0
@@ -251,7 +254,14 @@ Kirigami.ApplicationWindow {
             currentDirty = false;
             return;
         }
-        if (tabsModel.get(currentTab).isCollection) {
+        var curTab = tabsModel.get(currentTab);
+        if (curTab.isEnvironment) {
+            resolvedVars = [];
+            missingText = "";
+            currentDirty = false;
+            return;
+        }
+        if (curTab.isCollection) {
             // na aba da coleção a lista efetiva é a da coleção, não a do request
             resolvedVars = [];
             missingText = "";
@@ -259,7 +269,7 @@ Kirigami.ApplicationWindow {
             refreshCollectionResolved();
             return;
         }
-        const collection = collectionOf(tabsModel.get(currentTab).relPath);
+        const collection = collectionOf(curTab.relPath);
         currentCollection = collection;
         // uma passada só no backend: lista resolvida + o que falta
         const state = backend.variablesState(collectRequest(), collection);
@@ -382,7 +392,8 @@ Kirigami.ApplicationWindow {
     // ================= abas =================
     function snapshotCurrent() {
         if (currentTab < 0 || currentTab >= tabsModel.count) return;
-        if (tabsModel.get(currentTab).isCollection) return;   // coleção não tem editor de request
+        var t = tabsModel.get(currentTab);
+        if (t.isCollection || t.isEnvironment) return;   // abas utilitárias não têm editor de request
         tabsModel.setProperty(currentTab, "dataJson", JSON.stringify(collectRequest()));
         tabsModel.setProperty(currentTab, "method", methodBox.currentText);
     }
@@ -395,7 +406,8 @@ Kirigami.ApplicationWindow {
         return -1;
     }
     function markDirty() {
-        if (currentTab >= 0 && currentTab < tabsModel.count && !tabsModel.get(currentTab).isCollection)
+        if (currentTab >= 0 && currentTab < tabsModel.count
+                && !tabsModel.get(currentTab).isCollection && !tabsModel.get(currentTab).isEnvironment)
             tabsModel.setProperty(currentTab, "dirty", true);
         currentDirty = true;
         resolvedDebounce.restart();   // debounce: não re-resolve a cada tecla
@@ -424,45 +436,80 @@ Kirigami.ApplicationWindow {
         r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
         tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
                            method: r.method, dirty: false, dataJson: JSON.stringify(r),
-                           isCollection: false });
+                           isCollection: false, isEnvironment: false });
         currentTab = tabsModel.count - 1;
         applyRequest(r, relPath);
         showingCollection = false;
+        showingEnv = false;
     }
     function switchTab(i) {
         if (i < 0 || i >= tabsModel.count || i === currentTab) return;
         var t = tabsModel.get(i);
         snapshotCurrent();
         currentTab = i;
-        if (t.isCollection) {
+        if (t.isEnvironment) {
+            if (envScreen.editing.length === 0) envScreen.openFor(root.activeEnv);   // primeira exibição
+            showingEnv = true;
+            showingCollection = false;
+        } else if (t.isCollection) {
             loadCollection(t.relPath);
         } else {
             revealPath(t.relPath);   // mantém a árvore em sincronia com a aba ativa
             applyRequest(JSON.parse(t.dataJson), t.relPath);
             showingCollection = false;
+            showingEnv = false;
         }
+    }
+    // abre (ou foca) a aba única de variáveis de ambiente
+    function openEnvTab(name) {
+        var idx = -1;
+        for (var i = 0; i < tabsModel.count; i++)
+            if (tabsModel.get(i).isEnvironment === true) { idx = i; break; }
+        if (idx < 0) {
+            snapshotCurrent();
+            tabsModel.append({ relPath: "__environment__", name: "Ambientes", method: "",
+                               dirty: false, dataJson: "", isCollection: false, isEnvironment: true });
+            idx = tabsModel.count - 1;
+        }
+        switchTab(idx);
+        envScreen.openFor(name);
+        showingEnv = true;
+        showingCollection = false;
     }
     // aplica a aba ativa sem snapshot/guard (usado depois de fechar/excluir)
     function activateCurrent() {
         if (currentTab < 0 || currentTab >= tabsModel.count) {
             clearEditor();
             showingCollection = false;
+            showingEnv = false;
             return;
         }
         var t = tabsModel.get(currentTab);
+        if (t.isEnvironment) {
+            if (envScreen.editing.length === 0) envScreen.openFor(root.activeEnv);
+            showingEnv = true;
+            showingCollection = false;
+            return;
+        }
         if (t.isCollection) { loadCollection(t.relPath); return; }
         revealPath(t.relPath);
         applyRequest(JSON.parse(t.dataJson), t.relPath);
         showingCollection = false;
+        showingEnv = false;
     }
     // restaura as abas salvas sem aplicar cada uma no editor (só a ativa é aplicada depois)
     function restoreSessionTabs(paths) {
         for (var i = 0; i < paths.length; i++) {
             var rp = paths[i];
             if (rp.length === 0) continue;
+            if (rp === "__environment__") {
+                tabsModel.append({ relPath: rp, name: "Ambientes", method: "", dirty: false,
+                                   dataJson: "", isCollection: false, isEnvironment: true });
+                continue;
+            }
             if (backend.isCollection(rp)) {
                 tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
-                                   method: "", dirty: false, dataJson: "", isCollection: true });
+                                   method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false });
                 continue;
             }
             var r = backend.loadRequest(rp);
@@ -470,7 +517,7 @@ Kirigami.ApplicationWindow {
             r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
             tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
                                method: r.method, dirty: false, dataJson: JSON.stringify(r),
-                               isCollection: false });
+                               isCollection: false, isEnvironment: false });
         }
     }
     // ---- reordenar abas por drag and drop ----
@@ -494,9 +541,11 @@ Kirigami.ApplicationWindow {
     function closeTab(i) {
         if (i < 0 || i >= tabsModel.count) return;
         var t = tabsModel.get(i);
-        var dirty = t.isCollection
-                  ? (i === currentTab && (collectionVarsDirty || collectionHeadersDirty))
-                  : t.dirty;
+        var dirty = t.isEnvironment
+                  ? (i === currentTab && envScreen.envVarsDirty)
+                  : (t.isCollection
+                     ? (i === currentTab && (collectionVarsDirty || collectionHeadersDirty))
+                     : t.dirty);
         if (dirty) { confirmCloseDialog.tabIndex = i; confirmCloseDialog.open(); return; }
         doCloseTab(i, false);
     }
@@ -504,7 +553,9 @@ Kirigami.ApplicationWindow {
         var t = tabsModel.get(i);
         var relPath = t.relPath;
         if (saveFirst) {
-            if (t.isCollection) {
+            if (t.isEnvironment) {
+                envScreen.save();
+            } else if (t.isCollection) {
                 saveCollectionVars();
                 saveCollectionHeaders();
             } else {
@@ -512,12 +563,12 @@ Kirigami.ApplicationWindow {
                 backend.saveRequest(relPath, JSON.parse(dataJson));
             }
         }
-        if (!t.isCollection) {
+        if (!t.isCollection && !t.isEnvironment) {
             closedTabs.push(relPath);
             delete responses[relPath];   // libera a resposta guardada da aba fechada
         }
         tabsModel.remove(i);
-        if (tabsModel.count === 0) { currentTab = -1; clearEditor(); showingCollection = false; reloadTree(); return; }
+        if (tabsModel.count === 0) { currentTab = -1; clearEditor(); showingCollection = false; showingEnv = false; reloadTree(); return; }
         if (i < currentTab) currentTab--;
         else if (i === currentTab) currentTab = Math.min(i, tabsModel.count - 1);
         activateCurrent();
@@ -534,7 +585,7 @@ Kirigami.ApplicationWindow {
         if (existing >= 0) { switchTab(existing); return; }
         snapshotCurrent();
         tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
-                           method: "", dirty: false, dataJson: "", isCollection: true });
+                           method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false });
         currentTab = tabsModel.count - 1;
         loadCollection(relPath);
     }
@@ -583,6 +634,7 @@ Kirigami.ApplicationWindow {
         collectionVarsDirty = false;
         collectionHeadersDirty = false;
         showingCollection = true;
+        showingEnv = false;
     }
     function saveCollectionVars() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem variáveis
@@ -591,16 +643,32 @@ Kirigami.ApplicationWindow {
         refreshCollectionResolved();   // visão geral reflete secret/normal sem precisar reabrir
         notify("Variáveis da coleção salvas");
     }
+    function revertCollectionVars() {
+        if (collectionPath.length === 0 || collectionIsSubfolder) return;
+        fillModels(backend.withResolvedSecrets(backend.collectionVariables(collectionPath)), collectionVarsModel);
+        collectionVarsDirty = false;
+        notify("Alterações descartadas");
+    }
     function saveCollectionHeaders() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem cabeçalhos
         backend.saveCollectionHeaders(collectionPath, modelToArray(collectionHeadersModel));
         collectionHeadersDirty = false;
         notify("Cabeçalhos da coleção salvos");
     }
+    function revertCollectionHeaders() {
+        if (collectionPath.length === 0 || collectionIsSubfolder) return;
+        fillModels(backend.withResolvedSecrets(backend.collectionHeaders(collectionPath)), collectionHeadersModel);
+        collectionHeadersDirty = false;
+        notify("Alterações descartadas");
+    }
 
     function saveCurrent() {
         if (currentTab < 0 || currentTab >= tabsModel.count) return;
         var t = tabsModel.get(currentTab);
+        if (t.isEnvironment) {          // Ctrl+S na aba de ambientes salva o pendente
+            if (envScreen.envVarsDirty) envScreen.save();
+            return;
+        }
         if (t.isCollection) {          // Ctrl+S na coleção salva o que estiver pendente
             if (collectionVarsDirty) saveCollectionVars();
             if (collectionHeadersDirty) saveCollectionHeaders();
@@ -614,6 +682,19 @@ Kirigami.ApplicationWindow {
             reloadTree();
             notify("Salvo em ~/katarina-collections/" + t.relPath + ".json");
         }
+    }
+    function revertCurrent() {
+        if (currentTab < 0 || currentTab >= tabsModel.count) return;
+        var t = tabsModel.get(currentTab);
+        if (t.isCollection || t.isEnvironment) return;
+        var r = backend.loadRequest(t.relPath);
+        if (r.method === undefined) return;
+        r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);
+        tabsModel.setProperty(currentTab, "dataJson", JSON.stringify(r));
+        tabsModel.setProperty(currentTab, "dirty", false);
+        currentDirty = false;
+        applyRequest(r, t.relPath);
+        notify("Alterações descartadas");
     }
     function moveEntry(from, to) {
         if (!backend.moveEntry(from, to))
@@ -643,6 +724,7 @@ Kirigami.ApplicationWindow {
         currentTab = -1;
         clearEditor();
         showingCollection = false;
+        showingEnv = false;
         reloadTree();
         reloadEnvs();
         notify("Coleções agora em " + dir);
@@ -678,7 +760,7 @@ Kirigami.ApplicationWindow {
     }
 
     function doSend() {
-        if (sending || showingCollection || currentTab < 0) return;
+        if (sending || showingCollection || showingEnv || currentTab < 0) return;
         if (urlField.text.length === 0) { notify("Informe uma URL"); return; }
         if (settings.autoSaveOnSend && currentDirty) saveCurrent();
         var t = tabsModel.get(currentTab);
@@ -692,23 +774,32 @@ Kirigami.ApplicationWindow {
     }
 
     function hasDirtyTabs() {
-        if (currentTab >= 0 && currentTab < tabsModel.count && tabsModel.get(currentTab).isCollection
-                && (collectionVarsDirty || collectionHeadersDirty)) return true;
-        for (var i = 0; i < tabsModel.count; i++)
-            if (!tabsModel.get(i).isCollection && tabsModel.get(i).dirty) return true;
+        if (currentTab >= 0 && currentTab < tabsModel.count) {
+            var ct = tabsModel.get(currentTab);
+            if (ct.isEnvironment && envScreen.envVarsDirty) return true;
+            if (ct.isCollection && (collectionVarsDirty || collectionHeadersDirty)) return true;
+        }
+        for (var i = 0; i < tabsModel.count; i++) {
+            var t = tabsModel.get(i);
+            if (!t.isCollection && !t.isEnvironment && t.dirty) return true;
+        }
         return false;
     }
     function saveAllTabs() {
         for (var i = 0; i < tabsModel.count; i++) {
             var t = tabsModel.get(i);
-            if (t.isCollection) continue;   // coleção não é um request
+            if (t.isCollection || t.isEnvironment) continue;   // não são requests
             var dataJson = (i === currentTab) ? JSON.stringify(collectRequest()) : t.dataJson;
             backend.saveRequest(t.relPath, JSON.parse(dataJson));
             tabsModel.setProperty(i, "dirty", false);
         }
-        if (currentTab >= 0 && currentTab < tabsModel.count && tabsModel.get(currentTab).isCollection) {
-            if (collectionVarsDirty) saveCollectionVars();
-            if (collectionHeadersDirty) saveCollectionHeaders();
+        if (currentTab >= 0 && currentTab < tabsModel.count) {
+            var ct = tabsModel.get(currentTab);
+            if (ct.isEnvironment && envScreen.envVarsDirty) envScreen.save();
+            if (ct.isCollection) {
+                if (collectionVarsDirty) saveCollectionVars();
+                if (collectionHeadersDirty) saveCollectionHeaders();
+            }
         }
         currentDirty = false;
         reloadTree();
@@ -950,7 +1041,7 @@ Kirigami.ApplicationWindow {
                         ItemDelegate {
                             Layout.fillWidth: true; text: "Gerenciar variáveis…"; icon.name: "configure"
                             visible: root.envList.length > 0
-                            onClicked: { envPopup.close(); envScreen.openFor(root.activeEnv); }
+                            onClicked: { envPopup.close(); root.openEnvTab(root.activeEnv); }
                         }
                     }
                 }
@@ -973,7 +1064,7 @@ Kirigami.ApplicationWindow {
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.margins: Kirigami.Units.smallSpacing
-                        Kirigami.Icon { source: "vcs-repo"; implicitWidth: 16; implicitHeight: 16 }
+                        Kirigami.Icon { source: "folder-documents"; implicitWidth: 16; implicitHeight: 16 }
                         Label { text: "Coleções"; font.bold: true }
                         Item { Layout.fillWidth: true }
                         ToolButton { icon.name: "list-add"; onClicked: addMenu.open(); ToolTip.text: "Adicionar"; ToolTip.visible: hovered }
@@ -1026,6 +1117,7 @@ Kirigami.ApplicationWindow {
                                         root.dragFrom = model.relPath;
                                         root.dragLabel = model.name;
                                         root.dragMethod = model.isFolder ? "" : model.method;
+                                        root.dragIsCollection = model.isFolder && (model.depth || 0) === 0;
                                     }
                                     var gp = mainMouse.mapToItem(mainPage, m.x, m.y);
                                     root.ghostX = gp.x;
@@ -1156,14 +1248,15 @@ Kirigami.ApplicationWindow {
                                             anchors.leftMargin: 10
                                             spacing: 6
                                             Rectangle {
-                                                visible: !model.isCollection
+                                                visible: !model.isCollection && !model.isEnvironment
                                                 implicitWidth: tabBadge.implicitWidth + 8; implicitHeight: 14; radius: 3
                                                 color: root.methodBg(model.method)
                                                 Text { id: tabBadge; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 8; font.bold: true }
                                             }
                                             Kirigami.Icon {
-                                                visible: model.isCollection
-                                                source: "folder"
+                                                visible: model.isCollection || model.isEnvironment
+                                                source: model.isEnvironment ? "vcs-branch"
+                                                      : (model.relPath.indexOf("/") < 0 ? "folder-documents" : "folder")
                                                 implicitWidth: 14; implicitHeight: 14
                                                 color: Kirigami.Theme.textColor
                                                 Layout.alignment: Qt.AlignVCenter
@@ -1171,6 +1264,8 @@ Kirigami.ApplicationWindow {
                                             Label { text: model.name; font.bold: index === root.currentTab; elide: Text.ElideRight; Layout.maximumWidth: 180 }
                                             Kirigami.Icon {
                                                 visible: model.dirty
+                                                         || (model.isCollection && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty))
+                                                         || (model.isEnvironment && index === root.currentTab && root.envTabDirty)
                                                 source: "media-record-symbolic"
                                                 color: Kirigami.Theme.highlightColor
                                                 implicitWidth: 8; implicitHeight: 8
@@ -1194,6 +1289,7 @@ Kirigami.ApplicationWindow {
                                                     root.dragFrom = model.relPath;
                                                     root.dragLabel = model.name;
                                                     root.dragMethod = model.method;
+                                                    root.dragIsCollection = model.isCollection === true;
                                                 }
                                                 var gp = tabMouse.mapToItem(mainPage, m.x, m.y);
                                                 root.ghostX = gp.x;
@@ -1244,7 +1340,8 @@ Kirigami.ApplicationWindow {
                     StackLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        currentIndex: root.showingCollection ? 1 : (root.currentTab >= 0 ? 0 : 2)
+                        currentIndex: root.showingEnv ? 3
+                                      : (root.showingCollection ? 1 : (root.currentTab >= 0 ? 0 : 2))
 
                         // ---- 0: editor + resposta ----
                         SplitView {
@@ -1303,6 +1400,12 @@ Kirigami.ApplicationWindow {
                                         text: root.sending ? "Cancelar" : "Enviar"
                                         highlighted: !root.sending
                                         onClicked: root.sending ? backend.cancel() : root.doSend()
+                                    }
+                                    ToolButton {
+                                        icon.name: "edit-undo"
+                                        enabled: root.currentDirty
+                                        onClicked: root.revertCurrent()
+                                        ToolTip.text: "Descartar alterações não salvas"; ToolTip.visible: hovered
                                     }
                                     ToolButton {
                                         icon.name: "document-save"
@@ -1618,6 +1721,7 @@ Kirigami.ApplicationWindow {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Layout.margins: Kirigami.Units.smallSpacing
+                                    Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserva a altura mesmo sem resposta
                                     spacing: Kirigami.Units.smallSpacing
                                     Rectangle {
                                         visible: statusLabel.text.length > 0
@@ -1709,7 +1813,7 @@ Kirigami.ApplicationWindow {
                                         ScrollView {
                                             id: bodyScroll
                                             Layout.fillWidth: true; Layout.fillHeight: true
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
+                                            padding: Kirigami.Units.smallSpacing
                                             TextArea {
                                                 id: responseBody
                                                 readOnly: true
@@ -1736,7 +1840,7 @@ Kirigami.ApplicationWindow {
                                         }
                                         ScrollView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
+                                            padding: Kirigami.Units.smallSpacing
                                             TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: root.responseCookies; placeholderText: "Sem cookies." }
                                         }
                                         NetworkView {
@@ -1844,10 +1948,10 @@ Kirigami.ApplicationWindow {
                             ScrollView {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
+                                padding: Kirigami.Units.largeSpacing
                                 ColumnLayout {
                                     width: parent.width
                                     spacing: Kirigami.Units.largeSpacing
-                                    Layout.margins: Kirigami.Units.largeSpacing
                                     GridLayout {
                                         columns: 2
                                         columnSpacing: Kirigami.Units.largeSpacing
@@ -1921,79 +2025,65 @@ Kirigami.ApplicationWindow {
                             }
 
                             // 1) cabeçalhos
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.margins: Kirigami.Units.largeSpacing
-                                spacing: Kirigami.Units.smallSpacing
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Label { text: "Cabeçalhos da coleção"; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1; Layout.fillWidth: true }
-                                    RowLayout {
-                                        visible: root.collectionHeadersDirty
-                                        spacing: Kirigami.Units.smallSpacing
-                                        Kirigami.Icon { source: "media-record-symbolic"; color: Kirigami.Theme.neutralTextColor; implicitWidth: 10; implicitHeight: 10; Layout.alignment: Qt.AlignVCenter }
-                                        Label { text: "alterações não salvas"; color: Kirigami.Theme.neutralTextColor }
+                            Item {
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Kirigami.Units.largeSpacing
+                                    spacing: Kirigami.Units.smallSpacing
+                                    SaveBar {
+                                        Layout.fillWidth: true
+                                        title: "Cabeçalhos da coleção"
+                                        dirty: root.collectionHeadersDirty
+                                        showDiscard: true
+                                        onSave: root.saveCollectionHeaders()
+                                        onDiscard: root.revertCollectionHeaders()
                                     }
-                                    Button {
-                                        icon.name: "document-save"; text: "Salvar"
-                                        highlighted: true
-                                        enabled: root.collectionHeadersDirty
-                                        onClicked: root.saveCollectionHeaders()
+                                    Label {
+                                        text: "Enviados em todo request desta coleção. O request pode sobrescrever."
+                                        opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                     }
-                                }
-                                Label {
-                                    text: "Enviados em todo request desta coleção. O request pode sobrescrever."
-                                    opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
-                                }
-                                KvTable {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    model: collectionHeadersModel
-                                    keyPlaceholder: "cabeçalho"
-                                    resolved: root.collectionResolvedVars
-                                    collection: root.collectionPath
-                                    onAddRequested: collectionHeadersModel.append({ name: "", value: "", enabled: true })
-                                    onEdited: root.collectionHeadersDirty = true
+                                    KvTable {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        model: collectionHeadersModel
+                                        keyPlaceholder: "cabeçalho"
+                                        resolved: root.collectionResolvedVars
+                                        collection: root.collectionPath
+                                        onAddRequested: collectionHeadersModel.append({ name: "", value: "", enabled: true })
+                                        onEdited: root.collectionHeadersDirty = true
+                                    }
                                 }
                             }
 
                             // 2) variáveis
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.margins: Kirigami.Units.largeSpacing
-                                spacing: Kirigami.Units.smallSpacing
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Label { text: "Variáveis da coleção"; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1; Layout.fillWidth: true }
-                                    RowLayout {
-                                        visible: root.collectionVarsDirty
-                                        spacing: Kirigami.Units.smallSpacing
-                                        Kirigami.Icon { source: "media-record-symbolic"; color: Kirigami.Theme.neutralTextColor; implicitWidth: 10; implicitHeight: 10; Layout.alignment: Qt.AlignVCenter }
-                                        Label { text: "alterações não salvas"; color: Kirigami.Theme.neutralTextColor }
+                            Item {
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Kirigami.Units.largeSpacing
+                                    spacing: Kirigami.Units.smallSpacing
+                                    SaveBar {
+                                        Layout.fillWidth: true
+                                        title: "Variáveis da coleção"
+                                        dirty: root.collectionVarsDirty
+                                        showDiscard: true
+                                        onSave: root.saveCollectionVars()
+                                        onDiscard: root.revertCollectionVars()
                                     }
-                                    Button {
-                                        icon.name: "document-save"; text: "Salvar"
-                                        highlighted: true
-                                        enabled: root.collectionVarsDirty
-                                        onClicked: root.saveCollectionVars()
+                                    Label {
+                                        text: "Use {{nome}} em qualquer request desta coleção. Marque como segredo para não versionar o valor."
+                                        opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                     }
-                                }
-                                Label {
-                                    text: "Use {{nome}} em qualquer request desta coleção. Marque como segredo para não versionar o valor."
-                                    opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
-                                }
-                                KvTable {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    model: collectionVarsModel
-                                    keyPlaceholder: "variável"
-                                    secretColumn: true
-                                    resolved: root.collectionResolvedVars
-                                    collection: root.collectionPath
-                                    onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
-                                    onEdited: root.collectionVarsDirty = true
+                                    KvTable {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        model: collectionVarsModel
+                                        keyPlaceholder: "variável"
+                                        secretColumn: true
+                                        resolved: root.collectionResolvedVars
+                                        collection: root.collectionPath
+                                        onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
+                                        onEdited: root.collectionVarsDirty = true
+                                    }
                                 }
                             }
                             }
@@ -2007,6 +2097,186 @@ Kirigami.ApplicationWindow {
                             Label { Layout.alignment: Qt.AlignHCenter; text: "Selecione um request na barra lateral ou crie um novo."; opacity: 0.6 }
                             Button { Layout.alignment: Qt.AlignHCenter; Layout.topMargin: Kirigami.Units.smallSpacing; icon.name: "document-new"; text: "Novo request…"; onClicked: newReqDialog.openIn(root.targetFolder()) }
                         }
+
+                        // ---- 3: variáveis de ambiente (aba própria) ----
+                        Item {
+                            id: envScreen
+                            property string editing: ""
+                            property string viewCollection: ""
+                            property bool envVarsDirty: false
+                            property string pendingEnv: ""
+
+                            ListModel { id: envVarsModel }
+
+                            function openFor(name) {
+                                if (name.length === 0 && root.envList.length > 0) name = root.envList[0].name;
+                                viewCollection = "";
+                                loadVars(name);
+                            }
+                            function loadVars(name) {
+                                editing = name;
+                                envVarsDirty = false;
+                                envVarsModel.clear();
+                                if (name.length === 0) return;
+                                var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // valor real do cofre
+                                for (var i = 0; i < vars.length; i++) {
+                                    var v = vars[i];
+                                    var cols = v.collections !== undefined ? v.collections : [];
+                                    envVarsModel.append({ name: v.name, value: v.value !== undefined ? v.value : "",
+                                                          enabled: v.enabled !== false,
+                                                          secret: v.secret === true, secretId: v.secretId !== undefined ? v.secretId : "",
+                                                          scope: v.scope !== undefined ? v.scope : "all",
+                                                          collections: cols.join(",") });
+                                }
+                            }
+                            function save() {
+                                if (editing.length === 0) return;
+                                var vars = [];
+                                for (var i = 0; i < envVarsModel.count; i++) {
+                                    var v = envVarsModel.get(i);
+                                    if (v.name.length === 0) continue;
+                                    vars.push({ name: v.name, value: v.value, enabled: v.enabled !== false, secret: v.secret, secretId: v.secretId,
+                                                scope: v.scope, collections: v.collections.length > 0 ? v.collections.split(",") : [] });
+                                }
+                                if (backend.saveEnvironment(editing, vars)) {
+                                    root.activateEnv(editing);
+                                    loadVars(editing);
+                                    notify("Ambiente salvo");
+                                }
+                            }
+                            function matchesView(scope, collections) {
+                                if (viewCollection.length === 0) return true;
+                                if (scope === "all") return true;
+                                return collections.split(",").indexOf(viewCollection) >= 0;
+                            }
+                            function selectEnv(name) {
+                                if (name === editing) return;
+                                if (envVarsDirty) { pendingEnv = name; discardEnvDialog.open(); return; }
+                                loadVars(name);
+                            }
+                            function startRename(name) {
+                                if (envVarsDirty) { notify("Salve as alterações antes de renomear"); return; }
+                                renameEnvDialog.oldName = name;
+                                renameEnvDialog.open();
+                            }
+                            function renameTo(oldName, newName) {
+                                if (!backend.renameEnvironment(oldName, newName)) {
+                                    notify("Já existe um ambiente com esse nome");
+                                    return;
+                                }
+                                root.reloadEnvs();
+                                loadVars(newName);
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: Kirigami.Units.largeSpacing
+                                spacing: Kirigami.Units.smallSpacing
+
+                                // coluna esquerda: ambientes
+                                ColumnLayout {
+                                    Layout.preferredWidth: 200
+                                    Layout.fillHeight: true
+                                    spacing: Kirigami.Units.smallSpacing
+                                    Label { text: "Ambientes"; font.bold: true }
+                                    ListView {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        clip: true
+                                        model: root.envList
+                                        delegate: ItemDelegate {
+                                            width: ListView.view.width
+                                            text: modelData.name
+                                            highlighted: modelData.name === envScreen.editing
+                                            onClicked: { envScreen.selectEnv(modelData.name); }
+                                        }
+                                    }
+                                    Button {
+                                        Layout.fillWidth: true; icon.name: "list-add"; text: "Novo ambiente…"
+                                        display: AbstractButton.TextBesideIcon
+                                        onClicked: createEnvDialog.open()
+                                    }
+                                    Button {
+                                        Layout.fillWidth: true; icon.name: "edit-delete"; text: "Excluir"
+                                        display: AbstractButton.TextBesideIcon
+                                        enabled: envScreen.editing.length > 0
+                                        onClicked: {
+                                            const name = envScreen.editing;
+                                            root.confirmDelete("Excluir o ambiente \"" + name + "\"?", function () {
+                                                backend.deleteEnvironment(name);
+                                                root.reloadEnvs();
+                                                envScreen.editing = "";
+                                                envVarsModel.clear();
+                                            });
+                                        }
+                                    }
+                                }
+
+                                Kirigami.Separator { Layout.fillHeight: true }
+
+                                // coluna direita: variáveis do ambiente
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    spacing: Kirigami.Units.smallSpacing
+
+                                    SaveBar {
+                                        Layout.fillWidth: true
+                                        title: envScreen.editing
+                                        dirty: envScreen.envVarsDirty
+                                        showDiscard: true
+                                        showRename: true
+                                        canRename: envScreen.editing.length > 0 && !envScreen.envVarsDirty
+                                        renameTooltip: envScreen.envVarsDirty ? "Salve antes de renomear" : "Renomear ambiente"
+                                        onSave: envScreen.save()
+                                        onDiscard: envScreen.loadVars(envScreen.editing)
+                                        onRename: envScreen.startRename(envScreen.editing)
+                                    }
+
+                                    RowLayout {
+                                        spacing: Kirigami.Units.smallSpacing
+                                        Label { text: "Ver:" }
+                                        ComboBox {
+                                            id: viewCombo
+                                            implicitWidth: 230
+                                            model: ["Todas as variáveis"].concat(root.collectionNames())
+                                            onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
+                                        }
+                                        Label { text: "globais aparecem em toda visão"; opacity: 0.6 }
+                                    }
+
+                                    KvTable {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        model: envVarsModel
+                                        keyPlaceholder: "variável"
+                                        secretColumn: true
+                                        scopeColumn: true
+                                        resolved: root.resolvedVars
+                                        rowFilter: function(i) {
+                                            var v = envVarsModel.get(i);
+                                            return v !== undefined && envScreen.matchesView(v.scope, v.collections);
+                                        }
+                                        scopeIcon: function(i) {
+                                            var v = envVarsModel.get(i);
+                                            return (v && v.scope === "collections") ? "lock" : "globe";
+                                        }
+                                        scopeText: function(i) {
+                                            var v = envVarsModel.get(i);
+                                            if (!v || v.scope !== "collections") return "Global";
+                                            var c = (v.collections && v.collections.length > 0) ? v.collections.split(",") : [];
+                                            if (c.length === 0) return "escolher coleções…";
+                                            if (c.length <= 2) return c.join(", ");
+                                            return c.length + " coleções";
+                                        }
+                                        onScopeRequested: function(i) { scopeDialog.openFor(i); }
+                                        onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
+                                        onEdited: envScreen.envVarsDirty = true
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
             }
@@ -2038,7 +2308,8 @@ Kirigami.ApplicationWindow {
                 }
                 Kirigami.Icon {
                     visible: root.dragMethod.length === 0
-                    source: "folder"; implicitWidth: 15; implicitHeight: 15
+                    source: root.dragIsCollection ? "folder-documents" : "folder"
+                    implicitWidth: 15; implicitHeight: 15
                     color: Kirigami.Theme.highlightedTextColor
                 }
                 Label { text: root.dragLabel; color: Kirigami.Theme.highlightedTextColor }
@@ -2049,7 +2320,7 @@ Kirigami.ApplicationWindow {
     // ================= menus =================
     Menu {
         id: addMenu
-        MenuItem { text: "Nova coleção…"; icon.name: "folder-new"; onTriggered: collectionDialog.open() }
+        MenuItem { text: "Nova coleção…"; icon.name: "folder-documents"; onTriggered: collectionDialog.open() }
         MenuItem { text: "Novo request…"; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.selectedIsFolder ? root.selectedPath : "") }
         MenuSeparator {}
         MenuItem { text: "Importar cURL…"; icon.name: "document-import"; onTriggered: { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } }
@@ -2066,7 +2337,7 @@ Kirigami.ApplicationWindow {
         MenuItem { text: "Copiar request"; icon.name: "edit-copy"; enabled: root.selectedPath.length > 0 && !root.selectedIsFolder; onTriggered: root.copyTreeRequest(root.selectedPath) }
         MenuItem { text: "Mover para…"; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
         MenuItem { text: "Renomear…"; icon.name: "edit-rename"; enabled: root.selectedPath.length > 0; onTriggered: renameDialog.openFor(root.selectedPath) }
-        MenuItem { text: "Duplicar"; icon.name: "edit-copy"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
+        MenuItem { text: "Duplicar"; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
         MenuSeparator {}
         MenuItem { text: "Excluir"; icon.name: "edit-delete"; onTriggered: root.askDelete() }
     }
@@ -2157,10 +2428,13 @@ Kirigami.ApplicationWindow {
             anchors.fill: parent
             Label {
                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                text: (confirmCloseDialog.tabIndex >= 0 && confirmCloseDialog.tabIndex < tabsModel.count
-                       && tabsModel.get(confirmCloseDialog.tabIndex).isCollection ? "A coleção '" : "O request '")
-                      + (confirmCloseDialog.tabIndex >= 0 && confirmCloseDialog.tabIndex < tabsModel.count ? tabsModel.get(confirmCloseDialog.tabIndex).name : "")
-                      + "' tem alterações não salvas."
+                text: {
+                    var i = confirmCloseDialog.tabIndex;
+                    if (i < 0 || i >= tabsModel.count) return "Alterações não salvas.";
+                    var t = tabsModel.get(i);
+                    var what = t.isCollection ? "A coleção" : (t.isEnvironment ? "O ambiente" : "O request");
+                    return what + " '" + t.name + "' tem alterações não salvas.";
+                }
             }
             Item { Layout.fillHeight: true }
             RowLayout {
@@ -2468,229 +2742,6 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // ---- tela de variáveis de ambiente ----
-    Dialog {
-        id: envScreen
-        title: "Variáveis de ambiente"; anchors.centerIn: parent; modal: true; width: 880; height: 500
-        property string editing: ""
-        property string viewCollection: ""
-        property bool envVarsDirty: false
-        property string pendingEnv: ""
-
-        ListModel { id: envVarsModel }
-
-        function openFor(name) {
-            if (name.length === 0 && root.envList.length > 0) name = root.envList[0].name;
-            viewCollection = "";
-            envNameField.text = name;
-            loadVars(name);
-            open();
-        }
-        function loadVars(name) {
-            editing = name;
-            envVarsDirty = false;
-            envVarsModel.clear();
-            if (name.length === 0) return;
-            var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // valor real do cofre
-            for (var i = 0; i < vars.length; i++) {
-                var v = vars[i];
-                var cols = v.collections !== undefined ? v.collections : [];
-                envVarsModel.append({ name: v.name, value: v.value !== undefined ? v.value : "",
-                                      enabled: v.enabled !== false,
-                                      secret: v.secret === true, secretId: v.secretId !== undefined ? v.secretId : "",
-                                      scope: v.scope !== undefined ? v.scope : "all",
-                                      collections: cols.join(",") });
-            }
-        }
-        function save() {
-            var newName = envNameField.text.trim();
-            if (newName.length === 0) return;
-            if (newName !== editing && editing.length > 0)
-                backend.renameEnvironment(editing, newName);
-            var vars = [];
-            for (var i = 0; i < envVarsModel.count; i++) {
-                var v = envVarsModel.get(i);
-                if (v.name.length === 0) continue;
-                vars.push({ name: v.name, value: v.value, enabled: v.enabled !== false, secret: v.secret, secretId: v.secretId,
-                            scope: v.scope, collections: v.collections.length > 0 ? v.collections.split(",") : [] });
-            }
-            if (backend.saveEnvironment(newName, vars)) {
-                root.activateEnv(newName);
-                envNameField.text = newName;
-                loadVars(newName);
-                notify("Ambiente salvo");
-            }
-        }
-        function matchesView(scope, collections) {
-            if (viewCollection.length === 0) return true;
-            if (scope === "all") return true;
-            return collections.split(",").indexOf(viewCollection) >= 0;
-        }
-        function selectEnv(name) {
-            if (name === editing) return;
-            if (envVarsDirty) { pendingEnv = name; discardEnvDialog.open(); return; }
-            envNameField.text = name;
-            loadVars(name);
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            spacing: Kirigami.Units.smallSpacing
-
-            // coluna esquerda: ambientes
-            ColumnLayout {
-                Layout.preferredWidth: 200
-                Layout.fillHeight: true
-                spacing: Kirigami.Units.smallSpacing
-                Label { text: "Ambientes"; font.bold: true }
-                ListView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    model: root.envList
-                    delegate: ItemDelegate {
-                        width: ListView.view.width
-                        text: modelData.name
-                        highlighted: modelData.name === envNameField.text
-                        onClicked: { envScreen.selectEnv(modelData.name); }
-                    }
-                }
-                Button {
-                    Layout.fillWidth: true; icon.name: "list-add"; text: "Novo ambiente…"
-                    display: AbstractButton.TextBesideIcon
-                    onClicked: createEnvDialog.open()
-                }
-                Button {
-                    Layout.fillWidth: true; icon.name: "edit-delete"; text: "Excluir"
-                    display: AbstractButton.TextBesideIcon
-                    enabled: envNameField.text.length > 0
-                    onClicked: {
-                        const name = envNameField.text;
-                        root.confirmDelete("Excluir o ambiente \"" + name + "\"?", function () {
-                            backend.deleteEnvironment(name);
-                            root.reloadEnvs();
-                            envNameField.text = "";
-                            envVarsModel.clear();
-                        });
-                    }
-                }
-            }
-
-            Kirigami.Separator { Layout.fillHeight: true }
-
-            // coluna direita: variáveis do ambiente
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: Kirigami.Units.smallSpacing
-
-                TextField { id: envNameField; Layout.fillWidth: true; placeholderText: "nome do ambiente"; onTextEdited: envScreen.envVarsDirty = true }
-
-                RowLayout {
-                    spacing: Kirigami.Units.smallSpacing
-                    Label { text: "Ver:" }
-                    ComboBox {
-                        id: viewCombo
-                        implicitWidth: 230
-                        model: ["Todas as variáveis"].concat(root.collectionNames())
-                        onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
-                    }
-                    Label { text: "globais aparecem em toda visão"; opacity: 0.6 }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-                    Label { Layout.preferredWidth: 150; text: "Nome"; font.bold: true }
-                    Label { Layout.fillWidth: true; text: "Valor"; font.bold: true }
-                    Label { Layout.preferredWidth: 200; text: "Escopo"; font.bold: true }
-                    Label { Layout.preferredWidth: 70; text: "Segredo"; font.bold: true }
-                    Item { Layout.preferredWidth: 40 }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    border.width: 1
-                    border.color: Kirigami.Theme.disabledTextColor
-                    radius: 4
-                    color: "transparent"
-                    ListView {
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    clip: true
-                    model: envVarsModel
-                    delegate: RowLayout {
-                        id: envRow
-                        width: ListView.view.width
-                        spacing: Kirigami.Units.smallSpacing
-                        readonly property string scopeVal: model.scope
-                        readonly property string collectionsVal: model.collections
-                        readonly property bool shown: envScreen.matchesView(scopeVal, collectionsVal)
-                        visible: shown
-                        height: shown ? implicitHeight : 0
-                        opacity: model.enabled === false ? 0.45 : 1
-                        CheckBox { checked: model.enabled !== false; onToggled: { model.enabled = checked; envScreen.envVarsDirty = true; } }
-                        TextField { Layout.preferredWidth: 150; text: model.name; placeholderText: "variável"; onTextEdited: { model.name = text; envScreen.envVarsDirty = true; } }
-                        TextField {
-                            Layout.fillWidth: true
-                            text: model.value
-                            placeholderText: model.secret ? "segredo (no cofre)" : "valor"
-                            echoMode: model.secret ? TextInput.Password : TextInput.Normal
-                            onTextEdited: { model.value = text; envScreen.envVarsDirty = true; }
-                        }
-                        Button {
-                            Layout.preferredWidth: 200
-                            icon.name: envRow.scopeVal === "collections" ? "lock" : "globe"
-                            display: AbstractButton.TextBesideIcon
-                            text: {
-                                if (envRow.scopeVal !== "collections") return "Global";
-                                var c = envRow.collectionsVal.length > 0 ? envRow.collectionsVal.split(",") : [];
-                                if (c.length === 0) return "escolher coleções…";
-                                if (c.length <= 2) return c.join(", ");
-                                return c.length + " coleções";
-                            }
-                            onClicked: scopeDialog.openFor(index)
-                            ToolTip.text: "Quais coleções podem usar esta variável"
-                            ToolTip.visible: hovered
-                        }
-                        CheckBox { checked: model.secret === true; onToggled: { model.secret = checked; envScreen.envVarsDirty = true; } }
-                        ToolButton {
-                            icon.name: "list-remove"
-                            onClicked: {
-                                const i = index, nm = model.name;
-                                root.confirmDelete("Remover a variável \"" + nm + "\"?", function () {
-                                    envVarsModel.remove(i);
-                                    envScreen.envVarsDirty = true;
-                                });
-                            }
-                            ToolTip.text: "Remover variável"; ToolTip.visible: hovered
-                        }
-                    }
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Button {
-                        icon.name: "list-add"; text: "Adicionar variável"
-                        display: AbstractButton.TextBesideIcon
-                        onClicked: { envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" }); envScreen.envVarsDirty = true; }
-                    }
-                    Item { Layout.fillWidth: true }
-                    RowLayout {
-                        visible: envScreen.envVarsDirty
-                        spacing: Kirigami.Units.smallSpacing
-                        Kirigami.Icon { source: "media-record-symbolic"; color: Kirigami.Theme.neutralTextColor; implicitWidth: 10; implicitHeight: 10; Layout.alignment: Qt.AlignVCenter }
-                        Label { text: "alterações não salvas"; color: Kirigami.Theme.neutralTextColor }
-                    }
-                    Button { text: "Resetar"; enabled: envScreen.envVarsDirty; onClicked: envScreen.loadVars(envNameField.text) }
-                    Button { text: "Salvar"; highlighted: true; enabled: envScreen.envVarsDirty; onClicked: envScreen.save() }
-                }
-            }
-        }
-    }
-
     // ---- criar ambiente (só o nome) ----
     Dialog {
         id: createEnvDialog
@@ -2700,9 +2751,8 @@ Kirigami.ApplicationWindow {
             if (n.length === 0) { newEnvName.forceActiveFocus(); return; }
             backend.saveEnvironment(n, []);
             root.activateEnv(n);
-            if (envScreen.visible) { envNameField.text = n; envScreen.loadVars(n); }
             createEnvDialog.close();
-            envScreen.openFor(n);
+            root.openEnvTab(n);
         }
         onAboutToShow: newEnvName.text = ""
         ColumnLayout {
@@ -2736,10 +2786,36 @@ Kirigami.ApplicationWindow {
                     text: "Descartar"; highlighted: true
                     onClicked: {
                         discardEnvDialog.close();
-                        envNameField.text = envScreen.pendingEnv;
                         envScreen.loadVars(envScreen.pendingEnv);
                     }
                 }
+            }
+        }
+    }
+
+    // ---- renomear ambiente ----
+    Dialog {
+        id: renameEnvDialog
+        title: "Renomear ambiente"; modal: true; anchors.centerIn: parent; width: 380; height: 160
+        property string oldName: ""
+        function apply() {
+            var n = envRenameField.text.trim();
+            if (n.length === 0 || n === oldName) { close(); return; }
+            envScreen.renameTo(oldName, n);
+            close();
+        }
+        onAboutToShow: envRenameField.text = oldName
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Kirigami.Units.smallSpacing
+            Label { text: "Novo nome do ambiente"; font.bold: true }
+            TextField { id: envRenameField; Layout.fillWidth: true; placeholderText: "nome do ambiente"; onAccepted: renameEnvDialog.apply() }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.fillWidth: true
+                Item { Layout.fillWidth: true }
+                Button { text: "Cancelar"; onClicked: renameEnvDialog.close() }
+                Button { text: "Renomear"; highlighted: true; onClicked: renameEnvDialog.apply() }
             }
         }
     }
@@ -2876,7 +2952,7 @@ Kirigami.ApplicationWindow {
                 { group: "Globais", label: "Importar cURL…", run: function () { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } },
                 { group: "Globais", label: "Histórico", run: function () { historyDialog.openAndLoad(); } },
                 { group: "Globais", label: "Configurações…", run: function () { settingsDialog.open(); } },
-                { group: "Globais", label: "Gerenciar variáveis de ambiente…", run: function () { envScreen.openFor(root.activeEnv); } },
+                { group: "Globais", label: "Gerenciar variáveis de ambiente…", run: function () { root.openEnvTab(root.activeEnv); } },
                 { group: "Globais", label: "Criar ambiente…", run: function () { createEnvDialog.open(); } },
                 { group: "Globais", label: "Fechar aba", run: function () { root.closeTab(root.currentTab); } },
                 { group: "Globais", label: "Reabrir aba fechada", run: function () { root.reopenClosed(); } },

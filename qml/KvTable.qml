@@ -3,20 +3,32 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// Tabela de pares chave/valor com checkbox de ativação (params, headers, vars, campos).
-// O campo de valor aceita {{variavel}}: destaca, sugere e mostra o valor no hover.
-// allowFiles habilita tipo texto/arquivo (multipart / x-www-form-urlencoded).
-ColumnLayout {
+// Tabela unificada de pares chave/valor do app (params, headers, campos, vars de
+// request/coleção/ambiente). O campo de valor aceita {{variavel}} (destaca, sugere e
+// mostra no hover). Colunas opcionais: Tipo (arquivos), Escopo e Segredo.
+//
+// Layout responsivo: as colunas "Nome", "Valor" e "Escopo" são flexíveis
+// (fillWidth com preferred/minimum explícitos), então encolhem em janelas estreitas.
+// Cabeçalho e linhas usam exatamente os mesmos preferred/minimum → ficam alinhados.
+//
+// Raiz é um Item (implicit 0) com ColumnLayout interna, para o tamanho implícito não
+// depender da largura (evita loop de polish do layout).
+Item {
     id: table
     property var model
     property string keyPlaceholder: "chave"
     property bool secretColumn: false
     property bool allowFiles: false
+    property bool scopeColumn: false
     property var resolved: []
     property string collection: ""
+    property var scopeText: null     // function(index) -> texto do botão de escopo
+    property var scopeIcon: null     // function(index) -> nome do ícone do escopo
+    property var rowFilter: null     // function(index) -> bool (mostra/esconde a linha)
     signal addRequested()
     signal edited()
     signal pickFile(int index)
+    signal scopeRequested(int index)
 
     // remoção de linha com confirmação, seguindo a config global (settings.confirmDelete)
     function tryRemove(i) {
@@ -26,124 +38,188 @@ ColumnLayout {
 
     readonly property bool empty: model === undefined || model === null || model.count === 0
 
-    spacing: Kirigami.Units.smallSpacing
+    readonly property int colSpacing: Kirigami.Units.smallSpacing
+    // colunas de largura fixa (pequenas)
+    readonly property int enabledColWidth: 48
+    readonly property int typeColWidth: 90
+    readonly property int secretColWidth: 64
+    readonly property int removeColWidth: 40
+    // colunas flexíveis
+    readonly property int keyColPreferred: 150
+    readonly property int keyColMinimum: 80
+    readonly property int valueColPreferred: 180
+    readonly property int valueColMinimum: 80
+    readonly property int scopeColPreferred: 170
+    readonly property int scopeColMinimum: 90
+    readonly property string keyHeader: keyPlaceholder.length > 0
+        ? keyPlaceholder.charAt(0).toUpperCase() + keyPlaceholder.slice(1) : "Chave"
 
-    ListView {
-        id: view
-        objectName: "kvList"
-        visible: !table.empty
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-        Layout.rightMargin: Kirigami.Units.smallSpacing
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        clip: true
-        model: table.model
-        delegate: RowLayout {
-            width: view.width
-            opacity: model.enabled === false ? 0.45 : 1   // linha desabilitada fica esmaecida
-            CheckBox {
-                checked: model.enabled
-                onToggled: { model.enabled = checked; table.edited(); }
-            }
-            TextField {
-                Layout.fillWidth: true
-                text: model.name
-                placeholderText: table.keyPlaceholder
-                onTextEdited: { model.name = text; table.edited(); }
-            }
-            // arquivo (só no modo campos)
-            Button {
-                Layout.fillWidth: true
-                visible: table.allowFiles && model.type === "file"
-                text: model.fileName && model.fileName.length > 0
-                      ? model.fileName.split("/").pop() : "Escolher arquivo…"
-                icon.name: "document-open"
-                onClicked: table.pickFile(index)
-            }
-            // valor mascarado quando é segredo (TextField tem echoMode)
-            TextField {
-                visible: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
-                Layout.fillWidth: true
-                text: model.value
-                placeholderText: "segredo (no cofre)"
-                echoMode: TextInput.Password
-                onTextEdited: { model.value = text; table.edited(); }
-            }
-            // valor normal com destaque de {{variavel}}
-            TextArea {
-                id: valArea
-                visible: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
-                Layout.fillWidth: true
-                text: model.value
-                placeholderText: "valor"
-                wrapMode: TextEdit.NoWrap
-                selectByMouse: true
-                implicitHeight: Kirigami.Units.gridUnit * 1.7
-                topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
-                onTextEdited: { model.value = text; table.edited(); }
-                Keys.onPressed: function (e) { if (valCompleter.handleKey(e)) e.accepted = true; }
-                Component.onCompleted: varSupport.attach(valArea.textDocument, "#c678dd", true, false)
-                VarCompleter {
-                    id: valCompleter
-                    anchors.fill: parent
-                    target: valArea
-                    resolved: table.resolved
-                    collection: table.collection
+    ColumnLayout {
+        id: content
+        anchors.fill: parent
+        spacing: table.colSpacing
+
+        // cabeçalho das colunas — mesmos preferred/minimum das linhas
+        RowLayout {
+            id: header
+            objectName: "kvHeader"
+            visible: !table.empty
+            Layout.fillWidth: true
+            Layout.leftMargin: table.colSpacing
+            Layout.rightMargin: table.colSpacing
+            Layout.topMargin: table.colSpacing
+            spacing: table.colSpacing
+            Label { text: "Ativo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.preferredWidth: table.enabledColWidth; Layout.minimumWidth: table.enabledColWidth; Layout.maximumWidth: table.enabledColWidth }
+            Label { text: table.keyHeader; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.fillWidth: true; Layout.preferredWidth: table.keyColPreferred; Layout.minimumWidth: table.keyColMinimum }
+            Label { text: "Valor"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum }
+            Label { visible: table.allowFiles; text: "Tipo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.preferredWidth: table.typeColWidth; Layout.minimumWidth: table.typeColWidth; Layout.maximumWidth: table.typeColWidth }
+            Label { visible: table.scopeColumn; text: "Escopo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum }
+            Label { visible: table.secretColumn; text: "Segredo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+                    Layout.preferredWidth: table.secretColWidth; Layout.minimumWidth: table.secretColWidth; Layout.maximumWidth: table.secretColWidth }
+            Item { Layout.preferredWidth: table.removeColWidth; Layout.minimumWidth: table.removeColWidth; Layout.maximumWidth: table.removeColWidth }
+        }
+        Kirigami.Separator {
+            visible: !table.empty
+            Layout.fillWidth: true
+            Layout.leftMargin: table.colSpacing
+            Layout.rightMargin: table.colSpacing
+        }
+
+        ListView {
+            id: view
+            objectName: "kvList"
+            visible: !table.empty
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.leftMargin: table.colSpacing
+            Layout.rightMargin: table.colSpacing
+            clip: true
+            model: table.model
+            delegate: RowLayout {
+                width: view.width
+                spacing: table.colSpacing
+                readonly property bool shown: table.rowFilter === null || table.rowFilter(index)
+                visible: shown
+                height: shown ? implicitHeight : 0
+                opacity: model.enabled === false ? 0.45 : 1   // linha desabilitada esmaecida
+                CheckBox {
+                    Layout.preferredWidth: table.enabledColWidth; Layout.minimumWidth: table.enabledColWidth; Layout.maximumWidth: table.enabledColWidth
+                    checked: model.enabled
+                    onToggled: { model.enabled = checked; table.edited(); }
+                }
+                TextField {
+                    Layout.fillWidth: true; Layout.preferredWidth: table.keyColPreferred; Layout.minimumWidth: table.keyColMinimum
+                    text: model.name
+                    placeholderText: table.keyPlaceholder
+                    onTextEdited: { model.name = text; table.edited(); }
+                }
+                // arquivo (só no modo campos)
+                Button {
+                    Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
+                    visible: table.allowFiles && model.type === "file"
+                    text: model.fileName && model.fileName.length > 0
+                          ? model.fileName.split("/").pop() : "Escolher arquivo…"
+                    icon.name: "document-open"
+                    onClicked: table.pickFile(index)
+                }
+                // valor mascarado quando é segredo (TextField tem echoMode)
+                TextField {
+                    Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
+                    visible: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
+                    text: model.value
+                    placeholderText: "segredo (no cofre)"
+                    echoMode: TextInput.Password
+                    onTextEdited: { model.value = text; table.edited(); }
+                }
+                // valor normal com destaque de {{variavel}}
+                TextArea {
+                    id: valArea
+                    Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
+                    visible: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
+                    text: model.value
+                    placeholderText: "valor"
+                    wrapMode: TextEdit.NoWrap
+                    selectByMouse: true
+                    implicitHeight: Kirigami.Units.gridUnit * 1.7
+                    topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
+                    onTextEdited: { model.value = text; table.edited(); }
+                    Keys.onPressed: function (e) { if (valCompleter.handleKey(e)) e.accepted = true; }
+                    Component.onCompleted: varSupport.attach(valArea.textDocument, "#c678dd", true, false)
+                    VarCompleter {
+                        id: valCompleter
+                        anchors.fill: parent
+                        target: valArea
+                        resolved: table.resolved
+                        collection: table.collection
+                    }
+                }
+                ComboBox {
+                    Layout.preferredWidth: table.typeColWidth; Layout.minimumWidth: table.typeColWidth; Layout.maximumWidth: table.typeColWidth
+                    visible: table.allowFiles
+                    model: ["text", "file"]
+                    currentIndex: model.type === "file" ? 1 : 0
+                    onActivated: {
+                        view.model.setProperty(index, "type", currentText);
+                        table.edited();
+                    }
+                }
+                Button {
+                    Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum
+                    visible: table.scopeColumn
+                    icon.name: table.scopeIcon !== null ? table.scopeIcon(index) : ""
+                    display: AbstractButton.TextBesideIcon
+                    text: table.scopeText !== null ? table.scopeText(index) : ""
+                    onClicked: table.scopeRequested(index)
+                }
+                CheckBox {
+                    Layout.preferredWidth: table.secretColWidth; Layout.minimumWidth: table.secretColWidth; Layout.maximumWidth: table.secretColWidth
+                    visible: table.secretColumn
+                    checked: model.secret === true
+                    onToggled: { model.secret = checked; table.edited(); }
+                }
+                ToolButton {
+                    Layout.preferredWidth: table.removeColWidth; Layout.minimumWidth: table.removeColWidth; Layout.maximumWidth: table.removeColWidth
+                    icon.name: "list-remove"
+                    onClicked: table.tryRemove(index)
+                    ToolTip.text: "Remover linha"
+                    ToolTip.visible: hovered
                 }
             }
-            ComboBox {
-                visible: table.allowFiles
-                implicitWidth: 100
-                model: ["text", "file"]
-                currentIndex: model.type === "file" ? 1 : 0
-                onActivated: {
-                    view.model.setProperty(index, "type", currentText);
-                    table.edited();
+        }
+
+        Item {
+            visible: table.empty
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: table.colSpacing
+                Label { Layout.alignment: Qt.AlignHCenter; text: "Nada aqui ainda."; opacity: 0.6 }
+                ToolButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    icon.name: "list-add"
+                    text: "Adicionar"
+                    display: AbstractButton.TextBesideIcon
+                    highlighted: true
+                    onClicked: { table.addRequested(); table.edited(); }
                 }
             }
-            CheckBox {
-                visible: table.secretColumn
-                text: "segredo"
-                checked: model.secret === true
-                onToggled: { model.secret = checked; table.edited(); }
-            }
-            ToolButton {
-                icon.name: "list-remove"
-                onClicked: table.tryRemove(index)
-                ToolTip.text: "Remover linha"
-                ToolTip.visible: hovered
-            }
         }
-    }
 
-    Item {
-        visible: table.empty
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: Kirigami.Units.smallSpacing
-            Label { Layout.alignment: Qt.AlignHCenter; text: "Nada aqui ainda."; opacity: 0.5 }
-            ToolButton {
-                Layout.alignment: Qt.AlignHCenter
-                icon.name: "list-add"
-                text: "Adicionar"
-                display: AbstractButton.TextBesideIcon
-                highlighted: true
-                onClicked: { table.addRequested(); table.edited(); }
-            }
+        ToolButton {
+            visible: !table.empty
+            icon.name: "list-add"
+            text: "Adicionar"
+            display: AbstractButton.TextBesideIcon
+            Layout.leftMargin: table.colSpacing
+            Layout.bottomMargin: table.colSpacing
+            onClicked: { table.addRequested(); table.edited(); }
         }
-    }
-
-    ToolButton {
-        visible: !table.empty
-        icon.name: "list-add"
-        text: "Adicionar"
-        display: AbstractButton.TextBesideIcon
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-        Layout.bottomMargin: Kirigami.Units.smallSpacing
-        onClicked: { table.addRequested(); table.edited(); }
     }
 
     // confirmação de remoção de linha (mesma config global de exclusão)

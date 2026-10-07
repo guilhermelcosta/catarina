@@ -14,14 +14,14 @@ Item {
         Rectangle {
             width: parent.width
             height: 28
-            color: Kirigami.Theme.alternateBackgroundColor
+            color: "transparent"
             Row {
                 anchors.fill: parent
                 anchors.leftMargin: Kirigami.Units.smallSpacing
                 anchors.rightMargin: Kirigami.Units.smallSpacing
-                Text { width: table.nameWidth; anchors.verticalCenter: parent.verticalCenter; text: "Nome"; font.bold: true; color: Kirigami.Theme.textColor }
-                Rectangle { width: 1; height: parent.height; color: Kirigami.Theme.disabledTextColor; opacity: 0.4 }
-                Text { width: parent.width - table.nameWidth - 6; anchors.verticalCenter: parent.verticalCenter; leftPadding: Kirigami.Units.smallSpacing; text: "Valor"; font.bold: true; color: Kirigami.Theme.textColor }
+                Text { width: table.nameWidth; anchors.verticalCenter: parent.verticalCenter; text: "Nome"; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
+                Rectangle { width: 1; height: parent.height; color: Kirigami.Theme.disabledTextColor; opacity: 0.3 }
+                Text { width: parent.width - table.nameWidth - 6; anchors.verticalCenter: parent.verticalCenter; leftPadding: Kirigami.Units.smallSpacing; text: "Valor"; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
             }
         }
         Kirigami.Separator { width: parent.width }
@@ -69,7 +69,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             topPadding: Kirigami.Units.largeSpacing
             text: "Sem cabeçalhos."
-            opacity: 0.5
+            opacity: 0.6
             color: Kirigami.Theme.textColor
         }
     }

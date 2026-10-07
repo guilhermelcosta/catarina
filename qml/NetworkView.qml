@@ -74,6 +74,15 @@ Item {
 
             // ---- request headers ----
             Label { text: "Requisição enviada"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
+            RowLayout {
+                visible: net.meta.requestHeaders !== undefined && net.meta.requestHeaders.length > 0
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.smallSpacing
+                Layout.rightMargin: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.smallSpacing
+                Label { Layout.preferredWidth: 180; text: "Cabeçalho"; font.bold: true; opacity: 0.65 }
+                Label { Layout.fillWidth: true; text: "Valor"; font.bold: true; opacity: 0.65 }
+            }
             Repeater {
                 model: net.meta.requestHeaders
                 delegate: RowLayout {
@@ -115,6 +124,6 @@ Item {
         anchors.centerIn: parent
         visible: net.meta.method === undefined
         text: "Envie uma requisição para ver os dados de rede."
-        opacity: 0.5
+        opacity: 0.6
     }
 }
