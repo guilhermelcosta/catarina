@@ -13,9 +13,13 @@ Item {
 
     function matchingNames() {
         var out = [];
-        for (var i = 0; i < resolved.length; i++)
-            if (resolved[i].enabled !== false && resolved[i].name.indexOf(partial) === 0)
-                out.push(resolved[i].name);
+        for (var i = 0; i < resolved.length; i++) {
+            var n = resolved[i].name;
+            if (resolved[i].enabled === false || n.length === 0) continue;
+            if (n.indexOf("{") >= 0 || n.indexOf("}") >= 0) continue;   // ignora o token em digitação (ex.: "{{")
+            if (n.indexOf(partial) === 0)
+                out.push(n);
+        }
         out.sort();
         return out;
     }
@@ -70,6 +74,10 @@ Item {
         if (rest.indexOf("}}") === 0) rest = rest.substring(2);
         target.text = before + "{{" + name + "}}" + rest;
         target.cursorPosition = before.length + name.length + 4;
+        // setar `text` programaticamente NÃO emite textEdited; sem isto o modelo do
+        // KvTable (onTextEdited) fica com o valor antigo (o "{{" em digitação)
+        if (target.textEdited !== undefined)
+            target.textEdited();
         pop.close();
     }
     // chamado pelos Keys.onPressed do alvo; devolve true se consumiu a tecla

@@ -113,10 +113,12 @@ Item {
                     checked: model.enabled
                     onToggled: { model.enabled = checked; table.edited(); }
                 }
-                TextField {
+                VarField {
                     Layout.fillWidth: true; Layout.preferredWidth: table.keyColPreferred; Layout.minimumWidth: table.keyColMinimum
                     text: model.name
                     placeholderText: table.keyPlaceholder
+                    resolved: table.resolved
+                    collection: table.collection
                     onTextEdited: { model.name = text; table.edited(); }
                 }
                 // arquivo (só no modo campos)
@@ -138,26 +140,15 @@ Item {
                     onTextEdited: { model.value = text; table.edited(); }
                 }
                 // valor normal com destaque de {{variavel}}
-                TextArea {
+                VarField {
                     id: valArea
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
                     visible: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
                     text: model.value
                     placeholderText: "valor"
-                    wrapMode: TextEdit.NoWrap
-                    selectByMouse: true
-                    implicitHeight: Kirigami.Units.gridUnit * 1.7
-                    topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
+                    resolved: table.resolved
+                    collection: table.collection
                     onTextEdited: { model.value = text; table.edited(); }
-                    Keys.onPressed: function (e) { if (valCompleter.handleKey(e)) e.accepted = true; }
-                    Component.onCompleted: varSupport.attach(valArea.textDocument, "#c678dd", true, false)
-                    VarCompleter {
-                        id: valCompleter
-                        anchors.fill: parent
-                        target: valArea
-                        resolved: table.resolved
-                        collection: table.collection
-                    }
                 }
                 ComboBox {
                     Layout.preferredWidth: table.typeColWidth; Layout.minimumWidth: table.typeColWidth; Layout.maximumWidth: table.typeColWidth

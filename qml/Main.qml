@@ -710,7 +710,8 @@ Kirigami.ApplicationWindow {
     // recalcula "Variáveis efetivas" da coleção (reabrir a aba e voltar à visão geral)
     function refreshCollectionResolved() {
         if (collectionPath.length === 0 || collectionIsSubfolder) { collectionResolvedVars = []; return; }
-        collectionResolvedVars = backend.resolvedVariables(collectionOf(collectionPath), []);
+        // inclui as variáveis em edição (não salvas) para uma referenciar a outra
+        collectionResolvedVars = backend.resolvedVariables(collectionOf(collectionPath), modelToArray(collectionVarsModel));
     }
     // popula o painel da coleção a partir do disco
     function loadCollection(relPath) {
@@ -1695,6 +1696,9 @@ Kirigami.ApplicationWindow {
                                                         bodyArea.insert(pos, "{}");
                                                         bodyArea.cursorPosition = pos + 1;
                                                         root.markDirty();
+                                                        // insert() programático não emite textEdited; sem
+                                                        // isto o popup de {{var}} só abre ao digitar o 1º caractere
+                                                        bodyCompleter.updateCompleter();
                                                     } else if (event.key === Qt.Key_BracketLeft) {
                                                         event.accepted = true;
                                                         bodyArea.insert(pos, "[]");
@@ -1774,28 +1778,23 @@ Kirigami.ApplicationWindow {
                                                 onActivated: root.markDirty()
                                             }
                                         }
-                                        TextArea {
+                                        VarField {
                                             id: bearerToken
                                             Layout.fillWidth: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             visible: authTypeBox.currentValue === "bearer"
                                             placeholderText: "Token"
-                                            wrapMode: TextEdit.NoWrap
-                                            selectByMouse: true
-                                            implicitHeight: Kirigami.Units.gridUnit * 1.7
-                                            topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
+                                            resolved: root.resolvedVars
+                                            collection: root.currentCollection
                                             onTextEdited: root.markDirty()
-                                            Keys.onPressed: function (e) { if (bearerCompleter.handleKey(e)) e.accepted = true; }
-                                            Component.onCompleted: varSupport.attach(bearerToken.textDocument, "#c678dd", true, false)
-                                            VarCompleter { id: bearerCompleter; anchors.fill: parent; target: bearerToken; resolved: root.resolvedVars; collection: root.currentCollection }
                                         }
                                         RowLayout {
                                             visible: authTypeBox.currentValue === "basic"
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            TextField { id: basicUser; Layout.fillWidth: true; placeholderText: "Usuário"; onTextEdited: root.markDirty() }
+                                            VarField { id: basicUser; Layout.fillWidth: true; placeholderText: "Usuário"; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
                                             TextField { id: basicPass; Layout.fillWidth: true; placeholderText: "Senha"; echoMode: TextInput.Password; onTextEdited: root.markDirty() }
                                         }
                                         RowLayout {
@@ -1803,19 +1802,14 @@ Kirigami.ApplicationWindow {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            TextField { id: apiKeyName; Layout.fillWidth: true; placeholderText: "Nome do cabeçalho"; onTextEdited: root.markDirty() }
-                                            TextArea {
+                                            VarField { id: apiKeyName; Layout.fillWidth: true; placeholderText: "Nome do cabeçalho"; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
+                                            VarField {
                                                 id: apiKeyValue
                                                 Layout.fillWidth: true
                                                 placeholderText: "Valor"
-                                                wrapMode: TextEdit.NoWrap
-                                                selectByMouse: true
-                                                implicitHeight: Kirigami.Units.gridUnit * 1.7
-                                                topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
+                                                resolved: root.resolvedVars
+                                                collection: root.currentCollection
                                                 onTextEdited: root.markDirty()
-                                                Keys.onPressed: function (e) { if (apiValueCompleter.handleKey(e)) e.accepted = true; }
-                                                Component.onCompleted: varSupport.attach(apiKeyValue.textDocument, "#c678dd", true, false)
-                                                VarCompleter { id: apiValueCompleter; anchors.fill: parent; target: apiKeyValue; resolved: root.resolvedVars; collection: root.currentCollection }
                                             }
                                         }
                                         Label { visible: authTypeBox.currentValue === "none"; text: "Sem autenticação."; opacity: 0.7; Layout.leftMargin: Kirigami.Units.smallSpacing }
@@ -2197,7 +2191,7 @@ Kirigami.ApplicationWindow {
                                         resolved: root.collectionResolvedVars
                                         collection: root.collectionPath
                                         onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
-                                        onEdited: root.collectionVarsDirty = true
+                                        onEdited: { root.collectionVarsDirty = true; root.refreshCollectionResolved(); }
                                     }
                                 }
                             }
@@ -2225,9 +2219,19 @@ Kirigami.ApplicationWindow {
                             property string viewCollection: ""
                             property bool envVarsDirty: false
                             property string pendingEnv: ""
+                            property var resolvedVars: []   // p/ o autocomplete das variáveis do ambiente
 
                             ListModel { id: envVarsModel }
 
+                            function refreshResolved() {
+                                var arr = [];
+                                for (var i = 0; i < envVarsModel.count; i++) {
+                                    var v = envVarsModel.get(i);
+                                    arr.push({ name: v.name, value: v.value, enabled: v.enabled !== false,
+                                               secret: v.secret === true, secretId: v.secretId });
+                                }
+                                resolvedVars = backend.resolvedVariables("", arr);
+                            }
                             function openFor(name) {
                                 if (name.length === 0 && root.envList.length > 0) name = root.envList[0].name;
                                 viewCollection = "";
@@ -2237,7 +2241,7 @@ Kirigami.ApplicationWindow {
                                 editing = name;
                                 envVarsDirty = false;
                                 envVarsModel.clear();
-                                if (name.length === 0) return;
+                                if (name.length === 0) { resolvedVars = []; return; }
                                 var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // valor real do cofre
                                 for (var i = 0; i < vars.length; i++) {
                                     var v = vars[i];
@@ -2248,6 +2252,7 @@ Kirigami.ApplicationWindow {
                                                           scope: v.scope !== undefined ? v.scope : "all",
                                                           collections: cols.join(",") });
                                 }
+                                refreshResolved();
                             }
                             function save() {
                                 if (editing.length === 0) return;
@@ -2372,7 +2377,7 @@ Kirigami.ApplicationWindow {
                                         keyPlaceholder: "variável"
                                         secretColumn: true
                                         scopeColumn: true
-                                        resolved: root.resolvedVars
+                                        resolved: envScreen.resolvedVars
                                         rowFilter: function(i) {
                                             var v = envVarsModel.get(i);
                                             return v !== undefined && envScreen.matchesView(v.scope, v.collections);
@@ -2397,7 +2402,7 @@ Kirigami.ApplicationWindow {
                                         }
                                         onScopeRequested: function(i, gx, gy) { scopePopup.openFor(i, gx, gy); }
                                         onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
-                                        onEdited: envScreen.envVarsDirty = true
+                                        onEdited: { envScreen.envVarsDirty = true; envScreen.refreshResolved(); }
                                     }
                                 }
                             }

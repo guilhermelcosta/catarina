@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import QtTest
 import "../qml"
@@ -31,6 +32,22 @@ TestCase {
     }
     HeaderTable { id: ht }
     JsonTree { id: tree }
+    VarCompleter { id: comp }
+    TextArea { id: emitProbe; onTextEdited: root.probeCount++ }
+    property int probeCount: 0
+
+    // setar `text` programaticamente não emite textEdited (só o usuário emite). O
+    // popup precisa emitir para o modelo do KvTable (onTextEdited) atualizar ao escolher.
+    function test_varcompleter_choose_notifica_edicao() {
+        root.probeCount = 0;
+        emitProbe.text = "{{";
+        comp.target = emitProbe;
+        comp.tokenStart = 0;
+        comp.partial = "";
+        comp.choose("teste");
+        compare(emitProbe.text, "{{teste}}");
+        compare(root.probeCount, 1);
+    }
     KvTable { id: kv; model: kvModel; width: 800; height: 400 }
     ResolvedVarsTable {
         id: rvt
@@ -41,6 +58,21 @@ TestCase {
     function test_resolved_vars_filters_disabled() {
         compare(rvt.count, 1);
         compare(rvt.activeVars[0].name, "a");
+    }
+
+    // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
+    function test_varcompleter_filters_braces() {
+        comp.resolved = [
+            { name: "teste", enabled: true },
+            { name: "{{teste}}", enabled: true },
+            { name: "{{", enabled: true },
+            { name: "", enabled: true },
+            { name: "off", enabled: false }
+        ];
+        comp.partial = "";
+        var names = comp.matchingNames();
+        compare(names.length, 1);
+        compare(names[0], "teste");
     }
 
     // cabeçalho e linha precisam usar a MESMA largura por coluna (o bug era o fillWidth

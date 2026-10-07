@@ -51,6 +51,13 @@ dispara. Verificado em `qmltestrunner` (offscreen e xcb).
   quebra o clique); **ou**
 - simplesmente não auto-mostrar tooltip nesses itens.
 
+### ⚠️ `text` programático não emite `textEdited`
+Setar `TextArea.text` por código (ex.: `VarCompleter.choose`) **não** dispara `textEdited` —
+ele só sai de edição do usuário. Quem escuta `onTextEdited` (o `KvTable` grava o modelo,
+o corpo/URL marcam dirty) fica desatualizado. Por isso o `VarCompleter.choose` emite
+`target.textEdited()` na mão (QML permite emitir um sinal C++). Regressão em
+`tests/tst_components.qml` (`test_varcompleter_choose_notifica_edicao`).
+
 ---
 
 ## 2. Opacidades (valores padrão)
@@ -130,7 +137,11 @@ Todos em `qml/`:
 - **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
 - **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
-- **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}`.
+- **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`).
+- **`VarField.qml`** — campo de texto de uma linha com `{{variavel}}` **embutido** (highlight +
+  autocomplete + hover). **Todo campo que aceita variáveis usa este componente** (URL, corpo,
+  auth, colunas Nome/Valor do `KvTable`). É `TextArea` porque o highlight precisa do
+  `QQuickTextDocument` — logo campos mascarados (`echoMode`, senha/segredo) não têm highlight.
 - **`NetworkView.qml`** — aba "Rede".
 - **`Util.js`** — lógica pura/testável (cURL, base64, formatação, reordenação de abas).
   Coloque aqui qualquer função sem dependência de UI.
@@ -148,6 +159,13 @@ Todos em `qml/`:
 
 - **Variáveis** têm `enabled`; desabilitada não resolve em `{{...}}`, fica esmaecida e o
   autocomplete não a oferece. A resolução é única (`Backend::variableChain`) para todos os escopos.
+- **Nome e valor podem referenciar outra variável** via `{{outra}}` (ex.: nome `{{env}}_url`
+  vira o valor de `env`; valor `{{host}}/x` encadeia). Resolvido em `Backend::variableChain`
+  (nome **e** valor num laço único, reconstruindo o mapa de nomes a cada passada até
+  estabilizar — cobre referência encadeada, ex.: `{{variavel-1}}` → `valor 1` e `{{valor 1}}`
+  → `valor 2`). O número máximo de passadas é a constante
+  `kMaxVariableResolvePasses` (`src/backend.cpp`): ~1 passada por nível encadeado e, ao mesmo
+  tempo, teto de segurança para referência cíclica (`{{a}}`↔`{{b}}`), que não converge.
 - **Segredos**: o valor real é carregado do cofre para edição (mascarado no campo com segredo),
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).

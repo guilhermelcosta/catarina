@@ -22,6 +22,13 @@
 
 namespace {
 
+// Teto de passadas ao resolver {{variavel}} em nome/valor (Backend::variableChain).
+// Cada passada reconstrói o mapa nome→valor, então cadeias de referência encadeada
+// ({{a}} → valor que referencia {{b}} → ...) se resolvem em ~1 passada por nível.
+// Serve também de limite de segurança: referência cíclica ({{a}}↔{{b}}) não converge
+// e para aqui em vez de girar para sempre. 10 cobre folgado os níveis usados na UI.
+constexpr int kMaxVariableResolvePasses = 10;
+
 const QStringList collectTexts(const QVariantMap &request)
 {
     QStringList texts;
@@ -367,6 +374,31 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
             add(e.variables, QStringLiteral("global"), true);
     add(collectionVariables(collection), QStringLiteral("coleção"), false);
     add(requestVars, QStringLiteral("request"), false);
+
+    // Uma variável pode ter {{outra}} no nome e/ou no valor, e a referência pode
+    // encadear (nome "{{a}}" cujo valor referencia "{{b}}"). Por isso itera até
+    // estabilizar: a cada passada o mapa nome→valor é reconstruído com os nomes já
+    // resolvidos, então um nome que só existe depois de outra resolução passa a valer.
+    // O teto de passadas é kMaxVariableResolvePasses (ver definição).
+    QVariantMap vals;
+    for (int pass = 0; pass < kMaxVariableResolvePasses; ++pass) {
+        vals.clear();
+        for (const ResolvedVar &r : chain)
+            if (r.enabled)
+                vals.insert(r.name, r.value);          // precedência: o último vence
+        bool changed = false;
+        for (ResolvedVar &r : chain) {
+            if (!r.enabled)
+                continue;
+            const QString nn = substitute(r.name, vals);
+            const QString nv = substitute(r.value, vals);
+            if (nn != r.name) { r.name = nn; changed = true; }
+            if (nv != r.value) { r.value = nv; changed = true; }
+        }
+        if (!changed)
+            break;
+    }
+
     return chain;
 }
 

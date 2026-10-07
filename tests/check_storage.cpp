@@ -204,6 +204,33 @@ int main(int argc, char **argv)
         CHECK(seenPub && seenTok);
     }
 
+    // nome e valor podem referenciar outra variável: {{pub}} no nome vira o VALOR de pub
+    {
+        const QVariantMap interp = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("{{pub}}"), QStringLiteral("req2"))});
+        CHECK(!interp.contains(QStringLiteral("{{pub}}")));                       // nome resolvido
+        CHECK(interp.value(QStringLiteral("1")).toString() == QStringLiteral("req2"));
+        CHECK(interp.value(QStringLiteral("pub")).toString() == QStringLiteral("1")); // global intacta
+
+        const QVariantMap valRef = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("alias"), QStringLiteral("{{pub}}!"))});
+        CHECK(valRef.value(QStringLiteral("alias")).toString() == QStringLiteral("1!"));
+
+        // encadeado: o nome referencia um nome que só passa a existir após outra
+        // resolução. variavel-1=valor 1; {{variavel-1}}=valor 2 (vira "valor 1");
+        // {{valor 1}}=valor 3 (vira "valor 2").
+        const QVariantMap chainRef = b.effectiveVariables(
+            QStringLiteral("colA"),
+            {item(QStringLiteral("variavel-1"), QStringLiteral("valor 1")),
+             item(QStringLiteral("{{variavel-1}}"), QStringLiteral("valor 2")),
+             item(QStringLiteral("{{valor 1}}"), QStringLiteral("valor 3"))});
+        CHECK(chainRef.value(QStringLiteral("variavel-1")).toString() == QStringLiteral("valor 1"));
+        CHECK(chainRef.value(QStringLiteral("valor 1")).toString() == QStringLiteral("valor 2"));
+        CHECK(chainRef.value(QStringLiteral("valor 2")).toString() == QStringLiteral("valor 3"));
+    }
+
     // missingVariables varre url, body, headers, fields e auth
     {
         const QVariantMap r{{QStringLiteral("url"), QStringLiteral("{{pub}}")},

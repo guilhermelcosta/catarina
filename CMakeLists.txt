@@ -43,6 +43,7 @@ qt_add_resources(katarina "qml"
         qml/HeaderTable.qml
         qml/NetworkView.qml
         qml/VarCompleter.qml
+        qml/VarField.qml
         qml/ShortcutField.qml
 )
 
