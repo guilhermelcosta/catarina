@@ -15,7 +15,6 @@
 #include <QSslError>
 #include <QRegularExpression>
 #include <QSaveFile>
-#include <QSettings>
 #include <QStandardPaths>
 #include <QUrlQuery>
 #include <QUuid>
@@ -56,10 +55,7 @@ const QStringList collectTexts(const QVariantMap &request)
 Backend::Backend(QObject *parent)
     : QObject(parent)
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope,
-                       QStringLiteral("katarina"), QStringLiteral("katarina"));
-    m_dir = settings.value(QStringLiteral("storageDir"),
-                           QDir::homePath() + QStringLiteral("/katarina-collections")).toString();
+    m_dir = m_settings.storageDir();
     m_envFile = m_dir + QStringLiteral("/.katarina/environments.json");
     m_appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     m_secretsFile = m_appData + QStringLiteral("/secrets.json");
@@ -77,9 +73,7 @@ void Backend::setStorageDir(const QString &dir)
 {
     if (dir.isEmpty() || dir == m_dir)
         return;
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope,
-                       QStringLiteral("katarina"), QStringLiteral("katarina"));
-    settings.setValue(QStringLiteral("storageDir"), dir);
+    m_settings.setStorageDir(dir);
     m_dir = dir;
     m_envFile = m_dir + QStringLiteral("/.katarina/environments.json");
     QDir().mkpath(m_dir);
@@ -189,8 +183,6 @@ QString Backend::encodeForm(const QVariantList &fields)
 }
 
 // ---------------------------------------------------------------- segredos
-
-QString Backend::secretsPath() const { return m_secretsFile; }
 
 QString Backend::secretValue(const QString &id) const
 {
@@ -453,12 +445,10 @@ void Backend::send(const QVariantMap &request, const QString &collection)
         return;
     }
 
-    QSettings prefs(QSettings::IniFormat, QSettings::UserScope,
-                    QStringLiteral("katarina"), QStringLiteral("katarina"));
-    const bool ignoreSsl = prefs.value(QStringLiteral("ignoreSsl"), false).toBool();
+    const bool ignoreSsl = m_settings.ignoreSsl();
 
     QNetworkRequest req(u);
-    req.setTransferTimeout(prefs.value(QStringLiteral("timeoutSec"), 30).toInt() * 1000);
+    req.setTransferTimeout(m_settings.timeoutSec() * 1000);
 
     bool hasContentType = false;
     for (const QVariant &v : substituteList(request.value(QStringLiteral("headers")).toList(), vars)) {
@@ -645,8 +635,6 @@ static void walk(const QString &root, const QString &rel, int depth, QVariantLis
     }
     for (const QString &file : dir.entryList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
         if (file.startsWith(QLatin1Char('.')))
-            continue;
-        if (rel.isEmpty() && file == QLatin1String("environments.json"))   // legado
             continue;
         QString base = file;
         base.chop(5);
@@ -903,15 +891,7 @@ void Backend::loadEnvironments()
 {
     m_envs.clear();
     m_activeEnv.clear();
-    QString path = m_envFile;
-    if (!QFile::exists(path)) {
-        const QString legacy = m_dir + QStringLiteral("/environments.json");
-        if (QFile::exists(legacy))
-            path = legacy;
-        else
-            return;
-    }
-    QFile f(path);
+    QFile f(m_envFile);
     if (!f.open(QIODevice::ReadOnly))
         return;
     const QJsonObject root = QJsonDocument::fromJson(f.readAll()).object();

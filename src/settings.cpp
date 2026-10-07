@@ -7,21 +7,11 @@ Settings::Settings(QObject *parent)
     : QObject(parent)
     , m_s(QSettings::IniFormat, QSettings::UserScope, QStringLiteral("katarina"), QStringLiteral("katarina"))
 {
-    migrateLegacyConfig();
 }
 
 QString Settings::defaultStorageDir()
 {
     return QDir::homePath() + QStringLiteral("/katarina-collections");
-}
-
-// Compatibilidade com o antigo kreq: se a config ainda aponta para a pasta
-// antiga e ela existe, continua usando-a para não perder as coleções.
-void Settings::migrateLegacyConfig()
-{
-    const QString old = QDir::homePath() + QStringLiteral("/kreq-collections");
-    if (QDir(old).exists() && m_s.value(QStringLiteral("storageDir")).toString().isEmpty())
-        m_s.setValue(QStringLiteral("storageDir"), old);
 }
 
 QString Settings::storageDir() const
@@ -43,8 +33,6 @@ bool Settings::confirmDelete() const { return m_s.value(QStringLiteral("confirmD
 void Settings::setConfirmDelete(bool v) { m_s.setValue(QStringLiteral("confirmDelete"), v); emit settingsChanged(); }
 bool Settings::autoSaveOnSend() const { return m_s.value(QStringLiteral("autoSaveOnSend"), false).toBool(); }
 void Settings::setAutoSaveOnSend(bool v) { m_s.setValue(QStringLiteral("autoSaveOnSend"), v); emit settingsChanged(); }
-QString Settings::exportFormat() const { return m_s.value(QStringLiteral("exportFormat"), QStringLiteral("cURL")).toString(); }
-void Settings::setExportFormat(const QString &v) { m_s.setValue(QStringLiteral("exportFormat"), v); emit settingsChanged(); }
 int Settings::timeoutSec() const { return m_s.value(QStringLiteral("timeoutSec"), 30).toInt(); }
 void Settings::setTimeoutSec(int v) { m_s.setValue(QStringLiteral("timeoutSec"), v); emit settingsChanged(); }
 bool Settings::ignoreSsl() const { return m_s.value(QStringLiteral("ignoreSsl"), false).toBool(); }
