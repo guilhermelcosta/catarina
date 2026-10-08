@@ -58,6 +58,39 @@ Item {
         else { table.model.remove(i); table.edited(); }
     }
 
+    // células editáveis (na ordem das colunas) de uma linha já instanciada.
+    // Cada célula expõe kvCell = true só na sua face ativa (a coluna "valor" tem
+    // três faces mutuamente exclusivas), então não dependemos de `visible` — que no
+    // harness de teste lê a visibilidade efetiva (TestCase é invisível).
+    function focusableCells(row) {
+        var it = kvList.itemAtIndex(row);
+        if (!it || it.shown === false) return [];   // linha filtrada fora não recebe foco
+        var out = [];
+        for (var i = 0; i < it.children.length; i++) {
+            var c = it.children[i];
+            if (c && c.kvCell === true && c.enabled !== false) out.push(c);
+        }
+        return out;
+    }
+    // Tab/Shift+Tab (dir = +1/-1): próxima coluna; no fim da linha, linha seguinte
+    function moveFocus(dir) {
+        for (var r = 0; r < table.model.count; r++) {
+            var cells = table.focusableCells(r);
+            var idx = -1;
+            for (var c = 0; c < cells.length; c++)
+                if (cells[c].activeFocus) { idx = c; break; }
+            if (idx < 0) continue;
+            var n = idx + dir;
+            if (n >= 0 && n < cells.length) { cells[n].forceActiveFocus(); return; }
+            var r2 = r + dir;
+            if (r2 < 0 || r2 >= table.model.count) return;
+            var cells2 = table.focusableCells(r2);
+            var c2 = dir > 0 ? 0 : cells2.length - 1;
+            if (c2 >= 0 && cells2[c2]) cells2[c2].forceActiveFocus();
+            return;
+        }
+    }
+
     readonly property bool empty: model === undefined || model === null || model.count === 0
 
     readonly property int colSpacing: Kirigami.Units.smallSpacing
@@ -113,7 +146,7 @@ Item {
         }
 
         ListView {
-            id: view
+            id: kvList
             objectName: "kvList"
             visible: !table.empty
             Layout.fillWidth: true
@@ -123,63 +156,87 @@ Item {
             clip: true
             model: table.model
             delegate: RowLayout {
-                width: view.width
+                width: kvList.width
                 spacing: table.colSpacing
+                // Tab/Shift+Tab de controles que não consomem a tecla (checkbox, combo, botões)
+                Keys.onPressed: function (e) {
+                    if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
+                        table.moveFocus(e.key === Qt.Key_Backtab ? -1 : 1);
+                        e.accepted = true;
+                    }
+                }
                 readonly property bool shown: table.rowFilter === null || table.rowFilter(index)
                 visible: shown
                 height: shown ? implicitHeight : 0
                 opacity: model.enabled === false ? 0.45 : 1   // linha desabilitada esmaecida
                 CheckBox {
+                    property bool kvCell: true
                     Layout.preferredWidth: table.enabledColWidth; Layout.minimumWidth: table.enabledColWidth; Layout.maximumWidth: table.enabledColWidth
                     checked: model.enabled
                     onToggled: { model.enabled = checked; table.edited(); }
                 }
                 VarField {
+                    property bool kvCell: true
+                    objectName: "kvKeyField"
                     Layout.fillWidth: true; Layout.preferredWidth: table.keyColPreferred; Layout.minimumWidth: table.keyColMinimum
                     text: model.name
                     placeholderText: table.keyPlaceholder
+                    tabHandler: function (dir) { table.moveFocus(dir); }
                     resolved: table.resolved
                     collection: table.collection
                     errorText: (table.uniqueNames && table.revision >= 0 && table.isDuplicateName(index))
-                               ? "Nome de variável repetido neste escopo" : ""
+                               ? Strings.t.duplicateNameHint : ""
                     onTextEdited: { model.name = text; table.edited(); }
                 }
                 // arquivo (só no modo campos)
                 Button {
+                    property bool kvCell: table.allowFiles && model.type === "file"
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
                     visible: table.allowFiles && model.type === "file"
                     text: model.fileName && model.fileName.length > 0
-                          ? model.fileName.split("/").pop() : "Escolher arquivo…"
+                          ? model.fileName.split("/").pop() : Strings.t.chooseFile
                     icon.name: "document-open"
                     onClicked: table.pickFile(index)
                 }
                 // valor mascarado quando é segredo (TextField tem echoMode)
                 TextField {
+                    property bool kvCell: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
                     visible: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
                     text: model.value
-                    placeholderText: "segredo (no cofre)"
+                    placeholderText: Strings.t.secretInVault
                     echoMode: TextInput.Password
                     onTextEdited: { model.value = text; table.edited(); }
+                    // Tab/Shift+Tab movem para a célula ao lado (mesma navegação do VarField)
+                    Keys.onPressed: function (e) {
+                        if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
+                            table.moveFocus(e.key === Qt.Key_Backtab ? -1 : 1);
+                            e.accepted = true;
+                        }
+                    }
                 }
                 // valor normal com destaque de {{variavel}}
                 VarField {
                     id: valArea
+                    property bool kvCell: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
+                    objectName: "kvValueField"
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
                     visible: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
                     text: model.value
-                    placeholderText: "valor"
+                    placeholderText: Strings.t.value
+                    tabHandler: function (dir) { table.moveFocus(dir); }
                     resolved: table.resolved
                     collection: table.collection
                     onTextEdited: { model.value = text; table.edited(); }
                 }
                 ComboBox {
+                    property bool kvCell: table.allowFiles
                     Layout.preferredWidth: table.typeColWidth; Layout.minimumWidth: table.typeColWidth; Layout.maximumWidth: table.typeColWidth
                     visible: table.allowFiles
                     model: ["text", "file"]
                     currentIndex: model.type === "file" ? 1 : 0
                     onActivated: {
-                        view.model.setProperty(index, "type", currentText);
+                        kvList.model.setProperty(index, "type", currentText);
                         table.edited();
                     }
                 }
@@ -230,16 +287,18 @@ Item {
                     }
                 }
                 CheckBox {
+                    property bool kvCell: table.secretColumn
                     Layout.preferredWidth: table.secretColWidth; Layout.minimumWidth: table.secretColWidth; Layout.maximumWidth: table.secretColWidth
                     visible: table.secretColumn
                     checked: model.secret === true
                     onToggled: { model.secret = checked; table.edited(); }
                 }
                 ToolButton {
+                    property bool kvCell: true
                     Layout.preferredWidth: table.removeColWidth; Layout.minimumWidth: table.removeColWidth; Layout.maximumWidth: table.removeColWidth
                     icon.name: "list-remove"
                     onClicked: table.tryRemove(index)
-                    ToolTip.text: "Remover linha"
+                    ToolTip.text: Strings.t.removeRow
                     ToolTip.visible: hovered
                 }
             }
@@ -296,15 +355,15 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Remover esta linha?" }
+            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: Strings.t.removeRowQuestion }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
-                Button { text: "Cancelar"; onClicked: confirmRemove.close() }
+                Button { text: Strings.t.cancel; onClicked: confirmRemove.close() }
                 Button {
-                    text: "Remover"; highlighted: true
+                    text: Strings.t.remove; Accessible.defaultButton: true
                     onClicked: {
                         if (confirmRemove.pendingIndex >= 0) {
                             table.model.remove(confirmRemove.pendingIndex);

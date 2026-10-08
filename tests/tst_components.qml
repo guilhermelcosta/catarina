@@ -234,6 +234,29 @@ TestCase {
         compare(kvModel.count, 0);
     }
 
+    // Tab/Shift+Tab movem o foco entre as células editáveis da tabela
+    function test_kvtable_tab_navigates_cells() {
+        settings.confirmDelete = false;
+        kvModel.clear();
+        kvModel.append({ name: "a", value: "1", enabled: true });
+        wait(50);
+        var lv = findChild(kv, "kvList");
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        var keyField = row.children[1];
+        var valField = row.children[4];
+        keyField.forceActiveFocus();
+        wait(20);
+        compare(keyField.activeFocus, true, "foco inicial no campo chave");
+        keyClick(Qt.Key_Tab);
+        wait(20);
+        compare(valField.activeFocus, true, "Tab vai para o campo valor");
+        keyClick(Qt.Key_Backtab);
+        wait(20);
+        compare(keyField.activeFocus, true, "Shift+Tab volta para o campo chave");
+        kvModel.clear();
+    }
+
     // ---- Util.js: domínio puro ----
     function test_util_b64() {
         compare(Util.b64("a"), "YQ==");

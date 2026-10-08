@@ -79,7 +79,7 @@ o corpo/URL marcam dirty) fica desatualizado. Por isso o `VarCompleter.choose` e
 ## 3. Botões e ações
 
 Padrão de **posicionamento**: ações no **topo à direita**; "Adicionar" no **rodapé** da lista.
-Diferença de importância: primária = `highlighted`; secundária = `ToolButton` só com ícone + tooltip.
+Diferença de importância: primária = `highlighted` (ou `Accessible.defaultButton` dentro de diálogo — ver abaixo); secundária = `ToolButton` só com ícone + tooltip.
 
 | Ação | Forma | Ícone | Onde |
 |---|---|---|---|
@@ -93,10 +93,16 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
 - **Diálogos (padrão)**: título em **negrito** com `header: DialogHeader { dialogTitle: <id>.title }`
-  — o texto auxiliar (rótulo de campo) **não** é negrito. `Cancelar` à esquerda e ação primária
-  (`highlighted`) à direita, na `RowLayout` com `Layout.bottomMargin: smallSpacing` (respiro até a
-  borda). Prefira `standardButtons` quando der. A `height` fixa precisa caber o conteúdo — senão
-  os botões extravasam o fundo.
+  — o texto auxiliar (rótulo de campo) **não** é negrito. `Cancelar` à esquerda e ação primária à
+  direita, na `RowLayout` com `Layout.bottomMargin: smallSpacing` (respiro até a borda). A `height`
+  fixa precisa caber o conteúdo — senão os botões extravasam o fundo.
+  - **Ação primária de diálogo usa `Accessible.defaultButton: true`, não `highlighted`.** No estilo
+    Breeze (`org.kde.desktop/Button.qml`), `hasFocus: activeFocus || highlighted` — ou seja, um
+    botão `highlighted` é desenhado **como se estivesse focado** mesmo sem foco. Em diálogo, isso
+    fazia o primário parecer focado e, ao dar Tab, o primário e o botão realmente focado ficavam
+    ambos com borda de foco (parecia foco duplicado/preso). `Accessible.defaultButton` desenha o
+    realce de "ação padrão" (fundo tingido + borda suave), distinto da borda de foco.
+    Use `highlighted: true` só em ações primárias **fora** de diálogo (toolbar/SaveBar/EmptyState).
 - **Validação de diálogo é ao vivo** (conforme digita): `Label` vermelho abaixo do campo
   (`negativeTextColor`) + botão primário desabilitado enquanto inválido. O diálogo tem **altura
   fixa** já reservando o espaço da mensagem (senão, ou cresce ao digitar, ou os botões vazam).
