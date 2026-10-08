@@ -554,7 +554,7 @@ Kirigami.ApplicationWindow {
             if (tabsModel.get(i).isEnvironment === true) { idx = i; break; }
         if (idx < 0) {
             snapshotCurrent();
-            tabsModel.append({ relPath: "__environment__", name: "Ambientes", method: "",
+            tabsModel.append({ relPath: "__environment__", name: Strings.t.environments, method: "",
                                dirty: false, dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
                                pinned: false, preview: false });
             idx = tabsModel.count - 1;
@@ -618,7 +618,7 @@ Kirigami.ApplicationWindow {
             var rp = paths[i];
             if (rp.length === 0) continue;
             if (rp === "__environment__") {
-                tabsModel.append({ relPath: rp, name: "Ambientes", method: "", dirty: false,
+                tabsModel.append({ relPath: rp, name: Strings.t.environments, method: "", dirty: false,
                                    dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
                                    pinned: false, preview: false });
                 continue;
