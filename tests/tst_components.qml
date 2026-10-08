@@ -16,7 +16,6 @@ TestCase {
         id: varSupport
         function attach() {}
         function copyText(t) {}
-        function clipboardText() { return ""; }
     }
 
     // stub de settings: o KvTable consulta settings.confirmDelete ao remover linha

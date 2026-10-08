@@ -1010,20 +1010,6 @@ Kirigami.ApplicationWindow {
         return { method: r.method, url: r.url, headers: headers, body: hasBody ? body : "" };
     }
 
-    function copyRequest(relPath) {
-        var o = (relPath !== undefined && relPath.length > 0) ? backend.loadRequest(relPath) : collectRequest();
-        if (o.method === undefined) return;
-        varSupport.copyText(JSON.stringify(o, null, 2));
-        notify("Request copiado");
-    }
-    function pasteRequest() {
-        var o = null;
-        try { o = JSON.parse(varSupport.clipboardText()); } catch (e) { o = null; }
-        if (!o || o.url === undefined) { notify("A área de transferência não tem um request"); return; }
-        var path = uniqueRequestPath(targetFolder(), "request-colado");
-        if (backend.saveRequest(path, o)) { reloadTree(); openRequest(path); }
-    }
-
     // ================= ciclo de vida =================
     Component.onCompleted: {
         rebuildTree();      // imediato (a restauração usa o modelo já preenchido)
@@ -2595,38 +2581,35 @@ Kirigami.ApplicationWindow {
     // ================= menus =================
     Menu {
         id: addMenu
-        MenuItem { text: "Nova coleção…"; icon.name: "folder-documents"; onTriggered: collectionDialog.open() }
-        MenuItem { text: "Novo request…"; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.selectedIsFolder ? root.selectedPath : "") }
+        MenuItem { text: Strings.t.newCollection; icon.name: "folder-documents"; onTriggered: collectionDialog.open() }
+        MenuItem { text: Strings.t.newRequest; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.selectedIsFolder ? root.selectedPath : "") }
         MenuSeparator {}
-        MenuItem { text: "Importar cURL…"; icon.name: "document-import"; onTriggered: { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } }
-        MenuItem { text: "Colar request"; icon.name: "edit-paste"; onTriggered: root.pasteRequest() }
+        MenuItem { text: Strings.t.importCurl; icon.name: "document-import"; onTriggered: { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } }
     }
     Menu {
         id: ctxMenu
-        MenuItem { text: "Novo request aqui…"; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.targetFolder()) }
+        MenuItem { text: Strings.t.newRequestHere; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.targetFolder()) }
         MenuItem {
-            text: "Nova pasta aqui"; icon.name: "folder-new"
+            text: Strings.t.newFolderHere; icon.name: "folder-new"
             onTriggered: { root.selectedPath = root.targetFolder(); root.selectedIsFolder = root.selectedPath.length > 0; folderDialog.open(); }
         }
         MenuSeparator {}
-        MenuItem { text: "Copiar request"; icon.name: "edit-copy"; enabled: root.selectedPath.length > 0 && !root.selectedIsFolder; onTriggered: root.copyRequest(root.selectedPath) }
-        MenuItem { text: "Mover para…"; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
-        MenuItem { text: "Renomear…"; icon.name: "edit-rename"; enabled: root.selectedPath.length > 0; onTriggered: renameDialog.openFor(root.selectedPath) }
-        MenuItem { text: "Duplicar"; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
+        MenuItem { text: Strings.t.moveToEllipsis; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
+        MenuItem { text: Strings.t.renameEllipsis; icon.name: "edit-rename"; enabled: root.selectedPath.length > 0; onTriggered: renameDialog.openFor(root.selectedPath) }
+        MenuItem { text: Strings.t.duplicate; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
         MenuSeparator {}
-        MenuItem { text: "Excluir"; icon.name: "edit-delete"; onTriggered: root.askDelete() }
+        MenuItem { text: Strings.t.delete; icon.name: "edit-delete"; onTriggered: root.askDelete() }
     }
 
     Menu {
         id: reqMenu
-        MenuItem { text: "Exportar código…"; icon.name: "document-export"; onTriggered: { curlExportDialog.refresh(); curlExportDialog.open(); } }
-        MenuItem { text: "Copiar request"; icon.name: "edit-copy"; onTriggered: root.copyRequest() }
+        MenuItem { text: Strings.t.exportCode; icon.name: "document-export"; onTriggered: { curlExportDialog.refresh(); curlExportDialog.open(); } }
     }
 
     // ================= diálogos =================
     Dialog {
         id: newReqDialog
-        title: "Novo request"; modal: true; anchors.centerIn: parent; width: 460; height: 300
+        title: Strings.t.newRequestTitle; modal: true; anchors.centerIn: parent; width: 460; height: 300
         header: DialogHeader { dialogTitle: newReqDialog.title }
         property string target: ""
         function openIn(folder) { target = folder; nrName.text = ""; nrUrl.text = ""; nrMethod.currentIndex = 0; open(); nrName.forceActiveFocus(); }
@@ -3273,24 +3256,22 @@ Kirigami.ApplicationWindow {
 
         function openPalette() {
             allActions = [
-                { group: "Globais", label: "Novo request…", run: function () { newReqDialog.openIn(root.targetFolder()); } },
-                { group: "Globais", label: "Nova pasta…", run: function () { folderDialog.open(); } },
-                { group: "Globais", label: "Nova coleção…", run: function () { collectionDialog.open(); } },
-                { group: "Globais", label: "Importar cURL…", run: function () { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } },
-                { group: "Globais", label: "Histórico", run: function () { historyDialog.openAndLoad(); } },
-                { group: "Globais", label: "Configurações…", run: function () { root.openSettingsTab(); } },
-                { group: "Globais", label: "Gerenciar variáveis de ambiente…", run: function () { root.openEnvTab(root.activeEnv); } },
-                { group: "Globais", label: "Criar ambiente…", run: function () { createEnvDialog.open(); } },
-                { group: "Globais", label: "Fechar aba", run: function () { root.closeTab(root.currentTab); } },
-                { group: "Globais", label: "Reabrir aba fechada", run: function () { root.reopenClosed(); } },
-                { group: "Contexto atual", label: "Salvar request", run: function () { root.saveCurrent(); } },
-                { group: "Contexto atual", label: "Enviar request", run: function () { root.doSend(); } },
-                { group: "Contexto atual", label: "Exportar código…", run: function () { curlExportDialog.refresh(); curlExportDialog.open(); } },
-                { group: "Contexto atual", label: "Copiar request", run: function () { root.copyRequest(); } },
-                { group: "Contexto atual", label: "Colar request", run: function () { root.pasteRequest(); } },
-                { group: "Contexto atual", label: "Mover selecionado…", run: function () { if (root.selectedPath.length > 0) moveDialog.openFor(root.selectedPath); } },
-                { group: "Contexto atual", label: "Renomear selecionado…", run: function () { if (root.selectedPath.length > 0) renameDialog.openFor(root.selectedPath); } },
-                { group: "Contexto atual", label: "Duplicar selecionado", run: function () { root.duplicateSelected(); } }
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newRequest, run: function () { newReqDialog.openIn(root.targetFolder()); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newFolder, run: function () { folderDialog.open(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newCollection, run: function () { collectionDialog.open(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.importCurl, run: function () { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.history, run: function () { historyDialog.openAndLoad(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.settingsEllipsis, run: function () { root.openSettingsTab(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.manageEnvVariables, run: function () { root.openEnvTab(root.activeEnv); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.createEnvironment, run: function () { createEnvDialog.open(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.closeTab, run: function () { root.closeTab(root.currentTab); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.reopenTab, run: function () { root.reopenClosed(); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.saveRequest, run: function () { root.saveCurrent(); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.sendRequest, run: function () { root.doSend(); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.exportCode, run: function () { curlExportDialog.refresh(); curlExportDialog.open(); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.moveSelected, run: function () { if (root.selectedPath.length > 0) moveDialog.openFor(root.selectedPath); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.renameSelected, run: function () { if (root.selectedPath.length > 0) renameDialog.openFor(root.selectedPath); } },
+                { group: Strings.t.paletteGroupContext, label: Strings.t.duplicateSelected, run: function () { root.duplicateSelected(); } }
             ];
             paletteField.text = "";
             applyFilter("");
