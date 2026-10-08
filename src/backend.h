@@ -66,6 +66,8 @@ public:
     // ---- variáveis de coleção (versionadas, sem segredos) ----
     Q_INVOKABLE QVariantList collectionVariables(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionVariables(const QString &collection, const QVariantList &vars);
+    // primeiro nome de variável repetido na lista ("" se não houver); nomes aparados
+    Q_INVOKABLE QString duplicateVariableName(const QVariantList &vars) const;
 
     // ---- cabeçalhos de coleção (aplicados a todos os requests dela) ----
     Q_INVOKABLE QVariantList collectionHeaders(const QString &collection) const;

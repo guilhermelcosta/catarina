@@ -428,6 +428,34 @@ int main(int argc, char **argv)
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 2);
     b.deleteEntry(QStringLiteral("__col__"));
 
+    // ---------------------------------------------------------------- nomes repetidos no mesmo escopo
+    {
+        CHECK(b.duplicateVariableName({item(QStringLiteral("a"), QStringLiteral("1")),
+                                       item(QStringLiteral("a"), QStringLiteral("2"))})
+              == QStringLiteral("a"));
+        CHECK(b.duplicateVariableName({item(QStringLiteral("a"), QStringLiteral("1")),
+                                       item(QStringLiteral("b"), QStringLiteral("2"))}).isEmpty());
+        // nomes são aparados: "a " colide com "a"
+        CHECK(b.duplicateVariableName({item(QStringLiteral("a"), QStringLiteral("1")),
+                                       item(QStringLiteral("a "), QStringLiteral("2"))})
+              == QStringLiteral("a"));
+        // recusa salvar com duplicados nos 3 escopos
+        CHECK(!b.saveCollectionVariables(QStringLiteral("__dup__"),
+                                         {item(QStringLiteral("x"), QStringLiteral("1")),
+                                          item(QStringLiteral("x"), QStringLiteral("2"))}));
+        CHECK(!b.saveEnvironment(QStringLiteral("__dup_env__"),
+                                 {item(QStringLiteral("y"), QStringLiteral("1")),
+                                  item(QStringLiteral("y"), QStringLiteral("2"))}));
+        CHECK(!b.saveRequest(QStringLiteral("__dup__/r"),
+                             {{QStringLiteral("method"), QStringLiteral("GET")},
+                              {QStringLiteral("vars"), QVariantList{item(QStringLiteral("z"), QStringLiteral("1")),
+                                                                    item(QStringLiteral("z"), QStringLiteral("2"))}}}));
+        // mesmo nome em escopos diferentes é permitido (eles se sobrepõem)
+        CHECK(b.saveCollectionVariables(QStringLiteral("__dup__"), {item(QStringLiteral("x"), QStringLiteral("1"))}));
+        b.deleteEntry(QStringLiteral("__dup__"));
+        b.deleteEnvironment(QStringLiteral("__dup_env__"));
+    }
+
     // ---------------------------------------------------------------- requests
     const QString rel = QStringLiteral("__check__/req");
     b.deleteEntry(QStringLiteral("__check__"));

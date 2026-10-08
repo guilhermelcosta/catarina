@@ -60,6 +60,10 @@ Kirigami.ApplicationWindow {
     property var collectionResolvedVars: []
     property string currentCollection: ""
     property string missingText: ""
+    // avisos de nome de variável repetido no mesmo escopo (bloqueiam salvar/enviar)
+    property string requestVarsWarning: ""
+    property string collectionVarsWarning: ""
+    property string envVarsWarning: ""
     property string responseCookies: ""
     property bool currentDirty: false
 
@@ -182,6 +186,16 @@ Kirigami.ApplicationWindow {
         for (var i = 0; i < model.count; i++) out.push(entryOf(model.get(i)));
         return out;
     }
+    // mensagem quando há nome de variável repetido no mesmo escopo ("" se ok)
+    function varsWarning(model) {
+        var d = backend.duplicateVariableName(modelToArray(model));
+        return d.length > 0 ? "Variável repetida: " + d : "";
+    }
+    function updateVarsWarnings() {
+        requestVarsWarning = varsWarning(requestVarsModel);
+        collectionVarsWarning = varsWarning(collectionVarsModel);
+        envVarsWarning = varsWarning(envVarsModel);
+    }
     function currentAuth() {
         return { type: authTypeBox.currentValue, token: bearerToken.text,
                  user: basicUser.text, pass: basicPass.text,
@@ -225,6 +239,7 @@ Kirigami.ApplicationWindow {
         collectionVarsDirty = false;        // saímos da coleção: edições pendentes não valem mais
         collectionHeadersDirty = false;
         refreshResolved();
+        updateVarsWarnings();
     }
     function clearEditor() {
         methodBox.currentIndex = 0;
@@ -739,11 +754,14 @@ Kirigami.ApplicationWindow {
         refreshCollectionResolved();
         collectionVarsDirty = false;
         collectionHeadersDirty = false;
+        updateVarsWarnings();
         showingCollection = true;
         showingEnv = false;
     }
     function saveCollectionVars() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem variáveis
+        var dup = backend.duplicateVariableName(modelToArray(collectionVarsModel));
+        if (dup.length > 0) { notify("Nome de variável repetido na coleção: " + dup); return; }
         backend.saveCollectionVariables(collectionPath, modelToArray(collectionVarsModel));
         collectionVarsDirty = false;
         refreshCollectionResolved();   // visão geral reflete secret/normal sem precisar reabrir
@@ -781,6 +799,8 @@ Kirigami.ApplicationWindow {
             if (collectionHeadersDirty) saveCollectionHeaders();
             return;
         }
+        var dup = backend.duplicateVariableName(modelToArray(requestVarsModel));
+        if (dup.length > 0) { notify("Nome de variável repetido no request: " + dup); return; }
         if (backend.saveRequest(t.relPath, collectRequest())) {
             tabsModel.setProperty(currentTab, "method", methodBox.currentText);
             tabsModel.setProperty(currentTab, "dirty", false);
@@ -869,6 +889,8 @@ Kirigami.ApplicationWindow {
     function doSend() {
         if (sending || showingCollection || showingEnv || showingSettings || currentTab < 0) return;
         if (urlField.text.length === 0) { notify("Informe uma URL"); return; }
+        var dup = backend.duplicateVariableName(modelToArray(requestVarsModel));
+        if (dup.length > 0) { notify("Nome de variável repetido no request: " + dup); return; }
         if (settings.autoSaveOnSend && currentDirty) saveCurrent();
         var t = tabsModel.get(currentTab);
         setResponseBody(""); responseHeaders = []; netMeta = ({});
@@ -1551,7 +1573,7 @@ Kirigami.ApplicationWindow {
                                     }
                                     ToolButton {
                                         icon.name: "document-save"
-                                        enabled: root.currentDirty
+                                        enabled: root.currentDirty && root.requestVarsWarning.length === 0
                                         onClicked: root.saveCurrent()
                                         ToolTip.text: "Salvar (Ctrl+S)"; ToolTip.visible: hovered
                                     }
@@ -1824,10 +1846,11 @@ Kirigami.ApplicationWindow {
                                             model: requestVarsModel
                                             keyPlaceholder: "variável"
                                             secretColumn: true
+                                            uniqueNames: true
                                             resolved: root.resolvedVars
                                             collection: root.currentCollection
                                             onAddRequested: requestVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
-                                            onEdited: root.markDirty()
+                                            onEdited: { root.markDirty(); root.updateVarsWarnings(); }
                                         }
                                         Item {
                                             id: requestResolvedPane
@@ -2178,6 +2201,7 @@ Kirigami.ApplicationWindow {
                                         Layout.fillWidth: true
                                         title: "Variáveis da coleção"
                                         dirty: root.collectionVarsDirty
+                                        canSave: root.collectionVarsWarning.length === 0
                                         showDiscard: true
                                         onSave: root.saveCollectionVars()
                                         onDiscard: root.revertCollectionVars()
@@ -2192,10 +2216,11 @@ Kirigami.ApplicationWindow {
                                         model: collectionVarsModel
                                         keyPlaceholder: "variável"
                                         secretColumn: true
+                                        uniqueNames: true
                                         resolved: root.collectionResolvedVars
                                         collection: root.collectionPath
                                         onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
-                                        onEdited: { root.collectionVarsDirty = true; root.refreshCollectionResolved(); }
+                                        onEdited: { root.collectionVarsDirty = true; root.refreshCollectionResolved(); root.updateVarsWarnings(); }
                                     }
                                 }
                             }
@@ -2257,9 +2282,12 @@ Kirigami.ApplicationWindow {
                                                           collections: cols.join(",") });
                                 }
                                 refreshResolved();
+                                root.updateVarsWarnings();
                             }
                             function save() {
                                 if (editing.length === 0) return;
+                                var dup = backend.duplicateVariableName(modelToArray(envVarsModel));
+                                if (dup.length > 0) { notify("Nome de variável repetido no ambiente: " + dup); return; }
                                 var vars = [];
                                 for (var i = 0; i < envVarsModel.count; i++) {
                                     var v = envVarsModel.get(i);
@@ -2353,6 +2381,7 @@ Kirigami.ApplicationWindow {
                                         Layout.fillWidth: true
                                         title: envScreen.editing
                                         dirty: envScreen.envVarsDirty
+                                        canSave: root.envVarsWarning.length === 0
                                         showDiscard: true
                                         showRename: true
                                         canRename: envScreen.editing.length > 0 && !envScreen.envVarsDirty
@@ -2380,6 +2409,7 @@ Kirigami.ApplicationWindow {
                                         model: envVarsModel
                                         keyPlaceholder: "variável"
                                         secretColumn: true
+                                        uniqueNames: true
                                         scopeColumn: true
                                         resolved: envScreen.resolvedVars
                                         rowFilter: function(i) {
@@ -2413,7 +2443,7 @@ Kirigami.ApplicationWindow {
                                         }
                                         onScopeRequested: function(i, gx, gy) { scopePopup.openFor(i, gx, gy); }
                                         onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
-                                        onEdited: { envScreen.envVarsDirty = true; envScreen.refreshResolved(); }
+                                        onEdited: { envScreen.envVarsDirty = true; envScreen.refreshResolved(); root.updateVarsWarnings(); }
                                     }
                                 }
                             }
@@ -2816,6 +2846,17 @@ Kirigami.ApplicationWindow {
         id: renameDialog
         title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 175
         property string relPath: ""
+        // erro ao vivo (conforme digita); nome vazio não mostra nada
+        function errorText() {
+            var n = renameField.text.trim();
+            if (n.length === 0) return "";
+            if (n.indexOf("/") >= 0) return "O nome não pode conter '/'.";
+            var parent = relPath.split("/").slice(0, -1).join("/");
+            var newRel = parent.length > 0 ? parent + "/" + n : n;
+            if (newRel !== relPath && (backend.isCollection(newRel) || backend.loadRequest(newRel).method !== undefined))
+                return "Já existe um item com esse nome aqui.";
+            return "";
+        }
         function openFor(p) {
             relPath = p;
             renameField.text = p.split("/").pop();
@@ -2824,6 +2865,7 @@ Kirigami.ApplicationWindow {
             renameField.selectAll();
         }
         function apply() {
+            if (errorText().length > 0) return;
             var n = renameField.text.trim();
             if (n.length === 0) return;
             var parent = relPath.split("/").slice(0, -1).join("/");
@@ -2833,19 +2875,34 @@ Kirigami.ApplicationWindow {
                 if (root.selectedPath === relPath) root.selectedPath = newRel;
                 root.reloadTree();
                 close();
+            } else {
+                notify("Não foi possível renomear");
             }
         }
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
             Label { text: "Novo nome:" }
-            TextField { id: renameField; Layout.fillWidth: true; onAccepted: renameDialog.apply() }
+            TextField {
+                id: renameField
+                Layout.fillWidth: true
+                onAccepted: renameDialog.apply()
+                ToolTip.text: renameDialog.errorText()
+                ToolTip.visible: hovered && renameDialog.errorText().length > 0
+                ToolTip.delay: 500
+                Rectangle {
+                    anchors.fill: parent; anchors.margins: -1
+                    color: "transparent"; radius: 3; enabled: false; z: 10
+                    border.width: 1; border.color: Kirigami.Theme.negativeTextColor
+                    visible: renameDialog.errorText().length > 0
+                }
+            }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: renameDialog.close() }
-                Button { text: "Renomear"; highlighted: true; onClicked: renameDialog.apply() }
+                Button { text: "Renomear"; highlighted: true; enabled: renameDialog.errorText().length === 0; onClicked: renameDialog.apply() }
             }
         }
     }
@@ -2948,7 +3005,15 @@ Kirigami.ApplicationWindow {
         id: renameEnvDialog
         title: "Renomear ambiente"; modal: true; anchors.centerIn: parent; width: 380; height: 160
         property string oldName: ""
+        function errorText() {
+            var n = envRenameField.text.trim();
+            if (n.length === 0 || n === oldName) return "";
+            for (var i = 0; i < root.envList.length; i++)
+                if (root.envList[i].name === n) return "Já existe um ambiente com esse nome.";
+            return "";
+        }
         function apply() {
+            if (errorText().length > 0) return;
             var n = envRenameField.text.trim();
             if (n.length === 0 || n === oldName) { close(); return; }
             envScreen.renameTo(oldName, n);
@@ -2959,13 +3024,27 @@ Kirigami.ApplicationWindow {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
             Label { text: "Novo nome do ambiente"; font.bold: true }
-            TextField { id: envRenameField; Layout.fillWidth: true; placeholderText: "nome do ambiente"; onAccepted: renameEnvDialog.apply() }
+            TextField {
+                id: envRenameField
+                Layout.fillWidth: true
+                placeholderText: "nome do ambiente"
+                onAccepted: renameEnvDialog.apply()
+                ToolTip.text: renameEnvDialog.errorText()
+                ToolTip.visible: hovered && renameEnvDialog.errorText().length > 0
+                ToolTip.delay: 500
+                Rectangle {
+                    anchors.fill: parent; anchors.margins: -1
+                    color: "transparent"; radius: 3; enabled: false; z: 10
+                    border.width: 1; border.color: Kirigami.Theme.negativeTextColor
+                    visible: renameEnvDialog.errorText().length > 0
+                }
+            }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: renameEnvDialog.close() }
-                Button { text: "Renomear"; highlighted: true; onClicked: renameEnvDialog.apply() }
+                Button { text: "Renomear"; highlighted: true; enabled: renameEnvDialog.errorText().length === 0; onClicked: renameEnvDialog.apply() }
             }
         }
     }

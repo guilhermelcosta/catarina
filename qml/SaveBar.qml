@@ -13,6 +13,7 @@ RowLayout {
     property bool showDiscard: false
     property bool showRename: false
     property bool canRename: true
+    property bool canSave: true
     property string saveTooltip: "Salvar (Ctrl+S)"
     property string discardTooltip: "Descartar alterações não salvas"
     property string renameTooltip: "Renomear"
@@ -47,7 +48,7 @@ RowLayout {
     Button {
         icon.name: "document-save"; text: "Salvar"
         highlighted: true
-        enabled: bar.dirty
+        enabled: bar.dirty && bar.canSave
         onClicked: bar.save()
         ToolTip.text: bar.saveTooltip; ToolTip.visible: hovered
     }

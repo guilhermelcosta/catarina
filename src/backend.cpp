@@ -775,6 +775,9 @@ bool Backend::isCollection(const QString &relPath) const
 
 bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
 {
+    if (data.contains(QStringLiteral("vars"))
+        && !duplicateVariableName(data.value(QStringLiteral("vars")).toList()).isEmpty())
+        return false;   // nomes de variável repetidos no request
     const QString path = requestPath(relPath);
     QDir().mkpath(QFileInfo(path).absolutePath());
     QJsonObject obj = QJsonObject::fromVariantMap(data);
@@ -969,9 +972,23 @@ QVariantList Backend::collectionVariables(const QString &collection) const
     return cachedJsonList(path, QStringLiteral("vars"), m_colVarsCache[collection]);
 }
 
+QString Backend::duplicateVariableName(const QVariantList &vars) const
+{
+    QSet<QString> seen;
+    for (const QVariant &v : vars) {
+        const QString n = v.toMap().value(QStringLiteral("name")).toString().trimmed();
+        if (n.isEmpty())
+            continue;
+        if (seen.contains(n))
+            return n;
+        seen.insert(n);
+    }
+    return {};
+}
+
 bool Backend::saveCollectionVariables(const QString &collection, const QVariantList &vars)
 {
-    if (collection.isEmpty())
+    if (collection.isEmpty() || !duplicateVariableName(vars).isEmpty())
         return false;
     const QString dir = m_dir + QLatin1Char('/') + collection;
     QDir().mkpath(dir);
@@ -1071,7 +1088,7 @@ QVariantList Backend::environmentVariables(const QString &name) const
 
 bool Backend::saveEnvironment(const QString &name, const QVariantList &variables)
 {
-    if (name.isEmpty())
+    if (name.isEmpty() || !duplicateVariableName(variables).isEmpty())
         return false;
     const QVariantList sanitized = sanitizeSecrets(variables);
     for (Env &e : m_envs) {

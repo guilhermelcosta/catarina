@@ -26,11 +26,30 @@ Item {
     property var scopeIcon: null     // function(index) -> nome do ícone do chip de escopo
     property var scopeColor: null    // function(index) -> cor do chip (por escopo); null = neutro
     property var scopeTooltip: null  // function(index) -> tooltip (ex.: nomes completos)
+    property bool uniqueNames: false // destaca nomes repetidos na tabela (variáveis)
     property var rowFilter: null     // function(index) -> bool (mostra/esconde a linha)
     signal addRequested()
     signal edited()
     signal pickFile(int index)
     signal scopeRequested(int index, real gx, real gy)
+
+    // bump a cada edição: força a reavaliação do destaque de nome repetido
+    property int revision: 0
+    onEdited: revision++
+
+    // nome da linha colide (aparado) com o de outra linha da mesma tabela
+    function isDuplicateName(index) {
+        var r = table.model.get(index);
+        var n = r && r.name !== undefined ? String(r.name).trim() : "";
+        if (n.length === 0) return false;
+        for (var i = 0; i < table.model.count; i++) {
+            if (i === index) continue;
+            var m = table.model.get(i);
+            var o = m && m.name !== undefined ? String(m.name).trim() : "";
+            if (o === n) return true;
+        }
+        return false;
+    }
 
     // remoção de linha com confirmação, seguindo a config global (settings.confirmDelete)
     function tryRemove(i) {
@@ -120,6 +139,8 @@ Item {
                     placeholderText: table.keyPlaceholder
                     resolved: table.resolved
                     collection: table.collection
+                    errorText: (table.uniqueNames && table.revision >= 0 && table.isDuplicateName(index))
+                               ? "Nome de variável repetido neste escopo" : ""
                     onTextEdited: { model.name = text; table.edited(); }
                 }
                 // arquivo (só no modo campos)

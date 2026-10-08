@@ -96,6 +96,11 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
   Com `RowLayout` de botões própria, a `height` fixa precisa caber o conteúdo — senão os botões
   extravasam o fundo do diálogo (foi o caso do "Renomear": 150→175). Prefira `standardButtons`
   quando der.
+- **Validação de diálogo é ao vivo** (conforme digita): o campo fica com **borda vermelha**
+  (`negativeTextColor`) e mostra a razão em **tooltip no hover** (`ToolTip.text` +
+  `ToolTip.visible: hovered` + `ToolTip.delay`), com o botão primário desabilitado enquanto
+  inválido. Não use erro só-no-clique nem `Label` que empurra o layout (o "Renomear" estourava
+  a altura).
 - **Editor contextual pequeno**: prefira um **popover ancorado e não-modal** (aplica ao vivo), em vez
   de um diálogo modal; a célula que o abre pode ser um **chip** (ícone + texto,
   `alternateBackgroundColor`, borda `disabledTextColor`, `radius: 4`). Ex.: escopo da variável.
@@ -129,7 +134,9 @@ Todos em `qml/`:
 
 - **`KvTable.qml`** — tabela editável chave/valor (params, cabeçalhos, campos, variáveis de
   request/coleção/ambiente). Opções: `secretColumn`, `allowFiles`, `scopeColumn`
-  (+ `scopeText`/`scopeIcon`/`scopeColor`/`scopeRequested`), `rowFilter`, `resolved`/`collection`.
+  (+ `scopeText`/`scopeIcon`/`scopeColor`/`scopeRequested`), `rowFilter`, `resolved`/`collection`,
+  `uniqueNames` (nome repetido no mesmo escopo: texto em **vermelho e negrito** + motivo num
+  popup no hover do campo).
   O `scopeColor(index)` pinta o chip de escopo por escopo (verde = global, azul = restrita a
   coleções; **null** = neutro). **Toda tabela editável nova usa este componente** — estenda com
   uma opção nova em vez de criar outra tabela.
@@ -144,7 +151,9 @@ Todos em `qml/`:
   A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
   origem (global → coleção → request) e depois por nome.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
-- **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`).
+- **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`). O popup de
+  hover mostra `nome = valor` + um **chip do escopo** (mesma cor/ícone de origem: global/coleção/
+  request), em vez de `(escopo)` entre parênteses.
 - **`VarField.qml`** — campo de texto de uma linha com `{{variavel}}` **embutido** (highlight +
   autocomplete + hover). **Todo campo que aceita variáveis usa este componente** (URL, corpo,
   auth, colunas Nome/Valor do `KvTable`). É `TextArea` porque o highlight precisa do
@@ -166,6 +175,10 @@ Todos em `qml/`:
 
 - **Variáveis** têm `enabled`; desabilitada não resolve em `{{...}}`, fica esmaecida e o
   autocomplete não a oferece. A resolução é única (`Backend::variableChain`) para todos os escopos.
+- **Nome de variável é único por escopo** (ambiente, coleção ou request). O mesmo nome em escopos
+  diferentes é ok (eles se sobrepõem); repetido no mesmo escopo é recusado
+  (`Backend::duplicateVariableName`, nomes aparados). A UI bloqueia o **Salvar** e o campo
+  duplicado mostra o motivo num **popup no hover** (mesmo estilo do hover de `{{variavel}}`).
 - **Nome e valor podem referenciar outra variável** via `{{outra}}` (ex.: nome `{{env}}_url`
   vira o valor de `env`; valor `{{host}}/x` encadeia). Resolvido em `Backend::variableChain`
   (nome **e** valor num laço único, reconstruindo o mapa de nomes a cada passada até

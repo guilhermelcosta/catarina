@@ -77,6 +77,12 @@ TestCase {
     KvTable { id: kvScope; model: scopeModel; scopeColumn: true; width: 800; height: 300
               scopeText: function (i) { return "x" }
               scopeColor: function (i) { return "#ff0000" } }
+    ListModel {
+        id: dupModel
+        ListElement { name: "dup"; value: "1"; enabled: true; secret: false; type: "text"; fileName: "" }
+        ListElement { name: "dup"; value: "2"; enabled: true; secret: false; type: "text"; fileName: "" }
+    }
+    KvTable { id: kvDup; model: dupModel; uniqueNames: true; width: 800; height: 300 }
     VarField { id: vf; resolved: vfVars }
     property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
@@ -438,6 +444,18 @@ TestCase {
         var chip = findChild(row, "scopeChip");
         verify(chip !== null, "scopeChip não encontrado");
         compare(String(chip.tint), "#ff0000");
+    }
+
+    // nome repetido (uniqueNames) marca o campo com erroText; sem uniqueNames, não
+    function test_kvtable_duplicate_name_highlight() {
+        wait(50);
+        var lv = findChild(kvDup, "kvList");
+        verify(lv !== null);
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        compare(row.children[1].errorText.length > 0, true, "nome repetido marca erro");
+        var lv2 = findChild(kvSecret, "kvList");
+        compare(lv2.itemAtIndex(0).children[1].errorText.length === 0, true, "sem uniqueNames não marca");
     }
 
     function test_util_q() {
