@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Tabela unificada de pares chave/valor do app (params, headers, campos, vars de
 // request/coleção/ambiente). O campo de valor aceita {{variavel}} (destaca, sugere e
@@ -16,7 +17,7 @@ import org.kde.kirigami as Kirigami
 Item {
     id: table
     property var model
-    property string keyPlaceholder: "chave"
+    property string keyPlaceholder: Strings.t.key
     property bool secretColumn: false
     property bool allowFiles: false
     property bool scopeColumn: false
@@ -73,7 +74,7 @@ Item {
     readonly property int scopeColPreferred: 170
     readonly property int scopeColMinimum: 90
     readonly property string keyHeader: keyPlaceholder.length > 0
-        ? keyPlaceholder.charAt(0).toUpperCase() + keyPlaceholder.slice(1) : "Chave"
+        ? keyPlaceholder.charAt(0).toUpperCase() + keyPlaceholder.slice(1) : Strings.t.key
 
     ColumnLayout {
         id: content
@@ -90,17 +91,17 @@ Item {
             Layout.rightMargin: table.colSpacing
             Layout.topMargin: table.colSpacing
             spacing: table.colSpacing
-            Label { text: "Ativo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+            Label { text: Strings.t.active; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.preferredWidth: table.enabledColWidth; Layout.minimumWidth: table.enabledColWidth; Layout.maximumWidth: table.enabledColWidth }
             Label { text: table.keyHeader; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.fillWidth: true; Layout.preferredWidth: table.keyColPreferred; Layout.minimumWidth: table.keyColMinimum }
-            Label { text: "Valor"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+            Label { text: Strings.t.value; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum }
-            Label { visible: table.allowFiles; text: "Tipo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+            Label { visible: table.allowFiles; text: Strings.t.type; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.preferredWidth: table.typeColWidth; Layout.minimumWidth: table.typeColWidth; Layout.maximumWidth: table.typeColWidth }
-            Label { visible: table.scopeColumn; text: "Escopo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+            Label { visible: table.scopeColumn; text: Strings.t.scope; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.fillWidth: true; Layout.preferredWidth: table.scopeColPreferred; Layout.minimumWidth: table.scopeColMinimum }
-            Label { visible: table.secretColumn; text: "Segredo"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+            Label { visible: table.secretColumn; text: Strings.t.secret; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                     Layout.preferredWidth: table.secretColWidth; Layout.minimumWidth: table.secretColWidth; Layout.maximumWidth: table.secretColWidth }
             Item { Layout.preferredWidth: table.removeColWidth; Layout.minimumWidth: table.removeColWidth; Layout.maximumWidth: table.removeColWidth }
         }
@@ -251,8 +252,8 @@ Item {
             EmptyState {
                 anchors.centerIn: parent
                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-                title: "Nada aqui ainda."
-                actionText: "Adicionar"
+                title: Strings.t.nothingHere
+                actionText: Strings.t.add
                 actionIcon: "list-add"
                 onActionTriggered: { table.addRequested(); table.edited(); }
             }
@@ -261,7 +262,7 @@ Item {
         ToolButton {
             visible: !table.empty
             icon.name: "list-add"
-            text: "Adicionar"
+            text: Strings.t.add
             display: AbstractButton.TextBesideIcon
             Layout.leftMargin: table.colSpacing
             Layout.bottomMargin: table.colSpacing
@@ -286,7 +287,7 @@ Item {
         objectName: "confirmRemoveDialog"
         parent: Overlay.overlay
         anchors.centerIn: parent
-        title: "Remover"
+        title: Strings.t.remove
         header: DialogHeader { dialogTitle: confirmRemove.title }
         modal: true
         width: 380

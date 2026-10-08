@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     CHECK(a.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t")); // veio do cofre
     CHECK(!a.contains(QStringLiteral("des")));                                    // desabilitada não resolve
     CHECK(b.variableNoteFor(QStringLiteral("des"), QStringLiteral("colA"))
-          == QStringLiteral("desabilitada"));
+              .value(QStringLiteral("code")) == QStringLiteral("disabled"));
 
     const QVariantMap c = effective(b, QStringLiteral("colB"), {});
     CHECK(!c.contains(QStringLiteral("priv")));                                  // escopo respeitado
@@ -195,12 +195,17 @@ int main(int argc, char **argv)
     const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/x/{{nope}}")}};
     CHECK(missing(b, req, QStringLiteral("colA")) == QStringList{QStringLiteral("nope")});
 
-    // nota de escopo (usada pela UI)
-    CHECK(b.variableNoteFor(QStringLiteral("pub"), QStringLiteral("colB")).isEmpty());
-    CHECK(b.variableNoteFor(QStringLiteral("priv"), QStringLiteral("colB"))
-          == QStringLiteral("restrita a: colA"));
+    // nota de escopo (usada pela UI): códigos, não texto
+    CHECK(b.variableNoteFor(QStringLiteral("pub"), QStringLiteral("colB"))
+              .value(QStringLiteral("code")).toString().isEmpty());
+    {
+        const QVariantMap privNote = b.variableNoteFor(QStringLiteral("priv"), QStringLiteral("colB"));
+        CHECK(privNote.value(QStringLiteral("code")) == QStringLiteral("restricted"));
+        CHECK(privNote.value(QStringLiteral("collections")).toStringList()
+              == QStringList{QStringLiteral("colA")});
+    }
     CHECK(b.variableNoteFor(QStringLiteral("nope"), QStringLiteral("colA"))
-          == QStringLiteral("não definida"));
+              .value(QStringLiteral("code")) == QStringLiteral("undefined"));
 
     // resolvedVariables: origem de cada variável
     {

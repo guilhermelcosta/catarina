@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Util.js" as Util
+import "Strings.js" as Strings
 
 // Visão da rede: o que foi enviado (request) e como foi a conexão.
 // O Qt não expõe DNS/TLS por fase; mostramos o que ele fornece.
@@ -48,32 +49,32 @@ Item {
             }
 
             // ---- conexão ----
-            Label { text: "Conexão"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.topMargin: Kirigami.Units.smallSpacing }
+            Label { text: Strings.t.connection; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.topMargin: Kirigami.Units.smallSpacing }
             GridLayout {
                 columns: 2
                 columnSpacing: Kirigami.Units.largeSpacing
                 rowSpacing: Kirigami.Units.smallSpacing
                 Layout.leftMargin: Kirigami.Units.smallSpacing
-                Label { text: "Host"; opacity: 0.7 }
+                Label { text: Strings.t.host; opacity: 0.7 }
                 Label { text: net.meta.host !== undefined ? net.meta.host : "—"; font.family: "monospace" }
-                Label { text: "Porta"; opacity: 0.7 }
+                Label { text: Strings.t.port; opacity: 0.7 }
                 Label { text: net.meta.port !== undefined ? String(net.meta.port) : "—"; font.family: "monospace" }
-                Label { text: "Protocolo"; opacity: 0.7 }
+                Label { text: Strings.t.protocol; opacity: 0.7 }
                 Label {
                     text: net.meta.encrypted === true ? (net.meta.http2 === true ? "HTTPS · HTTP/2" : "HTTPS · HTTP/1.1")
                                                       : (net.meta.http2 === true ? "HTTP · HTTP/2" : "HTTP · HTTP/1.1")
                     font.family: "monospace"
                 }
-                Label { text: "Criptografado"; opacity: 0.7 }
-                Label { text: net.meta.encrypted === true ? "Sim (TLS)" : "Não"; font.family: "monospace" }
-                Label { text: "Tamanho"; opacity: 0.7 }
+                Label { text: Strings.t.encrypted; opacity: 0.7 }
+                Label { text: net.meta.encrypted === true ? Strings.t.yesTls : Strings.t.no; font.family: "monospace" }
+                Label { text: Strings.t.size; opacity: 0.7 }
                 Label { text: net.meta.sizeBytes !== undefined ? Util.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
             }
 
             Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
 
             // ---- request headers ----
-            Label { text: "Requisição enviada"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
+            Label { text: Strings.t.requestSent; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
             HeaderTable {
                 Layout.fillWidth: true
                 Layout.leftMargin: Kirigami.Units.smallSpacing
@@ -84,13 +85,13 @@ Item {
             }
             Label {
                 visible: !net.meta.requestHeaders || net.meta.requestHeaders.length === 0
-                text: "sem cabeçalhos"; opacity: 0.5; Layout.leftMargin: Kirigami.Units.smallSpacing
+                text: Strings.t.noHeaders; opacity: 0.5; Layout.leftMargin: Kirigami.Units.smallSpacing
             }
 
             // ---- request body ----
             Label {
                 visible: net.meta.requestBody !== undefined && net.meta.requestBody.length > 0
-                text: "Corpo enviado"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing
+                text: Strings.t.bodySent; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing
                 Layout.topMargin: Kirigami.Units.smallSpacing
             }
             TextArea {
@@ -111,7 +112,7 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-        message: "Envie uma requisição para ver os dados de rede."
+        message: Strings.t.networkEmpty
         visible: net.meta.method === undefined
     }
 }

@@ -497,7 +497,7 @@ QString Backend::variableNoteFor(const QString &name, const QString &collection)
     }
     if (note(collectionVariables(collection), false, &out))
         return out;
-    return QStringLiteral("não definida");
+    return {{QStringLiteral("code"), QStringLiteral("undefined")}};
 }
 
 // ---------------------------------------------------------------- requisição
@@ -507,8 +507,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     const QVariantMap state = variablesState(request, collection);
     const QStringList missing = state.value(QStringLiteral("missing")).toStringList();
     if (!missing.isEmpty()) {
-        emit error(QStringLiteral("Variável não resolvida: ") +
-                   missing.join(QStringLiteral(", ")));
+        emit error(QStringLiteral("unresolved"), {missing});
         return;
     }
 
@@ -518,7 +517,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     const QUrl u = buildUrl(substitute(request.value(QStringLiteral("url")).toString(), vars),
                             substituteList(request.value(QStringLiteral("params")).toList(), vars));
     if (!u.isValid() || u.host().isEmpty()) {
-        emit error(QStringLiteral("URL inválida"));
+        emit error(QStringLiteral("invalidUrl"), {});
         return;
     }
 
@@ -594,7 +593,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
                 return;
             }
             if (r->attribute(QNetworkRequest::HttpStatusCodeAttribute).isNull()) {
-                emit error(r->errorString());
+                emit error(QStringLiteral("network"), {r->errorString()});
                 return;
             }
             const int status = r->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -646,7 +645,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
                 const QString path = m.value(QStringLiteral("fileName")).toString();
                 auto *file = new QFile(path, multi);
                 if (!file->open(QIODevice::ReadOnly)) {
-                    emit error(QStringLiteral("Não consegui abrir o arquivo: ") + path);
+                    emit error(QStringLiteral("fileOpen"), {path});
                     multi->deleteLater();
                     return;
                 }

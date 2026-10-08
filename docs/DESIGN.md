@@ -163,6 +163,12 @@ Todos em `qml/`:
 - **`NetworkView.qml`** — aba "Rede".
 - **`Util.js`** — lógica pura/testável (cURL, base64, formatação, reordenação de abas).
   Coloque aqui qualquer função sem dependência de UI.
+- **`Strings.js`** — **todos os textos da UI** (inglês), num só arquivo. Use
+  `import "Strings.js" as Strings` e `text: Strings.t.<chave>` (ou `Strings.<função>(...)`
+  para mensagens parametrizadas). **Nunca** coloque literal de texto visível direto no QML, nem
+  valores de lógica (método, tipo, escopo, id) no `Strings.js`. O backend devolve **códigos**
+  (ex.: `variableNoteFor`, sinal `error`), e o QML traduz via `Strings.variableNote` /
+  `Strings.backendError`.
 
 ### Tabelas responsivas (regra)
 - Colunas flexíveis: `Layout.fillWidth: true` + **`Layout.preferredWidth` e `Layout.minimumWidth`

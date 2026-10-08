@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Autocomplete de {{variavel}} (com teclado) e popup com o valor (hover).
 // Deve ser filho do editor alvo, com anchors.fill: parent.
@@ -108,7 +109,7 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             spacing: 2
-            Label { text: "Variáveis"; font.bold: true; opacity: 0.7; Layout.leftMargin: 4 }
+            Label { text: Strings.t.variables; font.bold: true; opacity: 0.7; Layout.leftMargin: 4 }
             ListView {
                 id: compList
                 Layout.fillWidth: true
@@ -149,12 +150,13 @@ Item {
         if (!tok) { hoverPop.close(); return; }
         var v = valueOf(tok.name);
         if (v === null) {
-            var note = backend.variableNoteFor(tok.name, collection);
-            hoverPop.mainText = tok.name + "  " + (note.length > 0 ? note : "não definida");
+            var n = backend.variableNoteFor(tok.name, collection);
+            var note = Strings.variableNote(n.code, n.collections);
+            hoverPop.mainText = tok.name + "  " + (note.length > 0 ? note : Strings.t.notDefined);
             hoverPop.scopeSource = "";
         } else {
             hoverPop.mainText = tok.name + " = " + (v.secret ? "••••••" : v.value)
-                                + (v.enabled === false ? "  · desabilitada" : "");
+                                + (v.enabled === false ? "  · " + Strings.t.disabled : "");
             hoverPop.scopeSource = v.source !== undefined ? v.source : "";
         }
 

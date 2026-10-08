@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Tabela somente-leitura das variáveis efetivas (Origem / Nome / Valor).
 // Mesmo padrão de tabela do app: cabeçalho em negrito (opacidade 0.65),
@@ -50,11 +51,11 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: Kirigami.Units.smallSpacing
-        Label { text: "Origem"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.origin; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.preferredWidth: root.sourceColWidth; Layout.minimumWidth: root.sourceColWidth; Layout.maximumWidth: root.sourceColWidth }
-        Label { text: "Nome"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.name; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.fillWidth: true; Layout.preferredWidth: root.nameColPreferred; Layout.minimumWidth: root.nameColMinimum }
-        Label { text: "Valor"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.value; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.fillWidth: true; Layout.preferredWidth: root.valueColPreferred; Layout.minimumWidth: root.valueColMinimum }
     }
     Kirigami.Separator { Layout.fillWidth: true }

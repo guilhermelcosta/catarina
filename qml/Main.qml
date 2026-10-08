@@ -4,6 +4,7 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Util.js" as Util
+import "Strings.js" as Strings
 
 Kirigami.ApplicationWindow {
     id: root
@@ -75,7 +76,7 @@ Kirigami.ApplicationWindow {
     ListModel { id: collectionHeadersModel }
     ListModel { id: treeModel }
 
-    title: "katarina" + (currentTab >= 0 && currentTab < tabsModel.count
+    title: Strings.t.appName + (currentTab >= 0 && currentTab < tabsModel.count
                      ? " — " + tabsModel.get(currentTab).name : "")
 
     component SplitHandle: Rectangle {
@@ -200,7 +201,7 @@ Kirigami.ApplicationWindow {
     // mensagem quando há nome de variável repetido no mesmo escopo ("" se ok)
     function varsWarning(model) {
         var d = backend.duplicateVariableName(modelToArray(model));
-        return d.length > 0 ? "Variável repetida: " + d : "";
+        return d.length > 0 ? Strings.variableRepeated(d) : "";
     }
     function updateVarsWarnings() {
         requestVarsWarning = varsWarning(requestVarsModel);
@@ -270,7 +271,7 @@ Kirigami.ApplicationWindow {
             bodyArea.text = JSON.stringify(JSON.parse(bodyArea.text), null, 2);
             root.markDirty();
         } catch (e) {
-            notify("JSON inválido");
+            notify(Strings.t.invalidJsonShort);
         }
     }
     function refreshResolved() {
@@ -304,13 +305,15 @@ Kirigami.ApplicationWindow {
         const res = state.resolved;
         var notes = [];
         for (var i = 0; i < miss.length; i++) {
-            var note = backend.variableNoteFor(miss[i], collection);
+            var n = backend.variableNoteFor(miss[i], collection);
+            var code = n.code;
             for (var j = 0; j < res.length; j++)   // desabilitada no request não é "não definida"
                 if (res[j].name === miss[i] && res[j].enabled === false)
-                    note = "desabilitada";
+                    code = "disabled";
+            var note = Strings.variableNote(code, n.collections);
             notes.push(note.length > 0 ? miss[i] + " (" + note + ")" : miss[i]);
         }
-        missingText = notes.length > 0 ? "Variáveis não resolvidas: " + notes.join(", ") : "";
+        missingText = notes.length > 0 ? Strings.unresolvedVariables(notes.join(", ")) : "";
         res.sort(function (a, b) { return a.name.localeCompare(b.name); });
         resolvedVars = res;
         currentDirty = tabsModel.get(currentTab).dirty;
@@ -350,7 +353,7 @@ Kirigami.ApplicationWindow {
         if (q.length === 0) { findMatchTotal = 0; findMatchIndex = 0; return; }
         var all = countMatches(q);
         findMatchTotal = all.length;
-        if (all.length === 0) { findMatchIndex = 0; notify("Não encontrado: " + q); return; }
+        if (all.length === 0) { findMatchIndex = 0; notify(Strings.notFound(q)); return; }
         var cur = backwards ? responseBody.selectionStart - 1 : responseBody.selectionEnd;
         var idx;
         if (backwards) {
@@ -568,7 +571,7 @@ Kirigami.ApplicationWindow {
             if (tabsModel.get(i).isSettings === true) { idx = i; break; }
         if (idx < 0) {
             snapshotCurrent();
-            tabsModel.append({ relPath: "__settings__", name: "Configurações", method: "",
+            tabsModel.append({ relPath: "__settings__", name: Strings.t.settings, method: "",
                                dirty: false, dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
                                pinned: false, preview: false });
             idx = tabsModel.count - 1;
@@ -621,7 +624,7 @@ Kirigami.ApplicationWindow {
                 continue;
             }
             if (rp === "__settings__") {
-                tabsModel.append({ relPath: rp, name: "Configurações", method: "", dirty: false,
+                tabsModel.append({ relPath: rp, name: Strings.t.settings, method: "", dirty: false,
                                    dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
                                    pinned: false, preview: false });
                 continue;
@@ -811,14 +814,14 @@ Kirigami.ApplicationWindow {
             return;
         }
         var dup = backend.duplicateVariableName(modelToArray(requestVarsModel));
-        if (dup.length > 0) { notify("Nome de variável repetido no request: " + dup); return; }
+        if (dup.length > 0) { notify(Strings.duplicateInRequest(dup)); return; }
         if (backend.saveRequest(t.relPath, collectRequest())) {
             tabsModel.setProperty(currentTab, "method", methodBox.currentText);
             tabsModel.setProperty(currentTab, "dirty", false);
             currentDirty = false;
             refreshResolved();
             reloadTree();
-            notify("Salvo em ~/katarina-collections/" + t.relPath + ".json");
+            notify(Strings.savedTo(t.relPath));
         }
     }
     function revertCurrent() {
@@ -832,7 +835,7 @@ Kirigami.ApplicationWindow {
         tabsModel.setProperty(currentTab, "dirty", false);
         currentDirty = false;
         applyRequest(r, t.relPath);
-        notify("Alterações descartadas");
+        notify(Strings.t.changesDiscarded);
     }
     function moveEntry(from, to) {
         if (!backend.moveEntry(from, to))
@@ -846,7 +849,7 @@ Kirigami.ApplicationWindow {
     function notify(msg) { root.showPassiveNotification(msg); }
     function statusColor(t) {
         if (t.length === 0 || root.sending) return Kirigami.Theme.textColor;
-        if (t === "Cancelado") return Kirigami.Theme.disabledTextColor;
+        if (t === Strings.t.canceled) return Kirigami.Theme.disabledTextColor;
         var code = parseInt(t);
         if (!isNaN(code)) {
             if (code >= 200 && code < 300) return Kirigami.Theme.positiveTextColor;
@@ -865,7 +868,7 @@ Kirigami.ApplicationWindow {
         showingSettings = false;
         reloadTree();
         reloadEnvs();
-        notify("Coleções agora em " + dir);
+        notify(Strings.collectionsNow(dir));
     }
     // confirmação única de exclusão: respeita settings.confirmDelete em TODOS os fluxos
     function confirmDelete(message, onConfirm) {
@@ -877,8 +880,7 @@ Kirigami.ApplicationWindow {
     function askDelete() {
         if (selectedPath.length === 0) return;
         const name = selectedPath.split("/").pop();
-        root.confirmDelete("Excluir \"" + name + "\"?\n"
-                           + "Isso apaga do disco (recursivamente, se for pasta).",
+        root.confirmDelete(Strings.deleteItemConfirm(name),
                            function () { root.deleteSelected(); });
     }
     function deleteSelected() {
@@ -899,9 +901,9 @@ Kirigami.ApplicationWindow {
 
     function doSend() {
         if (sending || showingCollection || showingEnv || showingSettings || currentTab < 0) return;
-        if (urlField.text.length === 0) { notify("Informe uma URL"); return; }
+        if (urlField.text.length === 0) { notify(Strings.t.provideUrl); return; }
         var dup = backend.duplicateVariableName(modelToArray(requestVarsModel));
-        if (dup.length > 0) { notify("Nome de variável repetido no request: " + dup); return; }
+        if (dup.length > 0) { notify(Strings.duplicateInRequest(dup)); return; }
         if (settings.autoSaveOnSend && currentDirty) saveCurrent();
         var t = tabsModel.get(currentTab);
         setResponseBody(""); responseHeaders = []; netMeta = ({});
@@ -960,7 +962,7 @@ Kirigami.ApplicationWindow {
     }
     function importCurl(text) {
         var r = Util.parseCurl(text);
-        if (r.url.length === 0) { curlImportDialog.hint = "Não achei uma URL no comando."; return; }
+        if (r.url.length === 0) { curlImportDialog.hint = Strings.curlNoUrl(); return; }
         var path = uniqueRequestPath(targetFolder(), "curl-import");
         var data = { method: r.method, url: r.url, params: [], headers: r.headers, fields: [],
                      body: r.body, bodyType: r.bodyType, auth: r.auth, vars: [] };
@@ -1042,15 +1044,15 @@ Kirigami.ApplicationWindow {
     }
 
     property var shortcutDefs: [
-        { id: "send", label: "Enviar requisição", def: "Ctrl+Return" },
-        { id: "newRequest", label: "Novo request", def: "Ctrl+T" },
-        { id: "closeTab", label: "Fechar aba", def: "Ctrl+W" },
-        { id: "save", label: "Salvar request", def: "Ctrl+S" },
-        { id: "prevTab", label: "Aba anterior", def: "Alt+Left" },
-        { id: "nextTab", label: "Próxima aba", def: "Alt+Right" },
-        { id: "reopenTab", label: "Reabrir aba fechada", def: "Ctrl+Shift+T" },
-        { id: "palette", label: "Paleta de comandos", def: "Ctrl+K" },
-        { id: "findInResponse", label: "Buscar na resposta", def: "Ctrl+F" }
+        { id: "send", label: Strings.t.shortcutSend, def: "Ctrl+Return" },
+        { id: "newRequest", label: Strings.t.shortcutNewRequest, def: "Ctrl+T" },
+        { id: "closeTab", label: Strings.t.shortcutCloseTab, def: "Ctrl+W" },
+        { id: "save", label: Strings.t.shortcutSave, def: "Ctrl+S" },
+        { id: "prevTab", label: Strings.t.shortcutPrevTab, def: "Alt+Left" },
+        { id: "nextTab", label: Strings.t.shortcutNextTab, def: "Alt+Right" },
+        { id: "reopenTab", label: Strings.t.shortcutReopenTab, def: "Ctrl+Shift+T" },
+        { id: "palette", label: Strings.t.shortcutPalette, def: "Ctrl+K" },
+        { id: "findInResponse", label: Strings.t.shortcutFind, def: "Ctrl+F" }
     ]
     function shortcutSeq(id) {
         var def = "";
@@ -1093,7 +1095,7 @@ Kirigami.ApplicationWindow {
                 Layout.margins: Kirigami.Units.smallSpacing
                 spacing: Kirigami.Units.smallSpacing
                 Kirigami.Icon { source: "qrc:/icons/katarina.svg"; implicitWidth: 22; implicitHeight: 22 }
-                Label { text: "katarina"; font.bold: true }
+                Label { text: Strings.t.appName; font.bold: true }
                 Item { Layout.fillWidth: true }
                 // grupo de painéis: esquerda (coleções) e direita (resposta)
                 RowLayout {
@@ -1102,32 +1104,32 @@ Kirigami.ApplicationWindow {
                         checkable: true; checked: root.sidebarVisible
                         icon.name: root.sidebarVisible ? "view-left-close" : "view-left-new"
                         onToggled: root.sidebarVisible = checked
-                        ToolTip.text: root.sidebarVisible ? "Ocultar painel de coleções" : "Mostrar painel de coleções"
+                        ToolTip.text: root.sidebarVisible ? Strings.t.hideCollections : Strings.t.showCollections
                         ToolTip.visible: hovered
                     }
                     ToolButton {
                         checkable: true; checked: root.responseVisible
                         icon.name: root.responseVisible ? "view-right-close" : "view-right-new"
                         onToggled: root.responseVisible = checked
-                        ToolTip.text: root.responseVisible ? "Ocultar painel de resposta" : "Mostrar painel de resposta"
+                        ToolTip.text: root.responseVisible ? Strings.t.hideResponse : Strings.t.showResponse
                         ToolTip.visible: hovered
                     }
                 }
                 ToolButton {
-                    icon.name: "view-history"; text: "Histórico"
+                    icon.name: "view-history"; text: Strings.t.history
                     display: AbstractButton.TextBesideIcon
                     onClicked: historyDialog.openAndLoad()
                 }
                 Button {
                     id: envButton
                     icon.name: "vcs-branch"
-                    text: root.activeEnv.length > 0 ? root.activeEnv : "Sem ambiente"
+                    text: root.activeEnv.length > 0 ? root.activeEnv : Strings.t.noEnvironment
                     onClicked: envPopup.open()
                 }
                 ToolButton {
                     icon.name: "configure"
                     onClicked: root.openSettingsTab()
-                    ToolTip.text: "Configurações"; ToolTip.visible: hovered
+                    ToolTip.text: Strings.t.settings; ToolTip.visible: hovered
                 }
                 Popup {
                     id: envPopup
@@ -1142,7 +1144,7 @@ Kirigami.ApplicationWindow {
 
                         Label {
                             visible: root.envList.length > 0
-                            text: "Ambiente ativo"
+                            text: Strings.t.activeEnvironment
                             font.bold: true
                             Layout.leftMargin: Kirigami.Units.smallSpacing
                         }
@@ -1163,9 +1165,9 @@ Kirigami.ApplicationWindow {
                         ColumnLayout {
                             visible: root.envList.length === 0
                             spacing: Kirigami.Units.smallSpacing
-                            Label { text: "Pronto para começar?"; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                            Label { text: Strings.t.readyToStart; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
                             Label {
-                                text: "Crie um ambiente para ter variáveis como base_url e tokens."
+                                text: Strings.t.createEnvHint
                                 wrapMode: Text.WordWrap; Layout.fillWidth: true
                                 horizontalAlignment: Text.AlignHCenter; opacity: 0.75
                             }
@@ -1173,11 +1175,11 @@ Kirigami.ApplicationWindow {
 
                         Kirigami.Separator { Layout.fillWidth: true }
                         ItemDelegate {
-                            Layout.fillWidth: true; text: "Criar ambiente…"; icon.name: "list-add"
+                            Layout.fillWidth: true; text: Strings.t.createEnvironment; icon.name: "list-add"
                             onClicked: { envPopup.close(); createEnvDialog.open(); }
                         }
                         ItemDelegate {
-                            Layout.fillWidth: true; text: "Gerenciar variáveis…"; icon.name: "configure"
+                            Layout.fillWidth: true; text: Strings.t.manageVariables; icon.name: "configure"
                             visible: root.envList.length > 0
                             onClicked: { envPopup.close(); root.openEnvTab(root.activeEnv); }
                         }
@@ -1203,14 +1205,14 @@ Kirigami.ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.margins: Kirigami.Units.smallSpacing
                         Kirigami.Icon { source: "folder-documents"; implicitWidth: 16; implicitHeight: 16 }
-                        Label { text: "Coleções"; font.bold: true }
+                        Label { text: Strings.t.collections; font.bold: true }
                         Item { Layout.fillWidth: true }
-                        ToolButton { icon.name: "list-add"; onClicked: addMenu.open(); ToolTip.text: "Adicionar"; ToolTip.visible: hovered }
+                        ToolButton { icon.name: "list-add"; onClicked: addMenu.open(); ToolTip.text: Strings.t.add; ToolTip.visible: hovered }
                         ToolButton {
                             icon.name: "edit-delete"
                             enabled: root.selectedPath.length > 0
                             onClicked: root.askDelete()
-                            ToolTip.text: "Excluir selecionado"; ToolTip.visible: hovered
+                            ToolTip.text: Strings.t.deleteSelected; ToolTip.visible: hovered
                         }
                     }
                     Kirigami.Separator { Layout.fillWidth: true }
@@ -1341,7 +1343,7 @@ Kirigami.ApplicationWindow {
                                     root.selectedIsFolder = model.isFolder;
                                     ctxMenu.popup(itemMenuBtn);
                                 }
-                                ToolTip.text: "Mais ações"; ToolTip.visible: hovered
+                                ToolTip.text: Strings.t.moreActions; ToolTip.visible: hovered
                             }
                         }
                     }
@@ -1549,7 +1551,7 @@ Kirigami.ApplicationWindow {
                                     TextArea {
                                         id: urlField
                                         Layout.fillWidth: true
-                                        placeholderText: "{{base_url}}/recurso"
+                                        placeholderText: Strings.t.urlExample
                                         wrapMode: TextEdit.NoWrap
                                         selectByMouse: true
                                         font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
@@ -1572,7 +1574,7 @@ Kirigami.ApplicationWindow {
                                     }
                                     Button {
                                         icon.name: root.sending ? "process-stop" : "document-send"
-                                        text: root.sending ? "Cancelar" : "Enviar"
+                                        text: root.sending ? Strings.t.cancel : Strings.t.send
                                         highlighted: !root.sending
                                         onClicked: root.sending ? backend.cancel() : root.doSend()
                                     }
@@ -1580,18 +1582,18 @@ Kirigami.ApplicationWindow {
                                         icon.name: "edit-undo"
                                         enabled: root.currentDirty
                                         onClicked: root.revertCurrent()
-                                        ToolTip.text: "Descartar alterações não salvas"; ToolTip.visible: hovered
+                                        ToolTip.text: Strings.t.discardTooltip; ToolTip.visible: hovered
                                     }
                                     ToolButton {
                                         icon.name: "document-save"
                                         enabled: root.currentDirty && root.requestVarsWarning.length === 0
                                         onClicked: root.saveCurrent()
-                                        ToolTip.text: "Salvar (Ctrl+S)"; ToolTip.visible: hovered
+                                        ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
                                     }
                                     ToolButton {
                                         icon.name: "overflow-menu"
                                         onClicked: reqMenu.popup()
-                                        ToolTip.text: "Mais ações"; ToolTip.visible: hovered
+                                        ToolTip.text: Strings.t.moreActions; ToolTip.visible: hovered
                                     }
                                 }
 
@@ -1617,11 +1619,11 @@ Kirigami.ApplicationWindow {
                                 TabBar {
                                     id: reqTabBar
                                     Layout.fillWidth: true
-                                    TabButton { text: "Parâmetros" }
-                                    TabButton { text: "Cabeçalhos" }
-                                    TabButton { text: "Corpo" }
-                                    TabButton { text: "Autenticação" }
-                                    TabButton { text: "Variáveis" }
+                                    TabButton { text: Strings.t.parameters }
+                                    TabButton { text: Strings.t.headers }
+                                    TabButton { text: Strings.t.body }
+                                    TabButton { text: Strings.t.authentication }
+                                    TabButton { text: Strings.t.variables }
                                 }
 
                                 StackLayout {
@@ -1629,8 +1631,8 @@ Kirigami.ApplicationWindow {
                                     Layout.fillHeight: true
                                     currentIndex: reqTabBar.currentIndex
 
-                                    KvTable { model: paramsModel; keyPlaceholder: "parâmetro"; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
-                                    KvTable { model: headersModel; keyPlaceholder: "Cabeçalho"; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
+                                    KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
+                                    KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
 
                                     ColumnLayout {
                                         // O StackLayout limita o filho atual pela altura máxima que
@@ -1645,14 +1647,14 @@ Kirigami.ApplicationWindow {
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             Layout.topMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            Label { text: "Tipo:" }
+                                            Label { text: Strings.t.type + ":" }
                                             ComboBox {
                                                 id: bodyTypeBox
                                                 textRole: "text"; valueRole: "value"
                                                 model: [
-                                                    { text: "nenhum", value: "none" },
+                                                    { text: Strings.t.bodyNone, value: "none" },
                                                     { text: "JSON", value: "json" },
-                                                    { text: "texto", value: "text" },
+                                                    { text: Strings.t.bodyText, value: "text" },
                                                     { text: "form-urlencoded", value: "urlencoded" },
                                                     { text: "multipart/form-data", value: "multipart" }
                                                 ]
@@ -1662,15 +1664,15 @@ Kirigami.ApplicationWindow {
                                             Item { Layout.fillWidth: true }
                                             Button {
                                                 visible: bodyTypeBox.currentValue === "json"
-                                                icon.name: "tools-wizard"; text: "Formatar"
+                                                icon.name: "tools-wizard"; text: Strings.t.formatButton
                                                 display: AbstractButton.TextBesideIcon
                                                 onClicked: root.formatBody()
-                                                ToolTip.text: "Indentar o JSON"; ToolTip.visible: hovered
+                                                ToolTip.text: Strings.t.formatJson; ToolTip.visible: hovered
                                             }
                                         }
                                         Label {
                                             visible: bodyTypeBox.currentValue === "none"
-                                            text: "Sem corpo."
+                                            text: Strings.t.noBody
                                             opacity: 0.7
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                         }
@@ -1679,7 +1681,7 @@ Kirigami.ApplicationWindow {
                                             Layout.fillHeight: true
                                             visible: bodyTypeBox.currentValue === "multipart" || bodyTypeBox.currentValue === "urlencoded"
                                             model: fieldsModel
-                                            keyPlaceholder: "campo"
+                                            keyPlaceholder: Strings.t.field
                                             allowFiles: bodyTypeBox.currentValue === "multipart"
                                             onAddRequested: fieldsModel.append({ name: "", value: "", type: "text", fileName: "", enabled: true })
                                             onEdited: root.markDirty()
@@ -1694,7 +1696,7 @@ Kirigami.ApplicationWindow {
                                             Layout.bottomMargin: Kirigami.Units.smallSpacing
                                             TextArea {
                                                 id: bodyArea
-                                                placeholderText: '{ "chave": "valor" }'
+                                                placeholderText: Strings.t.jsonExample
                                                 font.family: "monospace"
                                                 font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                                                 wrapMode: TextEdit.Wrap
@@ -1791,15 +1793,15 @@ Kirigami.ApplicationWindow {
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             Layout.topMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            Label { text: "Tipo:" }
+                                            Label { text: Strings.t.type + ":" }
                                             ComboBox {
                                                 id: authTypeBox
                                                 textRole: "text"; valueRole: "value"
                                                 model: [
-                                                    { text: "nenhuma", value: "none" },
-                                                    { text: "Bearer token", value: "bearer" },
-                                                    { text: "Básico (usuário/senha)", value: "basic" },
-                                                    { text: "Chave de API", value: "apikey" }
+                                                    { text: Strings.t.authNoneOption, value: "none" },
+                                                    { text: Strings.t.authBearer, value: "bearer" },
+                                                    { text: Strings.t.authBasic, value: "basic" },
+                                                    { text: Strings.t.authApiKey, value: "apikey" }
                                                 ]
                                                 implicitWidth: 170
                                                 onActivated: root.markDirty()
@@ -1811,7 +1813,7 @@ Kirigami.ApplicationWindow {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             visible: authTypeBox.currentValue === "bearer"
-                                            placeholderText: "Token"
+                                            placeholderText: Strings.t.token
                                             resolved: root.resolvedVars
                                             collection: root.currentCollection
                                             onTextEdited: root.markDirty()
@@ -1821,25 +1823,25 @@ Kirigami.ApplicationWindow {
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            VarField { id: basicUser; Layout.fillWidth: true; placeholderText: "Usuário"; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
-                                            TextField { id: basicPass; Layout.fillWidth: true; placeholderText: "Senha"; echoMode: TextInput.Password; onTextEdited: root.markDirty() }
+                                            VarField { id: basicUser; Layout.fillWidth: true; placeholderText: Strings.t.user; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
+                                            TextField { id: basicPass; Layout.fillWidth: true; placeholderText: Strings.t.password; echoMode: TextInput.Password; onTextEdited: root.markDirty() }
                                         }
                                         RowLayout {
                                             visible: authTypeBox.currentValue === "apikey"
                                             Layout.leftMargin: Kirigami.Units.smallSpacing
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                             spacing: Kirigami.Units.smallSpacing
-                                            VarField { id: apiKeyName; Layout.fillWidth: true; placeholderText: "Nome do cabeçalho"; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
+                                            VarField { id: apiKeyName; Layout.fillWidth: true; placeholderText: Strings.t.headerName; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
                                             VarField {
                                                 id: apiKeyValue
                                                 Layout.fillWidth: true
-                                                placeholderText: "Valor"
+                                                placeholderText: Strings.t.value
                                                 resolved: root.resolvedVars
                                                 collection: root.currentCollection
                                                 onTextEdited: root.markDirty()
                                             }
                                         }
-                                        Label { visible: authTypeBox.currentValue === "none"; text: "Sem autenticação."; opacity: 0.7; Layout.leftMargin: Kirigami.Units.smallSpacing }
+                                        Label { visible: authTypeBox.currentValue === "none"; text: Strings.t.authNone; opacity: 0.7; Layout.leftMargin: Kirigami.Units.smallSpacing }
                                         Item { Layout.fillHeight: true }
                                     }
 
@@ -1855,7 +1857,7 @@ Kirigami.ApplicationWindow {
                                             SplitView.fillHeight: true
                                             SplitView.minimumHeight: Kirigami.Units.gridUnit * 3
                                             model: requestVarsModel
-                                            keyPlaceholder: "variável"
+                                            keyPlaceholder: Strings.t.variable
                                             secretColumn: true
                                             uniqueNames: true
                                             resolved: root.resolvedVars
@@ -1878,7 +1880,7 @@ Kirigami.ApplicationWindow {
                                                 anchors.leftMargin: Kirigami.Units.smallSpacing
                                                 anchors.rightMargin: Kirigami.Units.smallSpacing
                                                 spacing: Kirigami.Units.smallSpacing
-                                                Label { text: "Variáveis efetivas"; font.bold: true; Layout.topMargin: Kirigami.Units.smallSpacing }
+                                                Label { text: Strings.t.effectiveVariables; font.bold: true; Layout.topMargin: Kirigami.Units.smallSpacing }
                                                 ResolvedVarsTable {
                                                     id: requestResolvedTable
                                                     visible: requestResolvedTable.count > 0
@@ -1888,7 +1890,7 @@ Kirigami.ApplicationWindow {
                                                 }
                                                 Label {
                                                     visible: requestResolvedTable.count === 0
-                                                    text: "Nenhuma variável definida."
+                                                    text: Strings.t.noVariablesDefined
                                                     opacity: 0.6
                                                     wrapMode: Text.WordWrap
                                                     Layout.fillWidth: true
@@ -1938,16 +1940,16 @@ Kirigami.ApplicationWindow {
                                     Label { id: sizeLabel; visible: text.length > 0; opacity: 0.7 }
                                     ToolButton {
                                         visible: responseBody.text.length > 0
-                                        icon.name: "edit-copy"; text: "Copiar"
+                                        icon.name: "edit-copy"; text: Strings.t.copy
                                         display: AbstractButton.TextBesideIcon
-                                        onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); root.notify("Resposta copiada"); }
-                                        onHoveredChanged: root.hint(hovered ? "Copiar a resposta para a área de transferência" : "")
+                                        onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); root.notify(Strings.t.responseCopied); }
+                                        onHoveredChanged: root.hint(hovered ? Strings.t.copyResponse : "")
                                     }
                                     ToolButton {
                                         visible: responseBody.text.length > 0
                                         icon.name: "edit-find"
                                         onClicked: root.openFind()
-                                        onHoveredChanged: root.hint(hovered ? "Buscar na resposta (Ctrl+F)" : "")
+                                        onHoveredChanged: root.hint(hovered ? Strings.t.findTooltip : "")
                                     }
                                 }
 
@@ -1955,11 +1957,11 @@ Kirigami.ApplicationWindow {
                                     id: respTabBar
                                     Layout.fillWidth: true
                                     onCurrentIndexChanged: if (currentIndex === 1) root.syncJsonTree()
-                                    TabButton { text: "Corpo"; onHoveredChanged: root.hint(hovered ? "Corpo da resposta" : "") }
-                                    TabButton { text: "Árvore"; onHoveredChanged: root.hint(hovered ? "Explorar o JSON em árvore" : "") }
-                                    TabButton { text: "Cabeçalhos"; onHoveredChanged: root.hint(hovered ? "Cabeçalhos da resposta" : "") }
-                                    TabButton { text: "Cookies"; onHoveredChanged: root.hint(hovered ? "Cookies da resposta" : "") }
-                                    TabButton { text: "Rede"; onHoveredChanged: root.hint(hovered ? "Detalhes da conexão e do request enviado" : "") }
+                                    TabButton { text: Strings.t.responseBody; onHoveredChanged: root.hint(hovered ? Strings.t.bodyHint : "") }
+                                    TabButton { text: Strings.t.responseTree; onHoveredChanged: root.hint(hovered ? Strings.t.treeHint : "") }
+                                    TabButton { text: Strings.t.responseHeaders; onHoveredChanged: root.hint(hovered ? Strings.t.headersHint : "") }
+                                    TabButton { text: Strings.t.responseCookies; onHoveredChanged: root.hint(hovered ? Strings.t.cookiesHint : "") }
+                                    TabButton { text: Strings.t.responseNetwork; onHoveredChanged: root.hint(hovered ? Strings.t.networkHint : "") }
                                 }
 
                                 // busca embutida (Ctrl+F) — só aparece quando acionada
@@ -1972,7 +1974,7 @@ Kirigami.ApplicationWindow {
                                     TextField {
                                         id: findField
                                         Layout.fillWidth: true
-                                        placeholderText: "Buscar na resposta…"
+                                        placeholderText: Strings.t.searchResponse
                                         onAccepted: root.findNext(false)
                                         onTextChanged: { if (text.length > 0) root.findNext(false); else root.updateFindCounter(); }
                                         Keys.onEscapePressed: root.closeFind()
@@ -1985,15 +1987,15 @@ Kirigami.ApplicationWindow {
                                     }
                                     ToolButton {
                                         icon.name: "go-up"; onClicked: root.findNext(true)
-                                        onHoveredChanged: root.hint(hovered ? "Ocorrência anterior" : "")
+                                        onHoveredChanged: root.hint(hovered ? Strings.t.prevMatch : "")
                                     }
                                     ToolButton {
                                         icon.name: "go-down"; onClicked: root.findNext(false)
-                                        onHoveredChanged: root.hint(hovered ? "Próxima ocorrência" : "")
+                                        onHoveredChanged: root.hint(hovered ? Strings.t.nextMatch : "")
                                     }
                                     ToolButton {
                                         icon.name: "window-close"; onClicked: root.closeFind()
-                                        onHoveredChanged: root.hint(hovered ? "Fechar busca" : "")
+                                        onHoveredChanged: root.hint(hovered ? Strings.t.clearFind : "")
                                     }
                                 }
                                 Item {
@@ -2030,12 +2032,12 @@ Kirigami.ApplicationWindow {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
                                             headers: root.responseHeaders
-                                            onCopyRequested: function (text) { varSupport.copyText(text); root.notify("Cabeçalhos copiados"); }
+                                            onCopyRequested: function (text) { varSupport.copyText(text); root.notify(Strings.t.headersCopied); }
                                         }
                                         ScrollView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             padding: Kirigami.Units.smallSpacing
-                                            TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: root.responseCookies; placeholderText: "Sem cookies." }
+                                            TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: root.responseCookies; placeholderText: Strings.t.noCookies }
                                         }
                                         NetworkView {
                                             Layout.fillWidth: true; Layout.fillHeight: true
@@ -2048,10 +2050,10 @@ Kirigami.ApplicationWindow {
                                         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                                         visible: responseBody.text.length === 0 && !root.sending && respTabBar.currentIndex === 0
                                         iconSource: "qrc:/icons/katarina.svg"
-                                        title: "Sem resposta ainda"
-                                        message: "Envie a requisição (Ctrl+Enter) para ver a resposta aqui."
+                                        title: Strings.t.noResponseYet
+                                        message: Strings.t.noResponseHint
                                         shortcut: "Ctrl+K"
-                                        shortcutLabel: "abre a paleta de comandos"
+                                        shortcutLabel: Strings.t.openPaletteHint
                                     }
                                 }
 
@@ -2087,10 +2089,10 @@ Kirigami.ApplicationWindow {
                                 ColumnLayout {
                                     spacing: 0
                                     Label { text: root.collectionPath.split("/").pop(); font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 6 }
-                                    Label { text: root.collectionIsSubfolder ? "Pasta" : "Coleção"; opacity: 0.6 }
+                                    Label { text: root.collectionIsSubfolder ? Strings.t.folder : Strings.t.collection; opacity: 0.6 }
                                 }
                                 Item { Layout.fillWidth: true }
-                                Button { icon.name: "document-new"; text: "Novo request…"; onClicked: newReqDialog.openIn(root.collectionPath) }
+                                Button { icon.name: "document-new"; text: Strings.t.newRequest; onClicked: newReqDialog.openIn(root.collectionPath) }
                             }
                             Kirigami.Separator { Layout.fillWidth: true }
                             TabBar {
@@ -2118,22 +2120,22 @@ Kirigami.ApplicationWindow {
                                         columns: 2
                                         columnSpacing: Kirigami.Units.largeSpacing
                                         rowSpacing: Kirigami.Units.smallSpacing
-                                        Label { text: "Local"; font.bold: true }
+                                        Label { text: Strings.t.location; font.bold: true }
                                         Label { text: "~/katarina-collections/" + root.collectionPath; opacity: 0.8 }
-                                        Label { text: "Requests"; font.bold: true }
+                                        Label { text: Strings.t.requests; font.bold: true }
                                         Label { text: root.collectionRequests.length }
-                                        Label { text: "Subpastas"; font.bold: true }
+                                        Label { text: Strings.t.subfolders; font.bold: true }
                                         Label { text: root.collectionFolders }
                                     }
                                     Kirigami.Separator { Layout.fillWidth: true }
                                     Label {
                                         visible: root.collectionIsSubfolder
-                                        text: "Pasta é apenas organização. Cabeçalhos e variáveis ficam na coleção."
+                                        text: Strings.t.folderHint
                                         opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                     }
                                     Label {
                                         visible: !root.collectionIsSubfolder
-                                        text: "Variáveis efetivas"
+                                        text: Strings.t.effectiveVariables
                                         font.bold: true
                                         font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1
                                     }
@@ -2146,11 +2148,11 @@ Kirigami.ApplicationWindow {
                                     }
                                     Label {
                                         visible: !root.collectionIsSubfolder && collectionResolvedTable.count === 0
-                                        text: "Nenhuma variável definida nesta coleção."
+                                        text: Strings.t.noCollectionVariables
                                         opacity: 0.6
                                     }
                                     Kirigami.Separator { Layout.fillWidth: true }
-                                    Label { text: root.collectionIsSubfolder ? "Requests nesta pasta" : "Requests nesta coleção"; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
+                                    Label { text: root.collectionIsSubfolder ? Strings.t.requestsInFolder : Strings.t.requestsInCollection; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
                                     Repeater {
                                         model: root.collectionRequests
                                         delegate: ItemDelegate {
@@ -2167,7 +2169,7 @@ Kirigami.ApplicationWindow {
                                             }
                                         }
                                     }
-                                    Label { visible: root.collectionRequests.length === 0; text: root.collectionIsSubfolder ? "Nenhum request nesta pasta ainda." : "Nenhum request nesta coleção ainda."; opacity: 0.6 }
+                                    Label { visible: root.collectionRequests.length === 0; text: root.collectionIsSubfolder ? Strings.t.noRequestsInFolder : Strings.t.noRequestsInCollection; opacity: 0.6 }
                                 }
                             }
 
@@ -2179,21 +2181,21 @@ Kirigami.ApplicationWindow {
                                     spacing: Kirigami.Units.smallSpacing
                                     SaveBar {
                                         Layout.fillWidth: true
-                                        title: "Cabeçalhos da coleção"
+                                        title: Strings.t.collectionHeaders
                                         dirty: root.collectionHeadersDirty
                                         showDiscard: true
                                         onSave: root.saveCollectionHeaders()
                                         onDiscard: root.revertCollectionHeaders()
                                     }
                                     Label {
-                                        text: "Enviados em todo request desta coleção. O request pode sobrescrever."
+                                        text: Strings.t.collectionHeadersHint
                                         opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                     }
                                     KvTable {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         model: collectionHeadersModel
-                                        keyPlaceholder: "cabeçalho"
+                                        keyPlaceholder: Strings.t.header
                                         resolved: root.collectionResolvedVars
                                         collection: root.collectionPath
                                         onAddRequested: collectionHeadersModel.append({ name: "", value: "", enabled: true })
@@ -2244,9 +2246,9 @@ Kirigami.ApplicationWindow {
                                 anchors.centerIn: parent
                                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                                 iconSource: "document-send"
-                                title: "Nenhum request aberto"
-                                message: "Selecione um request na barra lateral ou crie um novo."
-                                actionText: "Novo request…"
+                                title: Strings.t.noRequestOpen
+                                message: Strings.t.noRequestOpenHint
+                                actionText: Strings.t.newRequest
                                 actionIcon: "document-new"
                                 onActionTriggered: newReqDialog.openIn(root.targetFolder())
                             }
@@ -2298,7 +2300,7 @@ Kirigami.ApplicationWindow {
                             function save() {
                                 if (editing.length === 0) return;
                                 var dup = backend.duplicateVariableName(modelToArray(envVarsModel));
-                                if (dup.length > 0) { notify("Nome de variável repetido no ambiente: " + dup); return; }
+                                if (dup.length > 0) { notify(Strings.duplicateInEnvironment(dup)); return; }
                                 var vars = [];
                                 for (var i = 0; i < envVarsModel.count; i++) {
                                     var v = envVarsModel.get(i);
@@ -2309,7 +2311,7 @@ Kirigami.ApplicationWindow {
                                 if (backend.saveEnvironment(editing, vars)) {
                                     root.activateEnv(editing);
                                     loadVars(editing);
-                                    notify("Ambiente salvo");
+                                    notify(Strings.t.environmentSaved);
                                 }
                             }
                             function matchesView(scope, collections) {
@@ -2323,13 +2325,13 @@ Kirigami.ApplicationWindow {
                                 loadVars(name);
                             }
                             function startRename(name) {
-                                if (envVarsDirty) { notify("Salve as alterações antes de renomear"); return; }
+                                if (envVarsDirty) { notify(Strings.t.saveBeforeRename); return; }
                                 renameEnvDialog.oldName = name;
                                 renameEnvDialog.open();
                             }
                             function renameTo(oldName, newName) {
                                 if (!backend.renameEnvironment(oldName, newName)) {
-                                    notify("Já existe um ambiente com esse nome");
+                                    notify(Strings.t.environmentExists);
                                     return;
                                 }
                                 root.reloadEnvs();
@@ -2346,7 +2348,7 @@ Kirigami.ApplicationWindow {
                                     Layout.preferredWidth: 200
                                     Layout.fillHeight: true
                                     spacing: Kirigami.Units.smallSpacing
-                                    Label { text: "Ambientes"; font.bold: true }
+                                    Label { text: Strings.t.environments; font.bold: true }
                                     ListView {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
@@ -2360,17 +2362,17 @@ Kirigami.ApplicationWindow {
                                         }
                                     }
                                     Button {
-                                        Layout.fillWidth: true; icon.name: "list-add"; text: "Novo ambiente…"
+                                        Layout.fillWidth: true; icon.name: "list-add"; text: Strings.t.newEnvironment
                                         display: AbstractButton.TextBesideIcon
                                         onClicked: createEnvDialog.open()
                                     }
                                     Button {
-                                        Layout.fillWidth: true; icon.name: "edit-delete"; text: "Excluir"
+                                        Layout.fillWidth: true; icon.name: "edit-delete"; text: Strings.t.delete
                                         display: AbstractButton.TextBesideIcon
                                         enabled: envScreen.editing.length > 0
                                         onClicked: {
                                             const name = envScreen.editing;
-                                            root.confirmDelete("Excluir o ambiente \"" + name + "\"?", function () {
+                                            root.confirmDelete(Strings.deleteEnvConfirm(name), function () {
                                                 backend.deleteEnvironment(name);
                                                 root.reloadEnvs();
                                                 envScreen.editing = "";
@@ -2396,7 +2398,7 @@ Kirigami.ApplicationWindow {
                                         showDiscard: true
                                         showRename: true
                                         canRename: envScreen.editing.length > 0 && !envScreen.envVarsDirty
-                                        renameTooltip: envScreen.envVarsDirty ? "Salve antes de renomear" : "Renomear ambiente"
+                                        renameTooltip: envScreen.envVarsDirty ? Strings.t.saveBeforeRenameEnv : Strings.t.renameEnvTooltip
                                         onSave: envScreen.save()
                                         onDiscard: envScreen.loadVars(envScreen.editing)
                                         onRename: envScreen.startRename(envScreen.editing)
@@ -2404,21 +2406,21 @@ Kirigami.ApplicationWindow {
 
                                     RowLayout {
                                         spacing: Kirigami.Units.smallSpacing
-                                        Label { text: "Ver:" }
+                                        Label { text: Strings.t.view }
                                         ComboBox {
                                             id: viewCombo
                                             implicitWidth: 230
-                                            model: ["Todas as variáveis"].concat(root.collectionNames())
+                                            model: [Strings.t.viewAllVariables].concat(root.collectionNames())
                                             onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
                                         }
-                                        Label { text: "globais aparecem em toda visão"; opacity: 0.6 }
+                                        Label { text: Strings.t.globalsEverywhere; opacity: 0.6 }
                                     }
 
                                     KvTable {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         model: envVarsModel
-                                        keyPlaceholder: "variável"
+                                        keyPlaceholder: Strings.t.variable
                                         secretColumn: true
                                         uniqueNames: true
                                         scopeColumn: true
@@ -2440,17 +2442,17 @@ Kirigami.ApplicationWindow {
                                         }
                                         scopeText: function(i) {
                                             var v = envVarsModel.get(i);
-                                            if (!v || v.scope !== "collections") return "Global";
+                                            if (!v || v.scope !== "collections") return Strings.t.globalTab;
                                             var c = (v.collections && v.collections.length > 0) ? v.collections.split(",") : [];
-                                            if (c.length === 0) return "escolher coleções…";
+                                            if (c.length === 0) return Strings.t.chooseCollections;
                                             if (c.length <= 2) return c.join(", ");
-                                            return c.length + " coleções";
+                                            return Strings.nCollections(c.length);
                                         }
                                         scopeTooltip: function(i) {
                                             var v = envVarsModel.get(i);
-                                            if (!v || v.scope !== "collections") return "Vale para todas as coleções";
+                                            if (!v || v.scope !== "collections") return Strings.t.validForAllCollections;
                                             var c = (v.collections && v.collections.length > 0) ? v.collections.split(",") : [];
-                                            return c.length > 0 ? c.join(", ") : "Nenhuma coleção selecionada";
+                                            return c.length > 0 ? c.join(", ") : Strings.t.noCollectionSelected;
                                         }
                                         onScopeRequested: function(i, gx, gy) { scopePopup.openFor(i, gx, gy); }
                                         onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
@@ -2476,50 +2478,50 @@ Kirigami.ApplicationWindow {
                                         width: settingsScroll.availableWidth
                                         spacing: Kirigami.Units.smallSpacing
 
-                                        Label { text: "Aparência"; font.bold: true }
+                                        Label { text: Strings.t.appearance; font.bold: true }
                                         RowLayout {
                                             spacing: Kirigami.Units.smallSpacing
-                                            Label { text: "Fonte do editor:"; Layout.preferredWidth: 170 }
+                                            Label { text: Strings.t.editorFont; Layout.preferredWidth: 170 }
                                             SpinBox { from: 0; to: 28; value: settings.fontSize; onValueModified: settings.fontSize = value }
-                                            Label { text: "0 = padrão"; opacity: 0.6 }
+                                            Label { text: Strings.t.defaultZero; opacity: 0.6 }
                                         }
 
                                         Kirigami.Separator { Layout.fillWidth: true }
-                                        Label { text: "Coleções"; font.bold: true }
-                                        Label { text: "Pasta onde as coleções são salvas:"; opacity: 0.7 }
+                                        Label { text: Strings.t.collections; font.bold: true }
+                                        Label { text: Strings.t.collectionsFolder; opacity: 0.7 }
                                         RowLayout {
                                             spacing: Kirigami.Units.smallSpacing
                                             TextField { id: dirField; Layout.fillWidth: true; text: settings.storageDir }
-                                            Button { text: "Procurar…"; onClicked: folderPicker.open() }
+                                            Button { text: Strings.t.browse; onClicked: folderPicker.open() }
                                             Button {
-                                                text: "Aplicar"; highlighted: true
+                                                text: Strings.t.apply; highlighted: true
                                                 enabled: dirField.text.length > 0 && dirField.text !== backend.storageDir
                                                 onClicked: root.applyStorageDir(dirField.text)
                                             }
                                         }
                                         Label {
-                                            text: "Ao aplicar, o katarina passa a usar essa pasta. As coleções atuais não são movidas — para trazê-las, copie os arquivos para lá."
+                                            text: Strings.t.storageDirHint
                                             opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                         }
 
                                         Kirigami.Separator { Layout.fillWidth: true }
-                                        Label { text: "Rede"; font.bold: true }
+                                        Label { text: Strings.t.network; font.bold: true }
                                         RowLayout {
                                             spacing: Kirigami.Units.smallSpacing
-                                            Label { text: "Timeout (segundos):"; Layout.preferredWidth: 170 }
+                                            Label { text: Strings.t.timeoutSeconds; Layout.preferredWidth: 170 }
                                             SpinBox { from: 0; to: 600; value: settings.timeoutSec; onValueModified: settings.timeoutSec = value }
-                                            Label { text: "0 = sem limite"; opacity: 0.6 }
+                                            Label { text: Strings.t.noLimit; opacity: 0.6 }
                                         }
-                                        CheckBox { text: "Ignorar erros de certificado TLS (self-signed)"; checked: settings.ignoreSsl; onToggled: settings.ignoreSsl = checked }
+                                        CheckBox { text: Strings.t.ignoreSsl; checked: settings.ignoreSsl; onToggled: settings.ignoreSsl = checked }
 
                                         Kirigami.Separator { Layout.fillWidth: true }
-                                        Label { text: "Comportamento"; font.bold: true }
-                                        CheckBox { text: "Confirmar antes de excluir"; checked: settings.confirmDelete; onToggled: settings.confirmDelete = checked }
-                                        CheckBox { text: "Salvar automaticamente ao enviar"; checked: settings.autoSaveOnSend; onToggled: settings.autoSaveOnSend = checked }
+                                        Label { text: Strings.t.behavior; font.bold: true }
+                                        CheckBox { text: Strings.t.confirmDeleteOption; checked: settings.confirmDelete; onToggled: settings.confirmDelete = checked }
+                                        CheckBox { text: Strings.t.autoSaveOnSend; checked: settings.autoSaveOnSend; onToggled: settings.autoSaveOnSend = checked }
 
                                         Kirigami.Separator { Layout.fillWidth: true }
-                                        Label { text: "Atalhos"; font.bold: true }
-                                        Label { text: "Clique num atalho e pressione a nova combinação. Esc cancela."; opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                                        Label { text: Strings.t.shortcuts; font.bold: true }
+                                        Label { text: Strings.t.shortcutsHint; opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                                         Repeater {
                                             model: root.shortcutDefs
                                             delegate: RowLayout {
@@ -2538,13 +2540,13 @@ Kirigami.ApplicationWindow {
                                                     icon.name: "edit-undo"
                                                     enabled: { var m = settings.shortcuts; return m !== undefined && m[modelData.id] !== undefined; }
                                                     onClicked: settings.resetShortcut(modelData.id)
-                                                    ToolTip.text: "Restaurar padrão"; ToolTip.visible: hovered
+                                                    ToolTip.text: Strings.t.restoreDefault; ToolTip.visible: hovered
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                Label { text: "As opções valem na hora."; opacity: 0.6; Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
+                                Label { text: Strings.t.optionsApplyInstantly; opacity: 0.6; Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
                             }
                         }
 
@@ -2640,10 +2642,10 @@ Kirigami.ApplicationWindow {
         function errorText() {
             var n = nrName.text.trim();
             if (n.length === 0) return "";
-            if (n.indexOf("/") >= 0) return "O nome não pode conter '/'.";
+            if (n.indexOf("/") >= 0) return Strings.t.nameCannotContainSlash;
             var newRel = (target.length > 0 ? target + "/" : "") + n;
             if (backend.isCollection(newRel) || backend.loadRequest(newRel).method !== undefined)
-                return "Já existe um item com esse nome aqui.";
+                return Strings.t.itemExists;
             return "";
         }
         function create() {
@@ -2721,10 +2723,10 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true; wrapMode: Text.WordWrap
                 text: {
                     var i = confirmCloseDialog.tabIndex;
-                    if (i < 0 || i >= tabsModel.count) return "Alterações não salvas.";
+                    if (i < 0 || i >= tabsModel.count) return Strings.t.unsavedChanges;
                     var t = tabsModel.get(i);
-                    var what = t.isCollection ? "A coleção" : (t.isEnvironment ? "O ambiente" : "O request");
-                    return what + " '" + t.name + "' tem alterações não salvas.";
+                    var kind = t.isCollection ? "collection" : (t.isEnvironment ? "environment" : "request");
+                    return Strings.unsavedItem(t.name, kind);
                 }
             }
             Item { Layout.fillHeight: true }
@@ -2794,9 +2796,9 @@ Kirigami.ApplicationWindow {
                 Label { text: "cURL"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
                 Item { Layout.fillWidth: true }
                 Button {
-                    icon.name: "edit-copy"; text: "Copiar"
+                    icon.name: "edit-copy"; text: Strings.t.copy
                     display: AbstractButton.TextBesideIcon
-                    onClicked: { varSupport.copyText(curlExportArea.text); root.notify("Código copiado"); }
+                    onClicked: { varSupport.copyText(curlExportArea.text); root.notify(Strings.t.codeCopied); }
                 }
             }
             ScrollView {
@@ -2807,7 +2809,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
-                Button { text: "Fechar"; onClicked: curlExportDialog.close() }
+                Button { text: Strings.t.close; onClicked: curlExportDialog.close() }
             }
         }
     }
@@ -2815,7 +2817,7 @@ Kirigami.ApplicationWindow {
     // ---- configurações ----
     FolderDialog {
         id: folderPicker
-        title: "Escolher pasta das coleções"
+        title: Strings.t.chooseCollectionsFolder
         onAccepted: dirField.text = selectedFolder.toString().replace("file://", "")
     }
 
@@ -2833,7 +2835,7 @@ Kirigami.ApplicationWindow {
         function openFor(relPath) {
             item = relPath;
             moveModel.clear();
-            moveModel.append({ label: "Raiz (topo)", path: "" });
+            moveModel.append({ label: Strings.t.rootTop, path: "" });
             var t = backend.collectionTree();
             for (var i = 0; i < t.length; i++) {
                 var e = t[i];
@@ -2857,7 +2859,7 @@ Kirigami.ApplicationWindow {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
             Label {
-                text: "Mover \"" + moveDialog.item.split("/").pop() + "\" para:"
+                text: Strings.moveTo(moveDialog.item.split("/").pop())
                 font.bold: true; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             ListView {
@@ -2881,18 +2883,18 @@ Kirigami.ApplicationWindow {
     // ---- renomear ----
     Dialog {
         id: renameDialog
-        title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 205
+        title: Strings.t.renameTitle; modal: true; anchors.centerIn: parent; width: 360; height: 205
         header: DialogHeader { dialogTitle: renameDialog.title }
         property string relPath: ""
         // erro ao vivo (conforme digita); nome vazio não mostra nada
         function errorText() {
             var n = renameField.text.trim();
             if (n.length === 0) return "";
-            if (n.indexOf("/") >= 0) return "O nome não pode conter '/'.";
+            if (n.indexOf("/") >= 0) return Strings.t.nameCannotContainSlash;
             var parent = relPath.split("/").slice(0, -1).join("/");
             var newRel = parent.length > 0 ? parent + "/" + n : n;
             if (newRel !== relPath && (backend.isCollection(newRel) || backend.loadRequest(newRel).method !== undefined))
-                return "Já existe um item com esse nome aqui.";
+                return Strings.t.itemExists;
             return "";
         }
         function openFor(p) {
@@ -2940,7 +2942,7 @@ Kirigami.ApplicationWindow {
     // ---- histórico ----
     Dialog {
         id: historyDialog
-        title: "Histórico"; anchors.centerIn: parent; modal: true; width: 640; height: 460
+        title: Strings.t.historyTitle; anchors.centerIn: parent; modal: true; width: 640; height: 460
         header: DialogHeader { dialogTitle: historyDialog.title }
         ListModel { id: historyModel }
         function openAndLoad() {
@@ -2951,7 +2953,7 @@ Kirigami.ApplicationWindow {
         }
         ColumnLayout {
             anchors.fill: parent
-            Label { text: "Clique para criar um novo request pré-preenchido."; opacity: 0.6; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+            Label { text: Strings.t.historyHint; opacity: 0.6; Layout.fillWidth: true; wrapMode: Text.WordWrap }
             ListView {
                 Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                 model: historyModel
@@ -2984,7 +2986,7 @@ Kirigami.ApplicationWindow {
     // ---- criar ambiente (só o nome) ----
     Dialog {
         id: createEnvDialog
-        title: "Criar ambiente"; anchors.centerIn: parent; modal: true; width: 380; height: 175
+        title: Strings.t.createEnvTitle; anchors.centerIn: parent; modal: true; width: 380; height: 175
         header: DialogHeader { dialogTitle: createEnvDialog.title }
         function create() {
             var n = newEnvName.text.trim();
@@ -3039,14 +3041,14 @@ Kirigami.ApplicationWindow {
     // ---- renomear ambiente ----
     Dialog {
         id: renameEnvDialog
-        title: "Renomear ambiente"; modal: true; anchors.centerIn: parent; width: 380; height: 190
+        title: Strings.t.renameEnvTitle; modal: true; anchors.centerIn: parent; width: 380; height: 190
         header: DialogHeader { dialogTitle: renameEnvDialog.title }
         property string oldName: ""
         function errorText() {
             var n = envRenameField.text.trim();
             if (n.length === 0 || n === oldName) return "";
             for (var i = 0; i < root.envList.length; i++)
-                if (root.envList[i].name === n) return "Já existe um ambiente com esse nome.";
+                if (root.envList[i].name === n) return Strings.t.environmentExists;
             return "";
         }
         function apply() {
@@ -3118,13 +3120,13 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Escopo da variável"; font.bold: true; Layout.fillWidth: true }
+            Label { text: Strings.t.scopeOfVariable; font.bold: true; Layout.fillWidth: true }
             TabBar {
                 id: scopeMode
                 Layout.fillWidth: true
                 currentIndex: scopePopup.global ? 0 : 1
-                TabButton { text: "Global"; onClicked: { scopePopup.global = true; scopePopup.applyScope(); } }
-                TabButton { text: "Coleções"; onClicked: { scopePopup.global = false; scopePopup.applyScope(); } }
+                TabButton { text: Strings.t.globalTab; onClicked: { scopePopup.global = true; scopePopup.applyScope(); } }
+                TabButton { text: Strings.t.collectionsTab; onClicked: { scopePopup.global = false; scopePopup.applyScope(); } }
             }
             Rectangle {
                 visible: !scopePopup.global
@@ -3149,7 +3151,7 @@ Kirigami.ApplicationWindow {
                 Label {
                     anchors.centerIn: parent
                     visible: scopeCollectionsModel.count === 0
-                    text: "Você ainda não tem coleções."
+                    text: Strings.t.noCollectionsYet
                     opacity: 0.6
                 }
             }
@@ -3159,7 +3161,7 @@ Kirigami.ApplicationWindow {
     FileDialog {
         id: fileDialog
         property int targetIndex: -1
-        title: "Escolher arquivo"
+        title: Strings.t.chooseFileTitle
         onAccepted: {
             if (targetIndex >= 0 && targetIndex < fieldsModel.count)
                 fieldsModel.setProperty(targetIndex, "fileName", selectedFile.toString().replace("file://", ""));
@@ -3168,10 +3170,10 @@ Kirigami.ApplicationWindow {
 
     Connections {
         target: backend
-        function onStarted() { root.sending = true; statusLabel.text = "Enviando…"; }
+        function onStarted() { root.sending = true; statusLabel.text = Strings.t.sending; }
         function onCanceled() {
             root.sending = false;
-            statusLabel.text = "Cancelado"; timeLabel.text = ""; sizeLabel.text = "";
+            statusLabel.text = Strings.t.canceled; timeLabel.text = ""; sizeLabel.text = "";
         }
         function onResponseReady(status, statusText, headers, body, elapsedMs, sizeBytes) {
             root.sending = false;
@@ -3196,9 +3198,9 @@ Kirigami.ApplicationWindow {
             setResponseBody(body);
             syncJsonTree();
         }
-        function onError(message) {
+        function onError(code, args) {
             root.sending = false;
-            statusLabel.text = "Erro: " + message;
+            statusLabel.text = Strings.backendError(code, args);
             timeLabel.text = ""; sizeLabel.text = "";
         }
         function onResponseMeta(meta) {
@@ -3281,11 +3283,11 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Paleta de comandos"; font.bold: true }
+            Label { text: Strings.t.commandPalette; font.bold: true }
             TextField {
                 id: paletteField
                 Layout.fillWidth: true
-                placeholderText: "Digite um comando…"
+                placeholderText: Strings.t.commandPlaceholder
                 onTextChanged: cmdPalette.applyFilter(text)
                 onAccepted: cmdPalette.trigger()
                 Keys.onDownPressed: paletteList.currentIndex = Math.min(paletteList.currentIndex + 1, cmdPalette.filtered.length - 1)
@@ -3327,7 +3329,7 @@ Kirigami.ApplicationWindow {
     // Declarado por último para ficar acima de qualquer outra tela/dialog aberto.
     Dialog {
         id: deleteDialog
-        title: "Excluir"; modal: true; anchors.centerIn: parent; width: 400; height: 175
+        title: Strings.t.deleteTitle; modal: true; anchors.centerIn: parent; width: 400; height: 175
         header: DialogHeader { dialogTitle: deleteDialog.title }
         property string message: ""
         property var callback: null

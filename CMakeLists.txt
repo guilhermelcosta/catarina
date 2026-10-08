@@ -42,6 +42,7 @@ qt_add_resources(katarina "qml"
     FILES
         qml/Main.qml
         qml/Util.js
+        qml/Strings.js
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml

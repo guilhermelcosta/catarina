@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Árvore JSON colapsável para o corpo da resposta.
 Item {
@@ -124,7 +125,7 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-        message: treeRoot.text.length === 0 ? "Sem resposta." : "Resposta não é JSON válido."
+        message: treeRoot.text.length === 0 ? Strings.t.noResponse : Strings.t.invalidJson
         visible: nodes.count === 0
     }
 }

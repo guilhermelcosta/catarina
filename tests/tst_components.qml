@@ -408,7 +408,7 @@ TestCase {
         verify(row !== null, "delegate não criado");
         compare(row.children.length, 9, "nº de filhos do delegate");
         compare(row.children[3].echoMode, TextInput.Password, "campo mascarado");
-        compare(row.children[4].placeholderText, "valor", "editor normal");
+        compare(row.children[4].placeholderText, "Value", "editor normal");
     }
 
     // modo campos: botão de arquivo no lugar do editor de valor

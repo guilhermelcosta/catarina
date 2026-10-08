@@ -44,8 +44,9 @@ public:
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
     Q_INVOKABLE void send(const QVariantMap &request, const QString &collection);
     Q_INVOKABLE void cancel();          // aborta o request em andamento
-    // por que "name" não resolve nesta coleção: "" (resolve), "restrita a: ..." ou "não definida"
-    Q_INVOKABLE QString variableNoteFor(const QString &name, const QString &collection) const;
+    // por que "name" não resolve nesta coleção, por código para a UI traduzir:
+    // { "code": "", "collections": [...] }, codes: "" | "disabled" | "restricted" | "undefined"
+    Q_INVOKABLE QVariantMap variableNoteFor(const QString &name, const QString &collection) const;
 
     // ---- coleções ----
     Q_INVOKABLE QVariantList collectionTree() const;
@@ -106,7 +107,8 @@ signals:
                        const QString &body, int elapsedMs, int sizeBytes);
     // metadados para a aba de rede/timeline (protocolo, ip, tls, request enviado)
     void responseMeta(const QVariantMap &meta);
-    void error(const QString &message);
+    // erro com código + argumentos; a UI monta o texto (Strings.js::backendError)
+    void error(const QString &code, const QVariantList &args);
     void started();                     // request despachado
     void canceled();                    // request abortado pelo usuário
     void collectionsChanged();

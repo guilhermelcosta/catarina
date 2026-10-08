@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Campo que captura uma combinação de teclas. Clique e pressione; Esc cancela.
 FocusScope {
@@ -22,7 +23,7 @@ FocusScope {
         border.color: field.recording ? Kirigami.Theme.focusColor : Kirigami.Theme.disabledTextColor
         Label {
             anchors.centerIn: parent
-            text: field.recording ? "Pressione a combinação…" : (field.sequence.length > 0 ? field.sequence : "—")
+            text: field.recording ? Strings.t.pressCombination : (field.sequence.length > 0 ? field.sequence : "—")
             opacity: field.recording ? 0.7 : 1
         }
     }
