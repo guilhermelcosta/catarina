@@ -269,6 +269,17 @@ Item {
         }
     }
 
+    // cabeçalho padrão de diálogo: título em negrito (padrão dos modais do app)
+    component DialogHeader: Kirigami.Heading {
+        property string dialogTitle: ""
+        text: dialogTitle
+        level: 2
+        type: Kirigami.Heading.Type.Primary
+        padding: Kirigami.Units.gridUnit
+        bottomPadding: 0
+        elide: Text.ElideRight
+    }
+
     // confirmação de remoção de linha (mesma config global de exclusão)
     Dialog {
         id: confirmRemove
@@ -276,8 +287,10 @@ Item {
         parent: Overlay.overlay
         anchors.centerIn: parent
         title: "Remover"
+        header: DialogHeader { dialogTitle: confirmRemove.title }
         modal: true
         width: 380
+        height: 175
         property int pendingIndex: -1
         ColumnLayout {
             anchors.fill: parent
@@ -286,6 +299,7 @@ Item {
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: confirmRemove.close() }
                 Button {

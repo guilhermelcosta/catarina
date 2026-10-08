@@ -85,6 +85,17 @@ Kirigami.ApplicationWindow {
         opacity: 0.4
     }
 
+    // cabeçalho padrão de diálogo: título sempre em negrito (o texto auxiliar não)
+    component DialogHeader: Kirigami.Heading {
+        property string dialogTitle: ""
+        text: dialogTitle
+        level: 2
+        type: Kirigami.Heading.Type.Primary
+        padding: Kirigami.Units.gridUnit
+        bottomPadding: 0
+        elide: Text.ElideRight
+    }
+
     // ================= helpers =================
     function methodColor(m) {
         switch (m) {
@@ -2613,6 +2624,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: newReqDialog
         title: "Novo request"; modal: true; anchors.centerIn: parent; width: 460; height: 300
+        header: DialogHeader { dialogTitle: newReqDialog.title }
         property string target: ""
         function openIn(folder) { target = folder; nrName.text = ""; nrUrl.text = ""; nrMethod.currentIndex = 0; open(); nrName.forceActiveFocus(); }
         function openPrefilled(folder, method, url) {
@@ -2625,7 +2637,17 @@ Kirigami.ApplicationWindow {
             open();
             nrName.forceActiveFocus();
         }
+        function errorText() {
+            var n = nrName.text.trim();
+            if (n.length === 0) return "";
+            if (n.indexOf("/") >= 0) return "O nome não pode conter '/'.";
+            var newRel = (target.length > 0 ? target + "/" : "") + n;
+            if (backend.isCollection(newRel) || backend.loadRequest(newRel).method !== undefined)
+                return "Já existe um item com esse nome aqui.";
+            return "";
+        }
         function create() {
+            if (errorText().length > 0) return;
             var n = nrName.text.trim();
             if (n.length === 0) { nrName.forceActiveFocus(); return; }
             var path = (target.length > 0 ? target + "/" : "") + n;
@@ -2635,21 +2657,26 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Nome"; font.bold: true }
+            Label { text: "Nome"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
             TextField { id: nrName; Layout.fillWidth: true; placeholderText: "nome do request"; onAccepted: newReqDialog.create() }
-            Label { text: "URL"; font.bold: true }
+            Label { text: "URL"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
                 ComboBox { id: nrMethod; model: ["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"]; implicitWidth: 110 }
                 TextField { id: nrUrl; Layout.fillWidth: true; placeholderText: "https://..." }
             }
+            Label {
+                text: newReqDialog.errorText(); color: Kirigami.Theme.negativeTextColor
+                visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
+            }
             Label { text: "Será criado em: " + (newReqDialog.target.length > 0 ? newReqDialog.target : "raiz"); opacity: 0.6 }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: newReqDialog.close() }
-                Button { text: "Criar"; highlighted: true; onClicked: newReqDialog.create() }
+                Button { text: "Criar"; highlighted: true; enabled: newReqDialog.errorText().length === 0; onClicked: newReqDialog.create() }
             }
         }
     }
@@ -2657,6 +2684,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: folderDialog
         title: "Nova pasta"; anchors.centerIn: parent; modal: true; width: 340; height: 140
+        header: DialogHeader { dialogTitle: folderDialog.title }
         standardButtons: Dialog.Ok | Dialog.Cancel
         onAccepted: {
             var n = folderName.text.trim();
@@ -2671,6 +2699,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: collectionDialog
         title: "Nova coleção"; anchors.centerIn: parent; modal: true; width: 340; height: 140
+        header: DialogHeader { dialogTitle: collectionDialog.title }
         standardButtons: Dialog.Ok | Dialog.Cancel
         onAccepted: {
             var n = collectionName.text.trim();
@@ -2684,6 +2713,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: confirmCloseDialog
         title: "Alterações não salvas"; modal: true; anchors.centerIn: parent; width: 400; height: 170
+        header: DialogHeader { dialogTitle: confirmCloseDialog.title }
         property int tabIndex: -1
         ColumnLayout {
             anchors.fill: parent
@@ -2700,6 +2730,7 @@ Kirigami.ApplicationWindow {
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: confirmCloseDialog.close() }
                 Button { text: "Descartar"; onClicked: { root.doCloseTab(confirmCloseDialog.tabIndex, false); confirmCloseDialog.close(); } }
@@ -2711,12 +2742,14 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: quitDialog
         title: "Sair do katarina"; modal: true; anchors.centerIn: parent; width: 400; height: 170
+        header: DialogHeader { dialogTitle: quitDialog.title }
         ColumnLayout {
             anchors.fill: parent
             Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Há requests com alterações não salvas." }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: quitDialog.close() }
                 Button { text: "Descartar e sair"; onClicked: { root.persistSession(); root.forceQuit = true; quitDialog.close(); Qt.quit(); } }
@@ -2729,10 +2762,11 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: curlImportDialog
         title: "Importar cURL"; anchors.centerIn: parent; modal: true; width: 560; height: 320
+        header: DialogHeader { dialogTitle: curlImportDialog.title }
         property string hint: ""
         ColumnLayout {
             anchors.fill: parent
-            Label { text: "Cole um comando cURL:"; font.bold: true }
+            Label { text: "Cole um comando cURL:"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
             ScrollView {
                 Layout.fillWidth: true; Layout.fillHeight: true
                 TextArea { id: curlImportArea; font.family: "monospace"; wrapMode: TextEdit.Wrap; placeholderText: "curl 'https://…' -H '…' -d '…'" }
@@ -2740,6 +2774,7 @@ Kirigami.ApplicationWindow {
             Label { text: curlImportDialog.hint; color: Kirigami.Theme.negativeTextColor; visible: text.length > 0 }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: curlImportDialog.close() }
                 Button { text: "Importar"; highlighted: true; onClicked: root.importCurl(curlImportArea.text) }
@@ -2749,13 +2784,14 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: curlExportDialog
         title: "Exportar código"; anchors.centerIn: parent; modal: true; width: 640; height: 400
+        header: DialogHeader { dialogTitle: curlExportDialog.title }
         function refresh() { curlExportArea.text = Util.exportCode(root.requestParts()); }
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
-                Label { text: "cURL"; font.bold: true }
+                Label { text: "cURL"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
                 Item { Layout.fillWidth: true }
                 Button {
                     icon.name: "edit-copy"; text: "Copiar"
@@ -2769,6 +2805,7 @@ Kirigami.ApplicationWindow {
             }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Fechar"; onClicked: curlExportDialog.close() }
             }
@@ -2844,7 +2881,8 @@ Kirigami.ApplicationWindow {
     // ---- renomear ----
     Dialog {
         id: renameDialog
-        title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 175
+        title: "Renomear"; modal: true; anchors.centerIn: parent; width: 360; height: 205
+        header: DialogHeader { dialogTitle: renameDialog.title }
         property string relPath: ""
         // erro ao vivo (conforme digita); nome vazio não mostra nada
         function errorText() {
@@ -2882,24 +2920,16 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Novo nome:" }
-            TextField {
-                id: renameField
-                Layout.fillWidth: true
-                onAccepted: renameDialog.apply()
-                ToolTip.text: renameDialog.errorText()
-                ToolTip.visible: hovered && renameDialog.errorText().length > 0
-                ToolTip.delay: 500
-                Rectangle {
-                    anchors.fill: parent; anchors.margins: -1
-                    color: "transparent"; radius: 3; enabled: false; z: 10
-                    border.width: 1; border.color: Kirigami.Theme.negativeTextColor
-                    visible: renameDialog.errorText().length > 0
-                }
+            Label { text: "Novo nome:"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
+            TextField { id: renameField; Layout.fillWidth: true; onAccepted: renameDialog.apply() }
+            Label {
+                text: renameDialog.errorText(); color: Kirigami.Theme.negativeTextColor
+                visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: renameDialog.close() }
                 Button { text: "Renomear"; highlighted: true; enabled: renameDialog.errorText().length === 0; onClicked: renameDialog.apply() }
@@ -2911,6 +2941,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: historyDialog
         title: "Histórico"; anchors.centerIn: parent; modal: true; width: 640; height: 460
+        header: DialogHeader { dialogTitle: historyDialog.title }
         ListModel { id: historyModel }
         function openAndLoad() {
             historyModel.clear();
@@ -2942,6 +2973,7 @@ Kirigami.ApplicationWindow {
             Label { visible: historyModel.count === 0; text: "Nada no histórico ainda — envie um request."; opacity: 0.5 }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Limpar"; onClicked: root.confirmDelete("Limpar todo o histórico?", function () { backend.clearHistory(); historyDialog.openAndLoad(); }) }
                 Button { text: "Fechar"; onClicked: historyDialog.close() }
@@ -2952,7 +2984,8 @@ Kirigami.ApplicationWindow {
     // ---- criar ambiente (só o nome) ----
     Dialog {
         id: createEnvDialog
-        title: "Criar ambiente"; anchors.centerIn: parent; modal: true; width: 380; height: 160
+        title: "Criar ambiente"; anchors.centerIn: parent; modal: true; width: 380; height: 175
+        header: DialogHeader { dialogTitle: createEnvDialog.title }
         function create() {
             var n = newEnvName.text.trim();
             if (n.length === 0) { newEnvName.forceActiveFocus(); return; }
@@ -2965,11 +2998,12 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Nome do ambiente"; font.bold: true }
+            Label { text: "Nome do ambiente"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
             TextField { id: newEnvName; Layout.fillWidth: true; placeholderText: "ex.: dev"; onAccepted: createEnvDialog.create() }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: createEnvDialog.close() }
                 Button { text: "Criar"; highlighted: true; onClicked: createEnvDialog.create() }
@@ -2981,12 +3015,14 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: discardEnvDialog
         title: "Descartar alterações?"; modal: true; anchors.centerIn: parent; width: 400; height: 170
+        header: DialogHeader { dialogTitle: discardEnvDialog.title }
         ColumnLayout {
             anchors.fill: parent
             Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Há alterações não salvas neste ambiente. Trocar de ambiente vai descartá-las." }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: discardEnvDialog.close() }
                 Button {
@@ -3003,7 +3039,8 @@ Kirigami.ApplicationWindow {
     // ---- renomear ambiente ----
     Dialog {
         id: renameEnvDialog
-        title: "Renomear ambiente"; modal: true; anchors.centerIn: parent; width: 380; height: 160
+        title: "Renomear ambiente"; modal: true; anchors.centerIn: parent; width: 380; height: 190
+        header: DialogHeader { dialogTitle: renameEnvDialog.title }
         property string oldName: ""
         function errorText() {
             var n = envRenameField.text.trim();
@@ -3023,25 +3060,16 @@ Kirigami.ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.smallSpacing
-            Label { text: "Novo nome do ambiente"; font.bold: true }
-            TextField {
-                id: envRenameField
-                Layout.fillWidth: true
-                placeholderText: "nome do ambiente"
-                onAccepted: renameEnvDialog.apply()
-                ToolTip.text: renameEnvDialog.errorText()
-                ToolTip.visible: hovered && renameEnvDialog.errorText().length > 0
-                ToolTip.delay: 500
-                Rectangle {
-                    anchors.fill: parent; anchors.margins: -1
-                    color: "transparent"; radius: 3; enabled: false; z: 10
-                    border.width: 1; border.color: Kirigami.Theme.negativeTextColor
-                    visible: renameEnvDialog.errorText().length > 0
-                }
+            Label { text: "Novo nome do ambiente"; Layout.bottomMargin: Kirigami.Units.smallSpacing }
+            TextField { id: envRenameField; Layout.fillWidth: true; placeholderText: "nome do ambiente"; onAccepted: renameEnvDialog.apply() }
+            Label {
+                text: renameEnvDialog.errorText(); color: Kirigami.Theme.negativeTextColor
+                visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: renameEnvDialog.close() }
                 Button { text: "Renomear"; highlighted: true; enabled: renameEnvDialog.errorText().length === 0; onClicked: renameEnvDialog.apply() }
@@ -3300,6 +3328,7 @@ Kirigami.ApplicationWindow {
     Dialog {
         id: deleteDialog
         title: "Excluir"; modal: true; anchors.centerIn: parent; width: 400; height: 175
+        header: DialogHeader { dialogTitle: deleteDialog.title }
         property string message: ""
         property var callback: null
         ColumnLayout {
@@ -3310,6 +3339,7 @@ Kirigami.ApplicationWindow {
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
                 Item { Layout.fillWidth: true }
                 Button { text: "Cancelar"; onClicked: deleteDialog.close() }
                 Button {

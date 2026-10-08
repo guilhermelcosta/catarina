@@ -92,15 +92,17 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
 | Duplicar | `MenuItem` | `edit-duplicate` | menus |
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
-- **Diálogos**: sempre `Cancelar` à esquerda e a ação primária (`highlighted`) à direita.
-  Com `RowLayout` de botões própria, a `height` fixa precisa caber o conteúdo — senão os botões
-  extravasam o fundo do diálogo (foi o caso do "Renomear": 150→175). Prefira `standardButtons`
-  quando der.
-- **Validação de diálogo é ao vivo** (conforme digita): o campo fica com **borda vermelha**
-  (`negativeTextColor`) e mostra a razão em **tooltip no hover** (`ToolTip.text` +
-  `ToolTip.visible: hovered` + `ToolTip.delay`), com o botão primário desabilitado enquanto
-  inválido. Não use erro só-no-clique nem `Label` que empurra o layout (o "Renomear" estourava
-  a altura).
+- **Diálogos (padrão)**: título em **negrito** com `header: DialogHeader { dialogTitle: <id>.title }`
+  — o texto auxiliar (rótulo de campo) **não** é negrito. `Cancelar` à esquerda e ação primária
+  (`highlighted`) à direita, na `RowLayout` com `Layout.bottomMargin: smallSpacing` (respiro até a
+  borda). Prefira `standardButtons` quando der. A `height` fixa precisa caber o conteúdo — senão
+  os botões extravasam o fundo.
+- **Validação de diálogo é ao vivo** (conforme digita): `Label` vermelho abaixo do campo
+  (`negativeTextColor`) + botão primário desabilitado enquanto inválido. O diálogo tem **altura
+  fixa** já reservando o espaço da mensagem (senão, ou cresce ao digitar, ou os botões vazam).
+  Não use erro só-no-clique.
+- **Rótulo de formulário acima do campo**: não-negrito + `Layout.bottomMargin: smallSpacing`
+  (folga `2×smallSpacing` até o campo) — só o `spacing` do `ColumnLayout` deixa o texto "colado".
 - **Editor contextual pequeno**: prefira um **popover ancorado e não-modal** (aplica ao vivo), em vez
   de um diálogo modal; a célula que o abre pode ser um **chip** (ícone + texto,
   `alternateBackgroundColor`, borda `disabledTextColor`, `radius: 4`). Ex.: escopo da variável.
