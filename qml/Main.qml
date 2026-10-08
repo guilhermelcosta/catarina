@@ -1286,7 +1286,7 @@ Kirigami.ApplicationWindow {
                                     root.selectedPath = model.relPath;
                                     root.selectedIsFolder = model.isFolder;
                                     if (m.button === Qt.RightButton) {
-                                        ctxMenu.popup();
+                                        ctxMenu.popup(mainMouse, m.x, m.y);
                                     } else if (model.isFolder) {
                                         root.openCollection(model.relPath);
                                     } else {
