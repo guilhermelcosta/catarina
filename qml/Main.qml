@@ -1577,11 +1577,6 @@ Kirigami.ApplicationWindow {
                                         onClicked: root.saveCurrent()
                                         ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
                                     }
-                                    ToolButton {
-                                        icon.name: "overflow-menu"
-                                        onClicked: reqMenu.popup()
-                                        ToolTip.text: Strings.t.moreActions; ToolTip.visible: hovered
-                                    }
                                 }
 
                                 RowLayout {
@@ -2597,13 +2592,13 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.moveToEllipsis; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
         MenuItem { text: Strings.t.renameEllipsis; icon.name: "edit-rename"; enabled: root.selectedPath.length > 0; onTriggered: renameDialog.openFor(root.selectedPath) }
         MenuItem { text: Strings.t.duplicate; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
+        MenuItem {
+            text: Strings.t.exportCode; icon.name: "document-export"
+            enabled: root.selectedPath.length > 0 && !root.selectedIsFolder
+            onTriggered: { root.openRequest(root.selectedPath); curlExportDialog.refresh(); curlExportDialog.open(); }
+        }
         MenuSeparator {}
         MenuItem { text: Strings.t.delete; icon.name: "edit-delete"; onTriggered: root.askDelete() }
-    }
-
-    Menu {
-        id: reqMenu
-        MenuItem { text: Strings.t.exportCode; icon.name: "document-export"; onTriggered: { curlExportDialog.refresh(); curlExportDialog.open(); } }
     }
 
     // ================= diálogos =================
