@@ -1,8 +1,10 @@
 #pragma once
 
+#include <QHash>
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QObject>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -42,12 +44,12 @@ public:
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
     Q_INVOKABLE void send(const QVariantMap &request, const QString &collection);
     Q_INVOKABLE void cancel();          // aborta o request em andamento
-    Q_INVOKABLE QStringList missingVariables(const QVariantMap &request, const QString &collection) const;
     // por que "name" não resolve nesta coleção: "" (resolve), "restrita a: ..." ou "não definida"
     Q_INVOKABLE QString variableNoteFor(const QString &name, const QString &collection) const;
 
     // ---- coleções ----
     Q_INVOKABLE QVariantList collectionTree() const;
+    Q_INVOKABLE bool isCollection(const QString &relPath) const;   // é pasta/coleção?
     Q_INVOKABLE QVariantMap loadRequest(const QString &relPath) const;
     Q_INVOKABLE bool saveRequest(const QString &relPath, const QVariantMap &data);
     Q_INVOKABLE bool deleteEntry(const QString &relPath);
@@ -55,6 +57,8 @@ public:
     // move um request ou pasta para dentro de toFolder ("" = raiz)
     Q_INVOKABLE bool moveEntry(const QString &from, const QString &toFolder);
     // renomeia mantendo o mesmo pai (newName é o nome-base, sem .json)
+    // renomear uma coleção (pasta de topo) também reaponta o escopo das variáveis
+    // de ambiente que a referenciam
     Q_INVOKABLE bool renameEntry(const QString &relPath, const QString &newName);
     // duplica request ou pasta como "<nome> copy"
     Q_INVOKABLE bool duplicateEntry(const QString &relPath);
@@ -62,6 +66,8 @@ public:
     // ---- variáveis de coleção (versionadas, sem segredos) ----
     Q_INVOKABLE QVariantList collectionVariables(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionVariables(const QString &collection, const QVariantList &vars);
+    // primeiro nome de variável repetido na lista ("" se não houver); nomes aparados
+    Q_INVOKABLE QString duplicateVariableName(const QVariantList &vars) const;
 
     // ---- cabeçalhos de coleção (aplicados a todos os requests dela) ----
     Q_INVOKABLE QVariantList collectionHeaders(const QString &collection) const;
@@ -79,17 +85,21 @@ public:
     Q_INVOKABLE QString secretValue(const QString &id) const;
     Q_INVOKABLE bool saveSecret(const QString &id, const QString &value);
     Q_INVOKABLE bool removeSecret(const QString &id);
+    // preenche `value` das variáveis secretas a partir do cofre (para edição; o
+    // valor nunca é escrito no arquivo versionado — isso continua sendo no save)
+    Q_INVOKABLE QVariantList withResolvedSecrets(const QVariantList &vars) const;
 
     // ---- histórico ----
     Q_INVOKABLE QVariantList history() const;
     Q_INVOKABLE void clearHistory();
 
     // variáveis efetivas visíveis a uma coleção, já com valores de segredo resolvidos
-    Q_INVOKABLE QVariantMap effectiveVariables(const QString &collection,
-                                               const QVariantList &requestVars) const;
     // como acima, mas com a origem de cada variável (request/coleção/global) — para a UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;
+    // resolve tudo numa passada: { "resolved": [...], "missing": [...] }
+    Q_INVOKABLE QVariantMap variablesState(const QVariantMap &request,
+                                           const QString &collection) const;
 
 signals:
     void responseReady(int status, const QString &statusText, const QVariantList &headers,
@@ -109,12 +119,38 @@ private:
         QVariantList variables;
     };
 
+    // item já resolvido da cadeia global → coleção → request
+    struct ResolvedVar {
+        QString name;
+        QString value;
+        QString source;
+        bool secret = false;
+        bool enabled = true;
+    };
+
     QString requestPath(const QString &relPath) const;
     QString historyPath() const;
     void addHistory(const QVariantMap &entry);
     void loadEnvironments();
     void saveEnvironments() const;
-    void resolveSecrets(QVariantList &vars) const;   // preenche value a partir de secretId
+    // troca oldName por newName no escopo "collections" das variáveis de ambiente
+    bool renameCollectionScope(const QString &oldName, const QString &newName);
+    // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
+    QList<ResolvedVar> variableChain(const QString &collection, const QVariantList &requestVars) const;
+    // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
+    void walkCollection(const QString &rel, int depth, QVariantList &out) const;
+
+    void ensureSecrets() const;    // carrega secrets.json uma única vez
+    bool writeSecrets() const;     // persiste o cache de segredos
+    // tira os segredos do arquivo (vão pro cofre); limpa o cofre se deixou de ser segredo
+    QVariantList sanitizeSecrets(const QVariantList &vars);
+
+    // cache de .variables.json / .headers.json por coleção, validado por mtime
+    struct CachedList {
+        qint64 mtime = -1;
+        QVariantList list;
+    };
+    QVariantList cachedJsonList(const QString &path, const QString &key, CachedList &slot) const;
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
@@ -123,6 +159,12 @@ private:
     QString m_envFile;     // <dir>/.katarina/environments.json
     QString m_appData;     // ~/.local/share/katarina
     QString m_secretsFile; // <m_appData>/secrets.json
+
+    mutable bool m_secretsLoaded = false;
+    mutable QHash<QString, QString> m_secretsCache;              // id -> valor
+    mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
+    mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis
+    mutable QHash<QString, CachedList> m_colHeadersCache;        // coleção -> cabeçalhos
 
     QList<Env> m_envs;
     QString m_activeEnv;

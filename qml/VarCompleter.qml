@@ -13,9 +13,13 @@ Item {
 
     function matchingNames() {
         var out = [];
-        for (var i = 0; i < resolved.length; i++)
-            if (resolved[i].name.indexOf(partial) === 0)
-                out.push(resolved[i].name);
+        for (var i = 0; i < resolved.length; i++) {
+            var n = resolved[i].name;
+            if (resolved[i].enabled === false || n.length === 0) continue;
+            if (n.indexOf("{") >= 0 || n.indexOf("}") >= 0) continue;   // ignora o token em digitação (ex.: "{{")
+            if (n.indexOf(partial) === 0)
+                out.push(n);
+        }
         out.sort();
         return out;
     }
@@ -70,6 +74,10 @@ Item {
         if (rest.indexOf("}}") === 0) rest = rest.substring(2);
         target.text = before + "{{" + name + "}}" + rest;
         target.cursorPosition = before.length + name.length + 4;
+        // setar `text` programaticamente NÃO emite textEdited; sem isto o modelo do
+        // KvTable (onTextEdited) fica com o valor antigo (o "{{" em digitação)
+        if (target.textEdited !== undefined)
+            target.textEdited();
         pop.close();
     }
     // chamado pelos Keys.onPressed do alvo; devolve true se consumiu a tecla
@@ -121,8 +129,20 @@ Item {
     }
 
     // ---------------- valor no hover ----------------
+    // cor/ícone do escopo (global/coleção/request), iguais ao chip de escopo
+    function sourceColor(s) {
+        if (s === "global") return Kirigami.Theme.positiveTextColor;
+        if (s === "coleção") return Kirigami.Theme.activeTextColor;
+        return Kirigami.Theme.neutralTextColor;
+    }
+    function sourceIcon(s) {
+        if (s === "global") return "globe";
+        if (s === "coleção") return "folder-documents";
+        return "document-send";
+    }
     function updateHover(x, y) {
         if (!target) { hoverPop.close(); return; }
+        if (target.text.indexOf("{{") < 0) { hoverPop.close(); return; }   // sem variável: não roda regex/positionAt
         var pos = target.positionAt(x, y);
         if (pos < 0) { hoverPop.close(); return; }
         var tok = tokenAt(pos);
@@ -130,11 +150,13 @@ Item {
         var v = valueOf(tok.name);
         if (v === null) {
             var note = backend.variableNoteFor(tok.name, collection);
-            hoverLabel.text = tok.name + "  (" + (note.length > 0 ? note : "não definida") + ")";
-        } else if (v.secret)
-            hoverLabel.text = tok.name + " = ••••••   (" + v.source + ")";
-        else
-            hoverLabel.text = tok.name + " = " + v.value + "   (" + v.source + ")";
+            hoverPop.mainText = tok.name + "  " + (note.length > 0 ? note : "não definida");
+            hoverPop.scopeSource = "";
+        } else {
+            hoverPop.mainText = tok.name + " = " + (v.secret ? "••••••" : v.value)
+                                + (v.enabled === false ? "  · desabilitada" : "");
+            hoverPop.scopeSource = v.source !== undefined ? v.source : "";
+        }
 
         var r = target.positionToRectangle(tok.start);
         hoverPop.x = Math.max(0, Math.min(r.x, completer.width - hoverPop.width));
@@ -157,8 +179,47 @@ Item {
         parent: completer
         padding: 6
         closePolicy: Popup.NoAutoClose
-        width: hoverLabel.implicitWidth + 14
-        height: hoverLabel.implicitHeight + 14
-        Label { id: hoverLabel; font.family: "monospace"; text: "" }
+        property string mainText: ""
+        property string scopeSource: ""
+        width: hoverRow.implicitWidth + 14
+        height: hoverRow.implicitHeight + 14
+        RowLayout {
+            id: hoverRow
+            anchors.fill: parent
+            spacing: 8
+            Label {
+                id: hoverLabel
+                font.family: "monospace"
+                text: hoverPop.mainText
+                Layout.alignment: Qt.AlignVCenter
+            }
+            // chip do escopo (cor/ícone por origem), no lugar de "(escopo)"
+            Rectangle {
+                visible: hoverPop.scopeSource.length > 0
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: scopeChipRow.implicitWidth + 10
+                implicitHeight: scopeChipRow.implicitHeight + 4
+                radius: 3
+                color: Qt.rgba(completer.sourceColor(hoverPop.scopeSource).r,
+                               completer.sourceColor(hoverPop.scopeSource).g,
+                               completer.sourceColor(hoverPop.scopeSource).b, 0.16)
+                RowLayout {
+                    id: scopeChipRow
+                    anchors.centerIn: parent
+                    spacing: 3
+                    Kirigami.Icon {
+                        source: completer.sourceIcon(hoverPop.scopeSource)
+                        color: completer.sourceColor(hoverPop.scopeSource)
+                        implicitWidth: 11; implicitHeight: 11
+                    }
+                    Text {
+                        text: hoverPop.scopeSource
+                        color: completer.sourceColor(hoverPop.scopeSource)
+                        font.pixelSize: 9
+                        font.bold: true
+                    }
+                }
+            }
+        }
     }
 }

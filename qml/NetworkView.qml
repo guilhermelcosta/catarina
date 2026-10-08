@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Util.js" as Util
 
 // Visão da rede: o que foi enviado (request) e como foi a conexão.
 // O Qt não expõe DNS/TLS por fase; mostramos o que ele fornece.
 Item {
     id: net
     property var meta: ({})      // vindo do Backend::responseMeta
-    property var formatter: null  // expõe fmtSize (root do Main.qml)
 
     ScrollView {
         anchors.fill: parent
@@ -67,23 +67,20 @@ Item {
                 Label { text: "Criptografado"; opacity: 0.7 }
                 Label { text: net.meta.encrypted === true ? "Sim (TLS)" : "Não"; font.family: "monospace" }
                 Label { text: "Tamanho"; opacity: 0.7 }
-                Label { text: net.meta.sizeBytes !== undefined ? net.formatter.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
+                Label { text: net.meta.sizeBytes !== undefined ? Util.fmtSize(net.meta.sizeBytes) : "—"; font.family: "monospace" }
             }
 
             Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
 
             // ---- request headers ----
             Label { text: "Requisição enviada"; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing }
-            Repeater {
-                model: net.meta.requestHeaders
-                delegate: RowLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: Kirigami.Units.smallSpacing
-                    Layout.rightMargin: Kirigami.Units.smallSpacing
-                    spacing: Kirigami.Units.smallSpacing
-                    Label { Layout.preferredWidth: 180; text: modelData.name; font.family: "monospace"; font.bold: true; elide: Text.ElideRight }
-                    Label { Layout.fillWidth: true; text: modelData.value; font.family: "monospace"; wrapMode: Text.Wrap }
-                }
+            HeaderTable {
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.smallSpacing
+                Layout.rightMargin: Kirigami.Units.smallSpacing
+                visible: net.meta.requestHeaders !== undefined && net.meta.requestHeaders.length > 0
+                headers: net.meta.requestHeaders !== undefined ? net.meta.requestHeaders : []
+                onCopyRequested: function (text) { varSupport.copyText(text) }
             }
             Label {
                 visible: !net.meta.requestHeaders || net.meta.requestHeaders.length === 0
@@ -111,10 +108,10 @@ Item {
         }
     }
 
-    Label {
+    EmptyState {
         anchors.centerIn: parent
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+        message: "Envie uma requisição para ver os dados de rede."
         visible: net.meta.method === undefined
-        text: "Envie uma requisição para ver os dados de rede."
-        opacity: 0.5
     }
 }
