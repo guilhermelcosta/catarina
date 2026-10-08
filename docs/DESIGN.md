@@ -92,10 +92,18 @@ Diferença de importância: primária = `highlighted` (ou `Accessible.defaultBut
 | Duplicar | `MenuItem` | `edit-duplicate` | menus |
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
-- **Diálogos (padrão)**: título em **negrito** com `header: DialogHeader { dialogTitle: <id>.title }`
-  — o texto auxiliar (rótulo de campo) **não** é negrito. `Cancelar` à esquerda e ação primária à
-  direita, na `RowLayout` com `Layout.bottomMargin: smallSpacing` (respiro até a borda). A `height`
-  fixa precisa caber o conteúdo — senão os botões extravasam o fundo.
+- **Diálogos (padrão)** — use as peças compartilhadas, todas com as mesmas distâncias:
+  1. `header: DialogHeader { dialogTitle: <id>.title }` (título negrito; o texto auxiliar não é).
+  2. corpo = **o próprio `contentItem`**, para o diálogo dimensionar pelo conteúdo:
+     `contentItem: ColumnLayout { spacing: Kirigami.Units.smallSpacing; ... }`.
+     Rótulo de campo acima do input: `Layout.bottomMargin: smallSpacing`.
+  3. ações no fim, dentro do corpo: `DialogActions { Button {...}; Button {...} }` — ele já
+     empurra os botões para a direita, com `spacing`/`Layout.bottomMargin: smallSpacing` e o
+     primário `Accessible.defaultButton: true` (ver acima).
+  - **Não** fixe `height` nem use `Item { Layout.fillHeight: true }`: o diálogo auto-dimensiona e
+    a distância input ↔ botões fica sempre `smallSpacing`. Só use `height` quando o corpo tiver
+    lista/`ScrollView` (aí o `contentItem` continua sendo o `ColumnLayout`).
+  - Diálogo de confirmação/toast simples: mesmo padrão (é o que dá o respiro uniforme).
   - **Ação primária de diálogo usa `Accessible.defaultButton: true`, não `highlighted`.** No estilo
     Breeze (`org.kde.desktop/Button.qml`), `hasFocus: activeFocus || highlighted` — ou seja, um
     botão `highlighted` é desenhado **como se estivesse focado** mesmo sem foco. Em diálogo, isso
@@ -148,6 +156,10 @@ Todos em `qml/`:
   O `scopeColor(index)` pinta o chip de escopo por escopo (verde = global, azul = restrita a
   coleções; **null** = neutro). **Toda tabela editável nova usa este componente** — estenda com
   uma opção nova em vez de criar outra tabela.
+- **`DialogHeader.qml`** — cabeçalho padrão de diálogo (título negrito, mesmo padding).
+- **`DialogActions.qml`** — rodapé padrão de diálogo: botões à direita, mesmo `spacing` e
+  `Layout.bottomMargin`. **Todo diálogo usa os dois** — assim as distâncias (título ↔ input ↔
+  botões) são iguais em todos e um modal novo já nasce no padrão.
 - **`SaveBar.qml`** — cabeçalho de seção com indicador de rascunho + Reverter + Salvar;
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),

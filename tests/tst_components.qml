@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtTest
+import org.kde.kirigami as Kirigami
 import "../qml"
 import "../qml/Util.js" as Util
 
@@ -47,6 +48,25 @@ TestCase {
         compare(emitProbe.text, "{{teste}}");
         compare(root.probeCount, 1);
     }
+    // componentes padrão de diálogo (mesmo espaçamento/respiro em todos os modais)
+    DialogActions {
+        id: dialogActions
+        Button { text: "A" }
+        Button { text: "B" }
+    }
+    DialogHeader { id: dialogHeader; dialogTitle: "T" }
+
+    // padrão de corpo de diálogo: é o próprio contentItem, então dimensiona pelo conteúdo
+    Dialog {
+        id: testDialog
+        contentItem: ColumnLayout {
+            id: testDialogBody
+            spacing: Kirigami.Units.smallSpacing
+            Label { text: "msg" }
+            DialogActions { Button { text: "Cancel" } Button { text: "OK" } }
+        }
+    }
+
     KvTable { id: kv; model: kvModel; width: 800; height: 400 }
     ResolvedVarsTable {
         id: rvt
@@ -102,6 +122,29 @@ TestCase {
         ];
         compare(rvt.activeVars.map(function (v) { return v.name; }).join(","), "b,m,c,z");
         rvt.vars = [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }];
+    }
+
+    // rodapé padrão de diálogo: espaçamento e respiro constantes, botões à direita
+    function test_dialog_actions_standard() {
+        compare(dialogActions.spacing, Kirigami.Units.smallSpacing);
+        compare(dialogActions.Layout.bottomMargin, Kirigami.Units.smallSpacing);
+        compare(dialogActions.children.length, 3, "espaçador + 2 botões");
+        verify(dialogActions.children[0].text === undefined, "primeiro filho é o espaçador");
+        compare(dialogActions.children[1].text, "A");
+        compare(dialogActions.children[2].text, "B");
+    }
+
+    // corpo padrão de diálogo: contentItem é o ColumnLayout e auto-dimensiona
+    function test_dialog_content_autosizes() {
+        compare(testDialogBody.spacing, Kirigami.Units.smallSpacing);
+        verify(testDialog.implicitHeight > 0, "diálogo dimensiona pelo conteúdo");
+    }
+
+    // cabeçalho padrão de diálogo
+    function test_dialog_header_standard() {
+        compare(dialogHeader.text, "T");
+        compare(dialogHeader.type, Kirigami.Heading.Type.Primary);
+        compare(dialogHeader.bottomPadding, 0);
     }
 
     // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
