@@ -119,12 +119,16 @@ QString Backend::substitute(const QString &text, const QVariantMap &vars)
 
 QVariantList Backend::substituteList(const QVariantList &list, const QVariantMap &vars)
 {
+    // Substitui TODO campo string, não só "name"/"value": o auth usa token/user/pass/key
+    // (e campos usam fileName), então limitar a name/value deixava {{variavel}} passar.
     QVariantList out;
     out.reserve(list.size());
     for (const QVariant &v : list) {
         QVariantMap m = v.toMap();
-        m[QStringLiteral("name")] = substitute(m.value(QStringLiteral("name")).toString(), vars);
-        m[QStringLiteral("value")] = substitute(m.value(QStringLiteral("value")).toString(), vars);
+        for (auto it = m.begin(); it != m.end(); ++it) {
+            if (it.value().typeId() == QMetaType::QString)
+                it.value() = substitute(it.value().toString(), vars);
+        }
         out.append(m);
     }
     return out;

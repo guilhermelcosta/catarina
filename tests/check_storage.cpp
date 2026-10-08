@@ -105,6 +105,18 @@ int main(int argc, char **argv)
     CHECK(Backend::authHeader(apikey).value(QStringLiteral("value")) == QStringLiteral("v"));
     CHECK(Backend::authHeader({{QStringLiteral("type"), QStringLiteral("none")}}).isEmpty());
 
+    // substituteList: interpola TODO campo string (o auth usa token/user/pass/key,
+    // não só name/value) — regressão do header "Bearer {{token}}"
+    {
+        const QVariantList sub = Backend::substituteList(
+            {QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
+                         {QStringLiteral("token"), QStringLiteral("{{tok}}")}}},
+            {{QStringLiteral("tok"), QStringLiteral("s3cr3t")}});
+        CHECK(sub.value(0).toMap().value(QStringLiteral("token")) == QStringLiteral("s3cr3t"));
+        CHECK(Backend::authHeader(sub.value(0).toMap()).value(QStringLiteral("value"))
+              == QStringLiteral("Bearer s3cr3t"));
+    }
+
     // buildUrl: assume http:// quando falta esquema, respeita params desabilitados
     {
         const QUrl u = Backend::buildUrl(QStringLiteral("exemplo.com/api"),
