@@ -2594,7 +2594,7 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.duplicate; icon.name: "edit-duplicate"; enabled: root.selectedPath.length > 0; onTriggered: root.duplicateSelected() }
         MenuItem {
             text: Strings.t.exportCode; icon.name: "document-export"
-            enabled: root.selectedPath.length > 0 && !root.selectedIsFolder
+            visible: root.selectedPath.length > 0 && !root.selectedIsFolder
             onTriggered: { root.openRequest(root.selectedPath); curlExportDialog.refresh(); curlExportDialog.open(); }
         }
         MenuSeparator {}
