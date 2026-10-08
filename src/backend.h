@@ -95,9 +95,13 @@ public:
     Q_INVOKABLE void clearHistory();
 
     // variáveis efetivas visíveis a uma coleção, já com valores de segredo resolvidos
-    // como acima, mas com a origem de cada variável (request/coleção/global) — para a UI
+    // como acima, mas com a origem de cada variável (request/collection/global) — para a UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;
+    // como resolvedVariables, mas com a lista da própria coleção fornecida (em edição),
+    // sem escopo de request — usado pela visão geral da coleção
+    Q_INVOKABLE QVariantList resolvedCollectionVariables(const QString &collection,
+                                                         const QVariantList &collectionVars) const;
     // resolve tudo numa passada: { "resolved": [...], "missing": [...] }
     Q_INVOKABLE QVariantMap variablesState(const QVariantMap &request,
                                            const QString &collection) const;
@@ -138,7 +142,11 @@ private:
     // troca oldName por newName no escopo "collections" das variáveis de ambiente
     bool renameCollectionScope(const QString &oldName, const QString &newName);
     // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
-    QList<ResolvedVar> variableChain(const QString &collection, const QVariantList &requestVars) const;
+    QList<ResolvedVar> variableChain(const QString &collection,
+                                     const QVariantList &collectionVars,
+                                     const QVariantList &requestVars) const;
+    // agrupa a cadeia por nome (origem de maior precedência vence) para a UI
+    QVariantList resolvedFromChain(const QList<ResolvedVar> &chain) const;
     // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
     void walkCollection(const QString &rel, int depth, QVariantList &out) const;
 

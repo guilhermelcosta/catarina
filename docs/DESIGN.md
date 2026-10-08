@@ -202,7 +202,16 @@ Todos em `qml/`:
   não-fixadas são transientes. `restoreSessionTabs` recria as fixadas já com o pino.
 - **Renomear coleção**: reaponta o escopo (`collections`) das variáveis de ambiente que a
   referenciam (`Backend::renameCollectionScope`), senão o escopo fica órfão.
-- **Idioma da UI**: português (pt-BR).
+- **Idioma da UI**: inglês, **centralizado em `qml/Strings.js`**. Mudar qualquer texto = editar
+  só esse arquivo.
+- **Origem de variável**: valores `"global"` / `"collection"` / `"request"` (usados por lógica e
+  exibidos nos chips de origem). Na visão geral da coleção, as variáveis em edição são resolvidas
+  por `Backend::resolvedCollectionVariables` para manter a origem `"collection"` (não `"request"`).
+- **Navegação por teclado**:
+  - `KvTable`: Tab/Shift+Tab andam célula a célula (`moveFocus`), por linha/coluna; campos
+    `VarField` recebem `tabHandler` e o delegate cobre os demais controles.
+  - Modais com input: foco automático no campo (`onOpened`); Left/Right navegam entre os botões
+    (`KeyNavigation`), Up/Down ligam campo ↔ botões. O `TextField` mantém Left/Right para o cursor.
 
 ---
 

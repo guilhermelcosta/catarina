@@ -355,6 +355,7 @@ void Backend::addHistory(const QVariantMap &entry)
 // escopo por variável, segredos e flag enabled. Fonte da verdade para
 // variablesState e resolvedVariables.
 QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
+                                                   const QVariantList &collectionVars,
                                                    const QVariantList &requestVars) const
 {
     QList<ResolvedVar> chain;
@@ -386,7 +387,7 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     for (const Env &e : m_envs)
         if (e.name == m_activeEnv)
             add(e.variables, QStringLiteral("global"), true);
-    add(collectionVariables(collection), QStringLiteral("coleção"), false);
+    add(collectionVars, QStringLiteral("collection"), false);
     add(requestVars, QStringLiteral("request"), false);
 
     // Uma variável pode ter {{outra}} no nome e/ou no valor, e a referência pode
@@ -416,17 +417,10 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     return chain;
 }
 
-QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
+QVariantList Backend::resolvedFromChain(const QList<ResolvedVar> &chain) const
 {
-    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
-    const QList<ResolvedVar> chain =
-        variableChain(collection, request.value(QStringLiteral("vars")).toList());
-
     QMap<QString, QVariantMap> byName;   // melhor precedência por nome
-    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
     for (const ResolvedVar &r : chain) {
-        if (r.enabled)
-            effective.insert(r.name, r.value);
         if (byName.contains(r.name) && !r.enabled)
             continue;                    // desabilitada não sobrescreve o que já resolve
         byName.insert(r.name, {{QStringLiteral("name"), r.name},
@@ -438,6 +432,21 @@ QVariantMap Backend::variablesState(const QVariantMap &request, const QString &c
     QVariantList resolved;
     for (auto it = byName.constBegin(); it != byName.constEnd(); ++it)
         resolved.append(it.value());
+    return resolved;
+}
+
+QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
+{
+    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
+    const QList<ResolvedVar> chain =
+        variableChain(collection, collectionVariables(collection),
+                      request.value(QStringLiteral("vars")).toList());
+
+    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
+    for (const ResolvedVar &r : chain)
+        if (r.enabled)
+            effective.insert(r.name, r.value);
+    const QVariantList resolved = resolvedFromChain(chain);
 
     QStringList missing;
     for (const QString &text : collectTexts(request)) {
@@ -459,36 +468,45 @@ QVariantList Backend::resolvedVariables(const QString &collection, const QVarian
         .toList();
 }
 
-QString Backend::variableNoteFor(const QString &name, const QString &collection) const
+QVariantList Backend::resolvedCollectionVariables(const QString &collection,
+                                                  const QVariantList &collectionVars) const
 {
-    // Explica por que "name" não resolve: desabilitada, fora de escopo ou inexistente.
-    auto note = [&](const QVariantList &vars, bool global, QString *out) {
+    // visão geral da coleção: sem request, a lista em edição é a própria coleção
+    return resolvedFromChain(variableChain(collection, collectionVars, {}));
+}
+
+QVariantMap Backend::variableNoteFor(const QString &name, const QString &collection) const
+{
+    // Por que "name" não resolve, por código (a UI traduz): "disabled", "restricted"
+    // (com a lista em "collections"), "" (resolve) ou "undefined".
+    auto note = [&](const QVariantList &vars, bool global, QVariantMap *out) {
         for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();
             if (m.value(QStringLiteral("name")).toString() != name)
                 continue;
             if (!m.value(QStringLiteral("enabled"), true).toBool()) {
-                *out = QStringLiteral("desabilitada");
+                *out = {{QStringLiteral("code"), QStringLiteral("disabled")}};
             } else if (global) {
                 const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
                 if (scope == QLatin1String("collections")) {
                     const QStringList list = m.value(QStringLiteral("collections")).toStringList();
                     if (!collection.isEmpty() && !list.contains(collection))
-                        *out = QStringLiteral("restrita a: ") + list.join(QStringLiteral(", "));
+                        *out = {{QStringLiteral("code"), QStringLiteral("restricted")},
+                                {QStringLiteral("collections"), list}};
                     else
-                        *out = QString();
+                        *out = {{QStringLiteral("code"), QString()}};
                 } else {
-                    *out = QString();
+                    *out = {{QStringLiteral("code"), QString()}};
                 }
             } else {
-                *out = QString();
+                *out = {{QStringLiteral("code"), QString()}};
             }
             return true;
         }
         return false;
     };
 
-    QString out;
+    QVariantMap out;
     for (const Env &e : m_envs) {
         if (e.name != m_activeEnv)
             continue;

@@ -414,10 +414,23 @@ int main(int argc, char **argv)
         CHECK(!colEff.contains(QStringLiteral("cvoff")));   // desabilitada na coleção não resolve
     }
     CHECK(b.variableNoteFor(QStringLiteral("cvoff"), QStringLiteral("__col__"))
-          == QStringLiteral("desabilitada"));
+              .value(QStringLiteral("code")) == QStringLiteral("disabled"));
     CHECK(missing(b, {{QStringLiteral("url"), QStringLiteral("{{cvoff}}")}},
                              QStringLiteral("__col__"))
           == QStringList{QStringLiteral("cvoff")});
+    // visão geral: variável da coleção em edição mantém origem "collection" (não "request")
+    {
+        bool seen = false;
+        for (const QVariant &v : b.resolvedCollectionVariables(
+                 QStringLiteral("__col__"), {item(QStringLiteral("cv"), QStringLiteral("7"))})) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("name")) == QStringLiteral("cv")) {
+                seen = true;
+                CHECK(m.value(QStringLiteral("source")) == QStringLiteral("collection"));
+            }
+        }
+        CHECK(seen);
+    }
     CHECK(b.saveCollectionHeaders(QStringLiteral("__col__"),
                                   {item(QStringLiteral("X-Test"), QStringLiteral("abc"))}));
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 1);

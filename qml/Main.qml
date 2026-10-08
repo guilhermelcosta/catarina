@@ -739,8 +739,9 @@ Kirigami.ApplicationWindow {
     // recalcula "Variáveis efetivas" da coleção (reabrir a aba e voltar à visão geral)
     function refreshCollectionResolved() {
         if (collectionPath.length === 0 || collectionIsSubfolder) { collectionResolvedVars = []; return; }
-        // inclui as variáveis em edição (não salvas) para uma referenciar a outra
-        collectionResolvedVars = backend.resolvedVariables(collectionOf(collectionPath), modelToArray(collectionVarsModel));
+        // inclui as variáveis em edição (não salvas) para uma referenciar a outra,
+        // mas mantendo a origem "collection" (não "request") na visão geral
+        collectionResolvedVars = backend.resolvedCollectionVariables(collectionOf(collectionPath), modelToArray(collectionVarsModel));
     }
     // popula o painel da coleção a partir do disco
     function loadCollection(relPath) {
@@ -775,29 +776,29 @@ Kirigami.ApplicationWindow {
     function saveCollectionVars() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem variáveis
         var dup = backend.duplicateVariableName(modelToArray(collectionVarsModel));
-        if (dup.length > 0) { notify("Nome de variável repetido na coleção: " + dup); return; }
+        if (dup.length > 0) { notify(Strings.duplicateInCollection(dup)); return; }
         backend.saveCollectionVariables(collectionPath, modelToArray(collectionVarsModel));
         collectionVarsDirty = false;
         refreshCollectionResolved();   // visão geral reflete secret/normal sem precisar reabrir
-        notify("Variáveis da coleção salvas");
+        notify(Strings.t.collectionVarsSaved);
     }
     function revertCollectionVars() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;
         fillModels(backend.withResolvedSecrets(backend.collectionVariables(collectionPath)), collectionVarsModel);
         collectionVarsDirty = false;
-        notify("Alterações descartadas");
+        notify(Strings.t.changesDiscarded);
     }
     function saveCollectionHeaders() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem cabeçalhos
         backend.saveCollectionHeaders(collectionPath, modelToArray(collectionHeadersModel));
         collectionHeadersDirty = false;
-        notify("Cabeçalhos da coleção salvos");
+        notify(Strings.t.collectionHeadersSaved);
     }
     function revertCollectionHeaders() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;
         fillModels(backend.withResolvedSecrets(backend.collectionHeaders(collectionPath)), collectionHeadersModel);
         collectionHeadersDirty = false;
-        notify("Alterações descartadas");
+        notify(Strings.t.changesDiscarded);
     }
 
     function saveCurrent() {
@@ -2101,9 +2102,9 @@ Kirigami.ApplicationWindow {
                                 Layout.fillWidth: true
                                 currentIndex: root.collectionTab
                                 onCurrentIndexChanged: { root.collectionTab = currentIndex; if (currentIndex === 0) root.refreshCollectionResolved(); }
-                                TabButton { text: "Visão geral" }
-                                TabButton { text: "Cabeçalhos" }
-                                TabButton { text: "Variáveis" }
+                                TabButton { text: Strings.t.overview }
+                                TabButton { text: Strings.t.headers }
+                                TabButton { text: Strings.t.variables }
                             }
                             StackLayout {
                                 Layout.fillWidth: true
@@ -2212,7 +2213,7 @@ Kirigami.ApplicationWindow {
                                     spacing: Kirigami.Units.smallSpacing
                                     SaveBar {
                                         Layout.fillWidth: true
-                                        title: "Variáveis da coleção"
+                                        title: Strings.t.collectionVariables
                                         dirty: root.collectionVarsDirty
                                         canSave: root.collectionVarsWarning.length === 0
                                         showDiscard: true
@@ -2220,14 +2221,14 @@ Kirigami.ApplicationWindow {
                                         onDiscard: root.revertCollectionVars()
                                     }
                                     Label {
-                                        text: "Use {{nome}} em qualquer request desta coleção. Marque como segredo para não versionar o valor."
+                                        text: Strings.t.collectionVariablesHint
                                         opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
                                     }
                                     KvTable {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         model: collectionVarsModel
-                                        keyPlaceholder: "variável"
+                                        keyPlaceholder: Strings.t.variable
                                         secretColumn: true
                                         uniqueNames: true
                                         resolved: root.collectionResolvedVars

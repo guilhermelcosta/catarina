@@ -92,12 +92,12 @@ TestCase {
         compare(rvt.activeVars[0].name, "a");
     }
 
-    // ordena por origem (global → coleção → request) e, dentro dela, por nome
+    // ordena por origem (global → collection → request) e, dentro dela, por nome
     function test_resolved_vars_order_by_source() {
         rvt.vars = [
             { name: "z", value: "1", source: "request", enabled: true },
             { name: "b", value: "2", source: "global", enabled: true },
-            { name: "m", value: "4", source: "coleção", enabled: true },
+            { name: "m", value: "4", source: "collection", enabled: true },
             { name: "c", value: "5", source: "request", enabled: true },
             { name: "off", value: "6", source: "global", enabled: false }
         ];

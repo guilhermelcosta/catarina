@@ -133,12 +133,12 @@ Item {
     // cor/ícone do escopo (global/coleção/request), iguais ao chip de escopo
     function sourceColor(s) {
         if (s === "global") return Kirigami.Theme.positiveTextColor;
-        if (s === "coleção") return Kirigami.Theme.activeTextColor;
+        if (s === "collection") return Kirigami.Theme.activeTextColor;
         return Kirigami.Theme.neutralTextColor;
     }
     function sourceIcon(s) {
         if (s === "global") return "globe";
-        if (s === "coleção") return "folder-documents";
+        if (s === "collection") return "folder-documents";
         return "document-send";
     }
     function updateHover(x, y) {
