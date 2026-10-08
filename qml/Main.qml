@@ -1408,9 +1408,9 @@ Kirigami.ApplicationWindow {
                                             }
                                             Label { text: model.name; font.bold: index === root.currentTab; font.italic: model.preview === true; elide: Text.ElideRight; Layout.maximumWidth: 180 }
                                             Kirigami.Icon {
-                                                visible: model.dirty
-                                                         || (model.isCollection && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty))
-                                                         || (model.isEnvironment && index === root.currentTab && root.envTabDirty)
+                                                visible: !!(model.dirty === true
+                                                         || (model.isCollection === true && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty))
+                                                         || (model.isEnvironment === true && index === root.currentTab && root.envTabDirty))
                                                 source: "media-record-symbolic"
                                                 color: Kirigami.Theme.highlightColor
                                                 implicitWidth: 8; implicitHeight: 8
