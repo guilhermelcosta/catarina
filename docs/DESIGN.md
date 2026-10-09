@@ -39,6 +39,13 @@ linha só ao trocar para a aba). Verificado no app (xcb).
   `ColumnLayout` com um `Item { Layout.fillHeight: true }`, deixando-o `visible` só quando
   nenhum outro filho preenche (ex.: corpo em "nenhum", variáveis efetivas vazias).
 
+### Divisores arrastáveis (`SplitView`): área de agarrar generosa
+A área que o mouse acerta para redimensionar é o **tamanho implícito do `handle`**, não o
+traço desenhado. Um handle de `1px` é quase impossível de pegar. Padrão do app:
+`SplitGrip` (`qml/Main.qml`) — quadrado **transparente** de `smallSpacing*2 + 1` (zona de
+arraste) com uma linha de `1px` centralizada (visual), `cursorShape` conforme a orientação e
+realce no hover/arraste. Todo `SplitView` novo usa `handle: SplitGrip {}`.
+
 ### ⚠️ `ListModel`: declare as roles no `append`, não via `setProperty`
 Uma role criada por `setProperty` **depois** que o delegate já existe **não chega ao
 delegate**: `model.<role>` fica `undefined` para sempre (o `get(i)` até enxerga o valor, mas
@@ -79,7 +86,7 @@ o corpo/URL marcam dirty) fica desatualizado. Por isso o `VarCompleter.choose` e
 ## 3. Botões e ações
 
 Padrão de **posicionamento**: ações no **topo à direita**; "Adicionar" no **rodapé** da lista.
-Diferença de importância: primária = `highlighted`; secundária = `ToolButton` só com ícone + tooltip.
+Diferença de importância: primária = `highlighted` (ou `Accessible.defaultButton` dentro de diálogo — ver abaixo); secundária = `ToolButton` só com ícone + tooltip.
 
 | Ação | Forma | Ícone | Onde |
 |---|---|---|---|
@@ -92,11 +99,25 @@ Diferença de importância: primária = `highlighted`; secundária = `ToolButton
 | Duplicar | `MenuItem` | `edit-duplicate` | menus |
 | Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
 
-- **Diálogos (padrão)**: título em **negrito** com `header: DialogHeader { dialogTitle: <id>.title }`
-  — o texto auxiliar (rótulo de campo) **não** é negrito. `Cancelar` à esquerda e ação primária
-  (`highlighted`) à direita, na `RowLayout` com `Layout.bottomMargin: smallSpacing` (respiro até a
-  borda). Prefira `standardButtons` quando der. A `height` fixa precisa caber o conteúdo — senão
-  os botões extravasam o fundo.
+- **Diálogos (padrão)** — use as peças compartilhadas, todas com as mesmas distâncias:
+  1. `header: DialogHeader { dialogTitle: <id>.title }` (título negrito; o texto auxiliar não é).
+  2. corpo = **o próprio `contentItem`**, para o diálogo dimensionar pelo conteúdo:
+     `contentItem: ColumnLayout { spacing: Kirigami.Units.smallSpacing; ... }`.
+     Rótulo de campo acima do input: `Layout.bottomMargin: smallSpacing`.
+  3. ações no fim, dentro do corpo: `DialogActions { Button {...}; Button {...} }` — ele já
+     empurra os botões para a direita, com `spacing`/`Layout.bottomMargin: smallSpacing` e o
+     primário `Accessible.defaultButton: true` (ver acima).
+  - **Não** fixe `height` nem use `Item { Layout.fillHeight: true }`: o diálogo auto-dimensiona e
+    a distância input ↔ botões fica sempre `smallSpacing`. Só use `height` quando o corpo tiver
+    lista/`ScrollView` (aí o `contentItem` continua sendo o `ColumnLayout`).
+  - Diálogo de confirmação/toast simples: mesmo padrão (é o que dá o respiro uniforme).
+  - **Ação primária de diálogo usa `Accessible.defaultButton: true`, não `highlighted`.** No estilo
+    Breeze (`org.kde.desktop/Button.qml`), `hasFocus: activeFocus || highlighted` — ou seja, um
+    botão `highlighted` é desenhado **como se estivesse focado** mesmo sem foco. Em diálogo, isso
+    fazia o primário parecer focado e, ao dar Tab, o primário e o botão realmente focado ficavam
+    ambos com borda de foco (parecia foco duplicado/preso). `Accessible.defaultButton` desenha o
+    realce de "ação padrão" (fundo tingido + borda suave), distinto da borda de foco.
+    Use `highlighted: true` só em ações primárias **fora** de diálogo (toolbar/SaveBar/EmptyState).
 - **Validação de diálogo é ao vivo** (conforme digita): `Label` vermelho abaixo do campo
   (`negativeTextColor`) + botão primário desabilitado enquanto inválido. O diálogo tem **altura
   fixa** já reservando o espaço da mensagem (senão, ou cresce ao digitar, ou os botões vazam).
@@ -142,6 +163,10 @@ Todos em `qml/`:
   O `scopeColor(index)` pinta o chip de escopo por escopo (verde = global, azul = restrita a
   coleções; **null** = neutro). **Toda tabela editável nova usa este componente** — estenda com
   uma opção nova em vez de criar outra tabela.
+- **`DialogHeader.qml`** — cabeçalho padrão de diálogo (título negrito, mesmo padding).
+- **`DialogActions.qml`** — rodapé padrão de diálogo: botões à direita, mesmo `spacing` e
+  `Layout.bottomMargin`. **Todo diálogo usa os dois** — assim as distâncias (título ↔ input ↔
+  botões) são iguais em todos e um modal novo já nasce no padrão.
 - **`SaveBar.qml`** — cabeçalho de seção com indicador de rascunho + Reverter + Salvar;
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
@@ -153,6 +178,10 @@ Todos em `qml/`:
   A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
   origem (global → coleção → request) e depois por nome.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
+- **`AuthEditor.qml`** — editor de autenticação compartilhado (aba Authentication do request e da
+  coleção). `load(auth)` preenche, `value()` devolve o mapa, sinal `edited` quando o usuário muda.
+  Com `allowInherit: true` (request) oferece a opção **inherit**, que aplica a auth da coleção ao
+  request (`Backend::effectiveAuth`). **Todo editor de auth usa este componente.**
 - **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`). O popup de
   hover mostra `nome = valor` + um **chip do escopo** (mesma cor/ícone de origem: global/coleção/
   request), em vez de `(escopo)` entre parênteses.
@@ -163,6 +192,12 @@ Todos em `qml/`:
 - **`NetworkView.qml`** — aba "Rede".
 - **`Util.js`** — lógica pura/testável (cURL, base64, formatação, reordenação de abas).
   Coloque aqui qualquer função sem dependência de UI.
+- **`Strings.js`** — **todos os textos da UI** (inglês), num só arquivo. Use
+  `import "Strings.js" as Strings` e `text: Strings.t.<chave>` (ou `Strings.<função>(...)`
+  para mensagens parametrizadas). **Nunca** coloque literal de texto visível direto no QML, nem
+  valores de lógica (método, tipo, escopo, id) no `Strings.js`. O backend devolve **códigos**
+  (ex.: `variableNoteFor`, sinal `error`), e o QML traduz via `Strings.variableNote` /
+  `Strings.backendError`.
 
 ### Tabelas responsivas (regra)
 - Colunas flexíveis: `Layout.fillWidth: true` + **`Layout.preferredWidth` e `Layout.minimumWidth`
@@ -192,11 +227,31 @@ Todos em `qml/`:
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
+- **Preview da query na barra de URL**: os params ativos aparecem concatenados logo após o texto
+  digitado, em destaque (`Kirigami.Theme.highlightColor`, fundo a 14%), para mostrar o que será
+  enviado sem abrir a aba Rede. É só visual — não entra no texto editável — e some se a URL
+  transborda o campo. Lógica pura em `Util.querySuffix` (mesma semântica de `Backend::buildUrl`),
+  testada em `tst_components`.
 - **Sessão**: só abas **fixadas** voltam ao reabrir o app (`Util.sessionPaths`); preview e demais
   não-fixadas são transientes. `restoreSessionTabs` recria as fixadas já com o pino.
 - **Renomear coleção**: reaponta o escopo (`collections`) das variáveis de ambiente que a
   referenciam (`Backend::renameCollectionScope`), senão o escopo fica órfão.
-- **Idioma da UI**: português (pt-BR).
+- **Autenticação de coleção**: fica em `.auth.json` (mesma pasta da coleção, versionável) e é
+  aplicada a todo request cuja auth seja `inherit` (`Backend::effectiveAuth`); qualquer outro
+  tipo usa a auth do próprio request. O request tem prioridade, como nos cabeçalhos.
+- **Idioma da UI**: inglês, **centralizado em `qml/Strings.js`**. Mudar qualquer texto = editar
+  só esse arquivo.
+- **Origem de variável**: valores `"global"` / `"collection"` / `"request"` (usados por lógica e
+  exibidos nos chips de origem). Na visão geral da coleção, as variáveis em edição são resolvidas
+  por `Backend::resolvedCollectionVariables` para manter a origem `"collection"` (não `"request"`).
+- **Navegação por teclado**:
+  - `KvTable`: Tab/Shift+Tab andam célula a célula (`moveFocus`), por linha/coluna; campos
+    `VarField` recebem `tabHandler` e o delegate cobre os demais controles.
+  - Modais com input: foco automático no campo (`onOpened`); Left/Right navegam entre os botões
+    (`KeyNavigation`), Up/Down ligam campo ↔ botões. O `TextField` mantém Left/Right para o cursor.
+  - Modais: **Enter/Return clica o botão focado** (além de Espaço), via `Keys.onReturnPressed` no
+    `DialogActions` — o botão não consome Return, então a tecla sobe até o rodapé, que chama
+    `click()` no `Window.activeFocusItem`. Campos de texto consomem Return sozinhos (`onAccepted`).
 
 ---
 

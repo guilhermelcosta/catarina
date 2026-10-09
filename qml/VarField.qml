@@ -12,9 +12,11 @@ TextArea {
     property var resolved: []          // [{name, value, secret, source, enabled}]
     property string collection: ""     // para explicar variáveis fora de escopo
     property string errorText: ""      // mensagem mostrada no popup de hover (ex.: nome repetido)
+    property var tabHandler: null      // function(dir): navegação Tab entre células (KvTable); null = nativo
 
     wrapMode: TextEdit.NoWrap
     selectByMouse: true
+    activeFocusOnTab: true
     implicitHeight: Kirigami.Units.gridUnit * 1.7
     topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
     // nome repetido: texto em vermelho e negrito (como o destaque de {{variavel}})
@@ -40,7 +42,15 @@ TextArea {
         Label { id: errLabel; font.family: "monospace"; text: root.errorText }
     }
 
-    Keys.onPressed: function (e) { if (completer.handleKey(e)) e.accepted = true; }
+    Keys.onPressed: function (e) {
+        if (completer.handleKey(e)) { e.accepted = true; return; }
+        // Tab/Shift+Tab: quando a tabela fornece um tabHandler, navega célula a célula;
+        // fora da tabela deixa passar (navegação nativa de foco)
+        if ((e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) && root.tabHandler) {
+            root.tabHandler(e.key === Qt.Key_Backtab ? -1 : 1);
+            e.accepted = true;
+        }
+    }
     Component.onCompleted: varSupport.attach(root.textDocument, "#c678dd", true, false)
 
     VarCompleter {

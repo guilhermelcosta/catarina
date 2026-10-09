@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Tabela simples de cabeçalhos HTTP (nome/valor) para a resposta.
 // As células são selecionáveis (copiar com o mouse) e há "Copiar tudo" no cabeçalho.
@@ -36,9 +37,9 @@ Item {
                 anchors.leftMargin: Kirigami.Units.smallSpacing
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                Text { width: table.nameWidth; anchors.verticalCenter: parent.verticalCenter; text: "Nome"; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
+                Text { width: table.nameWidth; anchors.verticalCenter: parent.verticalCenter; text: Strings.t.name; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
                 Rectangle { width: 1; height: parent.height; color: Kirigami.Theme.disabledTextColor; opacity: 0.3 }
-                Text { width: parent.width - table.nameWidth - 6; anchors.verticalCenter: parent.verticalCenter; leftPadding: Kirigami.Units.smallSpacing; text: "Valor"; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
+                Text { width: parent.width - table.nameWidth - 6; anchors.verticalCenter: parent.verticalCenter; leftPadding: Kirigami.Units.smallSpacing; text: Strings.t.value; font.bold: true; opacity: 0.65; color: Kirigami.Theme.textColor }
             }
             ToolButton {
                 anchors.right: parent.right
@@ -47,7 +48,7 @@ Item {
                 icon.name: "edit-copy"
                 enabled: table.headers.length > 0
                 onClicked: table.copyRequested(table.allHeadersText())
-                ToolTip.text: "Copiar todos os cabeçalhos"; ToolTip.visible: hovered
+                ToolTip.text: Strings.t.copyAllHeaders; ToolTip.visible: hovered
             }
         }
         Kirigami.Separator { width: parent.width }
@@ -104,7 +105,7 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-        message: "Sem cabeçalhos."
+        message: Strings.t.noHeadersEmpty
         visible: table.headers.length === 0
     }
 }

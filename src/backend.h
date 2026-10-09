@@ -39,13 +39,16 @@ public:
     static QString defaultContentType(const QString &bodyType);
     static QStringList variableRefs(const QString &text);            // nomes {{x}} num texto
     static QString encodeForm(const QVariantList &fields);           // x-www-form-urlencoded
+    // auth efetiva: "inherit" usa a da coleção; qualquer outro tipo usa a do request
+    static QVariantMap effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth);
 
     // ---- requisição ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
     Q_INVOKABLE void send(const QVariantMap &request, const QString &collection);
     Q_INVOKABLE void cancel();          // aborta o request em andamento
-    // por que "name" não resolve nesta coleção: "" (resolve), "restrita a: ..." ou "não definida"
-    Q_INVOKABLE QString variableNoteFor(const QString &name, const QString &collection) const;
+    // por que "name" não resolve nesta coleção, por código para a UI traduzir:
+    // { "code": "", "collections": [...] }, codes: "" | "disabled" | "restricted" | "undefined"
+    Q_INVOKABLE QVariantMap variableNoteFor(const QString &name, const QString &collection) const;
 
     // ---- coleções ----
     Q_INVOKABLE QVariantList collectionTree() const;
@@ -73,6 +76,10 @@ public:
     Q_INVOKABLE QVariantList collectionHeaders(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionHeaders(const QString &collection, const QVariantList &headers);
 
+    // ---- autenticação de coleção (herdada por requests com auth "inherit") ----
+    Q_INVOKABLE QVariantMap collectionAuth(const QString &collection) const;
+    Q_INVOKABLE bool saveCollectionAuth(const QString &collection, const QVariantMap &auth);
+
     // ---- environments globais (com escopo por variável) ----
     Q_INVOKABLE QVariantList environments() const;
     Q_INVOKABLE QVariantList environmentVariables(const QString &name) const;
@@ -94,9 +101,13 @@ public:
     Q_INVOKABLE void clearHistory();
 
     // variáveis efetivas visíveis a uma coleção, já com valores de segredo resolvidos
-    // como acima, mas com a origem de cada variável (request/coleção/global) — para a UI
+    // como acima, mas com a origem de cada variável (request/collection/global) — para a UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;
+    // como resolvedVariables, mas com a lista da própria coleção fornecida (em edição),
+    // sem escopo de request — usado pela visão geral da coleção
+    Q_INVOKABLE QVariantList resolvedCollectionVariables(const QString &collection,
+                                                         const QVariantList &collectionVars) const;
     // resolve tudo numa passada: { "resolved": [...], "missing": [...] }
     Q_INVOKABLE QVariantMap variablesState(const QVariantMap &request,
                                            const QString &collection) const;
@@ -106,7 +117,8 @@ signals:
                        const QString &body, int elapsedMs, int sizeBytes);
     // metadados para a aba de rede/timeline (protocolo, ip, tls, request enviado)
     void responseMeta(const QVariantMap &meta);
-    void error(const QString &message);
+    // erro com código + argumentos; a UI monta o texto (Strings.js::backendError)
+    void error(const QString &code, const QVariantList &args);
     void started();                     // request despachado
     void canceled();                    // request abortado pelo usuário
     void collectionsChanged();
@@ -136,7 +148,11 @@ private:
     // troca oldName por newName no escopo "collections" das variáveis de ambiente
     bool renameCollectionScope(const QString &oldName, const QString &newName);
     // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
-    QList<ResolvedVar> variableChain(const QString &collection, const QVariantList &requestVars) const;
+    QList<ResolvedVar> variableChain(const QString &collection,
+                                     const QVariantList &collectionVars,
+                                     const QVariantList &requestVars) const;
+    // agrupa a cadeia por nome (origem de maior precedência vence) para a UI
+    QVariantList resolvedFromChain(const QList<ResolvedVar> &chain) const;
     // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
     void walkCollection(const QString &rel, int depth, QVariantList &out) const;
 
@@ -151,6 +167,11 @@ private:
         QVariantList list;
     };
     QVariantList cachedJsonList(const QString &path, const QString &key, CachedList &slot) const;
+    struct CachedMap {
+        qint64 mtime = -1;
+        QVariantMap map;
+    };
+    QVariantMap cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const;
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
@@ -165,6 +186,7 @@ private:
     mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
     mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis
     mutable QHash<QString, CachedList> m_colHeadersCache;        // coleção -> cabeçalhos
+    mutable QHash<QString, CachedMap> m_colAuthCache;            // coleção -> auth
 
     QList<Env> m_envs;
     QString m_activeEnv;

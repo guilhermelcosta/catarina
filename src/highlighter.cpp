@@ -59,10 +59,3 @@ void VarSupport::copyText(const QString &text) const
     if (auto *cb = QGuiApplication::clipboard())
         cb->setText(text);
 }
-
-QString VarSupport::clipboardText() const
-{
-    if (auto *cb = QGuiApplication::clipboard())
-        return cb->text();
-    return {};
-}

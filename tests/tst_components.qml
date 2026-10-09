@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtTest
+import org.kde.kirigami as Kirigami
 import "../qml"
 import "../qml/Util.js" as Util
 
@@ -16,7 +17,6 @@ TestCase {
         id: varSupport
         function attach() {}
         function copyText(t) {}
-        function clipboardText() { return ""; }
     }
 
     // stub de settings: o KvTable consulta settings.confirmDelete ao remover linha
@@ -48,6 +48,25 @@ TestCase {
         compare(emitProbe.text, "{{teste}}");
         compare(root.probeCount, 1);
     }
+    // componentes padrão de diálogo (mesmo espaçamento/respiro em todos os modais)
+    DialogActions {
+        id: dialogActions
+        Button { text: "A" }
+        Button { text: "B" }
+    }
+    DialogHeader { id: dialogHeader; dialogTitle: "T" }
+
+    // padrão de corpo de diálogo: é o próprio contentItem, então dimensiona pelo conteúdo
+    Dialog {
+        id: testDialog
+        contentItem: ColumnLayout {
+            id: testDialogBody
+            spacing: Kirigami.Units.smallSpacing
+            Label { text: "msg" }
+            DialogActions { Button { text: "Cancel" } Button { text: "OK" } }
+        }
+    }
+
     KvTable { id: kv; model: kvModel; width: 800; height: 400 }
     ResolvedVarsTable {
         id: rvt
@@ -92,17 +111,54 @@ TestCase {
         compare(rvt.activeVars[0].name, "a");
     }
 
-    // ordena por origem (global → coleção → request) e, dentro dela, por nome
+    // ordena por origem (global → collection → request) e, dentro dela, por nome
     function test_resolved_vars_order_by_source() {
         rvt.vars = [
             { name: "z", value: "1", source: "request", enabled: true },
             { name: "b", value: "2", source: "global", enabled: true },
-            { name: "m", value: "4", source: "coleção", enabled: true },
+            { name: "m", value: "4", source: "collection", enabled: true },
             { name: "c", value: "5", source: "request", enabled: true },
             { name: "off", value: "6", source: "global", enabled: false }
         ];
         compare(rvt.activeVars.map(function (v) { return v.name; }).join(","), "b,m,c,z");
         rvt.vars = [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }];
+    }
+
+    // rodapé padrão de diálogo: espaçamento e respiro constantes, botões à direita
+    function test_dialog_actions_standard() {
+        compare(dialogActions.spacing, Kirigami.Units.smallSpacing);
+        compare(dialogActions.Layout.bottomMargin, Kirigami.Units.smallSpacing);
+        compare(dialogActions.children.length, 3, "espaçador + 2 botões");
+        verify(dialogActions.children[0].text === undefined, "primeiro filho é o espaçador");
+        compare(dialogActions.children[1].text, "A");
+        compare(dialogActions.children[2].text, "B");
+    }
+
+    // corpo padrão de diálogo: contentItem é o ColumnLayout e auto-dimensiona
+    function test_dialog_content_autosizes() {
+        compare(testDialogBody.spacing, Kirigami.Units.smallSpacing);
+        verify(testDialog.implicitHeight > 0, "diálogo dimensiona pelo conteúdo");
+    }
+
+    // cabeçalho padrão de diálogo
+    function test_dialog_header_standard() {
+        compare(dialogHeader.text, "T");
+        compare(dialogHeader.type, Kirigami.Heading.Type.Primary);
+        compare(dialogHeader.bottomPadding, 0);
+    }
+
+    // Enter sobre um botão focado do rodapé do diálogo dispara o clique (Tab move o foco)
+    function test_dialog_enter_clicks_focused_button() {
+        var btnA = dialogActions.children[1];
+        var btnB = dialogActions.children[2];
+        var clicked = 0;
+        btnB.clicked.connect(function () { clicked++; });
+        btnB.forceActiveFocus();
+        wait(20);
+        compare(btnB.activeFocus, true, "foco no botão B");
+        keyClick(Qt.Key_Return);
+        wait(20);
+        compare(clicked, 1, "Enter clica o botão focado");
     }
 
     // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
@@ -234,6 +290,29 @@ TestCase {
         compare(kvModel.count, 0);
     }
 
+    // Tab/Shift+Tab movem o foco entre as células editáveis da tabela
+    function test_kvtable_tab_navigates_cells() {
+        settings.confirmDelete = false;
+        kvModel.clear();
+        kvModel.append({ name: "a", value: "1", enabled: true });
+        wait(50);
+        var lv = findChild(kv, "kvList");
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate não criado");
+        var keyField = row.children[1];
+        var valField = row.children[4];
+        keyField.forceActiveFocus();
+        wait(20);
+        compare(keyField.activeFocus, true, "foco inicial no campo chave");
+        keyClick(Qt.Key_Tab);
+        wait(20);
+        compare(valField.activeFocus, true, "Tab vai para o campo valor");
+        keyClick(Qt.Key_Backtab);
+        wait(20);
+        compare(keyField.activeFocus, true, "Shift+Tab volta para o campo chave");
+        kvModel.clear();
+    }
+
     // ---- Util.js: domínio puro ----
     function test_util_b64() {
         compare(Util.b64("a"), "YQ==");
@@ -279,6 +358,22 @@ TestCase {
         var withBody = Util.exportCode({ method: "POST", url: "https://x/y",
                                          headers: [], body: "oi" });
         verify(withBody.indexOf("-d 'oi'") >= 0);
+    }
+
+    function test_util_querySuffix() {
+        var p = [{ name: "a", value: "1", enabled: true }];
+        compare(Util.querySuffix("https://x/y", p), "?a=1");
+        compare(Util.querySuffix("https://x/y?z=0", p), "&a=1");
+        compare(Util.querySuffix("https://x/y?", p), "a=1");          // '?' final: sem separador
+        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "", enabled: true }]), "?a=");
+        // desabilitado / sem nome são ignorados
+        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "1", enabled: false }]), "");
+        compare(Util.querySuffix("https://x/y", [{ name: "", value: "1", enabled: true }]), "");
+        // vários params na ordem
+        compare(Util.querySuffix("https://x/y", [
+            { name: "a", value: "1", enabled: true },
+            { name: "b", value: "2", enabled: true }]), "?a=1&b=2");
+        compare(Util.querySuffix("https://x/y", []), "");
     }
 
     // [A,B,C,D]: B(1) -> inserir antes de D(to=3) => [A,C,B,D]
@@ -408,7 +503,7 @@ TestCase {
         verify(row !== null, "delegate não criado");
         compare(row.children.length, 9, "nº de filhos do delegate");
         compare(row.children[3].echoMode, TextInput.Password, "campo mascarado");
-        compare(row.children[4].placeholderText, "valor", "editor normal");
+        compare(row.children[4].placeholderText, "Value", "editor normal");
     }
 
     // modo campos: botão de arquivo no lugar do editor de valor

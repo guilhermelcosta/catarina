@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Cabeçalho padronizado de uma seção editável: título à esquerda; à direita o
 // indicador "alterações não salvas" + Reverter (ícone, secundário) + Salvar.
@@ -14,9 +15,9 @@ RowLayout {
     property bool showRename: false
     property bool canRename: true
     property bool canSave: true
-    property string saveTooltip: "Salvar (Ctrl+S)"
-    property string discardTooltip: "Descartar alterações não salvas"
-    property string renameTooltip: "Renomear"
+    property string saveTooltip: Strings.t.saveTooltip
+    property string discardTooltip: Strings.t.discardTooltip
+    property string renameTooltip: Strings.t.renameTooltip
     signal save()
     signal discard()
     signal rename()
@@ -36,7 +37,7 @@ RowLayout {
         visible: bar.dirty
         spacing: Kirigami.Units.smallSpacing
         Kirigami.Icon { source: "media-record-symbolic"; color: Kirigami.Theme.neutralTextColor; implicitWidth: 10; implicitHeight: 10; Layout.alignment: Qt.AlignVCenter }
-        Label { text: "alterações não salvas"; color: Kirigami.Theme.neutralTextColor }
+        Label { text: Strings.t.unsavedMarker; color: Kirigami.Theme.neutralTextColor }
     }
     ToolButton {
         visible: bar.showDiscard
@@ -46,7 +47,7 @@ RowLayout {
         ToolTip.text: bar.discardTooltip; ToolTip.visible: hovered
     }
     Button {
-        icon.name: "document-save"; text: "Salvar"
+        icon.name: "document-save"; text: Strings.t.save
         highlighted: true
         enabled: bar.dirty && bar.canSave
         onClicked: bar.save()

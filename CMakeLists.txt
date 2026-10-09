@@ -42,15 +42,19 @@ qt_add_resources(katarina "qml"
     FILES
         qml/Main.qml
         qml/Util.js
+        qml/Strings.js
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
+        qml/DialogHeader.qml
+        qml/DialogActions.qml
         qml/ResolvedVarsTable.qml
         qml/JsonTree.qml
         qml/HeaderTable.qml
         qml/NetworkView.qml
         qml/VarCompleter.qml
         qml/VarField.qml
+        qml/AuthEditor.qml
         qml/ShortcutField.qml
 )
 

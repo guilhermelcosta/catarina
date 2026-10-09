@@ -38,5 +38,4 @@ public:
 
     // clipboard
     Q_INVOKABLE void copyText(const QString &text) const;
-    Q_INVOKABLE QString clipboardText() const;
 };
