@@ -1,12 +1,8 @@
 .pragma library
 
-// Lógica de domínio pura, independente da UI: parsing/geração de cURL,
-// base64 e formatação. Mantido fora do Main.qml de propósito — aqui só entra
+// Lógica de domínio pura, independente da UI: parsing/geração de cURL e
+// formatação. Mantido fora do Main.qml de propósito — aqui só entra
 // código sem dependência de estado da tela, então dá pra reusar e testar isolado.
-
-// ponytail: Qt.btoa(string) codifica UTF-8 (bom p/ Basic auth), mas está
-// deprecado no Qt 6.11+; migrar para o overload de byte-array quando avisar.
-function b64(s) { return Qt.btoa(s); }
 
 function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
 

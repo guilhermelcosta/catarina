@@ -178,6 +178,10 @@ Todos em `qml/`:
 - **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
   A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
   origem (global → coleção → request) e depois por nome.
+- **`SourceChip.qml`** — chip de origem da variável (fundo tingido + ícone + texto, cor/ícone por
+  escopo: global/coleção/request). Usado por `ResolvedVarsTable` e `VarCompleter`.
+- **`MethodBadge.qml`** — badge do método HTTP (sigla colorida; cor vem de `root.methodColor`).
+  Usado na árvore, nas abas, na visão da coleção e no histórico.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
 - **`AuthEditor.qml`** — editor de autenticação compartilhado (aba Authentication do request e da
   coleção). `load(auth)` preenche, `value()` devolve o mapa, sinal `edited` quando o usuário muda.
@@ -193,7 +197,7 @@ Todos em `qml/`:
   Por ser `TextArea`, ele **bloqueia Enter/Return** (é campo de uma linha; sem isso Enter inseriria
   quebra de linha no valor).
 - **`NetworkView.qml`** — aba "Rede".
-- **`Util.js`** — lógica pura/testável (cURL, base64, formatação, reordenação de abas).
+- **`Util.js`** — lógica pura/testável (cURL, formatação, reordenação de abas).
   Coloque aqui qualquer função sem dependência de UI.
 - **`Strings.js`** — **todos os textos da UI** (inglês), num só arquivo. Use
   `import "Strings.js" as Strings` e `text: Strings.t.<chave>` (ou `Strings.<função>(...)`

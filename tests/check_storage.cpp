@@ -157,6 +157,30 @@ int main(int argc, char **argv)
     CHECK(!b.storageDir().isEmpty());
     CHECK(b.storageDir().startsWith(tmp.path()));
 
+    // requestParts: headers ativos + auth + Content-Type padrão + corpo conforme o tipo
+    {
+        const QVariantMap r{{QStringLiteral("method"), QStringLiteral("POST")},
+                            {QStringLiteral("url"), QStringLiteral("http://x/y")},
+                            {QStringLiteral("headers"), QVariantList{item(QStringLiteral("X-A"), QStringLiteral("1"))}},
+                            {QStringLiteral("body"), QStringLiteral("{\"a\":1}")},
+                            {QStringLiteral("bodyType"), QStringLiteral("json")},
+                            {QStringLiteral("auth"), QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
+                                                                 {QStringLiteral("token"), QStringLiteral("t")}}}};
+        const QVariantMap parts = b.requestParts(r);
+        CHECK(parts.value(QStringLiteral("method")) == QStringLiteral("POST"));
+        bool auth = false, ct = false, xa = false;
+        for (const QVariant &v : parts.value(QStringLiteral("headers")).toList()) {
+            const QVariantMap h = v.toMap();
+            if (h.value(QStringLiteral("name")) == QStringLiteral("Authorization")
+                && h.value(QStringLiteral("value")) == QStringLiteral("Bearer t")) auth = true;
+            if (h.value(QStringLiteral("name")) == QStringLiteral("Content-Type")
+                && h.value(QStringLiteral("value")) == QStringLiteral("application/json")) ct = true;
+            if (h.value(QStringLiteral("name")) == QStringLiteral("X-A")) xa = true;
+        }
+        CHECK(auth && ct && xa);
+        CHECK(parts.value(QStringLiteral("body")) == QStringLiteral("{\"a\":1}"));
+    }
+
     b.deleteEnvironment(QStringLiteral("__e1__"));
     QVariantList ev;
     ev.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("pub")},

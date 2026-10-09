@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
 // Autocomplete de {{variavel}} (com teclado) e popup com o valor (hover).
@@ -130,17 +129,6 @@ Item {
     }
 
     // ---------------- valor no hover ----------------
-    // cor/ícone do escopo (global/coleção/request), iguais ao chip de escopo
-    function sourceColor(s) {
-        if (s === "global") return Kirigami.Theme.positiveTextColor;
-        if (s === "collection") return Kirigami.Theme.activeTextColor;
-        return Kirigami.Theme.neutralTextColor;
-    }
-    function sourceIcon(s) {
-        if (s === "global") return "globe";
-        if (s === "collection") return "folder-documents";
-        return "document-send";
-    }
     function updateHover(x, y) {
         if (!target) { hoverPop.close(); return; }
         if (target.text.indexOf("{{") < 0) { hoverPop.close(); return; }   // sem variável: não roda regex/positionAt
@@ -196,31 +184,10 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
             }
             // chip do escopo (cor/ícone por origem), no lugar de "(escopo)"
-            Rectangle {
+            SourceChip {
                 visible: hoverPop.scopeSource.length > 0
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: scopeChipRow.implicitWidth + 10
-                implicitHeight: scopeChipRow.implicitHeight + 4
-                radius: 3
-                color: Qt.rgba(completer.sourceColor(hoverPop.scopeSource).r,
-                               completer.sourceColor(hoverPop.scopeSource).g,
-                               completer.sourceColor(hoverPop.scopeSource).b, 0.16)
-                RowLayout {
-                    id: scopeChipRow
-                    anchors.centerIn: parent
-                    spacing: 3
-                    Kirigami.Icon {
-                        source: completer.sourceIcon(hoverPop.scopeSource)
-                        color: completer.sourceColor(hoverPop.scopeSource)
-                        implicitWidth: 11; implicitHeight: 11
-                    }
-                    Text {
-                        text: hoverPop.scopeSource
-                        color: completer.sourceColor(hoverPop.scopeSource)
-                        font.pixelSize: 9
-                        font.bold: true
-                    }
-                }
+                source: hoverPop.scopeSource
             }
         }
     }

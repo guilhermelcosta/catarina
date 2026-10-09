@@ -18,10 +18,10 @@ VarHighlighter::VarHighlighter(QTextDocument *doc, const QColor &varColor, bool 
     m_varFmt.setForeground(varColor);
     m_varFmt.setFontWeight(bold ? QFont::Bold : QFont::Normal);
 
-    // cores dos tokens JSON; sem cor do tema, cai num padrão razoável
-    m_strFmt.setForeground(strColor.isValid() ? strColor : QColor(QStringLiteral("#98c379")));
-    m_numFmt.setForeground(numColor.isValid() ? numColor : QColor(QStringLiteral("#d19a66")));
-    m_kwFmt.setForeground(kwColor.isValid() ? kwColor : QColor(QStringLiteral("#61afef")));
+    // cores dos tokens JSON (só usadas quando json=true; o chamador sempre passa)
+    m_strFmt.setForeground(strColor);
+    m_numFmt.setForeground(numColor);
+    m_kwFmt.setForeground(kwColor);
 }
 
 void VarHighlighter::highlightBlock(const QString &text)

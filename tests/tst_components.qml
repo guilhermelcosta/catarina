@@ -314,12 +314,6 @@ TestCase {
     }
 
     // ---- Util.js: domínio puro ----
-    function test_util_b64() {
-        compare(Util.b64("a"), "YQ==");
-        compare(Util.b64("user:pass"), "dXNlcjpwYXNz");
-        compare(Util.b64("aé"), "YcOp");   // UTF-8
-    }
-
     function test_util_fmtSize() {
         compare(Util.fmtSize(512), "512 B");
         compare(Util.fmtSize(2048), "2.0 KB");
