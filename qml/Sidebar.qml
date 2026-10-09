@@ -43,6 +43,30 @@ ColumnLayout {
             id: treeItem
             width: ListView.view.width
             highlighted: model.relPath === app.selectedPath
+            property int itemDepth: model.depth || 0
+
+            // guias de indentação (estilo VS Code): uma linha vertical por nível de
+            // ancestral, alinhada ao centro do triângulo daquele nível (recuo = 12px)
+            Row {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                Repeater {
+                    objectName: "indentRepeater"
+                    model: treeItem.itemDepth
+                    delegate: Item {
+                        width: 12
+                        height: treeItem.height
+                        Rectangle {
+                            x: 9
+                            width: 1
+                            height: parent.height
+                            color: Kirigami.Theme.textColor
+                            opacity: 0.15
+                        }
+                    }
+                }
+            }
 
             contentItem: RowLayout {
                 spacing: 4

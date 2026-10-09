@@ -221,4 +221,25 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
         verify(win.appController.collectRequest().headers.length >= 1);
     }
+
+    // guias de indentação: uma linha por nível de ancestral (profundidade = nº de guias)
+    function test_indent_guides_por_profundidade() {
+        backend.saveRequest("col/sub/r", baseReq());
+        win.appController.reloadTree();
+        wait(100);   // rebuildTree é coalescido via Qt.callLater
+
+        var tree = win.appController.treeModel;
+        var idx = -1;
+        for (var i = 0; i < tree.count; i++)
+            if (tree.get(i).relPath === "col/sub/r") { idx = i; break; }
+        verify(idx >= 0, "request na árvore");
+
+        var del = win.appController.sidebar.view.itemAtIndex(idx);
+        verify(del, "delegate visível");
+        compare(del.itemDepth, 2);   // col(0) > sub(1) > r(2)
+
+        var rep = findChild(del, "indentRepeater");
+        verify(rep, "repeater de guias presente");
+        compare(rep.count, 2);       // um guia por nível de ancestral
+    }
 }
