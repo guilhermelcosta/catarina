@@ -4,6 +4,9 @@
 // Hermético: usa um diretório temporário para config/coleções/segredos,
 // então não toca nos dados reais do usuário.
 #include "backend.h"
+#include "core/request_logic.h"
+#include "net/request_builder.h"
+#include "storage/secret_store.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -63,58 +66,58 @@ int main(int argc, char **argv)
     s.sync();
 
     // ---------------------------------------------------------------- puros
-    CHECK(Backend::variableRefs(QStringLiteral("{{a}}/x/{{b}}/{{a}}"))
+    CHECK(RequestLogic::variableRefs(QStringLiteral("{{a}}/x/{{b}}/{{a}}"))
           == QStringList({QStringLiteral("a"), QStringLiteral("b")}));
-    CHECK(Backend::variableRefs(QStringLiteral("{{ a }} {{b}}"))
+    CHECK(RequestLogic::variableRefs(QStringLiteral("{{ a }} {{b}}"))
           == QStringList({QStringLiteral("a"), QStringLiteral("b")}));
-    CHECK(Backend::variableRefs(QStringLiteral("sem variaveis")).isEmpty());
+    CHECK(RequestLogic::variableRefs(QStringLiteral("sem variaveis")).isEmpty());
 
-    CHECK(Backend::substitute(QStringLiteral("{{base}}/u/{{id}}"),
+    CHECK(RequestLogic::substitute(QStringLiteral("{{base}}/u/{{id}}"),
                               {{QStringLiteral("base"), QStringLiteral("http://x")},
                                {QStringLiteral("id"), 7}})
           == QStringLiteral("http://x/u/7"));
-    CHECK(Backend::substitute(QStringLiteral("nada"), {}) == QStringLiteral("nada"));
+    CHECK(RequestLogic::substitute(QStringLiteral("nada"), {}) == QStringLiteral("nada"));
     // aceita espaços dentro de {{ nome }} (mesmo padrão de variableRefs)
-    CHECK(Backend::substitute(QStringLiteral("{{ base }}/{{id}}"),
+    CHECK(RequestLogic::substitute(QStringLiteral("{{ base }}/{{id}}"),
                               {{QStringLiteral("base"), QStringLiteral("http://x")},
                                {QStringLiteral("id"), 7}})
           == QStringLiteral("http://x/7"));
     // nome que não existe fica literal, não vira vazio
-    CHECK(Backend::substitute(QStringLiteral("{{nao}}"), {{QStringLiteral("x"), QStringLiteral("1")}})
+    CHECK(RequestLogic::substitute(QStringLiteral("{{nao}}"), {{QStringLiteral("x"), QStringLiteral("1")}})
           == QStringLiteral("{{nao}}"));
 
-    CHECK(Backend::defaultContentType(QStringLiteral("json")) == QStringLiteral("application/json"));
-    CHECK(Backend::defaultContentType(QStringLiteral("urlencoded"))
+    CHECK(RequestLogic::defaultContentType(QStringLiteral("json")) == QStringLiteral("application/json"));
+    CHECK(RequestLogic::defaultContentType(QStringLiteral("urlencoded"))
           == QStringLiteral("application/x-www-form-urlencoded"));
-    CHECK(Backend::defaultContentType(QStringLiteral("text")) == QStringLiteral("text/plain"));
-    CHECK(Backend::defaultContentType(QStringLiteral("multipart")).isEmpty());
-    CHECK(Backend::defaultContentType(QStringLiteral("none")).isEmpty());
+    CHECK(RequestLogic::defaultContentType(QStringLiteral("text")) == QStringLiteral("text/plain"));
+    CHECK(RequestLogic::defaultContentType(QStringLiteral("multipart")).isEmpty());
+    CHECK(RequestLogic::defaultContentType(QStringLiteral("none")).isEmpty());
 
     const QVariantMap bearer{{QStringLiteral("type"), QStringLiteral("bearer")},
                              {QStringLiteral("token"), QStringLiteral("abc")}};
-    CHECK(Backend::authHeader(bearer).value(QStringLiteral("value")) == QStringLiteral("Bearer abc"));
+    CHECK(RequestLogic::authHeader(bearer).value(QStringLiteral("value")) == QStringLiteral("Bearer abc"));
 
     const QVariantMap basic{{QStringLiteral("type"), QStringLiteral("basic")},
                             {QStringLiteral("user"), QStringLiteral("user")},
                             {QStringLiteral("pass"), QStringLiteral("pass")}};
-    CHECK(Backend::authHeader(basic).value(QStringLiteral("value")) == QStringLiteral("Basic dXNlcjpwYXNz"));
+    CHECK(RequestLogic::authHeader(basic).value(QStringLiteral("value")) == QStringLiteral("Basic dXNlcjpwYXNz"));
 
     const QVariantMap apikey{{QStringLiteral("type"), QStringLiteral("apikey")},
                              {QStringLiteral("key"), QStringLiteral("X-Key")},
                              {QStringLiteral("value"), QStringLiteral("v")}};
-    CHECK(Backend::authHeader(apikey).value(QStringLiteral("name")) == QStringLiteral("X-Key"));
-    CHECK(Backend::authHeader(apikey).value(QStringLiteral("value")) == QStringLiteral("v"));
-    CHECK(Backend::authHeader({{QStringLiteral("type"), QStringLiteral("none")}}).isEmpty());
+    CHECK(RequestLogic::authHeader(apikey).value(QStringLiteral("name")) == QStringLiteral("X-Key"));
+    CHECK(RequestLogic::authHeader(apikey).value(QStringLiteral("value")) == QStringLiteral("v"));
+    CHECK(RequestLogic::authHeader({{QStringLiteral("type"), QStringLiteral("none")}}).isEmpty());
 
     // substituteList: interpola TODO campo string (o auth usa token/user/pass/key,
     // não só name/value) — regressão do header "Bearer {{token}}"
     {
-        const QVariantList sub = Backend::substituteList(
+        const QVariantList sub = RequestLogic::substituteList(
             {QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
                          {QStringLiteral("token"), QStringLiteral("{{tok}}")}}},
             {{QStringLiteral("tok"), QStringLiteral("s3cr3t")}});
         CHECK(sub.value(0).toMap().value(QStringLiteral("token")) == QStringLiteral("s3cr3t"));
-        CHECK(Backend::authHeader(sub.value(0).toMap()).value(QStringLiteral("value"))
+        CHECK(RequestLogic::authHeader(sub.value(0).toMap()).value(QStringLiteral("value"))
               == QStringLiteral("Bearer s3cr3t"));
     }
 
@@ -125,20 +128,20 @@ int main(int argc, char **argv)
         const QVariantMap mine{{QStringLiteral("type"), QStringLiteral("basic")},
                                {QStringLiteral("user"), QStringLiteral("u")},
                                {QStringLiteral("pass"), QStringLiteral("p")}};
-        CHECK(Backend::effectiveAuth({{QStringLiteral("type"), QStringLiteral("inherit")}}, col)
+        CHECK(RequestLogic::effectiveAuth({{QStringLiteral("type"), QStringLiteral("inherit")}}, col)
               == col);
-        CHECK(Backend::effectiveAuth(mine, col) == mine);
+        CHECK(RequestLogic::effectiveAuth(mine, col) == mine);
     }
 
     // buildUrl: assume http:// quando falta esquema, respeita params desabilitados
     {
-        const QUrl u = Backend::buildUrl(QStringLiteral("exemplo.com/api"),
+        const QUrl u = RequestLogic::buildUrl(QStringLiteral("exemplo.com/api"),
                                          {item(QStringLiteral("page"), QStringLiteral("2"))});
         CHECK(u.scheme() == QStringLiteral("http"));
         CHECK(QUrlQuery(u).queryItemValue(QStringLiteral("page")) == QStringLiteral("2"));
     }
     {
-        const QUrl u = Backend::buildUrl(QStringLiteral("https://h/p?a=1"),
+        const QUrl u = RequestLogic::buildUrl(QStringLiteral("https://h/p?a=1"),
                                          {item(QStringLiteral("b"), QStringLiteral("2")),
                                           item(QStringLiteral("ignorado"), QStringLiteral("x"), false)});
         CHECK(u.scheme() == QStringLiteral("https"));
@@ -148,7 +151,7 @@ int main(int argc, char **argv)
         CHECK(!q.hasQueryItem(QStringLiteral("ignorado")));
     }
 
-    CHECK(Backend::encodeForm({item(QStringLiteral("a"), QStringLiteral("1 2")),
+    CHECK(RequestLogic::encodeForm({item(QStringLiteral("a"), QStringLiteral("1 2")),
                                item(QStringLiteral("b"), QStringLiteral("x"), false)})
           == QStringLiteral("a=1%202"));
 
@@ -166,7 +169,7 @@ int main(int argc, char **argv)
                             {QStringLiteral("bodyType"), QStringLiteral("json")},
                             {QStringLiteral("auth"), QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
                                                                  {QStringLiteral("token"), QStringLiteral("t")}}}};
-        const QVariantMap parts = b.requestParts(r);
+        const QVariantMap parts = RequestLogic::requestParts(r);
         CHECK(parts.value(QStringLiteral("method")) == QStringLiteral("POST"));
         bool auth = false, ct = false, xa = false;
         for (const QVariant &v : parts.value(QStringLiteral("headers")).toList()) {
@@ -758,6 +761,72 @@ int main(int argc, char **argv)
                            {{QStringLiteral("method"), QStringLiteral("GET")}});
         bSeed2.seedDefaultCollection();
         CHECK(bSeed2.collectionTree().size() == 1);
+    }
+
+    // SecretStore como seam de DI: implementação em memória, sem cofre nem arquivo.
+    {
+        auto mem = SecretStore::createInMemory();
+        CHECK(mem->value(QStringLiteral("x")).isEmpty());
+        CHECK(mem->save(QStringLiteral("x"), QStringLiteral("s3cr3t")));
+        CHECK(mem->value(QStringLiteral("x")) == QStringLiteral("s3cr3t"));
+        CHECK(mem->remove(QStringLiteral("x")));
+        CHECK(mem->value(QStringLiteral("x")).isEmpty());
+        CHECK(!mem->remove(QStringLiteral("x")));   // já não existe
+    }
+    {
+        Backend bMem;
+        bMem.setStorageDir(tmp.path() + QStringLiteral("/mem"));
+        bMem.setSecretStore(SecretStore::createInMemory());
+        CHECK(bMem.saveSecret(QStringLiteral("id1"), QStringLiteral("v1")));
+        CHECK(bMem.secretValue(QStringLiteral("id1")) == QStringLiteral("v1"));
+        CHECK(bMem.removeSecret(QStringLiteral("id1")));
+        CHECK(bMem.secretValue(QStringLiteral("id1")).isEmpty());
+    }
+
+    // RequestBuilder: mesmo caminho do send, sem rede. Headers request+coleção,
+    // auth (request vence), Content-Type padrão, corpo e snapshots.
+    {
+        const QVariantMap req = {
+            {QStringLiteral("method"), QStringLiteral("POST")},
+            {QStringLiteral("url"), QStringLiteral("{{base}}/x")},
+            {QStringLiteral("headers"), QVariantList{
+                QVariantMap{{QStringLiteral("name"), QStringLiteral("X-A")},
+                            {QStringLiteral("value"), QStringLiteral("1")},
+                            {QStringLiteral("enabled"), true}}}},
+            {QStringLiteral("params"), QVariantList{
+                QVariantMap{{QStringLiteral("name"), QStringLiteral("q")},
+                            {QStringLiteral("value"), QStringLiteral("{{id}}")},
+                            {QStringLiteral("enabled"), true}}}},
+            {QStringLiteral("body"), QStringLiteral("{\"k\":{{id}}}")},
+            {QStringLiteral("bodyType"), QStringLiteral("json")},
+            {QStringLiteral("auth"), QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
+                                                 {QStringLiteral("token"), QStringLiteral("{{tok}}")}}},
+            {QStringLiteral("fields"), QVariantList{}}};
+        const QVariantMap vars{{QStringLiteral("base"), QStringLiteral("https://h")},
+                               {QStringLiteral("id"), QStringLiteral("7")},
+                               {QStringLiteral("tok"), QStringLiteral("Z")}};
+        const QVariantList colHeaders{QVariantMap{{QStringLiteral("name"), QStringLiteral("X-Col")},
+                                                  {QStringLiteral("value"), QStringLiteral("c")},
+                                                  {QStringLiteral("enabled"), true}}};
+        const QVariantMap colAuth{{QStringLiteral("type"), QStringLiteral("basic")},
+                                  {QStringLiteral("user"), QStringLiteral("u")},
+                                  {QStringLiteral("pass"), QStringLiteral("p")}};
+
+        const BuiltRequest b = RequestBuilder::build(req, vars, colHeaders, colAuth, 30, false);
+        CHECK(b.valid);
+        CHECK(b.url.toString() == QStringLiteral("https://h/x?q=7"));
+        CHECK(b.method == QStringLiteral("POST"));
+        // auth do request ("inherit"-like: aqui é bearer explícito) vence a da coleção
+        CHECK(QString::fromUtf8(b.req.rawHeader("Authorization")) == QStringLiteral("Bearer Z"));
+        CHECK(QString::fromUtf8(b.req.rawHeader("X-A")) == QStringLiteral("1"));
+        CHECK(QString::fromUtf8(b.req.rawHeader("X-Col")) == QStringLiteral("c"));
+        CHECK(QString::fromUtf8(b.req.rawHeader("Content-Type")) == QStringLiteral("application/json"));
+        CHECK(b.payload == QByteArray("{\"k\":7}"));
+        CHECK(b.sentBody == QStringLiteral("{\"k\":7}"));
+        // URL inválida → !valid (o send vira error "invalidUrl")
+        CHECK(!RequestBuilder::build({{QStringLiteral("method"), QStringLiteral("GET")},
+                                      {QStringLiteral("url"), QString()}},
+                                     {}, {}, {}, 30, false).valid);
     }
 
     qWarning() << "check_storage: OK";

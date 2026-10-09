@@ -28,6 +28,14 @@ qt_standard_project_setup(REQUIRES 6.5)
 # core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
 qt_add_library(katarina_core OBJECT
     src/backend.cpp
+    src/core/request_logic.cpp
+    src/core/variable_resolver.cpp
+    src/net/http_client.cpp
+    src/net/request_builder.cpp
+    src/storage/collection_storage.cpp
+    src/storage/environment_store.cpp
+    src/storage/history_store.cpp
+    src/storage/secret_store.cpp
     src/settings.cpp
 )
 target_include_directories(katarina_core PRIVATE src)
@@ -82,6 +90,33 @@ qt_add_resources(katarina "qml"
         qml/ShortcutField.qml
         qml/MethodBadge.qml
         qml/SourceChip.qml
+        qml/SplitGrip.qml
+        qml/Sidebar.qml
+        qml/TabStrip.qml
+        qml/dialogs/NewReqDialog.qml
+        qml/dialogs/NameDialog.qml
+        qml/dialogs/ConfirmCloseDialog.qml
+        qml/dialogs/QuitDialog.qml
+        qml/dialogs/CurlImportDialog.qml
+        qml/dialogs/CurlExportDialog.qml
+        qml/dialogs/FolderPicker.qml
+        qml/dialogs/MoveDialog.qml
+        qml/dialogs/RenameDialog.qml
+        qml/dialogs/HistoryDialog.qml
+        qml/dialogs/CreateEnvDialog.qml
+        qml/dialogs/DiscardEnvDialog.qml
+        qml/dialogs/RenameEnvDialog.qml
+        qml/dialogs/ScopePopup.qml
+        qml/dialogs/FilePickDialog.qml
+        qml/dialogs/DeleteDialog.qml
+        qml/dialogs/CommandPalette.qml
+        qml/screens/SettingsScreen.qml
+        qml/screens/EnvironmentScreen.qml
+        qml/screens/CollectionScreen.qml
+        qml/screens/RequestEditor.qml
+        qml/screens/BodyEditor.qml
+        qml/screens/ReqVarsEditor.qml
+        qml/screens/ResponsePane.qml
 )
 
 qt_add_resources(katarina "appicon"
