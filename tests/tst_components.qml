@@ -494,6 +494,16 @@ TestCase {
         compare(c.resolved[0].name, "x");
     }
 
+    // campo de uma linha: Enter não insere quebra de linha (é TextArea por causa do highlight)
+    function test_varfield_enter_nao_quebra_linha() {
+        vf.text = "abc";
+        vf.forceActiveFocus();
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Enter);
+        compare(vf.text.indexOf("\n"), -1, "Enter não quebra linha");
+        compare(vf.text, "abc");
+    }
+
     // coluna Segredo: campo mascarado (echoMode Password) + editor normal associado
     function test_kvtable_secret_column() {
         wait(50);
@@ -504,6 +514,16 @@ TestCase {
         compare(row.children.length, 9, "nº de filhos do delegate");
         compare(row.children[3].echoMode, TextInput.Password, "campo mascarado");
         compare(row.children[4].placeholderText, "Value", "editor normal");
+        // altura igual ao editor normal: as bolinhas do echoMode não podem mexer na linha
+        compare(row.children[3].implicitHeight, row.children[4].implicitHeight, "altura do campo secreto");
+        // olho espiar: alterna o echoMode sem desmarcar segredo
+        var eye = findChild(row.children[3], "kvRevealButton");
+        verify(eye !== null, "olho de revelar não encontrado");
+        eye.clicked();
+        compare(row.children[3].echoMode, TextInput.Normal, "revelado");
+        compare(row.children[3].text, "v", "valor acessível");
+        eye.clicked();
+        compare(row.children[3].echoMode, TextInput.Password, "mascarado de novo");
     }
 
     // modo campos: botão de arquivo no lugar do editor de valor

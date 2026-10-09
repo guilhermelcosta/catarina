@@ -1,0 +1,31 @@
+{
+    "vars": [
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "baseUrl",
+            "secret": false,
+            "secretId": "",
+            "type": "text",
+            "value": "https://dummyjson.com"
+        },
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "userId",
+            "secret": false,
+            "secretId": "",
+            "type": "text",
+            "value": "2"
+        },
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "accessToken",
+            "secret": true,
+            "secretId": "",
+            "type": "text",
+            "value": ""
+        }
+    ]
+}

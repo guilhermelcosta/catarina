@@ -1,0 +1,10 @@
+{
+    "auth": {
+        "key": "",
+        "pass": "",
+        "token": "{{accessToken}}",
+        "type": "bearer",
+        "user": "",
+        "value": ""
+    }
+}

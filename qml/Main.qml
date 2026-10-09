@@ -1595,7 +1595,7 @@ Kirigami.ApplicationWindow {
                                             // destaque legível nos dois temas: mistura o accent com a cor
                                             // de texto (clareia no escuro, escurece no claro)
                                             readonly property color accent: Kirigami.ColorUtils.linearInterpolation(
-                                                Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.45)
+                                                Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.8)
                                             readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
                                             enabled: false
                                             visible: root.querySuffix().length > 0 && urlField.text.length > 0

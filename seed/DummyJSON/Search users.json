@@ -1,0 +1,31 @@
+{
+    "auth": {
+        "key": "",
+        "pass": "",
+        "token": "",
+        "type": "inherit",
+        "user": "",
+        "value": ""
+    },
+    "body": "",
+    "bodyType": "none",
+    "fields": [
+    ],
+    "headers": [
+    ],
+    "method": "GET",
+    "params": [
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "q",
+            "secret": false,
+            "secretId": "",
+            "type": "",
+            "value": "em"
+        }
+    ],
+    "url": "{{baseUrl}}/users/search",
+    "vars": [
+    ]
+}
