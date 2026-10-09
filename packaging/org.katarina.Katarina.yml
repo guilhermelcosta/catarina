@@ -1,0 +1,38 @@
+app-id: org.katarina.Katarina
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+command: katarina
+finish-args:
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --filesystem=home        # campos de arquivo e coleções fora do sandbox
+  - --talk-name=org.freedesktop.secrets   # cofre de segredos do SO
+  - --talk-name=org.kde.kwalletd6
+modules:
+  # cofre de segredos (Secret Service/KWallet) usado pelo Backend quando presente
+  - name: qtkeychain
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_WITH_QT6=ON
+      - -DBUILD_TRANSLATIONS=OFF
+      - -DBUILD_TEST_APPLICATION=OFF
+    sources:
+      - type: archive
+        url: https://github.com/frankosterfeld/qtkeychain/archive/refs/tags/0.16.0.tar.gz
+        sha256: 3be26ec4ae30eecf0c2ff7572ba83799791b157c76e15a05ef35f23dc25e4054
+  - name: katarina
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: dir
+        path: ..
+        skip:
+          - build
+          - build-flatpak
+          - repo
+          - .git

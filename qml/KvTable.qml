@@ -198,14 +198,22 @@ Item {
                     icon.name: "document-open"
                     onClicked: table.pickFile(index)
                 }
-                // valor mascarado quando é segredo (TextField tem echoMode)
+                // valor mascarado quando é segredo (TextField tem echoMode) + olho para
+                // espiar o valor sem desmarcar "segredo"
                 TextField {
+                    id: secretField
                     property bool kvCell: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
+                    property bool revealed: false
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
                     visible: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
                     text: model.value
                     placeholderText: Strings.t.secretInVault
-                    echoMode: TextInput.Password
+                    echoMode: revealed ? TextInput.Normal : TextInput.Password
+                    // mesma métrica do VarField: sem isto as bolinhas do echoMode
+                    // mexem na altura da linha conforme a fonte
+                    implicitHeight: Kirigami.Units.gridUnit * 1.7
+                    topPadding: 3; bottomPadding: 3; leftPadding: 6
+                    rightPadding: revealButton.width + Kirigami.Units.smallSpacing
                     onTextEdited: { model.value = text; table.edited(); }
                     // Tab/Shift+Tab movem para a célula ao lado (mesma navegação do VarField)
                     Keys.onPressed: function (e) {
@@ -213,6 +221,20 @@ Item {
                             table.moveFocus(e.key === Qt.Key_Backtab ? -1 : 1);
                             e.accepted = true;
                         }
+                    }
+                    ToolButton {
+                        id: revealButton
+                        objectName: "kvRevealButton"
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.rightMargin: Kirigami.Units.smallSpacing / 2
+                        width: 24; height: 24
+                        flat: true
+                        icon.name: secretField.revealed ? "view-hidden" : "view-visible"
+                        icon.width: 17; icon.height: 17
+                        onClicked: secretField.revealed = !secretField.revealed
+                        ToolTip.text: secretField.revealed ? Strings.t.hideSecret : Strings.t.showSecret
+                        ToolTip.visible: hovered
                     }
                 }
                 // valor normal com destaque de {{variavel}}

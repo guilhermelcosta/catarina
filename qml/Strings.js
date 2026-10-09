@@ -154,6 +154,8 @@ var t = {
     scope: "Scope",
     secret: "Secret",
     secretInVault: "secret (in vault)",
+    showSecret: "Show value",
+    hideSecret: "Hide value",
     chooseFile: "Choose file…",
     removeRow: "Remove row",
     nothingHere: "Nothing here yet.",

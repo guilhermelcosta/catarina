@@ -52,6 +52,7 @@ int main(int argc, char **argv)
     CHECK(tmp.isValid());
     qputenv("XDG_DATA_HOME", tmp.path().toUtf8());
     qputenv("XDG_CONFIG_HOME", tmp.path().toUtf8());
+    qputenv("KATARINA_SECRETS_BACKEND", "file");   // hermético: não toca no cofre do SO
 
     QCoreApplication app(argc, argv);
 
@@ -679,6 +680,57 @@ int main(int argc, char **argv)
     // ---------------------------------------------------------------- histórico
     b.clearHistory();
     CHECK(b.history().isEmpty());
+
+    // ---------------------------------------------------------------- coleção de exemplo (seed)
+    // criada no primeiro uso de um storage vazio e só uma vez
+    {
+        const QString d3 = tmp.path() + QStringLiteral("/seed-vazio");
+        Backend bSeed;
+        bSeed.setStorageDir(d3);
+        bSeed.seedDefaultCollection();
+        bool hasDummy = false;
+        int tops = 0;
+        for (const QVariant &v : bSeed.collectionTree()) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("relPath")).toString() == QStringLiteral("DummyJSON"))
+                hasDummy = true;
+            if (m.value(QStringLiteral("depth")).toInt() == 0)
+                tops++;
+        }
+        CHECK(hasDummy);
+        CHECK(tops == 1);
+        // o request semeado veio com URL e método
+        const QVariantMap login = bSeed.loadRequest(QStringLiteral("DummyJSON/Login"));
+        CHECK(login.value(QStringLiteral("method")).toString() == QStringLiteral("POST"));
+        CHECK(login.value(QStringLiteral("url")).toString() == QStringLiteral("{{baseUrl}}/auth/login"));
+        // a senha (secret) resolve a partir do cofre semeado
+        CHECK(effective(bSeed, QStringLiteral("DummyJSON"),
+                        login.value(QStringLiteral("vars")).toList())
+                  .value(QStringLiteral("password")).toString() == QStringLiteral("emilyspass"));
+        // segunda chamada não duplica
+        bSeed.seedDefaultCollection();
+        int tops2 = 0;
+        for (const QVariant &v : bSeed.collectionTree())
+            if (v.toMap().value(QStringLiteral("depth")).toInt() == 0)
+                tops2++;
+        CHECK(tops2 == 1);
+        // salvar por cima de um request semeado (arquivo veio do qrc) deve funcionar
+        CHECK(bSeed.saveRequest(QStringLiteral("DummyJSON/List users"),
+                                {{QStringLiteral("method"), QStringLiteral("GET")},
+                                 {QStringLiteral("url"), QStringLiteral("editado")}}));
+        CHECK(bSeed.loadRequest(QStringLiteral("DummyJSON/List users"))
+                  .value(QStringLiteral("url")).toString() == QStringLiteral("editado"));
+    }
+    // storage com coleção do usuário NÃO recebe o seed
+    {
+        const QString d4 = tmp.path() + QStringLiteral("/seed-existente");
+        Backend bSeed2;
+        bSeed2.setStorageDir(d4);
+        bSeed2.saveRequest(QStringLiteral("minha"),
+                           {{QStringLiteral("method"), QStringLiteral("GET")}});
+        bSeed2.seedDefaultCollection();
+        CHECK(bSeed2.collectionTree().size() == 1);
+    }
 
     qWarning() << "check_storage: OK";
     return 0;

@@ -146,6 +146,7 @@ ex.: `vcs-repo` não existe). Convenção fixa:
 | Novo request | `document-new` |
 | Salvar / Reverter / Renomear | `document-save` / `edit-undo` / `edit-rename` |
 | Excluir / Remover linha | `edit-delete` / `list-remove` |
+| Revelar/ocultar segredo | `view-visible` / `view-hidden` |
 
 Checagem rápida: `find /usr/share/icons -iname "<nome>.svg"`.
 
@@ -189,6 +190,8 @@ Todos em `qml/`:
   autocomplete + hover). **Todo campo que aceita variáveis usa este componente** (URL, corpo,
   auth, colunas Nome/Valor do `KvTable`). É `TextArea` porque o highlight precisa do
   `QQuickTextDocument` — logo campos mascarados (`echoMode`, senha/segredo) não têm highlight.
+  Por ser `TextArea`, ele **bloqueia Enter/Return** (é campo de uma linha; sem isso Enter inseriria
+  quebra de linha no valor).
 - **`NetworkView.qml`** — aba "Rede".
 - **`Util.js`** — lógica pura/testável (cURL, base64, formatação, reordenação de abas).
   Coloque aqui qualquer função sem dependência de UI.
@@ -225,8 +228,20 @@ Todos em `qml/`:
   tempo, teto de segurança para referência cíclica (`{{a}}`↔`{{b}}`), que não converge.
 - **Segredos**: o valor real é carregado do cofre para edição (mascarado no campo com segredo),
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
+  O armazenamento é o **cofre do SO** via QtKeychain (Secret Service/KWallet/Keychain) — um blob
+  JSON sob o serviço `katarina`; sem o QtKeychain na build, cai para
+  `~/.local/share/katarina/katarina/secrets.json` (`0600`). Um `secrets.json` antigo é migrado pro
+  cofre e removido no primeiro uso (`KATARINA_SECRETS_BACKEND=file` força o arquivo — usado nos testes).
+  O campo mascarado (`KvTable`) traz um **olho** (`view-visible`/`view-hidden`) que alterna o
+  `echoMode` para espiar o valor sem desmarcar segredo. Esse `TextField` repete a
+  `implicitHeight`/padding do `VarField` (`gridUnit * 1.7`), senão as bolinhas do `echoMode`
+  mudam a altura da linha conforme a fonte.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
+- **Coleção de exemplo**: no primeiro uso (storage vazio, marca `.katarina/.seeded`) o backend copia
+  `seed/` (recursos `:/seed`, embutidos no binário) — a coleção **DummyJSON** de demonstração
+  (GET/POST/PUT/DELETE, params, variáveis e auth herdada). Não sobrescreve quem já tem coleções e
+  não recria depois que o usuário apaga. Só o app chama (`main.cpp`), não o construtor do `Backend`.
 - **Preview da query na barra de URL**: os params ativos aparecem concatenados logo após o texto
   digitado, em destaque (`Kirigami.Theme.highlightColor`, fundo a 14%), para mostrar o que será
   enviado sem abrir a aba Rede. É só visual — não entra no texto editável — e some se a URL

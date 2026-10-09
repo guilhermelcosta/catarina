@@ -44,6 +44,9 @@ TextArea {
 
     Keys.onPressed: function (e) {
         if (completer.handleKey(e)) { e.accepted = true; return; }
+        // campo de uma linha (TextArea por causa do highlight): Enter não pode
+        // inserir quebra de linha no meio do texto
+        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; return; }
         // Tab/Shift+Tab: quando a tabela fornece um tabHandler, navega célula a célula;
         // fora da tabela deixa passar (navegação nativa de foco)
         if ((e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) && root.tabHandler) {
