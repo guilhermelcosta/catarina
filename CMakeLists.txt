@@ -103,7 +103,7 @@ target_include_directories(bench_storage PRIVATE src)
 target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
 
 # ---- testes (ctest) ----
-find_package(Qt6 REQUIRED COMPONENTS QuickTest)
+find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
 
 add_test(NAME check_storage COMMAND check_storage)
 
@@ -114,11 +114,17 @@ target_compile_definitions(tst_components PRIVATE
     QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
 add_test(NAME tst_components COMMAND tst_components)
 
+# realce JSON (chave != valor) — lógica pura sobre QTextDocument
+qt_add_executable(check_highlighter tests/check_highlighter.cpp src/highlighter.cpp)
+target_include_directories(check_highlighter PRIVATE src)
+target_link_libraries(check_highlighter PRIVATE Qt6::Gui Qt6::Quick Qt6::Test)
+add_test(NAME check_highlighter COMMAND check_highlighter)
+
 # garante que o Main.qml carrega sem erros de QML
 add_test(NAME qml_smoke
          COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:katarina>)
 
-set_tests_properties(check_storage tst_components qml_smoke PROPERTIES
+set_tests_properties(check_storage tst_components check_highlighter qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ---- instalação: binário, ícone e lançador ----
