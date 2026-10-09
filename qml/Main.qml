@@ -42,6 +42,7 @@ Kirigami.ApplicationWindow {
     property bool collectionVarsDirty: false
     property int collectionTab: 0
     property bool collectionHeadersDirty: false
+    property bool collectionAuthDirty: false
 
     // ---- abas ----
     ListModel { id: tabsModel }
@@ -67,6 +68,7 @@ Kirigami.ApplicationWindow {
     property string envVarsWarning: ""
     property string responseCookies: ""
     property bool currentDirty: false
+    property int paramsRevision: 0   // bump nas edições da tabela de params (preview da URL)
 
     ListModel { id: paramsModel }
     ListModel { id: headersModel }
@@ -79,11 +81,21 @@ Kirigami.ApplicationWindow {
     title: Strings.t.appName + (currentTab >= 0 && currentTab < tabsModel.count
                      ? " — " + tabsModel.get(currentTab).name : "")
 
-    component SplitHandle: Rectangle {
-        implicitWidth: 1
-        implicitHeight: 1
-        color: Kirigami.Theme.disabledTextColor
-        opacity: 0.4
+    component SplitGrip: Rectangle {
+        // Área de agarrar generosa (traço de 1px é quase impossível acertar com o mouse).
+        // O quadrado transparente é a zona de arraste; a linha fina é só o visual.
+        readonly property bool verticalBar: height > width
+        implicitWidth: Kirigami.Units.smallSpacing * 2 + 1
+        implicitHeight: Kirigami.Units.smallSpacing * 2 + 1
+        color: "transparent"
+        HoverHandler { cursorShape: parent.verticalBar ? Qt.SplitHCursor : Qt.SplitVCursor }
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.verticalBar ? 1 : parent.width
+            height: parent.verticalBar ? parent.height : 1
+            color: Kirigami.Theme.disabledTextColor
+            opacity: SplitHandle.pressed ? 1.0 : (SplitHandle.hovered ? 0.8 : 0.4)
+        }
     }
 
 
@@ -199,9 +211,13 @@ Kirigami.ApplicationWindow {
         envVarsWarning = varsWarning(envVarsModel);
     }
     function currentAuth() {
-        return { type: authTypeBox.currentValue, token: bearerToken.text,
-                 user: basicUser.text, pass: basicPass.text,
-                 key: apiKeyName.text, value: apiKeyValue.text };
+        return requestAuthEditor.value();
+    }
+    // Preview na barra da query que os params ativos anexam à URL (lógica em Util.js).
+    // Lê `paramsRevision` só para a binding reavaliar a cada edição da tabela de params.
+    function querySuffix() {
+        var rev = paramsRevision;
+        return Util.querySuffix(urlField.text, modelToArray(paramsModel));
     }
     function collectRequest() {
         return { method: methodBox.currentText, url: urlField.text,
@@ -230,16 +246,11 @@ Kirigami.ApplicationWindow {
         var bt = bodyTypeBox.indexOfValue(r.bodyType !== undefined ? r.bodyType : "none");
         bodyTypeBox.currentIndex = bt >= 0 ? bt : 0;
         var auth = r.auth !== undefined ? r.auth : {};
-        var at = authTypeBox.indexOfValue(auth.type !== undefined ? auth.type : "none");
-        authTypeBox.currentIndex = at >= 0 ? at : 0;
-        bearerToken.text = auth.token !== undefined ? auth.token : "";
-        basicUser.text = auth.user !== undefined ? auth.user : "";
-        basicPass.text = auth.pass !== undefined ? auth.pass : "";
-        apiKeyName.text = auth.key !== undefined ? auth.key : "";
-        apiKeyValue.text = auth.value !== undefined ? auth.value : "";
+        requestAuthEditor.load(auth);
         restoreResponse(relPath);
         collectionVarsDirty = false;        // saímos da coleção: edições pendentes não valem mais
         collectionHeadersDirty = false;
+        collectionAuthDirty = false;
         refreshResolved();
         updateVarsWarnings();
     }
@@ -249,10 +260,10 @@ Kirigami.ApplicationWindow {
         paramsModel.clear(); headersModel.clear(); fieldsModel.clear(); requestVarsModel.clear();
         bodyArea.text = "";
         bodyTypeBox.currentIndex = 0;
-        authTypeBox.currentIndex = 0;
-        bearerToken.text = basicUser.text = basicPass.text = apiKeyName.text = apiKeyValue.text = "";
+        requestAuthEditor.clear();
         collectionVarsDirty = false;
         collectionHeadersDirty = false;
+        collectionAuthDirty = false;
         restoreResponse("");
     }
     function formatBody() {
@@ -667,7 +678,7 @@ Kirigami.ApplicationWindow {
                   : (t.isEnvironment
                      ? (i === currentTab && envScreen.envVarsDirty)
                      : (t.isCollection
-                        ? (i === currentTab && (collectionVarsDirty || collectionHeadersDirty))
+                        ? (i === currentTab && (collectionVarsDirty || collectionHeadersDirty || collectionAuthDirty))
                         : t.dirty));
         if (dirty) { confirmCloseDialog.tabIndex = i; confirmCloseDialog.open(); return; }
         doCloseTab(i, false);
@@ -681,6 +692,7 @@ Kirigami.ApplicationWindow {
             } else if (t.isCollection) {
                 saveCollectionVars();
                 saveCollectionHeaders();
+                saveCollectionAuth();
             } else if (!t.isSettings) {
                 var dataJson = (i === currentTab) ? JSON.stringify(collectRequest()) : t.dataJson;
                 backend.saveRequest(relPath, JSON.parse(dataJson));
@@ -752,13 +764,16 @@ Kirigami.ApplicationWindow {
         if (collectionIsSubfolder) {
             collectionVarsModel.clear();       // pasta não tem variáveis: elas pertencem à coleção
             collectionHeadersModel.clear();
+            collectionAuthEditor.load({});
         } else {
             fillModels(backend.withResolvedSecrets(backend.collectionVariables(relPath)), collectionVarsModel);
             fillModels(backend.withResolvedSecrets(backend.collectionHeaders(relPath)), collectionHeadersModel);
+            collectionAuthEditor.load(backend.collectionAuth(relPath));
         }
         refreshCollectionResolved();
         collectionVarsDirty = false;
         collectionHeadersDirty = false;
+        collectionAuthDirty = false;
         updateVarsWarnings();
         showingCollection = true;
         showingEnv = false;
@@ -790,6 +805,18 @@ Kirigami.ApplicationWindow {
         collectionHeadersDirty = false;
         notify(Strings.t.changesDiscarded);
     }
+    function saveCollectionAuth() {
+        if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem auth
+        backend.saveCollectionAuth(collectionPath, collectionAuthEditor.value());
+        collectionAuthDirty = false;
+        notify(Strings.t.collectionAuthSaved);
+    }
+    function revertCollectionAuth() {
+        if (collectionPath.length === 0 || collectionIsSubfolder) return;
+        collectionAuthEditor.load(backend.collectionAuth(collectionPath));
+        collectionAuthDirty = false;
+        notify(Strings.t.changesDiscarded);
+    }
 
     function saveCurrent() {
         if (currentTab < 0 || currentTab >= tabsModel.count) return;
@@ -802,6 +829,7 @@ Kirigami.ApplicationWindow {
         if (t.isCollection) {          // Ctrl+S na coleção salva o que estiver pendente
             if (collectionVarsDirty) saveCollectionVars();
             if (collectionHeadersDirty) saveCollectionHeaders();
+            if (collectionAuthDirty) saveCollectionAuth();
             return;
         }
         var dup = backend.duplicateVariableName(modelToArray(requestVarsModel));
@@ -913,7 +941,7 @@ Kirigami.ApplicationWindow {
         if (currentTab >= 0 && currentTab < tabsModel.count) {
             var ct = tabsModel.get(currentTab);
             if (ct.isEnvironment && envScreen.envVarsDirty) return true;
-            if (ct.isCollection && (collectionVarsDirty || collectionHeadersDirty)) return true;
+            if (ct.isCollection && (collectionVarsDirty || collectionHeadersDirty || collectionAuthDirty)) return true;
         }
         for (var i = 0; i < tabsModel.count; i++) {
             var t = tabsModel.get(i);
@@ -935,6 +963,7 @@ Kirigami.ApplicationWindow {
             if (ct.isCollection) {
                 if (collectionVarsDirty) saveCollectionVars();
                 if (collectionHeadersDirty) saveCollectionHeaders();
+                if (collectionAuthDirty) saveCollectionAuth();
             }
         }
         currentDirty = false;
@@ -1170,7 +1199,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 orientation: Qt.Horizontal
-                handle: SplitHandle {}
+                handle: SplitGrip {}
 
                 // ================= SIDEBAR =================
                 ColumnLayout {
@@ -1399,7 +1428,7 @@ Kirigami.ApplicationWindow {
                                             Label { text: model.name; font.bold: index === root.currentTab; font.italic: model.preview === true; elide: Text.ElideRight; Layout.maximumWidth: 180 }
                                             Kirigami.Icon {
                                                 visible: !!(model.dirty === true
-                                                         || (model.isCollection === true && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty))
+                                                         || (model.isCollection === true && index === root.currentTab && (root.collectionVarsDirty || root.collectionHeadersDirty || root.collectionAuthDirty))
                                                          || (model.isEnvironment === true && index === root.currentTab && root.envTabDirty))
                                                 source: "media-record-symbolic"
                                                 color: Kirigami.Theme.highlightColor
@@ -1500,7 +1529,7 @@ Kirigami.ApplicationWindow {
                         // ---- 0: editor + resposta ----
                         SplitView {
                             orientation: Qt.Horizontal
-                            handle: SplitHandle {}
+                            handle: SplitGrip {}
 
                             ColumnLayout {
                                 SplitView.fillWidth: true
@@ -1525,28 +1554,69 @@ Kirigami.ApplicationWindow {
                                             elide: Text.ElideRight
                                         }
                                     }
-                                    TextArea {
-                                        id: urlField
+                                    Item {
                                         Layout.fillWidth: true
-                                        placeholderText: Strings.t.urlExample
-                                        wrapMode: TextEdit.NoWrap
-                                        selectByMouse: true
-                                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                                         implicitHeight: Kirigami.Units.gridUnit * 2
-                                        topPadding: 5; bottomPadding: 5; leftPadding: 8; rightPadding: 8
-                                        onTextEdited: root.markDirty()
-                                        Keys.onPressed: function (e) {
-                                            // se o popup de variáveis está aberto, Enter insere a variável
-                                            if (urlCompleter.handleKey(e)) { e.accepted = true; return; }
-                                            if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; root.doSend(); }
-                                        }
-                                        Component.onCompleted: varSupport.attach(urlField.textDocument, "#c678dd", true)
-                                        VarCompleter {
-                                            id: urlCompleter
+
+                                        TextArea {
+                                            id: urlField
                                             anchors.fill: parent
-                                            target: urlField
-                                            resolved: root.resolvedVars
-                                            collection: root.currentCollection
+                                            placeholderText: Strings.t.urlExample
+                                            wrapMode: TextEdit.NoWrap
+                                            selectByMouse: true
+                                            font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                                            topPadding: 5; bottomPadding: 5; leftPadding: 8; rightPadding: 8
+                                            onTextEdited: root.markDirty()
+                                            Keys.onPressed: function (e) {
+                                                // se o popup de variáveis está aberto, Enter insere a variável
+                                                if (urlCompleter.handleKey(e)) { e.accepted = true; return; }
+                                                if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; root.doSend(); }
+                                            }
+                                            Component.onCompleted: varSupport.attach(urlField.textDocument, "#c678dd", true)
+                                            VarCompleter {
+                                                id: urlCompleter
+                                                anchors.fill: parent
+                                                target: urlField
+                                                resolved: root.resolvedVars
+                                                collection: root.currentCollection
+                                            }
+                                        }
+
+                                        // Preview da query anexada pelos params ativos (o que o buildUrl
+                                        // junta à URL). Só visual, não interfere na edição. Se a URL
+                                        // digitada transborda o campo, esconde (o fim some no scroll).
+                                        TextMetrics {
+                                            id: urlTextMetrics
+                                            font: urlField.font
+                                            text: urlField.text
+                                        }
+                                        Rectangle {
+                                            id: urlQueryGhost
+                                            // destaque legível nos dois temas: mistura o accent com a cor
+                                            // de texto (clareia no escuro, escurece no claro)
+                                            readonly property color accent: Kirigami.ColorUtils.linearInterpolation(
+                                                Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.45)
+                                            readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
+                                            enabled: false
+                                            visible: root.querySuffix().length > 0 && urlField.text.length > 0
+                                                     && startX <= urlField.width - urlField.rightPadding
+                                            x: startX
+                                            y: urlField.topPadding
+                                            height: queryGhostText.implicitHeight
+                                            width: Math.min(queryGhostText.implicitWidth + 8,
+                                                            urlField.width - x - urlField.rightPadding)
+                                            radius: 3
+                                            color: Qt.rgba(accent.r, accent.g, accent.b, 0.16)
+                                            Text {
+                                                id: queryGhostText
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 4; anchors.rightMargin: 4
+                                                verticalAlignment: Text.AlignVCenter
+                                                text: root.querySuffix()
+                                                color: urlQueryGhost.accent
+                                                font: urlField.font
+                                                elide: Text.ElideRight
+                                            }
                                         }
                                     }
                                     Button {
@@ -1603,7 +1673,7 @@ Kirigami.ApplicationWindow {
                                     Layout.fillHeight: true
                                     currentIndex: reqTabBar.currentIndex
 
-                                    KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
+                                    KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { root.markDirty(); root.paramsRevision++; } }
                                     KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: root.resolvedVars; collection: root.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: root.markDirty() }
 
                                     ColumnLayout {
@@ -1758,63 +1828,12 @@ Kirigami.ApplicationWindow {
                                         }
                                     }
 
-                                    ColumnLayout {
-                                        spacing: Kirigami.Units.smallSpacing
-                                        RowLayout {
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.rightMargin: Kirigami.Units.smallSpacing
-                                            Layout.topMargin: Kirigami.Units.smallSpacing
-                                            spacing: Kirigami.Units.smallSpacing
-                                            Label { text: Strings.t.type + ":" }
-                                            ComboBox {
-                                                id: authTypeBox
-                                                textRole: "text"; valueRole: "value"
-                                                model: [
-                                                    { text: Strings.t.authNoneOption, value: "none" },
-                                                    { text: Strings.t.authBearer, value: "bearer" },
-                                                    { text: Strings.t.authBasic, value: "basic" },
-                                                    { text: Strings.t.authApiKey, value: "apikey" }
-                                                ]
-                                                implicitWidth: 170
-                                                onActivated: root.markDirty()
-                                            }
-                                        }
-                                        VarField {
-                                            id: bearerToken
-                                            Layout.fillWidth: true
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.rightMargin: Kirigami.Units.smallSpacing
-                                            visible: authTypeBox.currentValue === "bearer"
-                                            placeholderText: Strings.t.token
-                                            resolved: root.resolvedVars
-                                            collection: root.currentCollection
-                                            onTextEdited: root.markDirty()
-                                        }
-                                        RowLayout {
-                                            visible: authTypeBox.currentValue === "basic"
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.rightMargin: Kirigami.Units.smallSpacing
-                                            spacing: Kirigami.Units.smallSpacing
-                                            VarField { id: basicUser; Layout.fillWidth: true; placeholderText: Strings.t.user; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
-                                            TextField { id: basicPass; Layout.fillWidth: true; placeholderText: Strings.t.password; echoMode: TextInput.Password; onTextEdited: root.markDirty() }
-                                        }
-                                        RowLayout {
-                                            visible: authTypeBox.currentValue === "apikey"
-                                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                                            Layout.rightMargin: Kirigami.Units.smallSpacing
-                                            spacing: Kirigami.Units.smallSpacing
-                                            VarField { id: apiKeyName; Layout.fillWidth: true; placeholderText: Strings.t.headerName; resolved: root.resolvedVars; collection: root.currentCollection; onTextEdited: root.markDirty() }
-                                            VarField {
-                                                id: apiKeyValue
-                                                Layout.fillWidth: true
-                                                placeholderText: Strings.t.value
-                                                resolved: root.resolvedVars
-                                                collection: root.currentCollection
-                                                onTextEdited: root.markDirty()
-                                            }
-                                        }
-                                        Label { visible: authTypeBox.currentValue === "none"; text: Strings.t.authNone; opacity: 0.7; Layout.leftMargin: Kirigami.Units.smallSpacing }
-                                        Item { Layout.fillHeight: true }
+                                    AuthEditor {
+                                        id: requestAuthEditor
+                                        resolvedVars: root.resolvedVars
+                                        collection: root.currentCollection
+                                        allowInherit: true
+                                        onEdited: root.markDirty()
                                     }
 
                                     // variáveis editáveis (topo) + efetivas (embaixo), com divisor
@@ -1822,7 +1841,7 @@ Kirigami.ApplicationWindow {
                                     SplitView {
                                         id: requestVarsSplit
                                         orientation: Qt.Vertical
-                                        handle: SplitHandle {}
+                                        handle: SplitGrip {}
 
                                         KvTable {
                                             SplitView.fillWidth: true
@@ -2076,6 +2095,7 @@ Kirigami.ApplicationWindow {
                                 TabButton { text: Strings.t.overview }
                                 TabButton { text: Strings.t.headers }
                                 TabButton { text: Strings.t.variables }
+                                TabButton { text: Strings.t.authentication }
                             }
                             StackLayout {
                                 Layout.fillWidth: true
@@ -2206,6 +2226,35 @@ Kirigami.ApplicationWindow {
                                         collection: root.collectionPath
                                         onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
                                         onEdited: { root.collectionVarsDirty = true; root.refreshCollectionResolved(); root.updateVarsWarnings(); }
+                                    }
+                                }
+                            }
+
+                            // 3) autenticação
+                            Item {
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Kirigami.Units.largeSpacing
+                                    spacing: Kirigami.Units.smallSpacing
+                                    SaveBar {
+                                        Layout.fillWidth: true
+                                        title: Strings.t.collectionAuth
+                                        dirty: root.collectionAuthDirty
+                                        showDiscard: true
+                                        onSave: root.saveCollectionAuth()
+                                        onDiscard: root.revertCollectionAuth()
+                                    }
+                                    Label {
+                                        text: Strings.t.collectionAuthHint
+                                        opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                                    }
+                                    AuthEditor {
+                                        id: collectionAuthEditor
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: Kirigami.Units.smallSpacing
+                                        resolvedVars: root.collectionResolvedVars
+                                        collection: root.collectionPath
+                                        onEdited: root.collectionAuthDirty = true
                                     }
                                 }
                             }

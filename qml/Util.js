@@ -64,6 +64,23 @@ function exportCode(p) {
     return s;
 }
 
+// Query que os params ativos serão anexados à URL (preview na barra de request).
+// Mesma semântica do Backend::buildUrl: '?' se a URL ainda não tem query, '&' se
+// já tem; pula params desabilitados ou sem nome. Devolve "" se nada é anexado.
+function querySuffix(url, params) {
+    var parts = [];
+    for (var i = 0; i < params.length; i++) {
+        var p = params[i];
+        if (!p || p.enabled === false || !p.name) continue;
+        parts.push(p.name + "=" + (p.value !== undefined ? p.value : ""));
+    }
+    if (parts.length === 0) return "";
+    var hasQuery = url.indexOf("?") >= 0;
+    var last = url.charAt(url.length - 1);
+    var sep = hasQuery ? ((last === "?" || last === "&") ? "" : "&") : "?";
+    return sep + parts.join("&");
+}
+
 // Fixação de abas (modelo do VS Code): fixada = permanente; desfixar devolve a
 // aba ao estado "preview" (transiente, a próxima request abre sobre ela) e garante
 // que só exista um preview. Recebe o estado atual [{pinned, preview}] e o índice

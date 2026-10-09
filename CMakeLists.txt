@@ -54,6 +54,7 @@ qt_add_resources(katarina "qml"
         qml/NetworkView.qml
         qml/VarCompleter.qml
         qml/VarField.qml
+        qml/AuthEditor.qml
         qml/ShortcutField.qml
 )
 

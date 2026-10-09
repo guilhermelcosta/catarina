@@ -39,6 +39,8 @@ public:
     static QString defaultContentType(const QString &bodyType);
     static QStringList variableRefs(const QString &text);            // nomes {{x}} num texto
     static QString encodeForm(const QVariantList &fields);           // x-www-form-urlencoded
+    // auth efetiva: "inherit" usa a da coleção; qualquer outro tipo usa a do request
+    static QVariantMap effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth);
 
     // ---- requisição ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
@@ -73,6 +75,10 @@ public:
     // ---- cabeçalhos de coleção (aplicados a todos os requests dela) ----
     Q_INVOKABLE QVariantList collectionHeaders(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionHeaders(const QString &collection, const QVariantList &headers);
+
+    // ---- autenticação de coleção (herdada por requests com auth "inherit") ----
+    Q_INVOKABLE QVariantMap collectionAuth(const QString &collection) const;
+    Q_INVOKABLE bool saveCollectionAuth(const QString &collection, const QVariantMap &auth);
 
     // ---- environments globais (com escopo por variável) ----
     Q_INVOKABLE QVariantList environments() const;
@@ -161,6 +167,11 @@ private:
         QVariantList list;
     };
     QVariantList cachedJsonList(const QString &path, const QString &key, CachedList &slot) const;
+    struct CachedMap {
+        qint64 mtime = -1;
+        QVariantMap map;
+    };
+    QVariantMap cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const;
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
@@ -175,6 +186,7 @@ private:
     mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
     mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis
     mutable QHash<QString, CachedList> m_colHeadersCache;        // coleção -> cabeçalhos
+    mutable QHash<QString, CachedMap> m_colAuthCache;            // coleção -> auth
 
     QList<Env> m_envs;
     QString m_activeEnv;

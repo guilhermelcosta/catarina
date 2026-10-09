@@ -117,6 +117,18 @@ int main(int argc, char **argv)
               == QStringLiteral("Bearer s3cr3t"));
     }
 
+    // effectiveAuth: "inherit" devolve a auth da coleção; qualquer outro tipo, a do request
+    {
+        const QVariantMap col{{QStringLiteral("type"), QStringLiteral("bearer")},
+                              {QStringLiteral("token"), QStringLiteral("col-tok")}};
+        const QVariantMap mine{{QStringLiteral("type"), QStringLiteral("basic")},
+                               {QStringLiteral("user"), QStringLiteral("u")},
+                               {QStringLiteral("pass"), QStringLiteral("p")}};
+        CHECK(Backend::effectiveAuth({{QStringLiteral("type"), QStringLiteral("inherit")}}, col)
+              == col);
+        CHECK(Backend::effectiveAuth(mine, col) == mine);
+    }
+
     // buildUrl: assume http:// quando falta esquema, respeita params desabilitados
     {
         const QUrl u = Backend::buildUrl(QStringLiteral("exemplo.com/api"),
@@ -456,6 +468,16 @@ int main(int argc, char **argv)
                                   {item(QStringLiteral("A"), QStringLiteral("1")),
                                    item(QStringLiteral("B"), QStringLiteral("2"))}));
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 2);
+    // auth da coleção: round-trip e cache invalidado ao salvar de novo
+    CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
+                               {{QStringLiteral("type"), QStringLiteral("bearer")},
+                                {QStringLiteral("token"), QStringLiteral("t1")}}));
+    CHECK(b.collectionAuth(QStringLiteral("__col__")).value(QStringLiteral("token"))
+          == QStringLiteral("t1"));
+    CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
+                               {{QStringLiteral("type"), QStringLiteral("basic")}}));
+    CHECK(b.collectionAuth(QStringLiteral("__col__")).value(QStringLiteral("type"))
+          == QStringLiteral("basic"));
     b.deleteEntry(QStringLiteral("__col__"));
 
     // ---------------------------------------------------------------- nomes repetidos no mesmo escopo

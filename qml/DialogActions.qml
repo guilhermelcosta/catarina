@@ -18,4 +18,15 @@ RowLayout {
     Layout.bottomMargin: Kirigami.Units.smallSpacing
     spacing: Kirigami.Units.smallSpacing
     Item { Layout.fillWidth: true }
+
+    // O `Button` do Qt responde a Espaço, mas não a Enter/Return. Como a tecla não é
+    // consumida pelo botão focado, ela sobe até aqui; clicamos o item com foco. Campo
+    // de texto consome Return sozinho (onAccepted), então não é afetado.
+    Keys.onReturnPressed: function (event) {
+        var item = Window.activeFocusItem;
+        if (item && typeof item.click === "function") {
+            item.click();
+            event.accepted = true;
+        }
+    }
 }

@@ -147,6 +147,20 @@ TestCase {
         compare(dialogHeader.bottomPadding, 0);
     }
 
+    // Enter sobre um botão focado do rodapé do diálogo dispara o clique (Tab move o foco)
+    function test_dialog_enter_clicks_focused_button() {
+        var btnA = dialogActions.children[1];
+        var btnB = dialogActions.children[2];
+        var clicked = 0;
+        btnB.clicked.connect(function () { clicked++; });
+        btnB.forceActiveFocus();
+        wait(20);
+        compare(btnB.activeFocus, true, "foco no botão B");
+        keyClick(Qt.Key_Return);
+        wait(20);
+        compare(clicked, 1, "Enter clica o botão focado");
+    }
+
     // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
     function test_varcompleter_filters_braces() {
         comp.resolved = [
@@ -344,6 +358,22 @@ TestCase {
         var withBody = Util.exportCode({ method: "POST", url: "https://x/y",
                                          headers: [], body: "oi" });
         verify(withBody.indexOf("-d 'oi'") >= 0);
+    }
+
+    function test_util_querySuffix() {
+        var p = [{ name: "a", value: "1", enabled: true }];
+        compare(Util.querySuffix("https://x/y", p), "?a=1");
+        compare(Util.querySuffix("https://x/y?z=0", p), "&a=1");
+        compare(Util.querySuffix("https://x/y?", p), "a=1");          // '?' final: sem separador
+        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "", enabled: true }]), "?a=");
+        // desabilitado / sem nome são ignorados
+        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "1", enabled: false }]), "");
+        compare(Util.querySuffix("https://x/y", [{ name: "", value: "1", enabled: true }]), "");
+        // vários params na ordem
+        compare(Util.querySuffix("https://x/y", [
+            { name: "a", value: "1", enabled: true },
+            { name: "b", value: "2", enabled: true }]), "?a=1&b=2");
+        compare(Util.querySuffix("https://x/y", []), "");
     }
 
     // [A,B,C,D]: B(1) -> inserir antes de D(to=3) => [A,C,B,D]

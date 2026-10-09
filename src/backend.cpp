@@ -52,9 +52,6 @@ const QStringList collectTexts(const QVariantMap &request)
         texts << m.value(QStringLiteral("name")).toString();
         texts << m.value(QStringLiteral("value")).toString();
     }
-    const QVariantMap auth = request.value(QStringLiteral("auth")).toMap();
-    for (const QVariant &v : auth)
-        texts << v.toString();
     return texts;
 }
 
@@ -87,6 +84,7 @@ void Backend::setStorageDir(const QString &dir)
     m_methodCache.clear();
     m_colVarsCache.clear();
     m_colHeadersCache.clear();
+    m_colAuthCache.clear();
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
     loadEnvironments();
@@ -169,6 +167,12 @@ QVariantMap Backend::authHeader(const QVariantMap &auth)
         return {{QStringLiteral("name"), auth.value(QStringLiteral("key")).toString()},
                 {QStringLiteral("value"), auth.value(QStringLiteral("value")).toString()}};
     return {};
+}
+
+QVariantMap Backend::effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth)
+{
+    return requestAuth.value(QStringLiteral("type")).toString() == QLatin1String("inherit")
+               ? collectionAuth : requestAuth;
 }
 
 QString Backend::defaultContentType(const QString &bodyType)
@@ -453,7 +457,12 @@ QVariantMap Backend::variablesState(const QVariantMap &request, const QString &c
     const QVariantList resolved = resolvedFromChain(chain);
 
     QStringList missing;
-    for (const QString &text : collectTexts(request)) {
+    QStringList texts = collectTexts(request);
+    // auth efetiva: com "inherit", o token da coleção também é escaneado
+    for (const QVariant &v : effectiveAuth(request.value(QStringLiteral("auth")).toMap(),
+                                             collectionAuth(collection)))
+        texts << v.toString();
+    for (const QString &text : texts) {
         for (const QString &name : variableRefs(text)) {
             if (!effective.contains(name) && !missing.contains(name))
                 missing.append(name);
@@ -575,7 +584,8 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     }
 
     QVariantList authList;
-    authList.append(request.value(QStringLiteral("auth")).toMap());
+    authList.append(effectiveAuth(request.value(QStringLiteral("auth")).toMap(),
+                                  collectionAuth(collection)));
     const QVariantMap ah = authHeader(substituteList(authList, vars).value(0).toMap());
     if (!ah.isEmpty())
         req.setRawHeader(ah.value(QStringLiteral("name")).toString().toUtf8(),
@@ -1049,6 +1059,47 @@ bool Backend::saveCollectionHeaders(const QString &collection, const QVariantLis
     const bool ok = f.commit();
     if (ok) {
         m_colHeadersCache[collection].mtime = -1;
+        emit collectionsChanged();
+    }
+    return ok;
+}
+
+QVariantMap Backend::cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const
+{
+    const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
+    if (slot.mtime == mt)
+        return slot.map;
+    QVariantMap map;
+    QFile f(path);
+    if (f.open(QIODevice::ReadOnly))
+        map = QJsonDocument::fromJson(f.readAll()).object().value(key).toObject().toVariantMap();
+    slot.mtime = mt;
+    slot.map = map;
+    return map;
+}
+
+QVariantMap Backend::collectionAuth(const QString &collection) const
+{
+    if (collection.isEmpty())
+        return {};
+    const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.auth.json");
+    return cachedJsonMap(path, QStringLiteral("auth"), m_colAuthCache[collection]);
+}
+
+bool Backend::saveCollectionAuth(const QString &collection, const QVariantMap &auth)
+{
+    if (collection.isEmpty())
+        return false;
+    const QString dir = m_dir + QLatin1Char('/') + collection;
+    QDir().mkpath(dir);
+    QSaveFile f(dir + QStringLiteral("/.auth.json"));
+    if (!f.open(QIODevice::WriteOnly))
+        return false;
+    const QJsonObject obj{{QStringLiteral("auth"), QJsonObject::fromVariantMap(auth)}};
+    f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+    const bool ok = f.commit();
+    if (ok) {
+        m_colAuthCache[collection].mtime = -1;
         emit collectionsChanged();
     }
     return ok;

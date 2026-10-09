@@ -39,6 +39,13 @@ linha só ao trocar para a aba). Verificado no app (xcb).
   `ColumnLayout` com um `Item { Layout.fillHeight: true }`, deixando-o `visible` só quando
   nenhum outro filho preenche (ex.: corpo em "nenhum", variáveis efetivas vazias).
 
+### Divisores arrastáveis (`SplitView`): área de agarrar generosa
+A área que o mouse acerta para redimensionar é o **tamanho implícito do `handle`**, não o
+traço desenhado. Um handle de `1px` é quase impossível de pegar. Padrão do app:
+`SplitGrip` (`qml/Main.qml`) — quadrado **transparente** de `smallSpacing*2 + 1` (zona de
+arraste) com uma linha de `1px` centralizada (visual), `cursorShape` conforme a orientação e
+realce no hover/arraste. Todo `SplitView` novo usa `handle: SplitGrip {}`.
+
 ### ⚠️ `ListModel`: declare as roles no `append`, não via `setProperty`
 Uma role criada por `setProperty` **depois** que o delegate já existe **não chega ao
 delegate**: `model.<role>` fica `undefined` para sempre (o `get(i)` até enxerga o valor, mas
@@ -171,6 +178,10 @@ Todos em `qml/`:
   A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
   origem (global → coleção → request) e depois por nome.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
+- **`AuthEditor.qml`** — editor de autenticação compartilhado (aba Authentication do request e da
+  coleção). `load(auth)` preenche, `value()` devolve o mapa, sinal `edited` quando o usuário muda.
+  Com `allowInherit: true` (request) oferece a opção **inherit**, que aplica a auth da coleção ao
+  request (`Backend::effectiveAuth`). **Todo editor de auth usa este componente.**
 - **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`). O popup de
   hover mostra `nome = valor` + um **chip do escopo** (mesma cor/ícone de origem: global/coleção/
   request), em vez de `(escopo)` entre parênteses.
@@ -216,10 +227,18 @@ Todos em `qml/`:
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
+- **Preview da query na barra de URL**: os params ativos aparecem concatenados logo após o texto
+  digitado, em destaque (`Kirigami.Theme.highlightColor`, fundo a 14%), para mostrar o que será
+  enviado sem abrir a aba Rede. É só visual — não entra no texto editável — e some se a URL
+  transborda o campo. Lógica pura em `Util.querySuffix` (mesma semântica de `Backend::buildUrl`),
+  testada em `tst_components`.
 - **Sessão**: só abas **fixadas** voltam ao reabrir o app (`Util.sessionPaths`); preview e demais
   não-fixadas são transientes. `restoreSessionTabs` recria as fixadas já com o pino.
 - **Renomear coleção**: reaponta o escopo (`collections`) das variáveis de ambiente que a
   referenciam (`Backend::renameCollectionScope`), senão o escopo fica órfão.
+- **Autenticação de coleção**: fica em `.auth.json` (mesma pasta da coleção, versionável) e é
+  aplicada a todo request cuja auth seja `inherit` (`Backend::effectiveAuth`); qualquer outro
+  tipo usa a auth do próprio request. O request tem prioridade, como nos cabeçalhos.
 - **Idioma da UI**: inglês, **centralizado em `qml/Strings.js`**. Mudar qualquer texto = editar
   só esse arquivo.
 - **Origem de variável**: valores `"global"` / `"collection"` / `"request"` (usados por lógica e
@@ -230,6 +249,9 @@ Todos em `qml/`:
     `VarField` recebem `tabHandler` e o delegate cobre os demais controles.
   - Modais com input: foco automático no campo (`onOpened`); Left/Right navegam entre os botões
     (`KeyNavigation`), Up/Down ligam campo ↔ botões. O `TextField` mantém Left/Right para o cursor.
+  - Modais: **Enter/Return clica o botão focado** (além de Espaço), via `Keys.onReturnPressed` no
+    `DialogActions` — o botão não consome Return, então a tecla sobe até o rodapé, que chama
+    `click()` no `Window.activeFocusItem`. Campos de texto consomem Return sozinhos (`onAccepted`).
 
 ---
 
