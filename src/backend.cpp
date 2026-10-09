@@ -52,9 +52,6 @@ const QStringList collectTexts(const QVariantMap &request)
         texts << m.value(QStringLiteral("name")).toString();
         texts << m.value(QStringLiteral("value")).toString();
     }
-    const QVariantMap auth = request.value(QStringLiteral("auth")).toMap();
-    for (const QVariant &v : auth)
-        texts << v.toString();
     return texts;
 }
 
@@ -87,6 +84,7 @@ void Backend::setStorageDir(const QString &dir)
     m_methodCache.clear();
     m_colVarsCache.clear();
     m_colHeadersCache.clear();
+    m_colAuthCache.clear();
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
     loadEnvironments();
@@ -119,12 +117,16 @@ QString Backend::substitute(const QString &text, const QVariantMap &vars)
 
 QVariantList Backend::substituteList(const QVariantList &list, const QVariantMap &vars)
 {
+    // Substitui TODO campo string, não só "name"/"value": o auth usa token/user/pass/key
+    // (e campos usam fileName), então limitar a name/value deixava {{variavel}} passar.
     QVariantList out;
     out.reserve(list.size());
     for (const QVariant &v : list) {
         QVariantMap m = v.toMap();
-        m[QStringLiteral("name")] = substitute(m.value(QStringLiteral("name")).toString(), vars);
-        m[QStringLiteral("value")] = substitute(m.value(QStringLiteral("value")).toString(), vars);
+        for (auto it = m.begin(); it != m.end(); ++it) {
+            if (it.value().typeId() == QMetaType::QString)
+                it.value() = substitute(it.value().toString(), vars);
+        }
         out.append(m);
     }
     return out;
@@ -165,6 +167,12 @@ QVariantMap Backend::authHeader(const QVariantMap &auth)
         return {{QStringLiteral("name"), auth.value(QStringLiteral("key")).toString()},
                 {QStringLiteral("value"), auth.value(QStringLiteral("value")).toString()}};
     return {};
+}
+
+QVariantMap Backend::effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth)
+{
+    return requestAuth.value(QStringLiteral("type")).toString() == QLatin1String("inherit")
+               ? collectionAuth : requestAuth;
 }
 
 QString Backend::defaultContentType(const QString &bodyType)
@@ -355,6 +363,7 @@ void Backend::addHistory(const QVariantMap &entry)
 // escopo por variável, segredos e flag enabled. Fonte da verdade para
 // variablesState e resolvedVariables.
 QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
+                                                   const QVariantList &collectionVars,
                                                    const QVariantList &requestVars) const
 {
     QList<ResolvedVar> chain;
@@ -386,7 +395,7 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     for (const Env &e : m_envs)
         if (e.name == m_activeEnv)
             add(e.variables, QStringLiteral("global"), true);
-    add(collectionVariables(collection), QStringLiteral("coleção"), false);
+    add(collectionVars, QStringLiteral("collection"), false);
     add(requestVars, QStringLiteral("request"), false);
 
     // Uma variável pode ter {{outra}} no nome e/ou no valor, e a referência pode
@@ -416,17 +425,10 @@ QList<Backend::ResolvedVar> Backend::variableChain(const QString &collection,
     return chain;
 }
 
-QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
+QVariantList Backend::resolvedFromChain(const QList<ResolvedVar> &chain) const
 {
-    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
-    const QList<ResolvedVar> chain =
-        variableChain(collection, request.value(QStringLiteral("vars")).toList());
-
     QMap<QString, QVariantMap> byName;   // melhor precedência por nome
-    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
     for (const ResolvedVar &r : chain) {
-        if (r.enabled)
-            effective.insert(r.name, r.value);
         if (byName.contains(r.name) && !r.enabled)
             continue;                    // desabilitada não sobrescreve o que já resolve
         byName.insert(r.name, {{QStringLiteral("name"), r.name},
@@ -438,9 +440,29 @@ QVariantMap Backend::variablesState(const QVariantMap &request, const QString &c
     QVariantList resolved;
     for (auto it = byName.constBegin(); it != byName.constEnd(); ++it)
         resolved.append(it.value());
+    return resolved;
+}
+
+QVariantMap Backend::variablesState(const QVariantMap &request, const QString &collection) const
+{
+    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
+    const QList<ResolvedVar> chain =
+        variableChain(collection, collectionVariables(collection),
+                      request.value(QStringLiteral("vars")).toList());
+
+    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
+    for (const ResolvedVar &r : chain)
+        if (r.enabled)
+            effective.insert(r.name, r.value);
+    const QVariantList resolved = resolvedFromChain(chain);
 
     QStringList missing;
-    for (const QString &text : collectTexts(request)) {
+    QStringList texts = collectTexts(request);
+    // auth efetiva: com "inherit", o token da coleção também é escaneado
+    for (const QVariant &v : effectiveAuth(request.value(QStringLiteral("auth")).toMap(),
+                                             collectionAuth(collection)))
+        texts << v.toString();
+    for (const QString &text : texts) {
         for (const QString &name : variableRefs(text)) {
             if (!effective.contains(name) && !missing.contains(name))
                 missing.append(name);
@@ -459,36 +481,45 @@ QVariantList Backend::resolvedVariables(const QString &collection, const QVarian
         .toList();
 }
 
-QString Backend::variableNoteFor(const QString &name, const QString &collection) const
+QVariantList Backend::resolvedCollectionVariables(const QString &collection,
+                                                  const QVariantList &collectionVars) const
 {
-    // Explica por que "name" não resolve: desabilitada, fora de escopo ou inexistente.
-    auto note = [&](const QVariantList &vars, bool global, QString *out) {
+    // visão geral da coleção: sem request, a lista em edição é a própria coleção
+    return resolvedFromChain(variableChain(collection, collectionVars, {}));
+}
+
+QVariantMap Backend::variableNoteFor(const QString &name, const QString &collection) const
+{
+    // Por que "name" não resolve, por código (a UI traduz): "disabled", "restricted"
+    // (com a lista em "collections"), "" (resolve) ou "undefined".
+    auto note = [&](const QVariantList &vars, bool global, QVariantMap *out) {
         for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();
             if (m.value(QStringLiteral("name")).toString() != name)
                 continue;
             if (!m.value(QStringLiteral("enabled"), true).toBool()) {
-                *out = QStringLiteral("desabilitada");
+                *out = {{QStringLiteral("code"), QStringLiteral("disabled")}};
             } else if (global) {
                 const QString scope = m.value(QStringLiteral("scope"), QStringLiteral("all")).toString();
                 if (scope == QLatin1String("collections")) {
                     const QStringList list = m.value(QStringLiteral("collections")).toStringList();
                     if (!collection.isEmpty() && !list.contains(collection))
-                        *out = QStringLiteral("restrita a: ") + list.join(QStringLiteral(", "));
+                        *out = {{QStringLiteral("code"), QStringLiteral("restricted")},
+                                {QStringLiteral("collections"), list}};
                     else
-                        *out = QString();
+                        *out = {{QStringLiteral("code"), QString()}};
                 } else {
-                    *out = QString();
+                    *out = {{QStringLiteral("code"), QString()}};
                 }
             } else {
-                *out = QString();
+                *out = {{QStringLiteral("code"), QString()}};
             }
             return true;
         }
         return false;
     };
 
-    QString out;
+    QVariantMap out;
     for (const Env &e : m_envs) {
         if (e.name != m_activeEnv)
             continue;
@@ -497,7 +528,7 @@ QString Backend::variableNoteFor(const QString &name, const QString &collection)
     }
     if (note(collectionVariables(collection), false, &out))
         return out;
-    return QStringLiteral("não definida");
+    return {{QStringLiteral("code"), QStringLiteral("undefined")}};
 }
 
 // ---------------------------------------------------------------- requisição
@@ -507,8 +538,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     const QVariantMap state = variablesState(request, collection);
     const QStringList missing = state.value(QStringLiteral("missing")).toStringList();
     if (!missing.isEmpty()) {
-        emit error(QStringLiteral("Variável não resolvida: ") +
-                   missing.join(QStringLiteral(", ")));
+        emit error(QStringLiteral("unresolved"), {missing});
         return;
     }
 
@@ -518,7 +548,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     const QUrl u = buildUrl(substitute(request.value(QStringLiteral("url")).toString(), vars),
                             substituteList(request.value(QStringLiteral("params")).toList(), vars));
     if (!u.isValid() || u.host().isEmpty()) {
-        emit error(QStringLiteral("URL inválida"));
+        emit error(QStringLiteral("invalidUrl"), {});
         return;
     }
 
@@ -554,7 +584,8 @@ void Backend::send(const QVariantMap &request, const QString &collection)
     }
 
     QVariantList authList;
-    authList.append(request.value(QStringLiteral("auth")).toMap());
+    authList.append(effectiveAuth(request.value(QStringLiteral("auth")).toMap(),
+                                  collectionAuth(collection)));
     const QVariantMap ah = authHeader(substituteList(authList, vars).value(0).toMap());
     if (!ah.isEmpty())
         req.setRawHeader(ah.value(QStringLiteral("name")).toString().toUtf8(),
@@ -594,7 +625,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
                 return;
             }
             if (r->attribute(QNetworkRequest::HttpStatusCodeAttribute).isNull()) {
-                emit error(r->errorString());
+                emit error(QStringLiteral("network"), {r->errorString()});
                 return;
             }
             const int status = r->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -646,7 +677,7 @@ void Backend::send(const QVariantMap &request, const QString &collection)
                 const QString path = m.value(QStringLiteral("fileName")).toString();
                 auto *file = new QFile(path, multi);
                 if (!file->open(QIODevice::ReadOnly)) {
-                    emit error(QStringLiteral("Não consegui abrir o arquivo: ") + path);
+                    emit error(QStringLiteral("fileOpen"), {path});
                     multi->deleteLater();
                     return;
                 }
@@ -1028,6 +1059,47 @@ bool Backend::saveCollectionHeaders(const QString &collection, const QVariantLis
     const bool ok = f.commit();
     if (ok) {
         m_colHeadersCache[collection].mtime = -1;
+        emit collectionsChanged();
+    }
+    return ok;
+}
+
+QVariantMap Backend::cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const
+{
+    const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
+    if (slot.mtime == mt)
+        return slot.map;
+    QVariantMap map;
+    QFile f(path);
+    if (f.open(QIODevice::ReadOnly))
+        map = QJsonDocument::fromJson(f.readAll()).object().value(key).toObject().toVariantMap();
+    slot.mtime = mt;
+    slot.map = map;
+    return map;
+}
+
+QVariantMap Backend::collectionAuth(const QString &collection) const
+{
+    if (collection.isEmpty())
+        return {};
+    const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.auth.json");
+    return cachedJsonMap(path, QStringLiteral("auth"), m_colAuthCache[collection]);
+}
+
+bool Backend::saveCollectionAuth(const QString &collection, const QVariantMap &auth)
+{
+    if (collection.isEmpty())
+        return false;
+    const QString dir = m_dir + QLatin1Char('/') + collection;
+    QDir().mkpath(dir);
+    QSaveFile f(dir + QStringLiteral("/.auth.json"));
+    if (!f.open(QIODevice::WriteOnly))
+        return false;
+    const QJsonObject obj{{QStringLiteral("auth"), QJsonObject::fromVariantMap(auth)}};
+    f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+    const bool ok = f.commit();
+    if (ok) {
+        m_colAuthCache[collection].mtime = -1;
         emit collectionsChanged();
     }
     return ok;

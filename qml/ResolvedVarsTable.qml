@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "Strings.js" as Strings
 
 // Tabela somente-leitura das variáveis efetivas (Origem / Nome / Valor).
 // Mesmo padrão de tabela do app: cabeçalho em negrito (opacidade 0.65),
@@ -26,18 +27,18 @@ ColumnLayout {
     // origem → rank de ordenação, cor e ícone (identidade visual por escopo)
     function sourceRank(s) {
         if (s === "global") return 0;
-        if (s === "coleção") return 1;
+        if (s === "collection") return 1;
         if (s === "request") return 2;
         return 3;
     }
     function sourceColor(s) {
         if (s === "global") return Kirigami.Theme.positiveTextColor;
-        if (s === "coleção") return Kirigami.Theme.activeTextColor;
+        if (s === "collection") return Kirigami.Theme.activeTextColor;
         return Kirigami.Theme.neutralTextColor;
     }
     function sourceIcon(s) {
         if (s === "global") return "globe";
-        if (s === "coleção") return "folder-documents";
+        if (s === "collection") return "folder-documents";
         return "document-send";
     }
 
@@ -50,11 +51,11 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: Kirigami.Units.smallSpacing
-        Label { text: "Origem"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.origin; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.preferredWidth: root.sourceColWidth; Layout.minimumWidth: root.sourceColWidth; Layout.maximumWidth: root.sourceColWidth }
-        Label { text: "Nome"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.name; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.fillWidth: true; Layout.preferredWidth: root.nameColPreferred; Layout.minimumWidth: root.nameColMinimum }
-        Label { text: "Valor"; font.bold: true; opacity: 0.65; elide: Text.ElideRight
+        Label { text: Strings.t.value; font.bold: true; opacity: 0.65; elide: Text.ElideRight
                 Layout.fillWidth: true; Layout.preferredWidth: root.valueColPreferred; Layout.minimumWidth: root.valueColMinimum }
     }
     Kirigami.Separator { Layout.fillWidth: true }

@@ -105,6 +105,30 @@ int main(int argc, char **argv)
     CHECK(Backend::authHeader(apikey).value(QStringLiteral("value")) == QStringLiteral("v"));
     CHECK(Backend::authHeader({{QStringLiteral("type"), QStringLiteral("none")}}).isEmpty());
 
+    // substituteList: interpola TODO campo string (o auth usa token/user/pass/key,
+    // não só name/value) — regressão do header "Bearer {{token}}"
+    {
+        const QVariantList sub = Backend::substituteList(
+            {QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
+                         {QStringLiteral("token"), QStringLiteral("{{tok}}")}}},
+            {{QStringLiteral("tok"), QStringLiteral("s3cr3t")}});
+        CHECK(sub.value(0).toMap().value(QStringLiteral("token")) == QStringLiteral("s3cr3t"));
+        CHECK(Backend::authHeader(sub.value(0).toMap()).value(QStringLiteral("value"))
+              == QStringLiteral("Bearer s3cr3t"));
+    }
+
+    // effectiveAuth: "inherit" devolve a auth da coleção; qualquer outro tipo, a do request
+    {
+        const QVariantMap col{{QStringLiteral("type"), QStringLiteral("bearer")},
+                              {QStringLiteral("token"), QStringLiteral("col-tok")}};
+        const QVariantMap mine{{QStringLiteral("type"), QStringLiteral("basic")},
+                               {QStringLiteral("user"), QStringLiteral("u")},
+                               {QStringLiteral("pass"), QStringLiteral("p")}};
+        CHECK(Backend::effectiveAuth({{QStringLiteral("type"), QStringLiteral("inherit")}}, col)
+              == col);
+        CHECK(Backend::effectiveAuth(mine, col) == mine);
+    }
+
     // buildUrl: assume http:// quando falta esquema, respeita params desabilitados
     {
         const QUrl u = Backend::buildUrl(QStringLiteral("exemplo.com/api"),
@@ -157,7 +181,7 @@ int main(int argc, char **argv)
     CHECK(a.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t")); // veio do cofre
     CHECK(!a.contains(QStringLiteral("des")));                                    // desabilitada não resolve
     CHECK(b.variableNoteFor(QStringLiteral("des"), QStringLiteral("colA"))
-          == QStringLiteral("desabilitada"));
+              .value(QStringLiteral("code")) == QStringLiteral("disabled"));
 
     const QVariantMap c = effective(b, QStringLiteral("colB"), {});
     CHECK(!c.contains(QStringLiteral("priv")));                                  // escopo respeitado
@@ -195,12 +219,17 @@ int main(int argc, char **argv)
     const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/x/{{nope}}")}};
     CHECK(missing(b, req, QStringLiteral("colA")) == QStringList{QStringLiteral("nope")});
 
-    // nota de escopo (usada pela UI)
-    CHECK(b.variableNoteFor(QStringLiteral("pub"), QStringLiteral("colB")).isEmpty());
-    CHECK(b.variableNoteFor(QStringLiteral("priv"), QStringLiteral("colB"))
-          == QStringLiteral("restrita a: colA"));
+    // nota de escopo (usada pela UI): códigos, não texto
+    CHECK(b.variableNoteFor(QStringLiteral("pub"), QStringLiteral("colB"))
+              .value(QStringLiteral("code")).toString().isEmpty());
+    {
+        const QVariantMap privNote = b.variableNoteFor(QStringLiteral("priv"), QStringLiteral("colB"));
+        CHECK(privNote.value(QStringLiteral("code")) == QStringLiteral("restricted"));
+        CHECK(privNote.value(QStringLiteral("collections")).toStringList()
+              == QStringList{QStringLiteral("colA")});
+    }
     CHECK(b.variableNoteFor(QStringLiteral("nope"), QStringLiteral("colA"))
-          == QStringLiteral("não definida"));
+              .value(QStringLiteral("code")) == QStringLiteral("undefined"));
 
     // resolvedVariables: origem de cada variável
     {
@@ -409,10 +438,23 @@ int main(int argc, char **argv)
         CHECK(!colEff.contains(QStringLiteral("cvoff")));   // desabilitada na coleção não resolve
     }
     CHECK(b.variableNoteFor(QStringLiteral("cvoff"), QStringLiteral("__col__"))
-          == QStringLiteral("desabilitada"));
+              .value(QStringLiteral("code")) == QStringLiteral("disabled"));
     CHECK(missing(b, {{QStringLiteral("url"), QStringLiteral("{{cvoff}}")}},
                              QStringLiteral("__col__"))
           == QStringList{QStringLiteral("cvoff")});
+    // visão geral: variável da coleção em edição mantém origem "collection" (não "request")
+    {
+        bool seen = false;
+        for (const QVariant &v : b.resolvedCollectionVariables(
+                 QStringLiteral("__col__"), {item(QStringLiteral("cv"), QStringLiteral("7"))})) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("name")) == QStringLiteral("cv")) {
+                seen = true;
+                CHECK(m.value(QStringLiteral("source")) == QStringLiteral("collection"));
+            }
+        }
+        CHECK(seen);
+    }
     CHECK(b.saveCollectionHeaders(QStringLiteral("__col__"),
                                   {item(QStringLiteral("X-Test"), QStringLiteral("abc"))}));
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 1);
@@ -426,6 +468,16 @@ int main(int argc, char **argv)
                                   {item(QStringLiteral("A"), QStringLiteral("1")),
                                    item(QStringLiteral("B"), QStringLiteral("2"))}));
     CHECK(b.collectionHeaders(QStringLiteral("__col__")).size() == 2);
+    // auth da coleção: round-trip e cache invalidado ao salvar de novo
+    CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
+                               {{QStringLiteral("type"), QStringLiteral("bearer")},
+                                {QStringLiteral("token"), QStringLiteral("t1")}}));
+    CHECK(b.collectionAuth(QStringLiteral("__col__")).value(QStringLiteral("token"))
+          == QStringLiteral("t1"));
+    CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
+                               {{QStringLiteral("type"), QStringLiteral("basic")}}));
+    CHECK(b.collectionAuth(QStringLiteral("__col__")).value(QStringLiteral("type"))
+          == QStringLiteral("basic"));
     b.deleteEntry(QStringLiteral("__col__"));
 
     // ---------------------------------------------------------------- nomes repetidos no mesmo escopo
