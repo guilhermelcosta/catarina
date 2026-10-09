@@ -148,8 +148,18 @@ add_test(NAME check_storage COMMAND check_storage)
 qt_add_executable(tst_components tests/tst_components.cpp)
 target_link_libraries(tst_components PRIVATE Qt6::Quick Qt6::QuickTest)
 target_compile_definitions(tst_components PRIVATE
-    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/components")
 add_test(NAME tst_components COMMAND tst_components)
+
+# comportamento de tela: instancia o Main com backend/settings reais e dirige o AppController
+qt_add_executable(tst_app tests/tst_app.cpp src/highlighter.cpp)
+target_sources(tst_app PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_include_directories(tst_app PRIVATE src)
+target_link_libraries(tst_app PRIVATE
+    Qt6::Core Qt6::Gui Qt6::Quick Qt6::QuickTest Qt6::Network ${KATARINA_SECRETS_LIBS})
+target_compile_definitions(tst_app PRIVATE
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/app")
+add_test(NAME tst_app COMMAND tst_app)
 
 # realce JSON (chave != valor) — lógica pura sobre QTextDocument
 qt_add_executable(check_highlighter tests/check_highlighter.cpp src/highlighter.cpp)
@@ -157,11 +167,19 @@ target_include_directories(check_highlighter PRIVATE src)
 target_link_libraries(check_highlighter PRIVATE Qt6::Gui Qt6::Quick Qt6::Test)
 add_test(NAME check_highlighter COMMAND check_highlighter)
 
+# integração HTTP hermética (QTcpServer local): resposta, headers, querystring,
+# erro de rede, cancelamento, multipart e falha ao abrir arquivo
+qt_add_executable(check_http tests/check_http.cpp)
+target_sources(check_http PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_include_directories(check_http PRIVATE src)
+target_link_libraries(check_http PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Test ${KATARINA_SECRETS_LIBS})
+add_test(NAME check_http COMMAND check_http)
+
 # garante que o Main.qml carrega sem erros de QML
 add_test(NAME qml_smoke
          COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:katarina>)
 
-set_tests_properties(check_storage tst_components check_highlighter qml_smoke PROPERTIES
+set_tests_properties(check_storage tst_components tst_app check_highlighter check_http qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ---- instalação: binário, ícone e lançador ----

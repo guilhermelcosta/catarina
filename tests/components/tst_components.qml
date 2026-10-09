@@ -3,9 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtTest
 import org.kde.kirigami as Kirigami
-import "../qml"
-import "../qml/Util.js" as Util
-import "../qml/js/VarTokens.js" as VarTokens
+import "../../qml"
+import "../../qml/Util.js" as Util
+import "../../qml/js/VarTokens.js" as VarTokens
 
 // Testes dos componentes reutilizáveis e da lógica pura do JsonTree.
 TestCase {

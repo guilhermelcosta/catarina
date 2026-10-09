@@ -28,6 +28,9 @@ Kirigami.ApplicationWindow {
     ListModel { id: collectionHeadersModel }
     ListModel { id: treeModel }
 
+    // exposto para os testes de comportamento de tela (tests/tst_app.qml)
+    readonly property var appController: controller
+
     AppController {
         id: controller
         window: root
