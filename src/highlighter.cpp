@@ -7,12 +7,15 @@
 #include <QTextDocument>
 
 VarHighlighter::VarHighlighter(QTextDocument *doc, const QColor &varColor, bool bold, bool json,
-                               const QColor &strColor, const QColor &numColor, const QColor &kwColor)
+                               const QColor &strColor, const QColor &numColor, const QColor &kwColor,
+                               const QColor &keyColor)
     : QSyntaxHighlighter(doc)
     , m_var(QStringLiteral("\\{\\{[^{}]*\\}\\}"))
     , m_str(QStringLiteral("\"(?:[^\"\\\\]|\\\\.)*\""))
     , m_num(QStringLiteral("\\b-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"))
     , m_kw(QStringLiteral("\\b(?:true|false|null)\\b"))
+    // chave = string seguida (com espaços) de ':' — lookahead para não pintar o ':'
+    , m_key(QStringLiteral("\"(?:[^\"\\\\]|\\\\.)*\"(?=\\s*:)"))
     , m_json(json)
 {
     m_varFmt.setForeground(varColor);
@@ -22,6 +25,7 @@ VarHighlighter::VarHighlighter(QTextDocument *doc, const QColor &varColor, bool 
     m_strFmt.setForeground(strColor);
     m_numFmt.setForeground(numColor);
     m_kwFmt.setForeground(kwColor);
+    m_keyFmt.setForeground(keyColor);
 }
 
 void VarHighlighter::highlightBlock(const QString &text)
@@ -35,6 +39,12 @@ void VarHighlighter::highlightBlock(const QString &text)
                 setFormat(m.capturedStart(), m.capturedLength(), pair.second);
             }
         }
+        // chaves por último: sobrescrevem a cor de string do mesmo trecho
+        auto kt = m_key.globalMatch(text);
+        while (kt.hasNext()) {
+            const QRegularExpressionMatch m = kt.next();
+            setFormat(m.capturedStart(), m.capturedLength(), m_keyFmt);
+        }
     }
     // variáveis por último para sobrepor (mesmo dentro de strings)
     auto it = m_var.globalMatch(text);
@@ -45,12 +55,14 @@ void VarHighlighter::highlightBlock(const QString &text)
 }
 
 void VarSupport::attach(QObject *textDocument, const QColor &color, bool bold, bool json,
-                        const QColor &strColor, const QColor &numColor, const QColor &kwColor) const
+                        const QColor &strColor, const QColor &numColor, const QColor &kwColor,
+                        const QColor &keyColor) const
 {
     auto *qdoc = qobject_cast<QQuickTextDocument *>(textDocument);
     if (!qdoc || !qdoc->textDocument())
         return;
-    auto *h = new VarHighlighter(qdoc->textDocument(), color, bold, json, strColor, numColor, kwColor);
+    auto *h = new VarHighlighter(qdoc->textDocument(), color, bold, json, strColor, numColor, kwColor,
+                                 keyColor);
     h->setParent(qdoc);
 }
 

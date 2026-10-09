@@ -78,6 +78,7 @@ Kirigami.ApplicationWindow {
     readonly property color jsonStringColor: darkTheme ? "#98c379" : "#2e7d32"
     readonly property color jsonNumberColor: darkTheme ? "#d19a66" : "#b26a00"
     readonly property color jsonKeywordColor: darkTheme ? "#d19a66" : "#b26a00"
+    readonly property color jsonKeyColor: darkTheme ? "#61afef" : "#005cc5"
 
     ListModel { id: paramsModel }
     ListModel { id: headersModel }
@@ -1730,7 +1731,8 @@ Kirigami.ApplicationWindow {
                                                 onTextEdited: root.markDirty()
                                                 Component.onCompleted:
                                                     varSupport.attach(bodyArea.textDocument, "#c678dd", true, true,
-                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor)
+                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor,
+                                                        root.jsonKeyColor)
                                                 VarCompleter {
                                                     id: bodyCompleter
                                                     anchors.fill: parent
@@ -1991,7 +1993,8 @@ Kirigami.ApplicationWindow {
                                                 selectedTextColor: Kirigami.Theme.highlightedTextColor
                                                 Component.onCompleted:
                                                     varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
-                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor)
+                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor,
+                                                        root.jsonKeyColor)
                                             }
                                         }
                                         JsonTree { id: jsonTree; Layout.fillWidth: true; Layout.fillHeight: true }
