@@ -19,7 +19,7 @@
             "secret": false,
             "secretId": "",
             "type": "",
-            "value": "en-US"
+            "value": "{{locale}}"
         }
     ],
     "method": "GET",

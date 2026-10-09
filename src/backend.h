@@ -44,6 +44,9 @@ public:
     static QString encodeForm(const QVariantList &fields);           // x-www-form-urlencoded
     // auth efetiva: "inherit" usa a da coleção; qualquer outro tipo usa a do request
     static QVariantMap effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth);
+    // partes efetivas de um request (method/url/headers/body) para exportação: aplica
+    // auth e Content-Type padrão como no send, sem resolver {{variaveis}}
+    Q_INVOKABLE QVariantMap requestParts(const QVariantMap &request) const;
 
     // ---- requisição ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
@@ -164,17 +167,12 @@ private:
     // tira os segredos do arquivo (vão pro cofre); limpa o cofre se deixou de ser segredo
     QVariantList sanitizeSecrets(const QVariantList &vars);
 
-    // cache de .variables.json / .headers.json por coleção, validado por mtime
-    struct CachedList {
+    // cache de um campo de .variables.json / .headers.json / .auth.json, validado por mtime
+    struct CachedJson {
         qint64 mtime = -1;
-        QVariantList list;
+        QVariant value;
     };
-    QVariantList cachedJsonList(const QString &path, const QString &key, CachedList &slot) const;
-    struct CachedMap {
-        qint64 mtime = -1;
-        QVariantMap map;
-    };
-    QVariantMap cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const;
+    QVariant cachedJson(const QString &path, const QString &key, CachedJson &slot) const;
 
     QNetworkAccessManager m_nam;
     QNetworkReply *m_currentReply = nullptr;   // para cancelar
@@ -188,9 +186,9 @@ private:
     mutable bool m_keychain = false;   // backend em uso: cofre do SO (true) ou arquivo (false)
     mutable QHash<QString, QString> m_secretsCache;              // id -> valor
     mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
-    mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis
-    mutable QHash<QString, CachedList> m_colHeadersCache;        // coleção -> cabeçalhos
-    mutable QHash<QString, CachedMap> m_colAuthCache;            // coleção -> auth
+    mutable QHash<QString, CachedJson> m_colVarsCache;           // coleção -> variáveis
+    mutable QHash<QString, CachedJson> m_colHeadersCache;        // coleção -> cabeçalhos
+    mutable QHash<QString, CachedJson> m_colAuthCache;           // coleção -> auth
 
     QList<Env> m_envs;
     QString m_activeEnv;

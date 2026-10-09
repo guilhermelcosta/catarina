@@ -1,12 +1,8 @@
 .pragma library
 
-// Lógica de domínio pura, independente da UI: parsing/geração de cURL,
-// base64 e formatação. Mantido fora do Main.qml de propósito — aqui só entra
+// Lógica de domínio pura, independente da UI: parsing/geração de cURL e
+// formatação. Mantido fora do Main.qml de propósito — aqui só entra
 // código sem dependência de estado da tela, então dá pra reusar e testar isolado.
-
-// ponytail: Qt.btoa(string) codifica UTF-8 (bom p/ Basic auth), mas está
-// deprecado no Qt 6.11+; migrar para o overload de byte-array quando avisar.
-function b64(s) { return Qt.btoa(s); }
 
 function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
 
@@ -79,6 +75,23 @@ function querySuffix(url, params) {
     var last = url.charAt(url.length - 1);
     var sep = hasQuery ? ((last === "?" || last === "&") ? "" : "&") : "?";
     return sep + parts.join("&");
+}
+
+// JSON canônico: ordena as chaves de objeto recursivamente (arrays mantêm a ordem).
+// Serve para comparar estados ("dirty") ignorando a ordem das chaves — voltar ao
+// valor original tem que dar igual, mesmo que o objeto tenha sido remontado.
+function stableStringify(v) {
+    if (Array.isArray(v))
+        return "[" + v.map(stableStringify).join(",") + "]";
+    if (v !== null && typeof v === "object") {
+        var keys = Object.keys(v).sort(), parts = [];
+        for (var i = 0; i < keys.length; i++) {
+            if (v[keys[i]] === undefined) continue;
+            parts.push(JSON.stringify(keys[i]) + ":" + stableStringify(v[keys[i]]));
+        }
+        return "{" + parts.join(",") + "}";
+    }
+    return JSON.stringify(v);
 }
 
 // Fixação de abas (modelo do VS Code): fixada = permanente; desfixar devolve a

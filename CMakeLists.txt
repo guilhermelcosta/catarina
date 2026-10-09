@@ -80,6 +80,8 @@ qt_add_resources(katarina "qml"
         qml/VarField.qml
         qml/AuthEditor.qml
         qml/ShortcutField.qml
+        qml/MethodBadge.qml
+        qml/SourceChip.qml
 )
 
 qt_add_resources(katarina "appicon"

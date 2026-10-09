@@ -31,16 +31,6 @@ ColumnLayout {
         if (s === "request") return 2;
         return 3;
     }
-    function sourceColor(s) {
-        if (s === "global") return Kirigami.Theme.positiveTextColor;
-        if (s === "collection") return Kirigami.Theme.activeTextColor;
-        return Kirigami.Theme.neutralTextColor;
-    }
-    function sourceIcon(s) {
-        if (s === "global") return "globe";
-        if (s === "collection") return "folder-documents";
-        return "document-send";
-    }
 
     readonly property int sourceColWidth: 84
     readonly property int nameColPreferred: 140
@@ -65,32 +55,17 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         clip: true
+        spacing: Kirigami.Units.smallSpacing
         model: root.activeVars
         delegate: RowLayout {
             width: view.width
             spacing: Kirigami.Units.smallSpacing
             opacity: modelData.enabled === false ? 0.4 : 1
-            Rectangle {
-                Layout.preferredWidth: root.sourceColWidth; Layout.minimumWidth: root.sourceColWidth; Layout.maximumWidth: root.sourceColWidth
-                implicitHeight: 16; radius: 3
-                color: Qt.rgba(root.sourceColor(modelData.source).r,
-                               root.sourceColor(modelData.source).g,
-                               root.sourceColor(modelData.source).b, 0.15)
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 3
-                    Kirigami.Icon {
-                        source: root.sourceIcon(modelData.source)
-                        color: root.sourceColor(modelData.source)
-                        implicitWidth: 11; implicitHeight: 11
-                    }
-                    Text {
-                        text: modelData.source !== undefined ? modelData.source : ""
-                        font.pixelSize: 9
-                        font.bold: true
-                        color: root.sourceColor(modelData.source)
-                    }
-                }
+            SourceChip {
+                Layout.preferredWidth: root.sourceColWidth
+                Layout.minimumWidth: root.sourceColWidth
+                Layout.maximumWidth: root.sourceColWidth
+                source: modelData.source !== undefined ? modelData.source : ""
             }
             Label { Layout.fillWidth: true; Layout.preferredWidth: root.nameColPreferred; Layout.minimumWidth: root.nameColMinimum
                     text: modelData.name; font.bold: true; elide: Text.ElideRight }

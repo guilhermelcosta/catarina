@@ -164,6 +164,10 @@ void Backend::seedDefaultCollection()
         // a senha pública do DummyJSON fica no cofre (o arquivo versionado só guarda
         // o secretId), então o exemplo funciona de primeira sem expor a senha
         saveSecret(QStringLiteral("seed-dummyjson-password"), QStringLiteral("emilyspass"));
+        // o seed trouxe um ambiente de exemplo; recarrega (o construtor já rodou
+        // antes da cópia, então sem isto as variáveis globais não apareceriam)
+        loadEnvironments();
+        emit environmentsChanged();
     }
     QFile f(marker);
     if (f.open(QIODevice::WriteOnly))
@@ -250,6 +254,49 @@ QVariantMap Backend::effectiveAuth(const QVariantMap &requestAuth, const QVarian
 {
     return requestAuth.value(QStringLiteral("type")).toString() == QLatin1String("inherit")
                ? collectionAuth : requestAuth;
+}
+
+QVariantMap Backend::requestParts(const QVariantMap &request) const
+{
+    QVariantList headers;
+    for (const QVariant &v : request.value(QStringLiteral("headers")).toList()) {
+        const QVariantMap h = v.toMap();
+        const QString name = h.value(QStringLiteral("name")).toString();
+        if (name.isEmpty() || !h.value(QStringLiteral("enabled"), true).toBool())
+            continue;
+        headers.append(QVariantMap{{QStringLiteral("name"), name},
+                                   {QStringLiteral("value"), h.value(QStringLiteral("value")).toString()}});
+    }
+    auto hasContentType = [&headers]() {
+        for (const QVariant &v : headers)
+            if (v.toMap().value(QStringLiteral("name")).toString()
+                    .compare(QLatin1String("Content-Type"), Qt::CaseInsensitive) == 0)
+                return true;
+        return false;
+    };
+
+    const QVariantMap ah = authHeader(request.value(QStringLiteral("auth")).toMap());
+    if (!ah.isEmpty())
+        headers.append(ah);
+
+    const QString bodyType = request.value(QStringLiteral("bodyType")).toString();
+    QString body;
+    if (bodyType == QLatin1String("urlencoded"))
+        body = encodeForm(request.value(QStringLiteral("fields")).toList());
+    else if (bodyType == QLatin1String("json") || bodyType == QLatin1String("text"))
+        body = request.value(QStringLiteral("body")).toString();
+
+    const QString ct = defaultContentType(bodyType);
+    if (!body.isEmpty() && !ct.isEmpty() && !hasContentType())
+        headers.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("Content-Type")},
+                                   {QStringLiteral("value"), ct}});
+
+    const bool hasBody = (bodyType == QLatin1String("json") || bodyType == QLatin1String("text")
+                          || bodyType == QLatin1String("urlencoded")) && !body.isEmpty();
+    return {{QStringLiteral("method"), request.value(QStringLiteral("method"))},
+            {QStringLiteral("url"), request.value(QStringLiteral("url"))},
+            {QStringLiteral("headers"), headers},
+            {QStringLiteral("body"), hasBody ? body : QString()}};
 }
 
 QString Backend::defaultContentType(const QString &bodyType)
@@ -1088,19 +1135,19 @@ bool Backend::moveEntry(const QString &from, const QString &toFolder)
 
 // ---------------------------------------------------------------- vars de coleção
 
-// lê um .json (com cache validado por mtime); escrever o arquivo invalida sozinho
-QVariantList Backend::cachedJsonList(const QString &path, const QString &key, CachedList &slot) const
+// lê um campo de um .json (com cache validado por mtime); escrever o arquivo invalida sozinho
+QVariant Backend::cachedJson(const QString &path, const QString &key, CachedJson &slot) const
 {
     const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
     if (slot.mtime == mt)
-        return slot.list;
-    QVariantList list;
+        return slot.value;
+    QVariant value;
     QFile f(path);
     if (f.open(QIODevice::ReadOnly))
-        list = QJsonDocument::fromJson(f.readAll()).object().value(key).toArray().toVariantList();
+        value = QJsonDocument::fromJson(f.readAll()).object().value(key).toVariant();
     slot.mtime = mt;
-    slot.list = list;
-    return list;
+    slot.value = value;
+    return value;
 }
 
 QVariantList Backend::collectionVariables(const QString &collection) const
@@ -1108,7 +1155,7 @@ QVariantList Backend::collectionVariables(const QString &collection) const
     if (collection.isEmpty())
         return {};
     const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.variables.json");
-    return cachedJsonList(path, QStringLiteral("vars"), m_colVarsCache[collection]);
+    return cachedJson(path, QStringLiteral("vars"), m_colVarsCache[collection]).toList();
 }
 
 QString Backend::duplicateVariableName(const QVariantList &vars) const
@@ -1150,7 +1197,7 @@ QVariantList Backend::collectionHeaders(const QString &collection) const
     if (collection.isEmpty())
         return {};
     const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.headers.json");
-    return cachedJsonList(path, QStringLiteral("headers"), m_colHeadersCache[collection]);
+    return cachedJson(path, QStringLiteral("headers"), m_colHeadersCache[collection]).toList();
 }
 
 bool Backend::saveCollectionHeaders(const QString &collection, const QVariantList &headers)
@@ -1172,26 +1219,12 @@ bool Backend::saveCollectionHeaders(const QString &collection, const QVariantLis
     return ok;
 }
 
-QVariantMap Backend::cachedJsonMap(const QString &path, const QString &key, CachedMap &slot) const
-{
-    const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
-    if (slot.mtime == mt)
-        return slot.map;
-    QVariantMap map;
-    QFile f(path);
-    if (f.open(QIODevice::ReadOnly))
-        map = QJsonDocument::fromJson(f.readAll()).object().value(key).toObject().toVariantMap();
-    slot.mtime = mt;
-    slot.map = map;
-    return map;
-}
-
 QVariantMap Backend::collectionAuth(const QString &collection) const
 {
     if (collection.isEmpty())
         return {};
     const QString path = m_dir + QLatin1Char('/') + collection + QStringLiteral("/.auth.json");
-    return cachedJsonMap(path, QStringLiteral("auth"), m_colAuthCache[collection]);
+    return cachedJson(path, QStringLiteral("auth"), m_colAuthCache[collection]).toMap();
 }
 
 bool Backend::saveCollectionAuth(const QString &collection, const QVariantMap &auth)

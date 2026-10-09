@@ -10,6 +10,7 @@ import org.kde.kirigami as Kirigami
 ColumnLayout {
     id: root
     property string iconSource: ""
+    property bool iconIsMask: false       // ícone monocromático (segue a cor do tema)
     property string title: ""
     property string message: ""
     property string shortcut: ""          // ex.: "Ctrl+K"
@@ -29,6 +30,8 @@ ColumnLayout {
             anchors.centerIn: parent
             source: root.iconSource
             implicitWidth: 72; implicitHeight: 72
+            isMask: root.iconIsMask
+            color: Kirigami.Theme.textColor
             opacity: 0.35
             visible: root.iconSource.length > 0
         }
