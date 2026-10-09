@@ -19,7 +19,6 @@ class Settings : public QObject
     Q_PROPERTY(QVariantMap shortcuts READ shortcuts NOTIFY shortcutsChanged)
     Q_PROPERTY(QStringList openTabs READ openTabs NOTIFY settingsChanged)
     Q_PROPERTY(int openTabIndex READ openTabIndex NOTIFY settingsChanged)
-    Q_PROPERTY(QStringList pinnedTabs READ pinnedTabs NOTIFY settingsChanged)
 
 public:
     explicit Settings(QObject *parent = nullptr);
@@ -42,9 +41,6 @@ public:
     QStringList openTabs() const;
     int openTabIndex() const;
     Q_INVOKABLE void saveSession(const QStringList &paths, int current);
-    // abas fixadas (não são substituídas por previews)
-    QStringList pinnedTabs() const;
-    Q_INVOKABLE void savePinnedTabs(const QStringList &paths);
 
     // atalhos: só os que foram remapeados ficam guardados (id -> sequência)
     QVariantMap shortcuts() const;

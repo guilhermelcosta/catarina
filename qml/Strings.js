@@ -12,7 +12,6 @@ var t = {
     // ---- barra superior / painéis ----
     history: "History",
     settings: "Settings",
-    add: "Add",
     deleteSelected: "Delete selected",
     moreActions: "More actions",
     hideCollections: "Hide collections panel",

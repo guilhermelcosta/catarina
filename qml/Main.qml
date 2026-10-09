@@ -43,6 +43,10 @@ Kirigami.ApplicationWindow {
     property int collectionTab: 0
     property bool collectionHeadersDirty: false
     property bool collectionAuthDirty: false
+    // estado salvo da coleção, para o dirty cair sozinho ao desfazer na mão
+    property string collectionVarsBaseline: ""
+    property string collectionHeadersBaseline: ""
+    property string collectionAuthBaseline: ""
 
     // ---- abas ----
     ListModel { id: tabsModel }
@@ -69,6 +73,11 @@ Kirigami.ApplicationWindow {
     property string responseCookies: ""
     property bool currentDirty: false
     property int paramsRevision: 0   // bump nas edições da tabela de params (preview da URL)
+    // cores dos tokens JSON (tema escuro/claro) usadas pelos editores (corpo e resposta)
+    readonly property bool darkTheme: Kirigami.Theme.backgroundColor.hsvValue < 0.5
+    readonly property color jsonStringColor: darkTheme ? "#98c379" : "#2e7d32"
+    readonly property color jsonNumberColor: darkTheme ? "#d19a66" : "#b26a00"
+    readonly property color jsonKeywordColor: darkTheme ? "#d19a66" : "#b26a00"
 
     ListModel { id: paramsModel }
     ListModel { id: headersModel }
@@ -110,7 +119,6 @@ Kirigami.ApplicationWindow {
         default:       return Kirigami.Theme.textColor;
         }
     }
-    function methodBg(m) { var c = methodColor(m); return Qt.rgba(c.r, c.g, c.b, 0.18); }
     function parentOf(p) { var i = p.lastIndexOf("/"); return i < 0 ? "" : p.substring(0, i); }
     function collectionOf(p) { var i = p.indexOf("/"); return i < 0 ? p : p.substring(0, i); }
     function collectionNames() {
@@ -227,6 +235,13 @@ Kirigami.ApplicationWindow {
                  auth: currentAuth(),
                  vars: modelToArray(requestVarsModel) };
     }
+    // estado atual do editor num JSON canônico (compara com o salvo p/ dirty)
+    function requestSnapshot() { return Util.stableStringify(collectRequest()); }
+    function recomputeCollectionDirty() {
+        collectionVarsDirty = Util.stableStringify(modelToArray(collectionVarsModel)) !== collectionVarsBaseline;
+        collectionHeadersDirty = Util.stableStringify(modelToArray(collectionHeadersModel)) !== collectionHeadersBaseline;
+        collectionAuthDirty = Util.stableStringify(collectionAuthEditor.value()) !== collectionAuthBaseline;
+    }
     function fillModels(list, model) {
         model.clear();
         var a = list !== undefined ? list : [];
@@ -253,6 +268,9 @@ Kirigami.ApplicationWindow {
         collectionAuthDirty = false;
         refreshResolved();
         updateVarsWarnings();
+        // aba limpa: o estado exibido vira a referência do "salvo" (desfazer zera o dirty)
+        if (currentTab >= 0 && currentTab < tabsModel.count && tabsModel.get(currentTab).dirty !== true)
+            tabsModel.setProperty(currentTab, "savedJson", requestSnapshot());
     }
     function clearEditor() {
         methodBox.currentIndex = 0;
@@ -366,7 +384,7 @@ Kirigami.ApplicationWindow {
         }
         findMatchIndex = all.indexOf(idx) + 1;
         var end = idx + q.length;
-        responseBody.deselect(0, responseBody.length);
+        responseBody.deselect();
         responseBody.select(idx, end);
         var r = responseBody.positionToRectangle(idx);
         var targetY = r.y - (bodyScroll.height / 2 - r.height / 2);
@@ -459,13 +477,15 @@ Kirigami.ApplicationWindow {
         }
     }
     function markDirty() {
-        if (currentTab >= 0 && currentTab < tabsModel.count
-                && !tabsModel.get(currentTab).isCollection && !tabsModel.get(currentTab).isEnvironment
-                && !tabsModel.get(currentTab).isSettings) {
-            tabsModel.setProperty(currentTab, "dirty", true);
+        if (currentTab < 0 || currentTab >= tabsModel.count) return;
+        var t = tabsModel.get(currentTab);
+        if (t.isCollection || t.isEnvironment || t.isSettings) return;
+        // dirty = estado atual != estado salvo; desfazer na mão volta a ficar limpo
+        var changed = requestSnapshot() !== t.savedJson;
+        tabsModel.setProperty(currentTab, "dirty", changed);
+        if (changed)
             tabsModel.setProperty(currentTab, "preview", false);   // editar tira a aba da prévia (fica permanente), como no VS Code
-        }
-        currentDirty = true;
+        currentDirty = changed;
         resolvedDebounce.restart();   // debounce: não re-resolve a cada tecla
     }
     // expande as pastas acima de relPath e o seleciona na árvore
@@ -513,7 +533,7 @@ Kirigami.ApplicationWindow {
             currentTab = target;
         } else {
             tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
-                               method: r.method, dirty: false, dataJson: JSON.stringify(r),
+                               method: r.method, dirty: false, dataJson: JSON.stringify(r), savedJson: "",
                                isCollection: false, isEnvironment: false, isSettings: false,
                                pinned: false, preview: true });
             currentTab = tabsModel.count - 1;
@@ -556,7 +576,8 @@ Kirigami.ApplicationWindow {
         if (idx < 0) {
             snapshotCurrent();
             tabsModel.append({ relPath: "__environment__", name: Strings.t.environments, method: "",
-                               dirty: false, dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
+                               dirty: false, dataJson: "", savedJson: "",
+                               isCollection: false, isEnvironment: true, isSettings: false,
                                pinned: false, preview: false });
             idx = tabsModel.count - 1;
         }
@@ -573,7 +594,8 @@ Kirigami.ApplicationWindow {
         if (idx < 0) {
             snapshotCurrent();
             tabsModel.append({ relPath: "__settings__", name: Strings.t.settings, method: "",
-                               dirty: false, dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
+                               dirty: false, dataJson: "", savedJson: "",
+                               isCollection: false, isEnvironment: false, isSettings: true,
                                pinned: false, preview: false });
             idx = tabsModel.count - 1;
         }
@@ -614,42 +636,35 @@ Kirigami.ApplicationWindow {
     }
     // restaura as abas salvas sem aplicar cada uma no editor (só a ativa é aplicada depois)
     function restoreSessionTabs(paths) {
-        var pinnedList = settings.pinnedTabs;
         for (var i = 0; i < paths.length; i++) {
             var rp = paths[i];
             if (rp.length === 0) continue;
             if (rp === "__environment__") {
                 tabsModel.append({ relPath: rp, name: Strings.t.environments, method: "", dirty: false,
-                                   dataJson: "", isCollection: false, isEnvironment: true, isSettings: false,
+                                   dataJson: "", savedJson: "", isCollection: false, isEnvironment: true, isSettings: false,
                                    pinned: false, preview: false });
                 continue;
             }
             if (rp === "__settings__") {
                 tabsModel.append({ relPath: rp, name: Strings.t.settings, method: "", dirty: false,
-                                   dataJson: "", isCollection: false, isEnvironment: false, isSettings: true,
+                                   dataJson: "", savedJson: "", isCollection: false, isEnvironment: false, isSettings: true,
                                    pinned: false, preview: false });
                 continue;
             }
             if (backend.isCollection(rp)) {
                 tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
-                                   method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false,
+                                   method: "", dirty: false, dataJson: "", savedJson: "", isCollection: true, isEnvironment: false, isSettings: false,
                                    pinned: false, preview: false });
                 continue;
             }
             var r = backend.loadRequest(rp);
             if (r.method === undefined) continue;
             r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
+            // só abas fixadas são persistidas, então restauram já fixadas
             tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
-                               method: r.method, dirty: false, dataJson: JSON.stringify(r),
+                               method: r.method, dirty: false, dataJson: JSON.stringify(r), savedJson: Util.stableStringify(r),
                                isCollection: false, isEnvironment: false, isSettings: false,
-                               pinned: false, preview: false });
-        }
-        // restaura o estado "fixada" (sobrevive ao restart)
-        for (var k = 0; k < tabsModel.count; k++) {
-            if (pinnedList.indexOf(tabsModel.get(k).relPath) >= 0) {
-                tabsModel.setProperty(k, "pinned", true);
-                tabsModel.setProperty(k, "preview", false);
-            }
+                               pinned: true, preview: false });
         }
     }
     // ---- reordenar abas por drag and drop ----
@@ -714,13 +729,18 @@ Kirigami.ApplicationWindow {
         openRequest(closedTabs.pop());
     }
 
+    // abre o diálogo de novo item: pasta (dentro da seleção) ou coleção (raiz)
+    function openNewFolder() { nameDialog.base = root.targetFolder(); nameDialog.asCollection = false; nameDialog.open(); }
+    function openNewCollection() { nameDialog.base = ""; nameDialog.asCollection = true; nameDialog.open(); }
+
     // abre (ou foca) a aba da coleção/pasta
     function openCollection(relPath) {
         var existing = tabIndexFor(relPath, true);
         if (existing >= 0) { switchTab(existing); return; }
         snapshotCurrent();
         tabsModel.append({ relPath: relPath, name: relPath.split("/").pop(),
-                           method: "", dirty: false, dataJson: "", isCollection: true, isEnvironment: false, isSettings: false,
+                           method: "", dirty: false, dataJson: "", savedJson: "",
+                           isCollection: true, isEnvironment: false, isSettings: false,
                            pinned: false, preview: false });
         currentTab = tabsModel.count - 1;
         loadCollection(relPath);
@@ -771,6 +791,9 @@ Kirigami.ApplicationWindow {
             collectionAuthEditor.load(backend.collectionAuth(relPath));
         }
         refreshCollectionResolved();
+        collectionVarsBaseline = Util.stableStringify(modelToArray(collectionVarsModel));
+        collectionHeadersBaseline = Util.stableStringify(modelToArray(collectionHeadersModel));
+        collectionAuthBaseline = Util.stableStringify(collectionAuthEditor.value());
         collectionVarsDirty = false;
         collectionHeadersDirty = false;
         collectionAuthDirty = false;
@@ -783,6 +806,7 @@ Kirigami.ApplicationWindow {
         var dup = backend.duplicateVariableName(modelToArray(collectionVarsModel));
         if (dup.length > 0) { notify(Strings.duplicateInCollection(dup)); return; }
         backend.saveCollectionVariables(collectionPath, modelToArray(collectionVarsModel));
+        collectionVarsBaseline = Util.stableStringify(modelToArray(collectionVarsModel));
         collectionVarsDirty = false;
         refreshCollectionResolved();   // visão geral reflete secret/normal sem precisar reabrir
         notify(Strings.t.collectionVarsSaved);
@@ -790,30 +814,35 @@ Kirigami.ApplicationWindow {
     function revertCollectionVars() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;
         fillModels(backend.withResolvedSecrets(backend.collectionVariables(collectionPath)), collectionVarsModel);
+        collectionVarsBaseline = Util.stableStringify(modelToArray(collectionVarsModel));
         collectionVarsDirty = false;
         notify(Strings.t.changesDiscarded);
     }
     function saveCollectionHeaders() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem cabeçalhos
         backend.saveCollectionHeaders(collectionPath, modelToArray(collectionHeadersModel));
+        collectionHeadersBaseline = Util.stableStringify(modelToArray(collectionHeadersModel));
         collectionHeadersDirty = false;
         notify(Strings.t.collectionHeadersSaved);
     }
     function revertCollectionHeaders() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;
         fillModels(backend.withResolvedSecrets(backend.collectionHeaders(collectionPath)), collectionHeadersModel);
+        collectionHeadersBaseline = Util.stableStringify(modelToArray(collectionHeadersModel));
         collectionHeadersDirty = false;
         notify(Strings.t.changesDiscarded);
     }
     function saveCollectionAuth() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem auth
         backend.saveCollectionAuth(collectionPath, collectionAuthEditor.value());
+        collectionAuthBaseline = Util.stableStringify(collectionAuthEditor.value());
         collectionAuthDirty = false;
         notify(Strings.t.collectionAuthSaved);
     }
     function revertCollectionAuth() {
         if (collectionPath.length === 0 || collectionIsSubfolder) return;
         collectionAuthEditor.load(backend.collectionAuth(collectionPath));
+        collectionAuthBaseline = Util.stableStringify(collectionAuthEditor.value());
         collectionAuthDirty = false;
         notify(Strings.t.changesDiscarded);
     }
@@ -836,6 +865,7 @@ Kirigami.ApplicationWindow {
         if (dup.length > 0) { notify(Strings.duplicateInRequest(dup)); return; }
         if (backend.saveRequest(t.relPath, collectRequest())) {
             tabsModel.setProperty(currentTab, "method", methodBox.currentText);
+            tabsModel.setProperty(currentTab, "savedJson", requestSnapshot());
             tabsModel.setProperty(currentTab, "dirty", false);
             currentDirty = false;
             refreshResolved();
@@ -934,7 +964,6 @@ Kirigami.ApplicationWindow {
         for (var i = 0; i < tabsModel.count; i++) arr.push(tabsModel.get(i));
         var s = Util.sessionPaths(arr, currentTab);
         settings.saveSession(s.paths, s.current);
-        settings.savePinnedTabs(s.paths);   // tudo que sobra é fixado → restore reaplica o pino
     }
 
     function hasDirtyTabs() {
@@ -992,42 +1021,8 @@ Kirigami.ApplicationWindow {
             curlImportDialog.close();
         }
     }
-    // ponytail: base64/formatação/parse de cURL vivem em Util.js (domínio puro).
-
-    function requestParts() {
-        var r = collectRequest();
-        var headers = [];
-        for (var i = 0; i < r.headers.length; i++)
-            if (r.headers[i].enabled && r.headers[i].name.length > 0)
-                headers.push({ name: r.headers[i].name, value: r.headers[i].value });
-        var a = currentAuth();
-        if (a.type === "bearer" && a.token.length > 0)
-            headers.push({ name: "Authorization", value: "Bearer " + a.token });
-        else if (a.type === "basic")
-            headers.push({ name: "Authorization", value: "Basic " + Util.b64(a.user + ":" + a.pass) });
-        else if (a.type === "apikey" && a.key.length > 0)
-            headers.push({ name: a.key, value: a.value });
-        function hasCT() {
-            for (var k = 0; k < headers.length; k++)
-                if (headers[k].name.toLowerCase() === "content-type") return true;
-            return false;
-        }
-        var body = r.body;
-        if (r.bodyType === "urlencoded") {
-            var parts = [];
-            for (var j = 0; j < r.fields.length; j++) {
-                var f = r.fields[j];
-                if (f.enabled !== false && f.name.length > 0)
-                    parts.push(encodeURIComponent(f.name) + "=" + encodeURIComponent(f.value));
-            }
-            body = parts.join("&");
-            if (body.length > 0 && !hasCT()) headers.push({ name: "Content-Type", value: "application/x-www-form-urlencoded" });
-        } else if (r.bodyType === "json" && r.body.length > 0 && !hasCT()) {
-            headers.push({ name: "Content-Type", value: "application/json" });
-        }
-        var hasBody = (r.bodyType === "json" || r.bodyType === "text" || r.bodyType === "urlencoded") && body.length > 0;
-        return { method: r.method, url: r.url, headers: headers, body: hasBody ? body : "" };
-    }
+    // ponytail: base64/formatação/parse de cURL vivem em Util.js (domínio puro);
+    // as partes efetivas (auth + Content-Type) vêm de Backend::requestParts.
 
     // ================= ciclo de vida =================
     Component.onCompleted: {
@@ -1100,7 +1095,8 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.smallSpacing
                 spacing: Kirigami.Units.smallSpacing
-                Kirigami.Icon { source: "qrc:/icons/katarina.svg"; implicitWidth: 22; implicitHeight: 22 }
+                Kirigami.Icon { source: "qrc:/icons/katarina.svg"; implicitWidth: 22; implicitHeight: 22
+                                isMask: true; color: Kirigami.Theme.textColor }
                 Label { text: Strings.t.appName; font.bold: true }
                 Item { Layout.fillWidth: true }
                 // grupo de painéis: esquerda (coleções) e direita (resposta)
@@ -1237,11 +1233,10 @@ Kirigami.ApplicationWindow {
                                 spacing: 4
                                 Item { Layout.preferredWidth: (model.depth || 0) * 12 + 16; Layout.preferredHeight: 1 }
                                 Kirigami.Icon { visible: model.isFolder; source: (model.depth || 0) === 0 ? "folder-documents" : "folder"; implicitWidth: 16; implicitHeight: 16; color: Kirigami.Theme.textColor }
-                                Rectangle {
+                                MethodBadge {
                                     visible: !model.isFolder
-                                    implicitWidth: badge.implicitWidth + 8; implicitHeight: 16; radius: 3
-                                    color: root.methodBg(model.method)
-                                    Text { id: badge; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 9; font.bold: true }
+                                    method: model.method
+                                    color: root.methodColor(model.method)
                                 }
                                 Label { Layout.fillWidth: true; text: model.name; elide: Text.ElideRight }
                             }
@@ -1410,11 +1405,13 @@ Kirigami.ApplicationWindow {
                                             anchors.left: parent.left
                                             anchors.leftMargin: 10
                                             spacing: 6
-                                            Rectangle {
+                                            MethodBadge {
                                                 visible: !model.isCollection && !model.isEnvironment && !model.isSettings
-                                                implicitWidth: tabBadge.implicitWidth + 8; implicitHeight: 14; radius: 3
-                                                color: root.methodBg(model.method)
-                                                Text { id: tabBadge; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 8; font.bold: true }
+                                                method: model.method
+                                                color: root.methodColor(model.method)
+                                                pixelSize: 8
+                                                badgeHeight: 14
+                                                Layout.alignment: Qt.AlignVCenter
                                             }
                                             Kirigami.Icon {
                                                 visible: model.isCollection || model.isEnvironment || model.isSettings
@@ -1558,28 +1555,16 @@ Kirigami.ApplicationWindow {
                                         Layout.fillWidth: true
                                         implicitHeight: Kirigami.Units.gridUnit * 2
 
-                                        TextArea {
+                                        VarField {
                                             id: urlField
                                             anchors.fill: parent
                                             placeholderText: Strings.t.urlExample
-                                            wrapMode: TextEdit.NoWrap
-                                            selectByMouse: true
                                             font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                                             topPadding: 5; bottomPadding: 5; leftPadding: 8; rightPadding: 8
+                                            resolved: root.resolvedVars
+                                            collection: root.currentCollection
                                             onTextEdited: root.markDirty()
-                                            Keys.onPressed: function (e) {
-                                                // se o popup de variáveis está aberto, Enter insere a variável
-                                                if (urlCompleter.handleKey(e)) { e.accepted = true; return; }
-                                                if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; root.doSend(); }
-                                            }
-                                            Component.onCompleted: varSupport.attach(urlField.textDocument, "#c678dd", true)
-                                            VarCompleter {
-                                                id: urlCompleter
-                                                anchors.fill: parent
-                                                target: urlField
-                                                resolved: root.resolvedVars
-                                                collection: root.currentCollection
-                                            }
+                                            onAccepted: root.doSend()
                                         }
 
                                         // Preview da query anexada pelos params ativos (o que o buildUrl
@@ -1743,13 +1728,9 @@ Kirigami.ApplicationWindow {
                                                 font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                                                 wrapMode: TextEdit.Wrap
                                                 onTextEdited: root.markDirty()
-                                                Component.onCompleted: {
-                                                    var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
+                                                Component.onCompleted:
                                                     varSupport.attach(bodyArea.textDocument, "#c678dd", true, true,
-                                                        dark ? "#98c379" : "#2e7d32",   // string
-                                                        dark ? "#d19a66" : "#b26a00",   // número
-                                                        dark ? "#d19a66" : "#b26a00");  // true/false/null
-                                                }
+                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor)
                                                 VarCompleter {
                                                     id: bodyCompleter
                                                     anchors.fill: parent
@@ -2008,13 +1989,9 @@ Kirigami.ApplicationWindow {
                                                 wrapMode: TextEdit.Wrap
                                                 selectionColor: Kirigami.Theme.highlightColor
                                                 selectedTextColor: Kirigami.Theme.highlightedTextColor
-                                                Component.onCompleted: {
-                                                    var dark = Kirigami.Theme.backgroundColor.hsvValue < 0.5;
+                                                Component.onCompleted:
                                                     varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
-                                                        dark ? "#98c379" : "#2e7d32",
-                                                        dark ? "#d19a66" : "#b26a00",
-                                                        dark ? "#d19a66" : "#b26a00");
-                                                }
+                                                        root.jsonStringColor, root.jsonNumberColor, root.jsonKeywordColor)
                                             }
                                         }
                                         JsonTree { id: jsonTree; Layout.fillWidth: true; Layout.fillHeight: true }
@@ -2041,6 +2018,7 @@ Kirigami.ApplicationWindow {
                                         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                                         visible: responseBody.text.length === 0 && !root.sending && respTabBar.currentIndex === 0
                                         iconSource: "qrc:/icons/katarina.svg"
+                                        iconIsMask: true
                                         title: Strings.t.noResponseYet
                                         message: Strings.t.noResponseHint
                                         shortcut: "Ctrl+K"
@@ -2152,10 +2130,9 @@ Kirigami.ApplicationWindow {
                                             onClicked: { root.revealPath(modelData.relPath); root.openRequest(modelData.relPath); }
                                             contentItem: RowLayout {
                                                 spacing: 6
-                                                Rectangle {
-                                                    implicitWidth: rbadge.implicitWidth + 8; implicitHeight: 16; radius: 3
-                                                    color: root.methodBg(modelData.method)
-                                                    Text { id: rbadge; anchors.centerIn: parent; text: modelData.method; color: root.methodColor(modelData.method); font.pixelSize: 9; font.bold: true }
+                                                MethodBadge {
+                                                    method: modelData.method
+                                                    color: root.methodColor(modelData.method)
                                                 }
                                                 Label { Layout.fillWidth: true; text: modelData.name }
                                             }
@@ -2191,7 +2168,7 @@ Kirigami.ApplicationWindow {
                                         resolved: root.collectionResolvedVars
                                         collection: root.collectionPath
                                         onAddRequested: collectionHeadersModel.append({ name: "", value: "", enabled: true })
-                                        onEdited: root.collectionHeadersDirty = true
+                                        onEdited: root.recomputeCollectionDirty()
                                     }
                                 }
                             }
@@ -2225,7 +2202,7 @@ Kirigami.ApplicationWindow {
                                         resolved: root.collectionResolvedVars
                                         collection: root.collectionPath
                                         onAddRequested: collectionVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "" })
-                                        onEdited: { root.collectionVarsDirty = true; root.refreshCollectionResolved(); root.updateVarsWarnings(); }
+                                        onEdited: { root.recomputeCollectionDirty(); root.refreshCollectionResolved(); root.updateVarsWarnings(); }
                                     }
                                 }
                             }
@@ -2254,7 +2231,7 @@ Kirigami.ApplicationWindow {
                                         Layout.topMargin: Kirigami.Units.smallSpacing
                                         resolvedVars: root.collectionResolvedVars
                                         collection: root.collectionPath
-                                        onEdited: root.collectionAuthDirty = true
+                                        onEdited: root.recomputeCollectionDirty()
                                     }
                                 }
                             }
@@ -2281,6 +2258,7 @@ Kirigami.ApplicationWindow {
                             property string editing: ""
                             property string viewCollection: ""
                             property bool envVarsDirty: false
+                            property string envVarsBaseline: ""
                             property string pendingEnv: ""
                             property var resolvedVars: []   // p/ o autocomplete das variáveis do ambiente
 
@@ -2295,6 +2273,18 @@ Kirigami.ApplicationWindow {
                                 }
                                 resolvedVars = backend.resolvedVariables("", arr);
                             }
+                            // estado atual das variáveis (inclui escopo) num JSON canônico
+                            function snapshot() {
+                                var arr = [];
+                                for (var i = 0; i < envVarsModel.count; i++) {
+                                    var v = envVarsModel.get(i);
+                                    arr.push({ name: v.name, value: v.value, enabled: v.enabled !== false,
+                                               secret: v.secret === true, secretId: v.secretId,
+                                               scope: v.scope, collections: v.collections });
+                                }
+                                return Util.stableStringify(arr);
+                            }
+                            function recomputeDirty() { envVarsDirty = snapshot() !== envVarsBaseline; }
                             function openFor(name) {
                                 if (name.length === 0 && root.envList.length > 0) name = root.envList[0].name;
                                 viewCollection = "";
@@ -2304,7 +2294,7 @@ Kirigami.ApplicationWindow {
                                 editing = name;
                                 envVarsDirty = false;
                                 envVarsModel.clear();
-                                if (name.length === 0) { resolvedVars = []; return; }
+                                if (name.length === 0) { resolvedVars = []; envVarsBaseline = snapshot(); return; }
                                 var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // valor real do cofre
                                 for (var i = 0; i < vars.length; i++) {
                                     var v = vars[i];
@@ -2317,6 +2307,7 @@ Kirigami.ApplicationWindow {
                                 }
                                 refreshResolved();
                                 root.updateVarsWarnings();
+                                envVarsBaseline = snapshot();
                             }
                             function save() {
                                 if (editing.length === 0) return;
@@ -2477,7 +2468,7 @@ Kirigami.ApplicationWindow {
                                         }
                                         onScopeRequested: function(i, gx, gy) { scopePopup.openFor(i, gx, gy); }
                                         onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
-                                        onEdited: { envScreen.envVarsDirty = true; envScreen.refreshResolved(); root.updateVarsWarnings(); }
+                                        onEdited: { envScreen.recomputeDirty(); envScreen.refreshResolved(); root.updateVarsWarnings(); }
                                     }
                                 }
                             }
@@ -2615,7 +2606,7 @@ Kirigami.ApplicationWindow {
     // ================= menus =================
     Menu {
         id: addMenu
-        MenuItem { text: Strings.t.newCollection; icon.name: "folder-documents"; onTriggered: collectionDialog.open() }
+        MenuItem { text: Strings.t.newCollection; icon.name: "folder-documents"; onTriggered: root.openNewCollection() }
         MenuItem { text: Strings.t.newRequest; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.selectedIsFolder ? root.selectedPath : "") }
         MenuSeparator {}
         MenuItem { text: Strings.t.importCurl; icon.name: "document-import"; onTriggered: { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } }
@@ -2625,7 +2616,7 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.newRequestHere; icon.name: "document-new"; onTriggered: newReqDialog.openIn(root.targetFolder()) }
         MenuItem {
             text: Strings.t.newFolderHere; icon.name: "folder-new"
-            onTriggered: { root.selectedPath = root.targetFolder(); root.selectedIsFolder = root.selectedPath.length > 0; folderDialog.open(); }
+            onTriggered: { root.selectedPath = root.targetFolder(); root.selectedIsFolder = root.selectedPath.length > 0; root.openNewFolder(); }
         }
         MenuSeparator {}
         MenuItem { text: Strings.t.moveToEllipsis; icon.name: "edit-move"; enabled: root.selectedPath.length > 0; onTriggered: moveDialog.openFor(root.selectedPath) }
@@ -2697,48 +2688,31 @@ Kirigami.ApplicationWindow {
     }
 
     Dialog {
-        id: folderDialog
-        title: Strings.t.newFolderTitle; anchors.centerIn: parent; modal: true; width: 340
-        header: DialogHeader { dialogTitle: folderDialog.title }
+        id: nameDialog
+        property string base: ""        // pasta onde criar ("" = raiz)
+        property bool asCollection: false
+        title: asCollection ? Strings.t.newCollectionTitle : Strings.t.newFolderTitle
+        anchors.centerIn: parent; modal: true; width: 340
+        header: DialogHeader { dialogTitle: nameDialog.title }
         // rodapé explícito (em vez de standardButtons) para as setas navegarem entre os botões
         function accept() {
-            var n = folderName.text.trim();
-            if (n.length === 0) { folderName.forceActiveFocus(); return; }
-            var base = root.targetFolder();
+            var n = nameField.text.trim();
+            if (n.length === 0) { nameField.forceActiveFocus(); return; }
             backend.createFolder((base.length > 0 ? base + "/" : "") + n);
-            root.reloadTree(); folderName.text = "";
+            root.reloadTree(); nameField.text = "";
             close();
         }
-        onOpened: folderName.forceActiveFocus()
+        onOpened: nameField.forceActiveFocus()
         contentItem: ColumnLayout {
             spacing: Kirigami.Units.smallSpacing
-            TextField { id: folderName; Layout.fillWidth: true; placeholderText: Strings.t.folderNamePlaceholder; KeyNavigation.down: folderOk; onAccepted: folderDialog.accept() }
-            DialogActions {
-                Button { id: folderCancel; text: Strings.t.cancel; KeyNavigation.right: folderOk; KeyNavigation.up: folderName; onClicked: folderDialog.close() }
-                Button { id: folderOk; text: Strings.t.create; Accessible.defaultButton: true; KeyNavigation.left: folderCancel; KeyNavigation.up: folderName; onClicked: folderDialog.accept() }
+            TextField {
+                id: nameField; Layout.fillWidth: true
+                placeholderText: nameDialog.asCollection ? Strings.t.collectionNamePlaceholder : Strings.t.folderNamePlaceholder
+                KeyNavigation.down: nameOk; onAccepted: nameDialog.accept()
             }
-        }
-    }
-
-    Dialog {
-        id: collectionDialog
-        title: Strings.t.newCollectionTitle; anchors.centerIn: parent; modal: true; width: 340
-        header: DialogHeader { dialogTitle: collectionDialog.title }
-        // rodapé explícito (em vez de standardButtons) para as setas navegarem entre os botões
-        function accept() {
-            var n = collectionName.text.trim();
-            if (n.length === 0) { collectionName.forceActiveFocus(); return; }
-            backend.createFolder(n);
-            root.reloadTree(); collectionName.text = "";
-            close();
-        }
-        onOpened: collectionName.forceActiveFocus()
-        contentItem: ColumnLayout {
-            spacing: Kirigami.Units.smallSpacing
-            TextField { id: collectionName; Layout.fillWidth: true; placeholderText: Strings.t.collectionNamePlaceholder; KeyNavigation.down: collectionOk; onAccepted: collectionDialog.accept() }
             DialogActions {
-                Button { id: collectionCancel; text: Strings.t.cancel; KeyNavigation.right: collectionOk; KeyNavigation.up: collectionName; onClicked: collectionDialog.close() }
-                Button { id: collectionOk; text: Strings.t.create; Accessible.defaultButton: true; KeyNavigation.left: collectionCancel; KeyNavigation.up: collectionName; onClicked: collectionDialog.accept() }
+                Button { id: nameCancel; text: Strings.t.cancel; KeyNavigation.right: nameOk; KeyNavigation.up: nameField; onClicked: nameDialog.close() }
+                Button { id: nameOk; text: Strings.t.create; Accessible.defaultButton: true; KeyNavigation.left: nameCancel; KeyNavigation.up: nameField; onClicked: nameDialog.accept() }
             }
         }
     }
@@ -2808,7 +2782,7 @@ Kirigami.ApplicationWindow {
         id: curlExportDialog
         title: Strings.t.exportTitle; anchors.centerIn: parent; modal: true; width: 640; height: 400
         header: DialogHeader { dialogTitle: curlExportDialog.title }
-        function refresh() { curlExportArea.text = Util.exportCode(root.requestParts()); }
+        function refresh() { curlExportArea.text = Util.exportCode(backend.requestParts(root.collectRequest())); }
         contentItem: ColumnLayout {
             spacing: Kirigami.Units.smallSpacing
             RowLayout {
@@ -2974,10 +2948,9 @@ Kirigami.ApplicationWindow {
                     onClicked: { historyDialog.close(); newReqDialog.openPrefilled(root.targetFolder(), model.method, model.url); }
                     contentItem: RowLayout {
                         spacing: 6
-                        Rectangle {
-                            implicitWidth: hb.implicitWidth + 8; implicitHeight: 16; radius: 3
-                            color: root.methodBg(model.method)
-                            Text { id: hb; anchors.centerIn: parent; text: model.method; color: root.methodColor(model.method); font.pixelSize: 9; font.bold: true }
+                        MethodBadge {
+                            method: model.method
+                            color: root.methodColor(model.method)
                         }
                         Label { Layout.fillWidth: true; text: model.url; elide: Text.ElideMiddle }
                         Label { text: model.status; opacity: 0.7 }
@@ -3114,7 +3087,7 @@ Kirigami.ApplicationWindow {
                 envVarsModel.setProperty(rowIndex, "scope", "collections");
                 envVarsModel.setProperty(rowIndex, "collections", sel.join(","));
             }
-            envScreen.envVarsDirty = true;
+            envScreen.recomputeDirty();
         }
         ColumnLayout {
             anchors.fill: parent
@@ -3239,8 +3212,8 @@ Kirigami.ApplicationWindow {
         function openPalette() {
             allActions = [
                 { group: Strings.t.paletteGroupGlobal, label: Strings.t.newRequest, run: function () { newReqDialog.openIn(root.targetFolder()); } },
-                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newFolder, run: function () { folderDialog.open(); } },
-                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newCollection, run: function () { collectionDialog.open(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newFolder, run: function () { root.openNewFolder(); } },
+                { group: Strings.t.paletteGroupGlobal, label: Strings.t.newCollection, run: function () { root.openNewCollection(); } },
                 { group: Strings.t.paletteGroupGlobal, label: Strings.t.importCurl, run: function () { curlImportDialog.hint = ""; curlImportArea.text = ""; curlImportDialog.open(); } },
                 { group: Strings.t.paletteGroupGlobal, label: Strings.t.history, run: function () { historyDialog.openAndLoad(); } },
                 { group: Strings.t.paletteGroupGlobal, label: Strings.t.settingsEllipsis, run: function () { root.openSettingsTab(); } },

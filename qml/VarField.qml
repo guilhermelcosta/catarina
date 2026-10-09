@@ -13,6 +13,7 @@ TextArea {
     property string collection: ""     // para explicar variáveis fora de escopo
     property string errorText: ""      // mensagem mostrada no popup de hover (ex.: nome repetido)
     property var tabHandler: null      // function(dir): navegação Tab entre células (KvTable); null = nativo
+    signal accepted()                  // Enter/Return (célula de uma linha): consumido, o chamador decide
 
     wrapMode: TextEdit.NoWrap
     selectByMouse: true
@@ -45,8 +46,8 @@ TextArea {
     Keys.onPressed: function (e) {
         if (completer.handleKey(e)) { e.accepted = true; return; }
         // campo de uma linha (TextArea por causa do highlight): Enter não pode
-        // inserir quebra de linha no meio do texto
-        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; return; }
+        // inserir quebra de linha no meio do texto; emite accepted() para o chamador
+        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; root.accepted(); return; }
         // Tab/Shift+Tab: quando a tabela fornece um tabHandler, navega célula a célula;
         // fora da tabela deixa passar (navegação nativa de foco)
         if ((e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) && root.tabHandler) {
