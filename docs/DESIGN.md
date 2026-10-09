@@ -172,7 +172,8 @@ Todos em `qml/`:
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
   título, mensagem (`opacity 0.6`), atalho e ação opcional (`highlighted`). Fundo transparente
-  (herda o painel). **Todo placeholder usa este componente** — centralize com
+  (herda o painel). Para ícone monocromático próprio (ex.: `katarina.svg`), passe `iconIsMask: true`
+  (fica com a cor do tema). **Todo placeholder usa este componente** — centralize com
   `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
 - **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
@@ -244,7 +245,9 @@ Todos em `qml/`:
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
 - **Coleção de exemplo**: no primeiro uso (storage vazio, marca `.katarina/.seeded`) o backend copia
   `seed/` (recursos `:/seed`, embutidos no binário) — a coleção **DummyJSON** de demonstração
-  (GET/POST/PUT/DELETE, params, variáveis e auth herdada). Não sobrescreve quem já tem coleções e
+  (GET/POST/PUT/DELETE, params, variáveis e auth herdada) e um **ambiente Demo** com variável
+  global (`locale`), para o exemplo já mostrar os três tipos de variável (global/coleção/request).
+  Não sobrescreve quem já tem coleções e
   não recria depois que o usuário apaga. Só o app chama (`main.cpp`), não o construtor do `Backend`.
 - **Preview da query na barra de URL**: os params ativos aparecem concatenados logo após o texto
   digitado, em destaque (`Kirigami.Theme.highlightColor`, fundo a 14%), para mostrar o que será
@@ -263,6 +266,12 @@ Todos em `qml/`:
 - **Origem de variável**: valores `"global"` / `"collection"` / `"request"` (usados por lógica e
   exibidos nos chips de origem). Na visão geral da coleção, as variáveis em edição são resolvidas
   por `Backend::resolvedCollectionVariables` para manter a origem `"collection"` (não `"request"`).
+- **Alterações não salvas (dirty)**: o indicador de rascunho (SaveBar/aba) só aparece quando o
+  estado atual **difere do salvo** — mudar e desfazer na mão zera o dirty. A comparação usa
+  `Util.stableStringify` (JSON canônico, ignora a ordem das chaves). Cada escopo guarda o seu
+  baseline: `savedJson` da aba de request, `collectionVarsBaseline`/`Headers`/`Auth` e
+  `envVarsBaseline`. Ao editar, **recompute** contra o baseline (não ligue um booleano); ao
+  carregar/salvar/reverter, atualize o baseline.
 - **Navegação por teclado**:
   - `KvTable`: Tab/Shift+Tab andam célula a célula (`moveFocus`), por linha/coluna; campos
     `VarField` recebem `tabHandler` e o delegate cobre os demais controles.

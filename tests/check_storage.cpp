@@ -723,6 +723,10 @@ int main(int argc, char **argv)
         }
         CHECK(hasDummy);
         CHECK(tops == 1);
+        // o seed também traz um ambiente de exemplo (dá a variável de origem "global")
+        CHECK(bSeed.environments().size() == 1);
+        CHECK(bSeed.activeEnvironment() == QStringLiteral("Demo"));
+        CHECK(bSeed.environmentVariables(QStringLiteral("Demo")).size() == 1);
         // o request semeado veio com URL e método
         const QVariantMap login = bSeed.loadRequest(QStringLiteral("DummyJSON/Login"));
         CHECK(login.value(QStringLiteral("method")).toString() == QStringLiteral("POST"));

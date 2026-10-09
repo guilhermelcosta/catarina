@@ -1,0 +1,19 @@
+{
+    "active": "Demo",
+    "environments": [
+        {
+            "name": "Demo",
+            "variables": [
+                {
+                    "enabled": true,
+                    "fileName": "",
+                    "name": "locale",
+                    "secret": false,
+                    "secretId": "",
+                    "type": "text",
+                    "value": "en-US"
+                }
+            ]
+        }
+    ]
+}

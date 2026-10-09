@@ -370,6 +370,21 @@ TestCase {
         compare(Util.querySuffix("https://x/y", []), "");
     }
 
+    // JSON canônico: ignora a ordem das chaves (é o que decide o dirty ao desfazer)
+    function test_util_stableStringify() {
+        compare(Util.stableStringify({ a: 1, b: 2 }), Util.stableStringify({ b: 2, a: 1 }));
+        compare(Util.stableStringify({ a: { x: 1, y: 2 }, b: [1, 2] }),
+                Util.stableStringify({ b: [1, 2], a: { y: 2, x: 1 } }));
+        verify(Util.stableStringify({ a: 1 }) !== Util.stableStringify({ a: 2 }));
+        verify(Util.stableStringify([1, 2]) !== Util.stableStringify([2, 1]));   // array importa ordem
+        // mudar e voltar ao original => mesmo snapshot (dirty some)
+        var base = Util.stableStringify({ url: "x", vars: [{ name: "a", value: "1" }] });
+        var cur = Util.stableStringify({ vars: [{ value: "1", name: "a" }], url: "y" });
+        verify(cur !== base);
+        cur = Util.stableStringify({ vars: [{ name: "a", value: "1" }], url: "x" });
+        compare(cur, base);
+    }
+
     // [A,B,C,D]: B(1) -> inserir antes de D(to=3) => [A,C,B,D]
     function test_util_tabMove() {
         var m = Util.tabMove(4, 1, 3, 1);

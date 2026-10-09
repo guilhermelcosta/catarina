@@ -77,6 +77,23 @@ function querySuffix(url, params) {
     return sep + parts.join("&");
 }
 
+// JSON canônico: ordena as chaves de objeto recursivamente (arrays mantêm a ordem).
+// Serve para comparar estados ("dirty") ignorando a ordem das chaves — voltar ao
+// valor original tem que dar igual, mesmo que o objeto tenha sido remontado.
+function stableStringify(v) {
+    if (Array.isArray(v))
+        return "[" + v.map(stableStringify).join(",") + "]";
+    if (v !== null && typeof v === "object") {
+        var keys = Object.keys(v).sort(), parts = [];
+        for (var i = 0; i < keys.length; i++) {
+            if (v[keys[i]] === undefined) continue;
+            parts.push(JSON.stringify(keys[i]) + ":" + stableStringify(v[keys[i]]));
+        }
+        return "{" + parts.join(",") + "}";
+    }
+    return JSON.stringify(v);
+}
+
 // Fixação de abas (modelo do VS Code): fixada = permanente; desfixar devolve a
 // aba ao estado "preview" (transiente, a próxima request abre sobre ela) e garante
 // que só exista um preview. Recebe o estado atual [{pinned, preview}] e o índice

@@ -55,6 +55,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         clip: true
+        spacing: Kirigami.Units.smallSpacing
         model: root.activeVars
         delegate: RowLayout {
             width: view.width

@@ -164,6 +164,10 @@ void Backend::seedDefaultCollection()
         // a senha pública do DummyJSON fica no cofre (o arquivo versionado só guarda
         // o secretId), então o exemplo funciona de primeira sem expor a senha
         saveSecret(QStringLiteral("seed-dummyjson-password"), QStringLiteral("emilyspass"));
+        // o seed trouxe um ambiente de exemplo; recarrega (o construtor já rodou
+        // antes da cópia, então sem isto as variáveis globais não apareceriam)
+        loadEnvironments();
+        emit environmentsChanged();
     }
     QFile f(marker);
     if (f.open(QIODevice::WriteOnly))
