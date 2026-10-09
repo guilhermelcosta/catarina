@@ -23,6 +23,7 @@ QtObject {
     property var collectionScreen
     property var envScreen
     property var sidebar
+    property var tabStrip
     property var newReqDialog
     property var nameDialog
     property var confirmCloseDialog

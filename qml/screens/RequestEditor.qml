@@ -19,6 +19,7 @@ ColumnLayout {
     readonly property string method: methodBox.currentText
     readonly property string bodyType: bodyEditor.bodyType
     property alias url: urlField.text
+    readonly property alias urlInput: urlField
     property alias body: bodyEditor.body
     function setMethod(m) { var i = methodBox.find(m); methodBox.currentIndex = i >= 0 ? i : 0; }
     function setBodyType(v) { bodyEditor.setBodyType(v); }

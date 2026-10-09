@@ -47,6 +47,7 @@ Kirigami.ApplicationWindow {
         collectionScreen: collectionScreen
         envScreen: envScreen
         sidebar: sidebar
+        tabStrip: tabStrip
         newReqDialog: newReqDialog
         nameDialog: nameDialog
         confirmCloseDialog: confirmCloseDialog
