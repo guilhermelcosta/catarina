@@ -1,0 +1,49 @@
+{
+    "auth": {
+        "key": "",
+        "pass": "",
+        "token": "",
+        "type": "inherit",
+        "user": "",
+        "value": ""
+    },
+    "body": "",
+    "bodyType": "none",
+    "fields": [
+    ],
+    "headers": [
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "Accept-Language",
+            "secret": false,
+            "secretId": "",
+            "type": "",
+            "value": "en-US"
+        }
+    ],
+    "method": "GET",
+    "params": [
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "limit",
+            "secret": false,
+            "secretId": "",
+            "type": "",
+            "value": "5"
+        },
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "select",
+            "secret": false,
+            "secretId": "",
+            "type": "",
+            "value": "firstName,lastName,age"
+        }
+    ],
+    "url": "{{baseUrl}}/users",
+    "vars": [
+    ]
+}

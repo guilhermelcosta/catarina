@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     Settings settings;
 
     Backend backend;
+    backend.seedDefaultCollection();
     VarSupport varSupport;
 
     QQmlApplicationEngine engine;

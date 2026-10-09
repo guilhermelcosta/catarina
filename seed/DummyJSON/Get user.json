@@ -1,0 +1,31 @@
+{
+    "auth": {
+        "key": "",
+        "pass": "",
+        "token": "",
+        "type": "inherit",
+        "user": "",
+        "value": ""
+    },
+    "body": "",
+    "bodyType": "none",
+    "fields": [
+    ],
+    "headers": [
+    ],
+    "method": "GET",
+    "params": [
+    ],
+    "url": "{{baseUrl}}/users/{{userId}}",
+    "vars": [
+        {
+            "enabled": true,
+            "fileName": "",
+            "name": "userId",
+            "secret": false,
+            "secretId": "",
+            "type": "text",
+            "value": "1"
+        }
+    ]
+}

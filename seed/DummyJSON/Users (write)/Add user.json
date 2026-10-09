@@ -1,0 +1,22 @@
+{
+    "auth": {
+        "key": "",
+        "pass": "",
+        "token": "",
+        "type": "inherit",
+        "user": "",
+        "value": ""
+    },
+    "body": "{\n  \"firstName\": \"Muhammad\",\n  \"lastName\": \"Ovi\",\n  \"age\": 25\n}",
+    "bodyType": "json",
+    "fields": [
+    ],
+    "headers": [
+    ],
+    "method": "POST",
+    "params": [
+    ],
+    "url": "{{baseUrl}}/users/add",
+    "vars": [
+    ]
+}

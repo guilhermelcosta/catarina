@@ -30,6 +30,9 @@ public:
     QString storageDir() const;
     Q_INVOKABLE void setStorageDir(const QString &dir);
     QString activeEnvironment() const;
+    // copia a coleção de exemplo embutida (:/seed) no primeiro uso; só quando o
+    // storage ainda está vazio e uma única vez (marca .katarina/.seeded)
+    Q_INVOKABLE void seedDefaultCollection();
 
     // ---- lógica pura, testável sem rede ----
     static QString substitute(const QString &text, const QVariantMap &vars);

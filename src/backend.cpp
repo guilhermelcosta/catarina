@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QDirIterator>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
@@ -55,6 +56,23 @@ const QStringList collectTexts(const QVariantMap &request)
     return texts;
 }
 
+// copia recursivamente um diretório de recursos (ex.: ":/seed") para o disco,
+// recriando a mesma árvore de subpastas
+void copyResourceDir(const QString &srcRoot, const QString &dstRoot)
+{
+    QDirIterator it(srcRoot, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString src = it.next();
+        const QString dst = dstRoot + src.mid(srcRoot.length());
+        QDir().mkpath(QFileInfo(dst).absolutePath());
+        QFile::copy(src, dst);
+        // QFile::copy preserva as permissões do recurso (somente leitura); sem isto o
+        // QSaveFile não consegue regravar o request e o save do usuário falha
+        QFile::setPermissions(dst, QFile::ReadOwner | QFile::WriteOwner
+                                   | QFile::ReadGroup | QFile::ReadOther);
+    }
+}
+
 } // namespace
 
 Backend::Backend(QObject *parent)
@@ -92,6 +110,22 @@ void Backend::setStorageDir(const QString &dir)
     emit environmentsChanged();
 }
 QString Backend::activeEnvironment() const { return m_activeEnv; }
+
+void Backend::seedDefaultCollection()
+{
+    const QString marker = m_dir + QStringLiteral("/.katarina/.seeded");
+    if (QFileInfo::exists(marker))
+        return;   // já foi semeado (mesmo que o usuário apague a coleção depois)
+    if (collectionTree().isEmpty()) {
+        copyResourceDir(QStringLiteral(":/seed"), m_dir);
+        // a senha pública do DummyJSON fica no cofre (o arquivo versionado só guarda
+        // o secretId), então o exemplo funciona de primeira sem expor a senha
+        saveSecret(QStringLiteral("seed-dummyjson-password"), QStringLiteral("emilyspass"));
+    }
+    QFile f(marker);
+    if (f.open(QIODevice::WriteOnly))
+        f.close();
+}
 
 // ---------------------------------------------------------------- lógica pura
 

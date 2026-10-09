@@ -20,6 +20,15 @@ qt_add_library(katarina_core OBJECT
 target_include_directories(katarina_core PRIVATE src)
 target_link_libraries(katarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
 
+# coleção de exemplo embutida (seed/), copiada no primeiro uso
+# (Backend::seedDefaultCollection) — recursos em :/seed/...
+file(GLOB_RECURSE KATARINA_SEED_FILES CONFIGURE_DEPENDS
+     ${CMAKE_CURRENT_SOURCE_DIR}/seed/*)
+qt_add_resources(katarina_core "seed"
+    PREFIX "/"
+    BASE ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${KATARINA_SEED_FILES})
+
 qt_add_executable(katarina
     src/main.cpp
     src/highlighter.cpp
