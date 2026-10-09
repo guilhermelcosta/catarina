@@ -185,6 +185,7 @@ private:
     QString m_secretsFile; // <m_appData>/secrets.json
 
     mutable bool m_secretsLoaded = false;
+    mutable bool m_keychain = false;   // backend em uso: cofre do SO (true) ou arquivo (false)
     mutable QHash<QString, QString> m_secretsCache;              // id -> valor
     mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
     mutable QHash<QString, CachedList> m_colVarsCache;           // coleção -> variáveis

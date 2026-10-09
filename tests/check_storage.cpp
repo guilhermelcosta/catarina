@@ -52,6 +52,7 @@ int main(int argc, char **argv)
     CHECK(tmp.isValid());
     qputenv("XDG_DATA_HOME", tmp.path().toUtf8());
     qputenv("XDG_CONFIG_HOME", tmp.path().toUtf8());
+    qputenv("KATARINA_SECRETS_BACKEND", "file");   // hermético: não toca no cofre do SO
 
     QCoreApplication app(argc, argv);
 

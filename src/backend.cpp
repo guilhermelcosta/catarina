@@ -21,6 +21,11 @@
 #include <QUrlQuery>
 #include <QUuid>
 
+#ifdef KATARINA_HAVE_KEYCHAIN
+#include <QEventLoop>
+#include <qt6keychain/keychain.h>
+#endif
+
 namespace {
 
 // Teto de passadas ao resolver {{variavel}} em nome/valor (Backend::variableChain).
@@ -73,6 +78,43 @@ void copyResourceDir(const QString &srcRoot, const QString &dstRoot)
     }
 }
 
+#ifdef KATARINA_HAVE_KEYCHAIN
+// Segredos vivem no cofre do SO (Secret Service/KWallet/Keychain) como um único blob
+// JSON ("katarina" / "secrets"); o arquivo em texto plano vira só fallback. KATARINA_SECRETS_BACKEND=file
+// força o arquivo (usado pelos testes, pra não tocar no cofre real).
+constexpr auto kKeychainService = "katarina";
+constexpr auto kKeychainEntry = "secrets";
+
+bool keychainAllowed()
+{
+    return qgetenv("KATARINA_SECRETS_BACKEND").toLower() != "file" && QKeychain::isAvailable();
+}
+
+QString keychainRead(QKeychain::Error &error)
+{
+    QKeychain::ReadPasswordJob job(QString::fromLatin1(kKeychainService));
+    job.setKey(QString::fromLatin1(kKeychainEntry));
+    QEventLoop loop;
+    QObject::connect(&job, &QKeychain::Job::finished, &loop, &QEventLoop::quit);
+    job.start();
+    loop.exec();
+    error = job.error();
+    return error == QKeychain::NoError ? job.textData() : QString();
+}
+
+bool keychainWrite(const QString &data)
+{
+    QKeychain::WritePasswordJob job(QString::fromLatin1(kKeychainService));
+    job.setKey(QString::fromLatin1(kKeychainEntry));
+    job.setTextData(data);
+    QEventLoop loop;
+    QObject::connect(&job, &QKeychain::Job::finished, &loop, &QEventLoop::quit);
+    job.start();
+    loop.exec();
+    return job.error() == QKeychain::NoError;
+}
+#endif
+
 } // namespace
 
 Backend::Backend(QObject *parent)
@@ -88,6 +130,7 @@ Backend::Backend(QObject *parent)
     // pasta de segredos só para o dono (o arquivo já é 0600)
     QFile::setPermissions(m_appData, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     loadEnvironments();
+    ensureSecrets();   // carrega o cofre/arquivo uma vez, antes do QML (evita I/O no meio do binding)
 }
 
 QString Backend::storageDir() const { return m_dir; }
@@ -250,17 +293,41 @@ QString Backend::encodeForm(const QVariantList &fields)
 // ---------------------------------------------------------------- segredos
 
 // secrets.json é lido uma única vez e mantido em memória; save/remove mantêm o cache.
+// Backend: cofre do SO (QtKeychain) quando disponível, senão o arquivo em texto plano.
 void Backend::ensureSecrets() const
 {
     if (m_secretsLoaded)
         return;
     m_secretsLoaded = true;
+
+#ifdef KATARINA_HAVE_KEYCHAIN
+    if (keychainAllowed()) {
+        QKeychain::Error err = QKeychain::NoError;
+        const QString blob = keychainRead(err);
+        if (err == QKeychain::NoError) {
+            m_keychain = true;
+            const QJsonObject obj = QJsonDocument::fromJson(blob.toUtf8()).object();
+            for (auto it = obj.constBegin(); it != obj.constEnd(); ++it)
+                m_secretsCache.insert(it.key(), it.value().toString());
+            return;
+        }
+        // cofre sem entrada ainda: usa o cofre daqui pra frente e migra o arquivo.
+        // qualquer outro erro (acesso negado etc.) mantém o arquivo em texto plano.
+        m_keychain = (err == QKeychain::EntryNotFound);
+    }
+#endif
+
     QFile f(m_secretsFile);
-    if (!f.open(QIODevice::ReadOnly))
-        return;
-    const QJsonObject obj = QJsonDocument::fromJson(f.readAll()).object();
-    for (auto it = obj.constBegin(); it != obj.constEnd(); ++it)
-        m_secretsCache.insert(it.key(), it.value().toString());
+    if (f.open(QIODevice::ReadOnly)) {
+        const QJsonObject obj = QJsonDocument::fromJson(f.readAll()).object();
+        for (auto it = obj.constBegin(); it != obj.constEnd(); ++it)
+            m_secretsCache.insert(it.key(), it.value().toString());
+    }
+#ifdef KATARINA_HAVE_KEYCHAIN
+    // migração: havia segredos no arquivo antigo → manda pro cofre e apaga o texto plano
+    if (m_keychain && !m_secretsCache.isEmpty() && writeSecrets())
+        QFile::remove(m_secretsFile);
+#endif
 }
 
 bool Backend::writeSecrets() const
@@ -268,10 +335,17 @@ bool Backend::writeSecrets() const
     QJsonObject obj;
     for (auto it = m_secretsCache.constBegin(); it != m_secretsCache.constEnd(); ++it)
         obj.insert(it.key(), it.value());
+    const QByteArray json = QJsonDocument(obj).toJson();
+
+#ifdef KATARINA_HAVE_KEYCHAIN
+    if (m_keychain)
+        return keychainWrite(QString::fromUtf8(json));
+#endif
+
     QSaveFile f(m_secretsFile);
     if (!f.open(QIODevice::WriteOnly))
         return false;
-    f.write(QJsonDocument(obj).toJson());
+    f.write(json);
     const bool ok = f.commit();
     QFile::setPermissions(m_secretsFile,
                           QFile::ReadOwner | QFile::WriteOwner);   // 0600

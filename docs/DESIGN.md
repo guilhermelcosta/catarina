@@ -228,6 +228,10 @@ Todos em `qml/`:
   tempo, teto de segurança para referência cíclica (`{{a}}`↔`{{b}}`), que não converge.
 - **Segredos**: o valor real é carregado do cofre para edição (mascarado no campo com segredo),
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
+  O armazenamento é o **cofre do SO** via QtKeychain (Secret Service/KWallet/Keychain) — um blob
+  JSON sob o serviço `katarina`; sem o QtKeychain na build, cai para
+  `~/.local/share/katarina/katarina/secrets.json` (`0600`). Um `secrets.json` antigo é migrado pro
+  cofre e removido no primeiro uso (`KATARINA_SECRETS_BACKEND=file` força o arquivo — usado nos testes).
   O campo mascarado (`KvTable`) traz um **olho** (`view-visible`/`view-hidden`) que alterna o
   `echoMode` para espiar o valor sem desmarcar segredo. Esse `TextField` repete a
   `implicitHeight`/padding do `VarField` (`gridUnit * 1.7`), senão as bolinhas do `echoMode`

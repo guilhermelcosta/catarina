@@ -10,6 +10,19 @@ include(KDECMakeSettings)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network)
 find_package(KF6Kirigami REQUIRED)
 
+# segredos: cofre do SO (QtKeychain) quando disponível; senão, arquivo 0600.
+# Opcional de propósito — o projeto compila sem o QtKeychain.
+find_package(Qt6Keychain QUIET)
+if(Qt6Keychain_FOUND)
+    message(STATUS "QtKeychain encontrado: segredos no cofre do sistema")
+    set(KATARINA_SECRETS_DEFS KATARINA_HAVE_KEYCHAIN)
+    set(KATARINA_SECRETS_LIBS Qt6Keychain::Qt6Keychain)
+else()
+    message(STATUS "QtKeychain não encontrado: segredos em arquivo (0600)")
+    set(KATARINA_SECRETS_DEFS "")
+    set(KATARINA_SECRETS_LIBS "")
+endif()
+
 qt_standard_project_setup(REQUIRES 6.5)
 
 # core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
@@ -18,7 +31,8 @@ qt_add_library(katarina_core OBJECT
     src/settings.cpp
 )
 target_include_directories(katarina_core PRIVATE src)
-target_link_libraries(katarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+target_compile_definitions(katarina_core PRIVATE ${KATARINA_SECRETS_DEFS})
+target_link_libraries(katarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
 
 # coleção de exemplo embutida (seed/), copiada no primeiro uso
 # (Backend::seedDefaultCollection) — recursos em :/seed/...
@@ -44,6 +58,7 @@ target_link_libraries(katarina PRIVATE
     Qt6::QuickControls2
     Qt6::Network
     KF6::Kirigami
+    ${KATARINA_SECRETS_LIBS}
 )
 
 qt_add_resources(katarina "qml"
@@ -77,13 +92,13 @@ qt_add_resources(katarina "appicon"
 qt_add_executable(check_storage tests/check_storage.cpp)
 target_sources(check_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
 target_include_directories(check_storage PRIVATE src)
-target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
 
 # Benchmark dos caminhos quentes (não é teste; roda à mão).
 qt_add_executable(bench_storage tests/bench.cpp)
 target_sources(bench_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
 target_include_directories(bench_storage PRIVATE src)
-target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network)
+target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
 
 # ---- testes (ctest) ----
 find_package(Qt6 REQUIRED COMPONENTS QuickTest)
