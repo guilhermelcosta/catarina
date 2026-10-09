@@ -129,6 +129,11 @@ QVariantMap Backend::requestParts(const QVariantMap &request) const
     return RequestLogic::requestParts(request);
 }
 
+QString Backend::querySuffix(const QString &url, const QVariantList &params) const
+{
+    return RequestLogic::querySuffix(url, params);
+}
+
 // ---------------------------------------------------------------- segredos
 
 // Delega ao SecretStore (cofre do SO ou arquivo 0600); ver storage/secret_store.h.

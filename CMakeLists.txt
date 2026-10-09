@@ -75,6 +75,7 @@ qt_add_resources(katarina "qml"
         qml/Main.qml
         qml/Util.js
         qml/Strings.js
+        qml/js/VarTokens.js
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
@@ -91,6 +92,7 @@ qt_add_resources(katarina "qml"
         qml/MethodBadge.qml
         qml/SourceChip.qml
         qml/SplitGrip.qml
+        qml/AppController.qml
         qml/Sidebar.qml
         qml/TabStrip.qml
         qml/dialogs/NewReqDialog.qml

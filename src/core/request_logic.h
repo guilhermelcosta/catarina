@@ -23,6 +23,9 @@ public:
     static QStringList variableRefs(const QString &text);
     // assume http:// quando falta esquema; pula params desabilitados/sem nome
     static QUrl buildUrl(const QString &url, const QVariantList &params);
+    // sufixo de query que os params ativos anexam à URL ("?a=1&b=" / "&x=2" / "").
+    // Mesma semântica do buildUrl, mas cru (sem percent-encode) — é o preview da UI.
+    static QString querySuffix(const QString &url, const QVariantList &params);
     // x-www-form-urlencoded dos fields habilitados
     static QString encodeForm(const QVariantList &fields);
     // Content-Type padrão do bodyType ("" se não houver corpo)

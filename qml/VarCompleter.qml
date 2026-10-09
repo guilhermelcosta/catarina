@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "Strings.js" as Strings
+import "js/VarTokens.js" as VarTokens
 
 // Autocomplete de {{variavel}} (com teclado) e popup com o valor (hover).
 // Deve ser filho do editor alvo, com anchors.fill: parent.
@@ -12,31 +13,13 @@ Item {
     property string collection: ""    // para explicar variáveis fora de escopo
 
     function matchingNames() {
-        var out = [];
-        for (var i = 0; i < resolved.length; i++) {
-            var n = resolved[i].name;
-            if (resolved[i].enabled === false || n.length === 0) continue;
-            if (n.indexOf("{") >= 0 || n.indexOf("}") >= 0) continue;   // ignora o token em digitação (ex.: "{{")
-            if (n.indexOf(partial) === 0)
-                out.push(n);
-        }
-        out.sort();
-        return out;
+        return VarTokens.matchingNames(resolved, partial);
     }
     function tokenAt(pos) {
-        var t = target.text;
-        var re = /\{\{\s*([^{}]+?)\s*\}\}/g;
-        var m;
-        while ((m = re.exec(t)) !== null)
-            if (pos >= m.index && pos <= m.index + m[0].length)
-                return { name: m[1], start: m.index };
-        return null;
+        return VarTokens.tokenAt(target.text, pos);
     }
     function valueOf(name) {
-        for (var i = 0; i < resolved.length; i++)
-            if (resolved[i].name === name)
-                return resolved[i];
-        return null;
+        return VarTokens.valueOf(resolved, name);
     }
 
     // ---------------- autocomplete ----------------

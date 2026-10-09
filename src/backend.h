@@ -48,6 +48,8 @@ public:
     // partes efetivas de um request (method/url/headers/body) para exportação: aplica
     // auth e Content-Type padrão como no send, sem resolver {{variaveis}}
     Q_INVOKABLE QVariantMap requestParts(const QVariantMap &request) const;
+    // preview do sufixo de query anexado pelos params ativos (mesma semântica do send)
+    Q_INVOKABLE QString querySuffix(const QString &url, const QVariantList &params) const;
 
     // ---- requisição ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }

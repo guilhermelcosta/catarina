@@ -74,7 +74,7 @@ Item {
                         spacing: Kirigami.Units.smallSpacing
                         Label { text: modelData.label; Layout.fillWidth: true }
                         ShortcutField {
-                            window: root
+                            window: app
                             sequence: {
                                 var m = settings.shortcuts;
                                 return (m && m[modelData.id] !== undefined) ? m[modelData.id] : modelData.def;

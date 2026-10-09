@@ -783,6 +783,21 @@ int main(int argc, char **argv)
         CHECK(bMem.secretValue(QStringLiteral("id1")).isEmpty());
     }
 
+    // querySuffix (preview): mesma semântica do buildUrl, cru (sem percent-encode)
+    {
+        const QVariantList p{item(QStringLiteral("a"), QStringLiteral("1"))};
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"), p) == QStringLiteral("?a=1"));
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y?z=0"), p) == QStringLiteral("&a=1"));
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y?"), p) == QStringLiteral("a=1"));
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"), {item(QStringLiteral("a"), QString())}) == QStringLiteral("?a="));
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"), {item(QStringLiteral("a"), QStringLiteral("1"), false)}) == QString());
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"), {item(QString(), QStringLiteral("1"))}) == QString());
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"),
+                                        {item(QStringLiteral("a"), QStringLiteral("1")),
+                                         item(QStringLiteral("b"), QStringLiteral("2"))}) == QStringLiteral("?a=1&b=2"));
+        CHECK(RequestLogic::querySuffix(QStringLiteral("https://x/y"), {}) == QString());
+    }
+
     // RequestBuilder: mesmo caminho do send, sem rede. Headers request+coleção,
     // auth (request vence), Content-Type padrão, corpo e snapshots.
     {

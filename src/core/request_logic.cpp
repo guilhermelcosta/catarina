@@ -78,6 +78,28 @@ QUrl RequestLogic::buildUrl(const QString &url, const QVariantList &params)
     return u;
 }
 
+QString RequestLogic::querySuffix(const QString &url, const QVariantList &params)
+{
+    QStringList parts;
+    for (const QVariant &v : params) {
+        const QVariantMap p = v.toMap();
+        if (!p.value(RS::kEnabled, true).toBool())
+            continue;
+        const QString name = p.value(RS::kName).toString();
+        if (name.isEmpty())
+            continue;
+        parts << name + QLatin1Char('=') + p.value(RS::kValue).toString();
+    }
+    if (parts.isEmpty())
+        return {};
+    const bool hasQuery = url.contains(QLatin1Char('?'));
+    const QChar last = url.isEmpty() ? QChar() : url.at(url.length() - 1);
+    const bool alreadyOpen = (last == QLatin1Char('?') || last == QLatin1Char('&'));
+    const QString sep = hasQuery ? (alreadyOpen ? QString() : QStringLiteral("&"))
+                                 : QStringLiteral("?");
+    return sep + parts.join(QLatin1Char('&'));
+}
+
 QString RequestLogic::encodeForm(const QVariantList &fields)
 {
     QUrlQuery q;
