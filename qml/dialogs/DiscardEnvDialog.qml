@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Descartar alterações do ambiente (injeta a tela de ambientes para recarregar).
+// Discard environment changes (injects the environments screen to reload).
 Dialog {
     id: discardEnvDialog
     property var envScreen

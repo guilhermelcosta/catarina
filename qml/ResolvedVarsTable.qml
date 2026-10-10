@@ -4,15 +4,15 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Tabela somente-leitura das variáveis efetivas (Origem / Nome / Valor).
-// Mesmo padrão de tabela do app: cabeçalho em negrito (opacidade 0.65),
-// colunas com larguras explícitas e linhas desabilitadas esmaecidas.
+// Read-only table of the effective variables (Origin / Name / Value).
+// Same table pattern as the app: bold header (opacity 0.65),
+// columns with explicit widths and disabled rows dimmed.
 // `vars`: [{ name, value, secret, source, enabled }]
 ColumnLayout {
     id: root
     property var vars: []
-    // só as que realmente resolvem (desabilitadas não aparecem nesta visualização);
-    // ordena por origem (global → coleção → request) e, dentro dela, por nome
+    // only those that actually resolve (disabled ones don't appear in this view);
+    // sorts by origin (global → collection → request) and, within it, by name
     readonly property var activeVars: {
         var list = vars ? vars.filter(function (v) { return v.enabled !== false; }) : [];
         list.sort(function (a, b) {
@@ -24,7 +24,7 @@ ColumnLayout {
     readonly property int count: activeVars.length
     spacing: Kirigami.Units.smallSpacing
 
-    // origem → rank de ordenação, cor e ícone (identidade visual por escopo)
+    // origin → sort rank, color and icon (visual identity per scope)
     function sourceRank(s) {
         if (s === "global") return 0;
         if (s === "collection") return 1;

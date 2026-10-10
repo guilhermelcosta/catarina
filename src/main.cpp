@@ -3,18 +3,19 @@
 #include "settings.h"
 
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QtLogging>
 
 #include <cstdio>
 
-// O estilo Breeze (org/kde/breeze/TextArea.qml) faz
+// The Breeze style (org/kde/breeze/TextArea.qml) does
 //   MobileTextActionsToolBar { target: control }
-// e a toolbar declara `property TextInput target`. Como `control` é um TextArea
-// (QQuickTextEdit), a atribuição falha e o Qt loga "Unable to assign ... to
-// QQuickTextInput" para CADA TextArea (bem repetitivo). É benigno — essa toolbar só
-// é usada em tabletMode. Filtramos só essa mensagem; todo o resto passa normal.
+// and the toolbar declares `property TextInput target`. Since `control` is a TextArea
+// (QQuickTextEdit), the assignment fails and Qt logs "Unable to assign ... to
+// QQuickTextInput" for EVERY TextArea (very noisy). It's benign — that toolbar is only
+// used in tabletMode. We filter only that message; everything else passes normally.
 static QtMessageHandler s_prevHandler = nullptr;
 static void catarinaMessageHandler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
 {
@@ -39,6 +40,10 @@ int main(int argc, char *argv[])
     s_prevHandler = qInstallMessageHandler(catarinaMessageHandler);
     QCoreApplication::setApplicationName(QStringLiteral("catarina"));
     QCoreApplication::setOrganizationName(QStringLiteral("catarina"));
+    // Window/taskbar icon (the placeholder lives in the qrc "appicon").
+    // setDesktopFileName makes Wayland match the window to org.catarina.Catarina.desktop.
+    app.setDesktopFileName(QStringLiteral("org.catarina.Catarina"));
+    app.setWindowIcon(QIcon(QStringLiteral(":/icons/catarina.svg")));
 
     Settings settings;
 

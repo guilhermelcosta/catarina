@@ -10,22 +10,22 @@ include(KDECMakeSettings)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network)
 find_package(KF6Kirigami REQUIRED)
 
-# segredos: cofre do SO (QtKeychain) quando disponível; senão, arquivo 0600.
-# Opcional de propósito — o projeto compila sem o QtKeychain.
+# secrets: OS keychain (QtKeychain) when available; otherwise a 0600 file.
+# Intentionally optional — the project builds without QtKeychain.
 find_package(Qt6Keychain QUIET)
 if(Qt6Keychain_FOUND)
-    message(STATUS "QtKeychain encontrado: segredos no cofre do sistema")
+    message(STATUS "QtKeychain found: secrets in the system keychain")
     set(CATARINA_SECRETS_DEFS CATARINA_HAVE_KEYCHAIN)
     set(CATARINA_SECRETS_LIBS Qt6Keychain::Qt6Keychain)
 else()
-    message(STATUS "QtKeychain não encontrado: segredos em arquivo (0600)")
+    message(STATUS "QtKeychain not found: secrets in a file (0600)")
     set(CATARINA_SECRETS_DEFS "")
     set(CATARINA_SECRETS_LIBS "")
 endif()
 
 qt_standard_project_setup(REQUIRES 6.5)
 
-# core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
+# shared core (backend + settings) compiled once, used by the app and tests
 qt_add_library(catarina_core OBJECT
     src/backend.cpp
     src/core/request_logic.cpp
@@ -42,8 +42,8 @@ target_include_directories(catarina_core PRIVATE src)
 target_compile_definitions(catarina_core PRIVATE ${CATARINA_SECRETS_DEFS})
 target_link_libraries(catarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
-# coleção de exemplo embutida (seed/), copiada no primeiro uso
-# (Backend::seedDefaultCollection) — recursos em :/seed/...
+# bundled example collection (seed/), copied on first use
+# (Backend::seedDefaultCollection) — resources under :/seed/...
 file(GLOB_RECURSE CATARINA_SEED_FILES CONFIGURE_DEPENDS
      ${CMAKE_CURRENT_SOURCE_DIR}/seed/*)
 qt_add_resources(catarina_core "seed"
@@ -127,31 +127,31 @@ qt_add_resources(catarina "appicon"
     FILES icons/catarina.svg
 )
 
-# Autochecagem da lógica do Backend (sem rede), hermética.
+# Self-check of the Backend logic (no network), hermetic.
 qt_add_executable(check_storage tests/check_storage.cpp)
 target_sources(check_storage PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(check_storage PRIVATE src)
 target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
-# Benchmark dos caminhos quentes (não é teste; roda à mão).
+# Benchmark of the hot paths (not a test; run by hand).
 qt_add_executable(bench_storage tests/bench.cpp)
 target_sources(bench_storage PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(bench_storage PRIVATE src)
 target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
-# ---- testes (ctest) ----
+# ---- tests (ctest) ----
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
 
 add_test(NAME check_storage COMMAND check_storage)
 
-# componentes reutilizáveis (KvTable/HeaderTable/JsonTree)
+# reusable components (KvTable/HeaderTable/JsonTree)
 qt_add_executable(tst_components tests/tst_components.cpp)
 target_link_libraries(tst_components PRIVATE Qt6::Quick Qt6::QuickTest)
 target_compile_definitions(tst_components PRIVATE
     QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/components")
 add_test(NAME tst_components COMMAND tst_components)
 
-# comportamento de tela: instancia o Main com backend/settings reais e dirige o AppController
+# screen behavior: instantiates the real Main with backend/settings and drives the AppController
 qt_add_executable(tst_app tests/tst_app.cpp src/highlighter.cpp)
 target_sources(tst_app PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(tst_app PRIVATE src)
@@ -161,28 +161,28 @@ target_compile_definitions(tst_app PRIVATE
     QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/app")
 add_test(NAME tst_app COMMAND tst_app)
 
-# realce JSON (chave != valor) — lógica pura sobre QTextDocument
+# JSON highlight (key != value) — pure logic over QTextDocument
 qt_add_executable(check_highlighter tests/check_highlighter.cpp src/highlighter.cpp)
 target_include_directories(check_highlighter PRIVATE src)
 target_link_libraries(check_highlighter PRIVATE Qt6::Gui Qt6::Quick Qt6::Test)
 add_test(NAME check_highlighter COMMAND check_highlighter)
 
-# integração HTTP hermética (QTcpServer local): resposta, headers, querystring,
-# erro de rede, cancelamento, multipart e falha ao abrir arquivo
+# hermetic HTTP integration (local QTcpServer): response, headers, querystring,
+# network error, cancellation, multipart and file-open failure
 qt_add_executable(check_http tests/check_http.cpp)
 target_sources(check_http PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(check_http PRIVATE src)
 target_link_libraries(check_http PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Test ${CATARINA_SECRETS_LIBS})
 add_test(NAME check_http COMMAND check_http)
 
-# garante que o Main.qml carrega sem erros de QML
+# ensures Main.qml loads with no QML errors
 add_test(NAME qml_smoke
          COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:catarina>)
 
 set_tests_properties(check_storage tst_components tst_app check_highlighter check_http qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# ---- instalação: binário, ícone e lançador ----
+# ---- installation: binary, icon and launcher ----
 install(TARGETS catarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 install(FILES icons/catarina.svg DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps)
 

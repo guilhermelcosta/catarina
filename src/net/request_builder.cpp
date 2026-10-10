@@ -6,7 +6,7 @@
 namespace {
 namespace RS = RequestSchema;
 
-// aplica headers habilitados; o request tem prioridade sobre a coleção (first-wins)
+// applies enabled headers; the request has priority over the collection (first-wins)
 void applyHeaders(QNetworkRequest &req, const QVariantList &raw, const QVariantMap &vars,
                   bool &hasContentType)
 {
@@ -18,7 +18,7 @@ void applyHeaders(QNetworkRequest &req, const QVariantList &raw, const QVariantM
         if (name.isEmpty())
             continue;
         if (!req.rawHeader(name.toUtf8()).isNull())
-            continue;   // coleção não sobrescreve header já definido pelo request
+            continue;   // the collection doesn't override a header already set by the request
         if (RS::isContentType(name))
             hasContentType = true;
         req.setRawHeader(name.toUtf8(), h.value(RS::kValue).toString().toUtf8());
@@ -63,7 +63,7 @@ BuiltRequest RequestBuilder::build(const QVariantMap &request, const QVariantMap
     if (req.rawHeader("Accept").isEmpty())
         req.setRawHeader("Accept", "application/json");
 
-    // snapshots para a aba de rede
+    // snapshots for the network tab
     for (const QByteArray &name : req.rawHeaderList())
         out.sentHeaders.append(QVariantMap{{QStringLiteral("name"), QString::fromUtf8(name)},
                                            {QStringLiteral("value"), QString::fromUtf8(req.rawHeader(name))}});
@@ -72,7 +72,7 @@ BuiltRequest RequestBuilder::build(const QVariantMap &request, const QVariantMap
                    : (out.bodyType == RS::kNone) ? QString()
                    : RequestLogic::substitute(request.value(RS::kBody).toString(), vars);
 
-    // corpo dos tipos não-multipart (multipart é montado no envio, com QFile devices)
+    // body of the non-multipart types (multipart is built at send time, with QFile devices)
     if (out.bodyType == RS::kUrlencoded)
         out.payload = RequestLogic::encodeForm(out.fields).toUtf8();
     else if (out.bodyType != RS::kNone && out.bodyType != RS::kMultipart)

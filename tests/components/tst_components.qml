@@ -7,29 +7,29 @@ import "../../qml"
 import "../../qml/Util.js" as Util
 import "../../qml/js/VarTokens.js" as VarTokens
 
-// Testes dos componentes reutilizáveis e da lógica pura do JsonTree.
+// Tests for the reusable components and the pure JsonTree logic.
 TestCase {
     id: root
     name: "Components"
     when: windowShown
 
-    // stub do highlighter/clipboard que o KvTable usa no contexto real
+    // highlighter/clipboard stub that KvTable uses in the real context
     QtObject {
         id: varSupport
         function attach() {}
         function copyText(t) {}
     }
 
-    // stub de settings: o KvTable consulta settings.confirmDelete ao remover linha
+    // settings stub: KvTable checks settings.confirmDelete when removing a row
     QtObject {
         id: settings
         property bool confirmDelete: false
     }
 
-    // já com uma linha: a ListView precisa estar visível no layout inicial do teste
+    // already with one row: the ListView must be visible in the test's initial layout
     ListModel {
         id: kvModel
-        ListElement { name: "chave-x"; value: "valor-x"; enabled: true }
+        ListElement { name: "key-x"; value: "value-x"; enabled: true }
     }
     HeaderTable { id: ht }
     JsonTree { id: tree }
@@ -37,19 +37,19 @@ TestCase {
     TextArea { id: emitProbe; onTextEdited: root.probeCount++ }
     property int probeCount: 0
 
-    // setar `text` programaticamente não emite textEdited (só o usuário emite). O
-    // popup precisa emitir para o modelo do KvTable (onTextEdited) atualizar ao escolher.
-    function test_varcompleter_choose_notifica_edicao() {
+    // setting `text` programmatically doesn't emit textEdited (only the user emits). The
+    // popup must emit so the KvTable model (onTextEdited) updates when choosing.
+    function test_varcompleter_choose_emits_edit() {
         root.probeCount = 0;
         emitProbe.text = "{{";
         comp.target = emitProbe;
         comp.tokenStart = 0;
         comp.partial = "";
-        comp.choose("teste");
-        compare(emitProbe.text, "{{teste}}");
+        comp.choose("test");
+        compare(emitProbe.text, "{{test}}");
         compare(root.probeCount, 1);
     }
-    // componentes padrão de diálogo (mesmo espaçamento/respiro em todos os modais)
+    // standard dialog components (same spacing/padding in all modals)
     DialogActions {
         id: dialogActions
         Button { text: "A" }
@@ -57,7 +57,7 @@ TestCase {
     }
     DialogHeader { id: dialogHeader; dialogTitle: "T" }
 
-    // padrão de corpo de diálogo: é o próprio contentItem, então dimensiona pelo conteúdo
+    // standard dialog body: it is the contentItem itself, so it sizes by content
     Dialog {
         id: testDialog
         contentItem: ColumnLayout {
@@ -73,7 +73,7 @@ TestCase {
         id: rvt
         vars: [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }]
     }
-    // ramos do KvTable exercitados por testes (segredo, arquivo, filtro de linha)
+    // KvTable branches exercised by tests (secret, file, row filter)
     ListModel {
         id: secretModel
         ListElement { name: "s"; value: "v"; enabled: true; secret: true; type: "text"; fileName: "" }
@@ -106,13 +106,13 @@ TestCase {
     VarField { id: vf; resolved: vfVars }
     property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
-    // a visualização de variáveis efetivas não mostra as desabilitadas
+    // the effective variables view doesn't show disabled ones
     function test_resolved_vars_filters_disabled() {
         compare(rvt.count, 1);
         compare(rvt.activeVars[0].name, "a");
     }
 
-    // ordena por origem (global → collection → request) e, dentro dela, por nome
+    // sorts by source (global → collection → request) and, within it, by name
     function test_resolved_vars_order_by_source() {
         rvt.vars = [
             { name: "z", value: "1", source: "request", enabled: true },
@@ -125,30 +125,30 @@ TestCase {
         rvt.vars = [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }];
     }
 
-    // rodapé padrão de diálogo: espaçamento e respiro constantes, botões à direita
+    // standard dialog footer: constant spacing and padding, buttons on the right
     function test_dialog_actions_standard() {
         compare(dialogActions.spacing, Kirigami.Units.smallSpacing);
         compare(dialogActions.Layout.bottomMargin, Kirigami.Units.smallSpacing);
-        compare(dialogActions.children.length, 3, "espaçador + 2 botões");
-        verify(dialogActions.children[0].text === undefined, "primeiro filho é o espaçador");
+        compare(dialogActions.children.length, 3, "spacer + 2 buttons");
+        verify(dialogActions.children[0].text === undefined, "first child is the spacer");
         compare(dialogActions.children[1].text, "A");
         compare(dialogActions.children[2].text, "B");
     }
 
-    // corpo padrão de diálogo: contentItem é o ColumnLayout e auto-dimensiona
+    // standard dialog body: contentItem is the ColumnLayout and auto-sizes
     function test_dialog_content_autosizes() {
         compare(testDialogBody.spacing, Kirigami.Units.smallSpacing);
-        verify(testDialog.implicitHeight > 0, "diálogo dimensiona pelo conteúdo");
+        verify(testDialog.implicitHeight > 0, "dialog sizes by content");
     }
 
-    // cabeçalho padrão de diálogo
+    // standard dialog header
     function test_dialog_header_standard() {
         compare(dialogHeader.text, "T");
         compare(dialogHeader.type, Kirigami.Heading.Type.Primary);
         compare(dialogHeader.bottomPadding, 0);
     }
 
-    // Enter sobre um botão focado do rodapé do diálogo dispara o clique (Tab move o foco)
+    // Enter on a focused footer button of the dialog triggers the click (Tab moves focus)
     function test_dialog_enter_clicks_focused_button() {
         var btnA = dialogActions.children[1];
         var btnB = dialogActions.children[2];
@@ -156,17 +156,17 @@ TestCase {
         btnB.clicked.connect(function () { clicked++; });
         btnB.forceActiveFocus();
         wait(20);
-        compare(btnB.activeFocus, true, "foco no botão B");
+        compare(btnB.activeFocus, true, "focus on button B");
         keyClick(Qt.Key_Return);
         wait(20);
-        compare(clicked, 1, "Enter clica o botão focado");
+        compare(clicked, 1, "Enter clicks the focused button");
     }
 
-    // o popup não deve sugerir o próprio token em digitação ("{{") nem nomes com chaves
+    // the popup must not suggest the token being typed ("{{") nor names with braces
     function test_varcompleter_filters_braces() {
         comp.resolved = [
-            { name: "teste", enabled: true },
-            { name: "{{teste}}", enabled: true },
+            { name: "test", enabled: true },
+            { name: "{{test}}", enabled: true },
             { name: "{{", enabled: true },
             { name: "", enabled: true },
             { name: "off", enabled: false }
@@ -174,27 +174,27 @@ TestCase {
         comp.partial = "";
         var names = comp.matchingNames();
         compare(names.length, 1);
-        compare(names[0], "teste");
+        compare(names[0], "test");
     }
 
-    // cabeçalho e linha precisam usar a MESMA largura por coluna (o bug era o fillWidth
-    // com preferred implícito; agora usam preferred/minimum explícitos e iguais)
+    // header and row must use the SAME per-column width (the bug was fillWidth
+    // with implicit preferred; now they use explicit, equal preferred/minimum)
     function test_kvtable_columns_aligned() {
         var hdr = findChild(kv, "kvHeader");
         var lv = findChild(kv, "kvList");
-        verify(hdr !== null, "kvHeader não encontrado");
-        verify(lv !== null, "kvList não encontrado");
+        verify(hdr !== null, "kvHeader not found");
+        verify(lv !== null, "kvList not found");
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
-        // header: [ativo, chave, valor, tipo, escopo, segredo, remover]
-        // row:    [ativo, chave, arquivo, valor-segredo, valor, tipo, escopo, segredo, remover]
-        compare(hdr.children[0].Layout.preferredWidth, row.children[0].Layout.preferredWidth);   // ativo
-        compare(hdr.children[1].Layout.preferredWidth, row.children[1].Layout.preferredWidth);   // chave
+        verify(row !== null, "delegate not created");
+        // header: [active, key, value, type, scope, secret, remove]
+        // row:    [active, key, file, secret-value, value, type, scope, secret, remove]
+        compare(hdr.children[0].Layout.preferredWidth, row.children[0].Layout.preferredWidth);   // active
+        compare(hdr.children[1].Layout.preferredWidth, row.children[1].Layout.preferredWidth);   // key
         compare(hdr.children[1].Layout.minimumWidth, row.children[1].Layout.minimumWidth);
-        compare(hdr.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);   // valor
+        compare(hdr.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);   // value
         compare(hdr.children[2].Layout.minimumWidth, row.children[4].Layout.minimumWidth);
-        compare(hdr.children[6].Layout.preferredWidth, row.children[8].Layout.preferredWidth);   // remover
-        // as três "caras" da coluna valor compartilham a mesma largura
+        compare(hdr.children[6].Layout.preferredWidth, row.children[8].Layout.preferredWidth);   // remove
+        // the three "faces" of the value column share the same width
         compare(row.children[2].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
         compare(row.children[3].Layout.preferredWidth, row.children[4].Layout.preferredWidth);
     }
@@ -236,15 +236,15 @@ TestCase {
     function test_jsontree_toggle() {
         tree.load('{"a":{"b":1}}');
         wait(50);
-        compare(tree.isOpenAt("$.a"), true);   // depth 0 vem aberto por padrão
+        compare(tree.isOpenAt("$.a"), true);   // depth 0 is open by default
         tree.toggle("$.a");
-        compare(tree.isOpenAt("$.a"), false);  // grava estado explícito
+        compare(tree.isOpenAt("$.a"), false);  // records explicit state
         tree.toggle("$.a");
         compare(tree.isOpenAt("$.a"), true);
     }
 
     function test_jsontree_invalid() {
-        tree.load("não é json");
+        tree.load("not json");
         wait(50);
         compare(tree.root, undefined);
     }
@@ -266,7 +266,7 @@ TestCase {
         compare(lv.count, 0);
     }
 
-    // com confirmação ligada, tryRemove NÃO remove até confirmar
+    // with confirmation on, tryRemove does NOT remove until confirmed
     function test_kvtable_remove_needs_confirm() {
         settings.confirmDelete = true;
         kvModel.clear();
@@ -274,13 +274,13 @@ TestCase {
         wait(50);
         kv.tryRemove(0);
         wait(50);
-        compare(kvModel.count, 1);           // aguarda confirmação
+        compare(kvModel.count, 1);           // waits for confirmation
         var dlg = findChild(kv, "confirmRemoveDialog");
         if (dlg) dlg.close();
         kvModel.clear();
     }
 
-    // com confirmação desligada, tryRemove remove direto
+    // with confirmation off, tryRemove removes directly
     function test_kvtable_remove_direct() {
         settings.confirmDelete = false;
         kvModel.clear();
@@ -291,7 +291,7 @@ TestCase {
         compare(kvModel.count, 0);
     }
 
-    // Tab/Shift+Tab movem o foco entre as células editáveis da tabela
+    // Tab/Shift+Tab move focus between the table's editable cells
     function test_kvtable_tab_navigates_cells() {
         settings.confirmDelete = false;
         kvModel.clear();
@@ -299,22 +299,22 @@ TestCase {
         wait(50);
         var lv = findChild(kv, "kvList");
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
+        verify(row !== null, "delegate not created");
         var keyField = row.children[1];
         var valField = row.children[4];
         keyField.forceActiveFocus();
         wait(20);
-        compare(keyField.activeFocus, true, "foco inicial no campo chave");
+        compare(keyField.activeFocus, true, "initial focus on the key field");
         keyClick(Qt.Key_Tab);
         wait(20);
-        compare(valField.activeFocus, true, "Tab vai para o campo valor");
+        compare(valField.activeFocus, true, "Tab goes to the value field");
         keyClick(Qt.Key_Backtab);
         wait(20);
-        compare(keyField.activeFocus, true, "Shift+Tab volta para o campo chave");
+        compare(keyField.activeFocus, true, "Shift+Tab goes back to the key field");
         kvModel.clear();
     }
 
-    // ---- Util.js: domínio puro ----
+    // ---- Util.js: pure domain ----
     function test_util_fmtSize() {
         compare(Util.fmtSize(512), "512 B");
         compare(Util.fmtSize(2048), "2.0 KB");
@@ -356,25 +356,25 @@ TestCase {
     }
 
     function test_vartokens() {
-        var rv = [{ name: "teste", enabled: true }, { name: "off", enabled: false },
+        var rv = [{ name: "test", enabled: true }, { name: "off", enabled: false },
                   { name: "{{a}}", enabled: true }, { name: "", enabled: true }];
-        compare(VarTokens.matchingNames(rv, ""), ["teste"]);
-        compare(VarTokens.matchingNames(rv, "te"), ["teste"]);
+        compare(VarTokens.matchingNames(rv, ""), ["test"]);
+        compare(VarTokens.matchingNames(rv, "te"), ["test"]);
         compare(VarTokens.matchingNames(rv, "z"), []);
         compare(VarTokens.tokenAt("x {{base}}/u", 5).name, "base");
         compare(VarTokens.tokenAt("x {{base}}/u", 1), null);
-        compare(VarTokens.valueOf(rv, "teste").name, "teste");
+        compare(VarTokens.valueOf(rv, "test").name, "test");
         compare(VarTokens.valueOf(rv, "nope"), null);
     }
 
-    // JSON canônico: ignora a ordem das chaves (é o que decide o dirty ao desfazer)
+    // canonical JSON: ignores key order (it's what decides dirty on undo)
     function test_util_stableStringify() {
         compare(Util.stableStringify({ a: 1, b: 2 }), Util.stableStringify({ b: 2, a: 1 }));
         compare(Util.stableStringify({ a: { x: 1, y: 2 }, b: [1, 2] }),
                 Util.stableStringify({ b: [1, 2], a: { y: 2, x: 1 } }));
         verify(Util.stableStringify({ a: 1 }) !== Util.stableStringify({ a: 2 }));
-        verify(Util.stableStringify([1, 2]) !== Util.stableStringify([2, 1]));   // array importa ordem
-        // mudar e voltar ao original => mesmo snapshot (dirty some)
+        verify(Util.stableStringify([1, 2]) !== Util.stableStringify([2, 1]));   // array order matters
+        // change and return to the original => same snapshot (dirty clears)
         var base = Util.stableStringify({ url: "x", vars: [{ name: "a", value: "1" }] });
         var cur = Util.stableStringify({ vars: [{ value: "1", name: "a" }], url: "y" });
         verify(cur !== base);
@@ -382,60 +382,60 @@ TestCase {
         compare(cur, base);
     }
 
-    // [A,B,C,D]: B(1) -> inserir antes de D(to=3) => [A,C,B,D]
+    // [A,B,C,D]: B(1) -> insert before D(to=3) => [A,C,B,D]
     function test_util_tabMove() {
         var m = Util.tabMove(4, 1, 3, 1);
         compare(m.dest, 2);
-        compare(m.current, 2);          // a própria aba movida segue ativa
-        compare(Util.tabMove(4, 1, 3, 2).current, 1);   // C foi para a esquerda
-        compare(Util.tabMove(4, 1, 3, 3).current, 3);   // D não se move
-        compare(Util.tabMove(4, 1, 3, 0).current, 0);   // A não se move
+        compare(m.current, 2);          // the moved tab itself stays active
+        compare(Util.tabMove(4, 1, 3, 2).current, 1);   // C moved to the left
+        compare(Util.tabMove(4, 1, 3, 3).current, 3);   // D doesn't move
+        compare(Util.tabMove(4, 1, 3, 0).current, 0);   // A doesn't move
 
-        // [A,B,C,D]: D(3) -> inserir antes de B(to=1) => [A,D,B,C]
+        // [A,B,C,D]: D(3) -> insert before B(to=1) => [A,D,B,C]
         compare(Util.tabMove(4, 3, 1, 3).dest, 1);
         compare(Util.tabMove(4, 3, 1, 1).current, 2);
         compare(Util.tabMove(4, 3, 1, 2).current, 3);
 
-        // no-op: inserir logo depois de si mesmo
+        // no-op: insert right after itself
         compare(Util.tabMove(4, 1, 2, 0), null);
-        // limites: inserir no fim
+        // bounds: insert at the end
         compare(Util.tabMove(4, 0, 4, 0).dest, 3);
     }
 
-    // fixar/desfixar (VS Code): desfixar devolve a aba ao preview e mantém só um
+    // pin/unpin (VS Code): unpin returns the tab to preview and keeps only one
     function test_util_tabPin() {
-        // fixar a aba preview -> deixa de ser preview
+        // pin the preview tab -> it stops being preview
         var m = Util.tabPin([{ pinned: false, preview: true }, { pinned: false, preview: false }], 0);
         compare(m.length, 1);
         compare(m[0].index, 0);
         compare(m[0].pinned, true);
         compare(m[0].preview, false);
 
-        // desfixar -> volta a preview
+        // unpin -> back to preview
         m = Util.tabPin([{ pinned: true, preview: false }], 0);
         compare(m.length, 1);
         compare(m[0].pinned, false);
         compare(m[0].preview, true);
 
-        // desfixar com outra preview aberta -> só uma preview sobra (a última)
+        // unpin with another preview open -> only one preview remains (the last)
         m = Util.tabPin([{ pinned: true, preview: false }, { pinned: false, preview: true }], 0);
         compare(m.length, 2);
         compare(m[0].preview, true);
         compare(m[1].index, 1);
         compare(m[1].preview, false);
 
-        // fixar uma aba que não é preview -> não mexe na preview ativa
+        // pin a tab that isn't preview -> doesn't touch the active preview
         m = Util.tabPin([{ pinned: false, preview: false }, { pinned: false, preview: true }], 0);
         compare(m.length, 1);
         compare(m[0].pinned, true);
 
-        // índice inválido
+        // invalid index
         compare(Util.tabPin([], 0).length, 0);
     }
 
-    // sessão persistida: só abas fixadas voltam ao reabrir o app
+    // persisted session: only pinned tabs return when reopening the app
     function test_util_sessionPaths() {
-        // fixada no meio, não-fixadas descartadas; ativa remapeada p/ a posição salva
+        // pinned in the middle, non-pinned discarded; active remapped to the saved position
         var s = Util.sessionPaths([
             { relPath: "a", pinned: true },
             { relPath: "b", pinned: false },
@@ -446,100 +446,100 @@ TestCase {
         compare(s.paths[1], "c");
         compare(s.current, 1);
 
-        // ativa era não-fixada → cai para 0
+        // active was non-pinned → falls back to 0
         s = Util.sessionPaths([{ relPath: "a", pinned: true }, { relPath: "b", pinned: false }], 1);
         compare(s.paths.length, 1);
         compare(s.current, 0);
 
-        // nenhuma fixada → lista vazia
+        // none pinned → empty list
         s = Util.sessionPaths([{ relPath: "b", pinned: false }], 0);
         compare(s.paths.length, 0);
         compare(s.current, 0);
     }
 
-    // ListModel + delegate: uma role criada por setProperty DEPOIS que o delegate já
-    // existe não chega ao delegate (model.pinned fica undefined para sempre). Foi a
-    // causa de a aba fixada voltar a mostrar o X depois de restaurar a sessão: o append
-    // não declarava "pinned"/"preview". Por isso TODO append declara as duas roles.
-    ListModel { id: roleModelTarde }
-    ListModel { id: roleModelCedo }
+    // ListModel + delegate: a role created via setProperty AFTER the delegate already
+    // exists doesn't reach the delegate (model.pinned stays undefined forever). It was the
+    // cause of the pinned tab showing the X again after restoring the session: the append
+    // didn't declare "pinned"/"preview". That's why EVERY append declares both roles.
+    ListModel { id: roleModelLate }
+    ListModel { id: roleModelEarly }
     ListView {
-        id: roleViewTarde
+        id: roleViewLate
         width: 100; height: 60
-        model: roleModelTarde
+        model: roleModelLate
         delegate: Text { text: String(model.pinned) }
     }
     ListView {
-        id: roleViewCedo
+        id: roleViewEarly
         width: 100; height: 60
-        model: roleModelCedo
+        model: roleModelEarly
         delegate: Text { text: String(model.pinned) }
     }
 
-    function test_listmodel_roles_declaradas() {
-        roleModelTarde.append({ name: "a" });            // sem declarar "pinned"
+    function test_listmodel_roles_declared() {
+        roleModelLate.append({ name: "a" });            // without declaring "pinned"
         wait(30);
-        roleModelTarde.setProperty(0, "pinned", true);   // role criada tarde
+        roleModelLate.setProperty(0, "pinned", true);   // role created late
         wait(50);
-        compare(roleViewTarde.itemAtIndex(0).text, "undefined");   // delegate não vê a role tardia
+        compare(roleViewLate.itemAtIndex(0).text, "undefined");   // delegate doesn't see the late role
 
-        roleModelCedo.append({ name: "b", pinned: false });        // role declarada no append
+        roleModelEarly.append({ name: "b", pinned: false });        // role declared in the append
         wait(30);
-        roleModelCedo.setProperty(0, "pinned", true);
+        roleModelEarly.setProperty(0, "pinned", true);
         wait(50);
-        compare(roleViewCedo.itemAtIndex(0).text, "true");         // delegate acompanha
+        compare(roleViewEarly.itemAtIndex(0).text, "true");         // delegate keeps up
     }
 
-    // VarField embute o VarCompleter e propaga `resolved` (o bug do font.family
-    // passou batido por não haver teste de instanciação)
+    // VarField embeds the VarCompleter and propagates `resolved` (the font.family bug
+    // went unnoticed because there was no instantiation test)
     function test_varfield_wiring() {
         var c = findChild(vf, "varCompleter");
-        verify(c !== null, "VarCompleter não anexado ao VarField");
-        verify(c.target === vf, "target do completer deve ser o VarField");
+        verify(c !== null, "VarCompleter not attached to VarField");
+        verify(c.target === vf, "completer target must be the VarField");
         compare(c.resolved.length, 1);
         compare(c.resolved[0].name, "x");
     }
 
-    // campo de uma linha: Enter não insere quebra de linha (é TextArea por causa do highlight)
-    function test_varfield_enter_nao_quebra_linha() {
+    // single-line field: Enter doesn't insert a line break (it's a TextArea because of highlighting)
+    function test_varfield_enter_does_not_break_line() {
         vf.text = "abc";
         vf.forceActiveFocus();
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Enter);
-        compare(vf.text.indexOf("\n"), -1, "Enter não quebra linha");
+        compare(vf.text.indexOf("\n"), -1, "Enter doesn't break the line");
         compare(vf.text, "abc");
     }
 
-    // coluna Segredo: campo mascarado (echoMode Password) + editor normal associado
+    // Secret column: masked field (echoMode Password) + associated normal editor
     function test_kvtable_secret_column() {
         wait(50);
         var lv = findChild(kvSecret, "kvList");
         verify(lv !== null);
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
-        compare(row.children.length, 9, "nº de filhos do delegate");
-        compare(row.children[3].echoMode, TextInput.Password, "campo mascarado");
-        compare(row.children[4].placeholderText, "Value", "editor normal");
-        // altura igual ao editor normal: as bolinhas do echoMode não podem mexer na linha
-        compare(row.children[3].implicitHeight, row.children[4].implicitHeight, "altura do campo secreto");
-        // olho espiar: alterna o echoMode sem desmarcar segredo
+        verify(row !== null, "delegate not created");
+        compare(row.children.length, 9, "number of delegate children");
+        compare(row.children[3].echoMode, TextInput.Password, "masked field");
+        compare(row.children[4].placeholderText, "Value", "normal editor");
+        // height equal to the normal editor: the echoMode dots must not shift the row
+        compare(row.children[3].implicitHeight, row.children[4].implicitHeight, "secret field height");
+        // peek eye: toggles echoMode without unchecking secret
         var eye = findChild(row.children[3], "kvRevealButton");
-        verify(eye !== null, "olho de revelar não encontrado");
+        verify(eye !== null, "reveal eye not found");
         eye.clicked();
-        compare(row.children[3].echoMode, TextInput.Normal, "revelado");
-        compare(row.children[3].text, "v", "valor acessível");
+        compare(row.children[3].echoMode, TextInput.Normal, "revealed");
+        compare(row.children[3].text, "v", "accessible value");
         eye.clicked();
-        compare(row.children[3].echoMode, TextInput.Password, "mascarado de novo");
+        compare(row.children[3].echoMode, TextInput.Password, "masked again");
     }
 
-    // modo campos: botão de arquivo no lugar do editor de valor
+    // fields mode: file button in place of the value editor
     function test_kvtable_file_column() {
         wait(50);
         var lv = findChild(kvFiles, "kvList");
         verify(lv !== null);
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
-        compare(row.children[2].icon.name, "document-open", "botão de arquivo");
+        verify(row !== null, "delegate not created");
+        compare(row.children[2].icon.name, "document-open", "file button");
     }
 
     function test_kvtable_row_filter() {
@@ -549,45 +549,45 @@ TestCase {
         var lv = findChild(kvFilter, "kvList");
         verify(lv !== null);
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
-        compare(row.shown, false, "linha filtrada");
-        compare(row.height, 0, "altura zero quando filtrada");
+        verify(row !== null, "delegate not created");
+        compare(row.shown, false, "filtered row");
+        compare(row.height, 0, "zero height when filtered");
         filterModel.clear();
     }
 
-    // chip de escopo usa a cor vinda do callback scopeColor
+    // scope chip uses the color from the scopeColor callback
     function test_kvtable_scope_color() {
         wait(50);
         var lv = findChild(kvScope, "kvList");
         verify(lv !== null);
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
+        verify(row !== null, "delegate not created");
         var chip = findChild(row, "scopeChip");
-        verify(chip !== null, "scopeChip não encontrado");
+        verify(chip !== null, "scopeChip not found");
         compare(String(chip.tint), "#ff0000");
     }
 
-    // nome repetido (uniqueNames) marca o campo com erroText; sem uniqueNames, não
+    // duplicate name (uniqueNames) marks the field with erroText; without uniqueNames, it doesn't
     function test_kvtable_duplicate_name_highlight() {
         wait(50);
         var lv = findChild(kvDup, "kvList");
         verify(lv !== null);
         var row = lv.itemAtIndex(0);
-        verify(row !== null, "delegate não criado");
-        compare(row.children[1].errorText.length > 0, true, "nome repetido marca erro");
+        verify(row !== null, "delegate not created");
+        compare(row.children[1].errorText.length > 0, true, "duplicate name marks error");
         var lv2 = findChild(kvSecret, "kvList");
-        compare(lv2.itemAtIndex(0).children[1].errorText.length === 0, true, "sem uniqueNames não marca");
+        compare(lv2.itemAtIndex(0).children[1].errorText.length === 0, true, "without uniqueNames it doesn't mark");
     }
 
     function test_util_q() {
         compare(Util.q("simples"), "'simples'");
-        compare(Util.q("a'b"), "'a'\\''b'");   // escapa apóstrofo pro shell
+        compare(Util.q("a'b"), "'a'\\''b'");   // escapes apostrophe for the shell
     }
 
     function test_util_tokenizeCurl() {
         compare(JSON.stringify(Util.tokenizeCurl("a 'b c' d")), '["a","b c","d"]');
         compare(JSON.stringify(Util.tokenizeCurl('x "y z"')), '["x","y z"]');
-        compare(JSON.stringify(Util.tokenizeCurl("a \\\nb")), '["a","b"]');   // continuação de linha
+        compare(JSON.stringify(Util.tokenizeCurl("a \\\nb")), '["a","b"]');   // line continuation
     }
 
     function test_jsontree_empty() {
@@ -601,6 +601,6 @@ TestCase {
         tree.load('{"a":{"b":{"c":1}}}');
         wait(50);
         compare(tree.isOpenAt("$.a"), true);
-        compare(tree.isOpenAt("$.a.b"), true);   // depth 1 ainda abre por padrão
+        compare(tree.isOpenAt("$.a.b"), true);   // depth 1 still opens by default
     }
 }

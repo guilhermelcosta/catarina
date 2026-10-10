@@ -5,8 +5,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// Histórico de requests enviados, persistido num arquivo JSON (mais novos primeiro,
-// cap de 200). Só persiste — não conhece rede nem variáveis.
+// History of sent requests, persisted in a JSON file (newest first,
+// cap of 200). It only persists — it knows neither network nor variables.
 class HistoryStore : public QObject
 {
     Q_OBJECT

@@ -17,13 +17,13 @@
 
 class HttpClient;
 
-// Backend: fachada QML. Envia requests (variáveis resolvidas por escopo, params,
-// auth, multipart) e delega a persistência aos stores:
-//   - CollectionStorage  ~/catarina-collections (.json versionáveis)
+// Backend: QML facade. Sends requests (variables resolved by scope, params,
+// auth, multipart) and delegates persistence to the stores:
+//   - CollectionStorage  ~/catarina-collections (.json versionable)
 //   - EnvironmentStore   <dir>/.catarina/environments.json
 //   - HistoryStore       ~/.local/share/catarina/history.json
-//   - SecretStore        cofre do SO ou ~/.local/share/catarina/secrets.json (0600)
-// Mantém os sinais e a API Q_INVOKABLE que o QML já usa.
+//   - SecretStore        OS keychain or ~/.local/share/catarina/secrets.json (0600)
+// Keeps the signals and the Q_INVOKABLE API the QML already uses.
 class Backend : public QObject
 {
     Q_OBJECT
@@ -33,67 +33,67 @@ class Backend : public QObject
 public:
     explicit Backend(QObject *parent = nullptr);
 
-    // injeção (testes): troca o armazenamento de segredos por um em memória,
-    // evitando tocar no cofre do SO ou em arquivos
+    // injection (tests): swaps the secret storage for an in-memory one,
+    // avoiding touching the OS keychain or files
     void setSecretStore(std::unique_ptr<SecretStore> store);
 
     QString storageDir() const;
     Q_INVOKABLE void setStorageDir(const QString &dir);
     QString activeEnvironment() const;
-    // copia a coleção de exemplo embutida (:/seed) no primeiro uso; só quando o
-    // storage ainda está vazio e uma única vez (marca .catarina/.seeded)
+    // copies the built-in example collection (:/seed) on first use; only when
+    // storage is still empty and just once (marks .catarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
 
-    // ---- lógica pura: movida para RequestLogic (src/core/request_logic.h) ----
-    // partes efetivas de um request (method/url/headers/body) para exportação: aplica
-    // auth e Content-Type padrão como no send, sem resolver {{variaveis}}
+    // ---- pure logic: moved to RequestLogic (src/core/request_logic.h) ----
+    // effective parts of a request (method/url/headers/body) for export: applies
+    // auth and default Content-Type like on send, without resolving {{variables}}
     Q_INVOKABLE QVariantMap requestParts(const QVariantMap &request) const;
-    // como requestParts, mas com {{variaveis}} resolvidas (valores efetivos, inclusive
-    // segredos), auth herdada aplicada e params anexados à URL — é o cURL "que funciona"
+    // like requestParts, but with {{variables}} resolved (effective values, including
+    // secrets), inherited auth applied and params appended to the URL — it's the cURL "that works"
     Q_INVOKABLE QVariantMap resolvedRequestParts(const QVariantMap &request,
                                                  const QString &collection) const;
-    // preview do sufixo de query anexado pelos params ativos (mesma semântica do send)
+    // preview of the query suffix appended by the active params (same semantics as send)
     Q_INVOKABLE QString querySuffix(const QString &url, const QVariantList &params) const;
 
-    // ---- requisição ----
+    // ---- request ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
     Q_INVOKABLE void send(const QVariantMap &request, const QString &collection);
-    Q_INVOKABLE void cancel();          // aborta o request em andamento
-    // por que "name" não resolve nesta coleção, por código para a UI traduzir:
+    Q_INVOKABLE void cancel();          // aborts the in-flight request
+    // why "name" doesn't resolve in this collection, as a code for the UI to translate:
     // { "code": "", "collections": [...] }, codes: "" | "disabled" | "restricted" | "undefined"
     Q_INVOKABLE QVariantMap variableNoteFor(const QString &name, const QString &collection) const;
 
-    // ---- coleções ----
+    // ---- collections ----
     Q_INVOKABLE QVariantList collectionTree() const;
-    Q_INVOKABLE bool isCollection(const QString &relPath) const;   // é pasta/coleção?
+    Q_INVOKABLE bool isCollection(const QString &relPath) const;   // is it a folder/collection?
     Q_INVOKABLE QVariantMap loadRequest(const QString &relPath) const;
     Q_INVOKABLE bool saveRequest(const QString &relPath, const QVariantMap &data);
     Q_INVOKABLE bool deleteEntry(const QString &relPath);
     Q_INVOKABLE bool createFolder(const QString &relPath);
-    // move um request ou pasta para dentro de toFolder ("" = raiz)
+    // moves a request or folder into toFolder ("" = root)
     Q_INVOKABLE bool moveEntry(const QString &from, const QString &toFolder);
-    // renomeia mantendo o mesmo pai (newName é o nome-base, sem .json)
-    // renomear uma coleção (pasta de topo) também reaponta o escopo das variáveis
-    // de ambiente que a referenciam
+    // renames keeping the same parent (newName is the base name, without .json)
+    // renaming a collection (top-level folder) also repoints the scope of the
+    // environment variables that reference it
     Q_INVOKABLE bool renameEntry(const QString &relPath, const QString &newName);
-    // duplica request ou pasta como "<nome> copy"
+    // duplicates a request or folder as "<name> copy"
     Q_INVOKABLE bool duplicateEntry(const QString &relPath);
 
-    // ---- variáveis de coleção (versionadas, sem segredos) ----
+    // ---- collection variables (versioned, without secrets) ----
     Q_INVOKABLE QVariantList collectionVariables(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionVariables(const QString &collection, const QVariantList &vars);
-    // primeiro nome de variável repetido na lista ("" se não houver); nomes aparados
+    // first duplicated variable name in the list ("" if none); names trimmed
     Q_INVOKABLE QString duplicateVariableName(const QVariantList &vars) const;
 
-    // ---- cabeçalhos de coleção (aplicados a todos os requests dela) ----
+    // ---- collection headers (applied to all of its requests) ----
     Q_INVOKABLE QVariantList collectionHeaders(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionHeaders(const QString &collection, const QVariantList &headers);
 
-    // ---- autenticação de coleção (herdada por requests com auth "inherit") ----
+    // ---- collection auth (inherited by requests with auth "inherit") ----
     Q_INVOKABLE QVariantMap collectionAuth(const QString &collection) const;
     Q_INVOKABLE bool saveCollectionAuth(const QString &collection, const QVariantMap &auth);
 
-    // ---- environments globais (com escopo por variável) ----
+    // ---- global environments (with per-variable scope) ----
     Q_INVOKABLE QVariantList environments() const;
     Q_INVOKABLE QVariantList environmentVariables(const QString &name) const;
     Q_INVOKABLE bool saveEnvironment(const QString &name, const QVariantList &variables);
@@ -101,53 +101,53 @@ public:
     Q_INVOKABLE bool renameEnvironment(const QString &oldName, const QString &newName);
     Q_INVOKABLE void setActiveEnvironment(const QString &name);
 
-    // ---- segredos (fora do repo) ----
+    // ---- secrets (outside the repo) ----
     Q_INVOKABLE QString secretValue(const QString &id) const;
     Q_INVOKABLE bool saveSecret(const QString &id, const QString &value);
     Q_INVOKABLE bool removeSecret(const QString &id);
-    // preenche `value` das variáveis secretas a partir do cofre (para edição; o
-    // valor nunca é escrito no arquivo versionado — isso continua sendo no save)
+    // fills `value` of secret variables from the keychain (for editing; the
+    // value is never written to the versioned file — that still happens on save)
     Q_INVOKABLE QVariantList withResolvedSecrets(const QVariantList &vars) const;
 
-    // ---- histórico ----
+    // ---- history ----
     Q_INVOKABLE QVariantList history() const;
     Q_INVOKABLE void clearHistory();
 
-    // variáveis efetivas visíveis a uma coleção, já com valores de segredo resolvidos
-    // como acima, mas com a origem de cada variável (request/collection/global) — para a UI
+    // effective variables visible to a collection, with secret values already resolved
+    // as above, but with the origin of each variable (request/collection/global) — for the UI
     Q_INVOKABLE QVariantList resolvedVariables(const QString &collection,
                                                const QVariantList &requestVars) const;
-    // como resolvedVariables, mas com a lista da própria coleção fornecida (em edição),
-    // sem escopo de request — usado pela visão geral da coleção
+    // like resolvedVariables, but with the collection's own list provided (while editing),
+    // without request scope — used by the collection overview
     Q_INVOKABLE QVariantList resolvedCollectionVariables(const QString &collection,
                                                          const QVariantList &collectionVars) const;
-    // resolve tudo numa passada: { "resolved": [...], "missing": [...] }
+    // resolves everything in one pass: { "resolved": [...], "missing": [...] }
     Q_INVOKABLE QVariantMap variablesState(const QVariantMap &request,
                                            const QString &collection) const;
 
 signals:
     void responseReady(int status, const QString &statusText, const QVariantList &headers,
                        const QString &body, int elapsedMs, int sizeBytes);
-    // metadados para a aba de rede/timeline (protocolo, ip, tls, request enviado)
+    // metadata for the network/timeline tab (protocol, ip, tls, sent request)
     void responseMeta(const QVariantMap &meta);
-    // erro com código + argumentos; a UI monta o texto (Strings.js::backendError)
+    // error with code + args; the UI builds the text (Strings.js::backendError)
     void error(const QString &code, const QVariantList &args);
-    void started();                     // request despachado
-    void canceled();                    // request abortado pelo usuário
+    void started();                     // request dispatched
+    void canceled();                    // request aborted by the user
     void collectionsChanged();
     void environmentsChanged();
     void historyChanged();
 
 private:
-    // variáveis do ambiente ativo (candidatas a globais na resolução)
+    // variables of the active environment (candidates for globals during resolution)
     QVariantList activeGlobalVars() const;
-    // resolver puro com o acesso a segredos deste Backend injetado
+    // pure resolver with this Backend's secret access injected
     VariableResolver resolver() const;
 
-    // tira os segredos do arquivo (vão pro cofre); limpa o cofre se deixou de ser segredo
+    // strips secrets from the file (they go to the keychain); clears the keychain if it's no longer a secret
     QVariantList sanitizeSecrets(const QVariantList &vars);
 
-    Settings m_settings;                       // mesma config do app (storageDir/timeout/ignoreSsl)
+    Settings m_settings;                       // same app config (storageDir/timeout/ignoreSsl)
     QString m_dir;         // ~/catarina-collections
     QString m_envFile;     // <dir>/.catarina/environments.json
     QString m_appData;     // ~/.local/share/catarina

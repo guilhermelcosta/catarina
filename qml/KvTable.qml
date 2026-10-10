@@ -4,16 +4,16 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Tabela unificada de pares chave/valor do app (params, headers, campos, vars de
-// request/coleção/ambiente). O campo de valor aceita {{variavel}} (destaca, sugere e
-// mostra no hover). Colunas opcionais: Tipo (arquivos), Escopo e Segredo.
+// Unified key/value pair table for the app (params, headers, fields, request/
+// collection/environment vars). The value field accepts {{variable}} (highlights, suggests,
+// and shows on hover). Optional columns: Type (files), Scope and Secret.
 //
-// Layout responsivo: as colunas "Nome", "Valor" e "Escopo" são flexíveis
-// (fillWidth com preferred/minimum explícitos), então encolhem em janelas estreitas.
-// Cabeçalho e linhas usam exatamente os mesmos preferred/minimum → ficam alinhados.
+// Responsive layout: the "Name", "Value" and "Scope" columns are flexible
+// (fillWidth with explicit preferred/minimum), so they shrink in narrow windows.
+// Header and rows use exactly the same preferred/minimum → they stay aligned.
 //
-// Raiz é um Item (implicit 0) com ColumnLayout interna, para o tamanho implícito não
-// depender da largura (evita loop de polish do layout).
+// Root is an Item (implicit 0) with an inner ColumnLayout, so the implicit size
+// doesn't depend on width (avoids a layout polish loop).
 Item {
     id: table
     property var model
@@ -23,22 +23,22 @@ Item {
     property bool scopeColumn: false
     property var resolved: []
     property string collection: ""
-    property var scopeText: null     // function(index) -> texto do chip de escopo
-    property var scopeIcon: null     // function(index) -> nome do ícone do chip de escopo
-    property var scopeColor: null    // function(index) -> cor do chip (por escopo); null = neutro
-    property var scopeTooltip: null  // function(index) -> tooltip (ex.: nomes completos)
-    property bool uniqueNames: false // destaca nomes repetidos na tabela (variáveis)
-    property var rowFilter: null     // function(index) -> bool (mostra/esconde a linha)
+    property var scopeText: null     // function(index) -> scope chip text
+    property var scopeIcon: null     // function(index) -> scope chip icon name
+    property var scopeColor: null    // function(index) -> chip color (per scope); null = neutral
+    property var scopeTooltip: null  // function(index) -> tooltip (e.g. full names)
+    property bool uniqueNames: false // highlights repeated names in the table (variables)
+    property var rowFilter: null     // function(index) -> bool (shows/hides the row)
     signal addRequested()
     signal edited()
     signal pickFile(int index)
     signal scopeRequested(int index, real gx, real gy)
 
-    // bump a cada edição: força a reavaliação do destaque de nome repetido
+    // bump on every edit: forces re-evaluation of the repeated-name highlight
     property int revision: 0
     onEdited: revision++
 
-    // nome da linha colide (aparado) com o de outra linha da mesma tabela
+    // row name collides (trimmed) with that of another row in the same table
     function isDuplicateName(index) {
         var r = table.model.get(index);
         var n = r && r.name !== undefined ? String(r.name).trim() : "";
@@ -52,19 +52,19 @@ Item {
         return false;
     }
 
-    // remoção de linha com confirmação, seguindo a config global (settings.confirmDelete)
+    // row removal with confirmation, following the global config (settings.confirmDelete)
     function tryRemove(i) {
         if (settings.confirmDelete) { confirmRemove.pendingIndex = i; confirmRemove.open(); }
         else { table.model.remove(i); table.edited(); }
     }
 
-    // células editáveis (na ordem das colunas) de uma linha já instanciada.
-    // Cada célula expõe kvCell = true só na sua face ativa (a coluna "valor" tem
-    // três faces mutuamente exclusivas), então não dependemos de `visible` — que no
-    // harness de teste lê a visibilidade efetiva (TestCase é invisível).
+    // editable cells (in column order) of an already instantiated row.
+    // Each cell exposes kvCell = true only on its active face (the "value" column has
+    // three mutually exclusive faces), so we don't rely on `visible` — which in the
+    // test harness reads effective visibility (TestCase is invisible).
     function focusableCells(row) {
         var it = kvList.itemAtIndex(row);
-        if (!it || it.shown === false) return [];   // linha filtrada fora não recebe foco
+        if (!it || it.shown === false) return [];   // filtered-out row gets no focus
         var out = [];
         for (var i = 0; i < it.children.length; i++) {
             var c = it.children[i];
@@ -72,7 +72,7 @@ Item {
         }
         return out;
     }
-    // Tab/Shift+Tab (dir = +1/-1): próxima coluna; no fim da linha, linha seguinte
+    // Tab/Shift+Tab (dir = +1/-1): next column; at the end of the row, the next row
     function moveFocus(dir) {
         for (var r = 0; r < table.model.count; r++) {
             var cells = table.focusableCells(r);
@@ -94,12 +94,12 @@ Item {
     readonly property bool empty: model === undefined || model === null || model.count === 0
 
     readonly property int colSpacing: Kirigami.Units.smallSpacing
-    // colunas de largura fixa (pequenas)
+    // fixed-width columns (small)
     readonly property int enabledColWidth: 48
     readonly property int typeColWidth: 90
     readonly property int secretColWidth: 64
     readonly property int removeColWidth: 40
-    // colunas flexíveis
+    // flexible columns
     readonly property int keyColPreferred: 150
     readonly property int keyColMinimum: 80
     readonly property int valueColPreferred: 180
@@ -114,7 +114,7 @@ Item {
         anchors.fill: parent
         spacing: table.colSpacing
 
-        // cabeçalho das colunas — mesmos preferred/minimum das linhas
+        // column header — same preferred/minimum as the rows
         RowLayout {
             id: header
             objectName: "kvHeader"
@@ -158,7 +158,7 @@ Item {
             delegate: RowLayout {
                 width: kvList.width
                 spacing: table.colSpacing
-                // Tab/Shift+Tab de controles que não consomem a tecla (checkbox, combo, botões)
+                // Tab/Shift+Tab from controls that don't consume the key (checkbox, combo, buttons)
                 Keys.onPressed: function (e) {
                     if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
                         table.moveFocus(e.key === Qt.Key_Backtab ? -1 : 1);
@@ -168,7 +168,7 @@ Item {
                 readonly property bool shown: table.rowFilter === null || table.rowFilter(index)
                 visible: shown
                 height: shown ? implicitHeight : 0
-                opacity: model.enabled === false ? 0.45 : 1   // linha desabilitada esmaecida
+                opacity: model.enabled === false ? 0.45 : 1   // disabled row dimmed
                 CheckBox {
                     property bool kvCell: true
                     Layout.preferredWidth: table.enabledColWidth; Layout.minimumWidth: table.enabledColWidth; Layout.maximumWidth: table.enabledColWidth
@@ -188,7 +188,7 @@ Item {
                                ? Strings.t.duplicateNameHint : ""
                     onTextEdited: { model.name = text; table.edited(); }
                 }
-                // arquivo (só no modo campos)
+                // file (fields mode only)
                 Button {
                     property bool kvCell: table.allowFiles && model.type === "file"
                     Layout.fillWidth: true; Layout.preferredWidth: table.valueColPreferred; Layout.minimumWidth: table.valueColMinimum
@@ -198,8 +198,8 @@ Item {
                     icon.name: "document-open"
                     onClicked: table.pickFile(index)
                 }
-                // valor mascarado quando é segredo (TextField tem echoMode) + olho para
-                // espiar o valor sem desmarcar "segredo"
+                // value masked when it's a secret (TextField has echoMode) + eye to
+                // peek at the value without unchecking "secret"
                 TextField {
                     id: secretField
                     property bool kvCell: !(table.allowFiles && model.type === "file") && table.secretColumn && model.secret
@@ -209,13 +209,13 @@ Item {
                     text: model.value
                     placeholderText: Strings.t.secretInVault
                     echoMode: revealed ? TextInput.Normal : TextInput.Password
-                    // mesma métrica do VarField: sem isto as bolinhas do echoMode
-                    // mexem na altura da linha conforme a fonte
+                    // same metric as VarField: without this the echoMode bullets
+                    // change the row height depending on the font
                     implicitHeight: Kirigami.Units.gridUnit * 1.7
                     topPadding: 3; bottomPadding: 3; leftPadding: 6
                     rightPadding: revealButton.width + Kirigami.Units.smallSpacing
                     onTextEdited: { model.value = text; table.edited(); }
-                    // Tab/Shift+Tab movem para a célula ao lado (mesma navegação do VarField)
+                    // Tab/Shift+Tab move to the adjacent cell (same navigation as VarField)
                     Keys.onPressed: function (e) {
                         if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
                             table.moveFocus(e.key === Qt.Key_Backtab ? -1 : 1);
@@ -237,7 +237,7 @@ Item {
                         ToolTip.visible: hovered
                     }
                 }
-                // valor normal com destaque de {{variavel}}
+                // normal value with {{variable}} highlighting
                 VarField {
                     id: valArea
                     property bool kvCell: !(table.allowFiles && model.type === "file") && !(table.secretColumn && model.secret)
@@ -262,7 +262,7 @@ Item {
                         table.edited();
                     }
                 }
-                // escopo: chip compacto (Global / N coleções) que abre um popover
+                // scope: compact chip (Global / N collections) that opens a popover
                 Rectangle {
                     id: scopeChip
                     objectName: "scopeChip"
@@ -351,7 +351,7 @@ Item {
         }
     }
 
-    // confirmação de remoção de linha (mesma config global de exclusão)
+    // row removal confirmation (same global delete config)
     Dialog {
         id: confirmRemove
         objectName: "confirmRemoveDialog"

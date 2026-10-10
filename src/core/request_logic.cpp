@@ -7,7 +7,7 @@
 namespace {
 namespace RS = RequestSchema;
 
-// mesmo padrão em substitute e variableRefs: aceita espaços em "{{ nome }}"
+// same pattern in substitute and variableRefs: accepts spaces in "{{ name }}"
 const QRegularExpression &varRefRegex()
 {
     static const QRegularExpression re(QStringLiteral("\\{\\{\\s*([^{}]+?)\\s*\\}\\}"));

@@ -12,7 +12,7 @@ Dialog {
     title: Strings.t.importCurlTitle; anchors.centerIn: parent; modal: true; width: 560; height: 320
     header: DialogHeader { dialogTitle: curlImportDialog.title }
     property string hint: ""
-    // chamado de fora: zera o conteúdo antes de abrir (o TextArea interno não é acessível fora)
+    // called from outside: clears the content before opening (the internal TextArea isn't accessible outside)
     function openFresh() { hint = ""; curlImportArea.text = ""; open(); }
     onOpened: curlImportArea.forceActiveFocus()
     contentItem: ColumnLayout {

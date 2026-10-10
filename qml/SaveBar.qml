@@ -4,9 +4,9 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Cabeçalho padronizado de uma seção editável: título à esquerda; à direita o
-// indicador "alterações não salvas" + Reverter (ícone, secundário) + Salvar.
-// `showRename` adiciona um lápis ao lado do título (ex.: renomear ambiente).
+// Standard header of an editable section: title on the left; on the right the
+// "unsaved changes" indicator + Revert (icon, secondary) + Save.
+// `showRename` adds a pencil next to the title (e.g. rename environment).
 RowLayout {
     id: bar
     property string title: ""

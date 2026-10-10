@@ -5,8 +5,8 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Tela da coleção (visão geral/cabeçalhos/variáveis/autenticação). `app` = janela;
-// modelos e diálogo de novo request injetados; o editor de auth exposto p/ a janela.
+// Collection screen (overview/headers/variables/authentication). `app` = window;
+// models and new-request dialog injected; the auth editor exposed to the window.
 ColumnLayout {
     property var app
     property var newReqDialog
@@ -106,7 +106,7 @@ ColumnLayout {
         }
     }
 
-    // 1) cabeçalhos
+    // 1) headers
     Item {
         ColumnLayout {
             anchors.fill: parent
@@ -137,7 +137,7 @@ ColumnLayout {
         }
     }
 
-    // 2) variáveis
+    // 2) variables
     Item {
         ColumnLayout {
             anchors.fill: parent
@@ -171,7 +171,7 @@ ColumnLayout {
         }
     }
 
-    // 3) autenticação
+    // 3) authentication
     Item {
         ColumnLayout {
             anchors.fill: parent

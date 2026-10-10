@@ -1,9 +1,9 @@
 import QtQuick
 import org.kde.kirigami as Kirigami
 
-// Cabeçalho padrão de diálogo: título em negrito, com o MESMO padding em todos os
-// modais. Use sempre `header: DialogHeader { dialogTitle: <id>.title }` — não crie
-// um Heading à mão (senão o respiro do título varia entre diálogos).
+// Standard dialog header: bold title, with the SAME padding across all
+// modals. Always use `header: DialogHeader { dialogTitle: <id>.title }` — don't create
+// a Heading by hand (otherwise the title breathing room varies between dialogs).
 Kirigami.Heading {
     property string dialogTitle: ""
     text: dialogTitle

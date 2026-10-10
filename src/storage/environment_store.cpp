@@ -123,7 +123,7 @@ bool EnvironmentStore::rename(const QString &oldName, const QString &newName)
         return false;
     for (const Env &o : m_envs)
         if (o.name == newName)
-            return false;   // já existe
+            return false;   // already exists
     for (Env &e : m_envs) {
         if (e.name == oldName) {
             e.name = newName;
@@ -139,7 +139,7 @@ bool EnvironmentStore::rename(const QString &oldName, const QString &newName)
 
 void EnvironmentStore::setActive(const QString &name)
 {
-    // sem early-return: sempre persiste e notifica (a UI pode estar dessincronizada)
+    // no early-return: always persists and notifies (the UI may be out of sync)
     m_active = name;
     saveFile();
     emit changed();

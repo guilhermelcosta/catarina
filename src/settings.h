@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
-// Preferências do app, persistidas em ~/.config/catarina/catarina.ini
+// App preferences, persisted in ~/.config/catarina/catarina.ini
 class Settings : public QObject
 {
     Q_OBJECT
@@ -37,16 +37,16 @@ public:
     bool ignoreSsl() const;
     void setIgnoreSsl(bool v);
 
-    // sessão: abas abertas (restauradas no próximo startup)
+    // session: open tabs (restored on next startup)
     QStringList openTabs() const;
     int openTabIndex() const;
     Q_INVOKABLE void saveSession(const QStringList &paths, int current);
 
-    // atalhos: só os que foram remapeados ficam guardados (id -> sequência)
+    // shortcuts: only remapped ones are kept (id -> sequence)
     QVariantMap shortcuts() const;
     Q_INVOKABLE void setShortcut(const QString &id, const QString &sequence);
     Q_INVOKABLE void resetShortcut(const QString &id);
-    Q_INVOKABLE QString keySequence(int key, int modifiers) const;   // p/ captura de tecla
+    Q_INVOKABLE QString keySequence(int key, int modifiers) const;   // for key capture
 
     static QString defaultStorageDir();
 

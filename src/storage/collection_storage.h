@@ -7,10 +7,10 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// CRUD em disco das coleções: requests (.json), pastas e os arquivos de coleção
-// (.variables.json / .headers.json / .auth.json). Sem lógica de negócio — não
-// resolve {{variáveis}} nem mexe em segredos; recebe e devolve mapas prontos.
-// Emite changed() para o Backend repassar à UI como collectionsChanged().
+// On-disk CRUD for collections: requests (.json), folders and the collection files
+// (.variables.json / .headers.json / .auth.json). No business logic — it doesn't
+// resolve {{variables}} or touch secrets; it receives and returns ready-made maps.
+// Emits changed() so the Backend relays it to the UI as collectionsChanged().
 class CollectionStorage : public QObject
 {
     Q_OBJECT
@@ -20,7 +20,7 @@ public:
     void setRoot(const QString &dir);   // ~/catarina-collections
     QString root() const;
 
-    QVariantList tree() const;          // itens com name/relPath/isFolder/method/depth/hasChildren
+    QVariantList tree() const;          // items with name/relPath/isFolder/method/depth/hasChildren
     bool isCollection(const QString &relPath) const;
     QVariantMap loadRequest(const QString &relPath) const;
     bool saveRequest(const QString &relPath, const QVariantMap &data);
@@ -39,8 +39,8 @@ public:
 
 signals:
     void changed();
-    // renomeou uma coleção (pasta de topo): o Backend reaponta o escopo das
-    // variáveis de ambiente que a referenciam pelo nome
+    // renamed a collection (top-level folder): the Backend repoints the scope of the
+    // environment variables that reference it by name
     void collectionRenamed(const QString &oldName, const QString &newName);
 
 private:
@@ -54,8 +54,8 @@ private:
     void clearCaches();
 
     QString m_root;
-    mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
-    mutable QHash<QString, CachedJson> m_varsCache;               // coleção -> variáveis
-    mutable QHash<QString, CachedJson> m_headersCache;            // coleção -> cabeçalhos
-    mutable QHash<QString, CachedJson> m_authCache;               // coleção -> auth
+    mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, method)
+    mutable QHash<QString, CachedJson> m_varsCache;               // collection -> variables
+    mutable QHash<QString, CachedJson> m_headersCache;            // collection -> headers
+    mutable QHash<QString, CachedJson> m_authCache;               // collection -> auth
 };

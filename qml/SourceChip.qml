@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// Chip de origem da variável (global/coleção/request): fundo tingido + ícone + texto,
-// com cor/ícone por escopo. Usado por ResolvedVarsTable e VarCompleter.
+// Variable origin chip (global/collection/request): tinted background + icon + text,
+// with color/icon per scope. Used by ResolvedVarsTable and VarCompleter.
 Item {
     id: chip
     property string source: ""

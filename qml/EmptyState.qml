@@ -3,25 +3,25 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// Estado vazio (placeholder) padronizado do app. Conteúdo centralizado:
-// ícone opcional (área fixa), título, mensagem, atalho e ação opcional.
-// Fundo transparente — herda o fundo do painel (padrão do app).
-// Use centralizado: `anchors.centerIn: parent` + `width: Math.min(parent.width - largeSpacing*2, 340)`.
+// Standard empty (placeholder) state of the app. Centered content:
+// optional icon (fixed area), title, message, shortcut and optional action.
+// Transparent background — inherits the panel background (app pattern).
+// Use centered: `anchors.centerIn: parent` + `width: Math.min(parent.width - largeSpacing*2, 340)`.
 ColumnLayout {
     id: root
     property string iconSource: ""
-    property bool iconIsMask: false       // ícone monocromático (segue a cor do tema)
+    property bool iconIsMask: false       // monochrome icon (follows the theme color)
     property string title: ""
     property string message: ""
-    property string shortcut: ""          // ex.: "Ctrl+K"
-    property string shortcutLabel: ""     // ex.: "abre a paleta de comandos"
+    property string shortcut: ""          // e.g. "Ctrl+K"
+    property string shortcutLabel: ""     // e.g. "opens the command palette"
     property string actionText: ""
     property string actionIcon: ""
     signal actionTriggered()
 
     spacing: Kirigami.Units.smallSpacing
 
-    // área do ícone: reserva 72px quando há ícone; some quando não há
+    // icon area: reserves 72px when there is an icon; collapses when there isn't
     Item {
         Layout.alignment: Qt.AlignHCenter
         implicitWidth: root.iconSource.length > 0 ? 72 : 0

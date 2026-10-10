@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Confirmar exclusão (genérico; respeita settings.confirmDelete).
+// Confirm deletion (generic; respects settings.confirmDelete).
 Dialog {
     id: deleteDialog
     title: Strings.t.deleteTitle; modal: true; anchors.centerIn: parent; width: 400

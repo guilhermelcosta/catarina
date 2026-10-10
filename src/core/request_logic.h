@@ -6,35 +6,35 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// Lógica de request pura: substituição de {{variáveis}}, montagem de URL, auth,
-// form-encode e as partes efetivas para exportação. Sem I/O, sem rede, sem estado —
-// por isso é testável isoladamente (check_storage / gtest).
+// Pure request logic: {{variables}} substitution, URL building, auth,
+// form-encode and the effective parts for export. No I/O, no network, no state —
+// so it's testable in isolation (check_storage / gtest).
 class RequestLogic
 {
 public:
     RequestLogic() = delete;
 
-    // Um passe só, aceitando espaços em "{{ nome }}". Nome que não resolve fica
-    // literal (não some nem vira vazio).
+    // A single pass, accepting spaces in "{{ name }}". A name that doesn't resolve stays
+    // literal (it neither disappears nor becomes empty).
     static QString substitute(const QString &text, const QVariantMap &vars);
-    // Substitui TODO campo string (auth usa token/user/pass/key, fields usam fileName).
+    // Replaces EVERY string field (auth uses token/user/pass/key, fields use fileName).
     static QVariantList substituteList(const QVariantList &list, const QVariantMap &vars);
-    // nomes {{x}} num texto, sem repetição
+    // {{x}} names in a text, without repetition
     static QStringList variableRefs(const QString &text);
-    // assume http:// quando falta esquema; pula params desabilitados/sem nome
+    // assumes http:// when the scheme is missing; skips disabled/unnamed params
     static QUrl buildUrl(const QString &url, const QVariantList &params);
-    // sufixo de query que os params ativos anexam à URL ("?a=1&b=" / "&x=2" / "").
-    // Mesma semântica do buildUrl, mas cru (sem percent-encode) — é o preview da UI.
+    // query suffix that the active params append to the URL ("?a=1&b=" / "&x=2" / "").
+    // Same semantics as buildUrl, but raw (without percent-encode) — it's the UI preview.
     static QString querySuffix(const QString &url, const QVariantList &params);
-    // x-www-form-urlencoded dos fields habilitados
+    // x-www-form-urlencoded of the enabled fields
     static QString encodeForm(const QVariantList &fields);
-    // Content-Type padrão do bodyType ("" se não houver corpo)
+    // default Content-Type of the bodyType ("" if there's no body)
     static QString defaultContentType(const QString &bodyType);
-    // header de auth ({} se "none"/vazio); "inherit" NÃO é resolvido aqui
+    // auth header ({} if "none"/empty); "inherit" is NOT resolved here
     static QVariantMap authHeader(const QVariantMap &auth);
-    // auth efetiva: "inherit" usa a da coleção; qualquer outro tipo usa a do request
+    // effective auth: "inherit" uses the collection's; any other type uses the request's
     static QVariantMap effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth);
-    // partes efetivas de um request (method/url/headers/body) para exportação: aplica
-    // auth e Content-Type padrão como no send, sem resolver {{variáveis}}
+    // effective parts of a request (method/url/headers/body) for export: applies
+    // auth and default Content-Type like on send, without resolving {{variables}}
     static QVariantMap requestParts(const QVariantMap &request);
 };

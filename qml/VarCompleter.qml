@@ -4,13 +4,13 @@ import QtQuick.Layouts
 import "Strings.js" as Strings
 import "js/VarTokens.js" as VarTokens
 
-// Autocomplete de {{variavel}} (com teclado) e popup com o valor (hover).
-// Deve ser filho do editor alvo, com anchors.fill: parent.
+// {{variable}} autocomplete (with keyboard) and popup with the value (hover).
+// Must be a child of the target editor, with anchors.fill: parent.
 Item {
     id: completer
-    property var target: null          // TextArea alvo
+    property var target: null          // target TextArea
     property var resolved: []          // [{name, value, secret, source}]
-    property string collection: ""    // para explicar variáveis fora de escopo
+    property string collection: ""    // to explain variables out of scope
 
     function matchingNames() {
         return VarTokens.matchingNames(resolved, partial);
@@ -57,13 +57,13 @@ Item {
         if (rest.indexOf("}}") === 0) rest = rest.substring(2);
         target.text = before + "{{" + name + "}}" + rest;
         target.cursorPosition = before.length + name.length + 4;
-        // setar `text` programaticamente NÃO emite textEdited; sem isto o modelo do
-        // KvTable (onTextEdited) fica com o valor antigo (o "{{" em digitação)
+        // setting `text` programmatically does NOT emit textEdited; without this the
+        // KvTable model (onTextEdited) keeps the old value (the "{{" being typed)
         if (target.textEdited !== undefined)
             target.textEdited();
         pop.close();
     }
-    // chamado pelos Keys.onPressed do alvo; devolve true se consumiu a tecla
+    // called by the target's Keys.onPressed; returns true if it consumed the key
     function handleKey(event) {
         if (!pop.visible) return false;
         var m = matchingNames();
@@ -111,10 +111,10 @@ Item {
         }
     }
 
-    // ---------------- valor no hover ----------------
+    // ---------------- value on hover ----------------
     function updateHover(x, y) {
         if (!target) { hoverPop.close(); return; }
-        if (target.text.indexOf("{{") < 0) { hoverPop.close(); return; }   // sem variável: não roda regex/positionAt
+        if (target.text.indexOf("{{") < 0) { hoverPop.close(); return; }   // no variable: don't run regex/positionAt
         var pos = target.positionAt(x, y);
         if (pos < 0) { hoverPop.close(); return; }
         var tok = tokenAt(pos);
@@ -166,7 +166,7 @@ Item {
                 text: hoverPop.mainText
                 Layout.alignment: Qt.AlignVCenter
             }
-            // chip do escopo (cor/ícone por origem), no lugar de "(escopo)"
+            // scope chip (color/icon per origin), instead of "(scope)"
             SourceChip {
                 visible: hoverPop.scopeSource.length > 0
                 Layout.alignment: Qt.AlignVCenter

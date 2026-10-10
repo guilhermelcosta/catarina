@@ -10,8 +10,8 @@
 
 class QNetworkReply;
 
-// Envia um BuiltRequest e traduz o QNetworkReply em sinais. Única classe que
-// conhece QNetworkAccessManager: o resto do app não lida com objetos de reply.
+// Sends a BuiltRequest and translates the QNetworkReply into signals. The only class that
+// knows QNetworkAccessManager: the rest of the app doesn't deal with reply objects.
 class HttpClient : public QObject
 {
     Q_OBJECT
@@ -23,13 +23,13 @@ public:
     bool busy() const;
 
 signals:
-    void started();                     // request despachado
-    void canceled();                    // request abortado pelo usuário
+    void started();                     // request dispatched
+    void canceled();                    // request aborted by the user
     void responseReady(int status, const QString &statusText, const QVariantList &headers,
                        const QString &body, int elapsedMs, int sizeBytes);
     void responseMeta(const QVariantMap &meta);
     void historyEntry(const QVariantMap &entry);
-    // código + argumentos; a UI monta o texto (Strings.js::backendError)
+    // code + args; the UI builds the text (Strings.js::backendError)
     void error(const QString &code, const QVariantList &args);
 
 private:

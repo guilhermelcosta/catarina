@@ -14,14 +14,14 @@ VarHighlighter::VarHighlighter(QTextDocument *doc, const QColor &varColor, bool 
     , m_str(QStringLiteral("\"(?:[^\"\\\\]|\\\\.)*\""))
     , m_num(QStringLiteral("\\b-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"))
     , m_kw(QStringLiteral("\\b(?:true|false|null)\\b"))
-    // chave = string seguida (com espaços) de ':' — lookahead para não pintar o ':'
+    // key = string followed (with spaces) by ':' — lookahead to avoid painting the ':'
     , m_key(QStringLiteral("\"(?:[^\"\\\\]|\\\\.)*\"(?=\\s*:)"))
     , m_json(json)
 {
     m_varFmt.setForeground(varColor);
     m_varFmt.setFontWeight(bold ? QFont::Bold : QFont::Normal);
 
-    // cores dos tokens JSON (só usadas quando json=true; o chamador sempre passa)
+    // JSON token colors (only used when json=true; the caller always passes them)
     m_strFmt.setForeground(strColor);
     m_numFmt.setForeground(numColor);
     m_kwFmt.setForeground(kwColor);
@@ -39,14 +39,14 @@ void VarHighlighter::highlightBlock(const QString &text)
                 setFormat(m.capturedStart(), m.capturedLength(), pair.second);
             }
         }
-        // chaves por último: sobrescrevem a cor de string do mesmo trecho
+        // keys last: they override the string color of the same span
         auto kt = m_key.globalMatch(text);
         while (kt.hasNext()) {
             const QRegularExpressionMatch m = kt.next();
             setFormat(m.capturedStart(), m.capturedLength(), m_keyFmt);
         }
     }
-    // variáveis por último para sobrepor (mesmo dentro de strings)
+    // variables last so they override (even inside strings)
     auto it = m_var.globalMatch(text);
     while (it.hasNext()) {
         const QRegularExpressionMatch m = it.next();

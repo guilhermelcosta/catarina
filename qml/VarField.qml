@@ -2,25 +2,25 @@ import QtQuick
 import QtQuick.Controls
 import org.kde.kirigami as Kirigami
 
-// Campo de texto de uma linha com suporte a {{variavel}} embutido: destaca,
-// sugere (autocomplete) e mostra o valor no hover. Centraliza o que antes era
-// repetido em cada campo (varSupport.attach + VarCompleter + Keys.onPressed).
-// É um TextArea (não TextField) porque o highlight precisa de QQuickTextDocument,
-// que só TextArea/TextEdit expõem.
+// Single-line text field with built-in {{variable}} support: highlights,
+// suggests (autocomplete) and shows the value on hover. Centralizes what used
+// to be repeated in each field (varSupport.attach + VarCompleter + Keys.onPressed).
+// It's a TextArea (not TextField) because the highlight needs QQuickTextDocument,
+// which only TextArea/TextEdit expose.
 TextArea {
     id: root
     property var resolved: []          // [{name, value, secret, source, enabled}]
-    property string collection: ""     // para explicar variáveis fora de escopo
-    property string errorText: ""      // mensagem mostrada no popup de hover (ex.: nome repetido)
-    property var tabHandler: null      // function(dir): navegação Tab entre células (KvTable); null = nativo
-    signal accepted()                  // Enter/Return (célula de uma linha): consumido, o chamador decide
+    property string collection: ""     // to explain variables out of scope
+    property string errorText: ""      // message shown in the hover popup (e.g. repeated name)
+    property var tabHandler: null      // function(dir): Tab navigation between cells (KvTable); null = native
+    signal accepted()                  // Enter/Return (single-line cell): consumed, the caller decides
 
     wrapMode: TextEdit.NoWrap
     selectByMouse: true
     activeFocusOnTab: true
     implicitHeight: Kirigami.Units.gridUnit * 1.7
     topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
-    // nome repetido: texto em vermelho e negrito (como o destaque de {{variavel}})
+    // repeated name: text in red and bold (like the {{variable}} highlight)
     color: root.errorText.length > 0 ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
     font.bold: root.errorText.length > 0
 
@@ -30,7 +30,7 @@ TextArea {
     }
     onHoveredChanged: updateErrorPopup()
 
-    // popup escuro com o motivo (mesmo estilo do hover de {{variavel}})
+    // dark popup with the reason (same style as the {{variable}} hover)
     Popup {
         id: errPop
         parent: root
@@ -45,11 +45,11 @@ TextArea {
 
     Keys.onPressed: function (e) {
         if (completer.handleKey(e)) { e.accepted = true; return; }
-        // campo de uma linha (TextArea por causa do highlight): Enter não pode
-        // inserir quebra de linha no meio do texto; emite accepted() para o chamador
+        // single-line field (TextArea because of the highlight): Enter can't
+        // insert a line break in the middle of the text; emits accepted() for the caller
         if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { e.accepted = true; root.accepted(); return; }
-        // Tab/Shift+Tab: quando a tabela fornece um tabHandler, navega célula a célula;
-        // fora da tabela deixa passar (navegação nativa de foco)
+        // Tab/Shift+Tab: when the table provides a tabHandler, navigates cell by cell;
+        // outside the table it passes through (native focus navigation)
         if ((e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) && root.tabHandler) {
             root.tabHandler(e.key === Qt.Key_Backtab ? -1 : 1);
             e.accepted = true;

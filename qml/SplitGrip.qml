@@ -2,10 +2,10 @@ import QtQuick
 import QtQuick.Controls
 import org.kde.kirigami as Kirigami
 
-// Área de agarrar de split (SplitView.handle), com zona de arraste generosa.
+// Split grab area (SplitView.handle), with a generous drag zone.
 Rectangle {
-    // Área de agarrar generosa (traço de 1px é quase impossível acertar com o mouse).
-    // O quadrado transparente é a zona de arraste; a linha fina é só o visual.
+    // Generous grab area (a 1px line is nearly impossible to hit with the mouse).
+    // The transparent square is the drag zone; the thin line is just the visual.
     readonly property bool verticalBar: height > width
     implicitWidth: Kirigami.Units.smallSpacing * 2 + 1
     implicitHeight: Kirigami.Units.smallSpacing * 2 + 1

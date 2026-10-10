@@ -5,8 +5,8 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Editor do request: método/URL/params/headers/body/auth/vars. `app` = janela;
-// modelos e FileDialog injetados; o editor de auth exposto p/ a janela.
+// Request editor: method/URL/params/headers/body/auth/vars. `app` = window;
+// models and FileDialog injected; the auth editor exposed to the window.
 ColumnLayout {
     id: editor
     property var app
@@ -61,9 +61,9 @@ ColumnLayout {
                 onAccepted: app.doSend()
             }
 
-            // Preview da query anexada pelos params ativos (o que o buildUrl
-            // junta à URL). Só visual, não interfere na edição. Se a URL
-            // digitada transborda o campo, esconde (o fim some no scroll).
+            // Preview of the query appended by the active params (what buildUrl
+            // joins to the URL). Visual only, doesn't interfere with editing. If the URL
+            // typed overflows the field, it hides (the end disappears in the scroll).
             TextMetrics {
                 id: urlTextMetrics
                 font: urlField.font
@@ -71,8 +71,8 @@ ColumnLayout {
             }
             Rectangle {
                 id: urlQueryGhost
-                // destaque legível nos dois temas: mistura o accent com a cor
-                // de texto (clareia no escuro, escurece no claro)
+                // readable highlight in both themes: blends the accent with the text
+                // color (lightens on dark, darkens on light)
                 readonly property color accent: Kirigami.ColorUtils.linearInterpolation(
                     Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.8)
                 readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
@@ -155,9 +155,9 @@ ColumnLayout {
         KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
         KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
 
-        // NB: qualificar com `editor.` — `fieldsModel`/`fileDialog` são propriedades
-        // deste componente; sem o prefixo o QML resolveria para a própria propriedade
-        // (ainda indefinida) em vez da do pai.
+        // NB: qualify with `editor.` — `fieldsModel`/`fileDialog` are properties
+        // of this component; without the prefix QML would resolve to the property
+        // itself (still undefined) instead of the parent's.
         BodyEditor { id: bodyEditor; objectName: "bodyEditor"; app: editor.app; fieldsModel: editor.fieldsModel; fileDialog: editor.fileDialog }
 
         AuthEditor {
@@ -168,8 +168,8 @@ ColumnLayout {
             onEdited: app.markDirty()
         }
 
-        // variáveis editáveis (topo) + efetivas (embaixo), com divisor
-        // arrastável — no máximo metade da altura da aba.
+        // editable variables (top) + effective ones (bottom), with a draggable
+        // divider — at most half the tab height.
         ReqVarsEditor { id: reqVars; objectName: "reqVarsEditor"; app: editor.app; requestVarsModel: editor.requestVarsModel }
     }
 }

@@ -9,12 +9,12 @@ Dialog {
     id: nameDialog
     property var app
 
-    property string base: ""        // pasta onde criar ("" = raiz)
+    property string base: ""        // folder where to create ("" = root)
     property bool asCollection: false
     title: asCollection ? Strings.t.newCollectionTitle : Strings.t.newFolderTitle
     anchors.centerIn: parent; modal: true; width: 340
     header: DialogHeader { dialogTitle: nameDialog.title }
-    // rodapé explícito (em vez de standardButtons) para as setas navegarem entre os botões
+    // explicit footer (instead of standardButtons) so the arrow keys navigate between the buttons
     function accept() {
         var n = nameField.text.trim();
         if (n.length === 0) { nameField.forceActiveFocus(); return; }

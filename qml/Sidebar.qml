@@ -5,8 +5,8 @@ import org.kde.kirigami as Kirigami
 
 import "Strings.js" as Strings
 
-// Sidebar de coleções (árvore + ações). `app` = janela; treeModel/menus injetados;
-// a lista é exposta p/ o popup de mover ancorar na linha.
+// Collections sidebar (tree + actions). `app` = window; treeModel/menus injected;
+// the list is exposed so the move popup can anchor to the row.
 ColumnLayout {
     id: sidebar
     property var app
@@ -45,8 +45,8 @@ ColumnLayout {
             highlighted: model.relPath === app.selectedPath
             property int itemDepth: model.depth || 0
 
-            // guias de indentação (estilo VS Code): uma linha vertical por nível de
-            // ancestral, alinhada ao centro do triângulo daquele nível (recuo = 12px)
+            // indent guides (VS Code style): one vertical line per ancestor level,
+            // aligned to the center of that level's triangle (indent = 12px)
             Row {
                 anchors.left: parent.left
                 anchors.top: parent.top
@@ -80,7 +80,7 @@ ColumnLayout {
                 Label { Layout.fillWidth: true; text: model.name; elide: Text.ElideRight }
             }
 
-            // clique (esquerdo/direito) + arrasto manual (com ghost)
+            // click (left/right) + manual drag (with ghost)
             MouseArea {
                 id: mainMouse
                 anchors.fill: parent
@@ -120,7 +120,7 @@ ColumnLayout {
                     var to = "";
                     if (app.dropTarget.length > 0 && app.dropTarget !== from)
                         to = app.dropIsFolder ? app.dropTarget : app.parentOf(app.dropTarget);
-                    // limpa o ghost ANTES de mover (o move recria a lista e mata este delegate)
+                    // clears the ghost BEFORE moving (the move recreates the list and kills this delegate)
                     app.dragging = false;
                     app.dropTarget = "";
                     if (to.length > 0 && to !== from)
@@ -129,7 +129,7 @@ ColumnLayout {
                 onCanceled: { app.dragging = false; app.dropTarget = ""; }
                 onClicked: function (m) {
                     if (app.justDragged) { app.justDragged = false; return; }
-                    // clique no triângulo = colapsar/expandir
+                    // click on the triangle = collapse/expand
                     var triX = (model.depth || 0) * 12 + 3;
                     if (m.button === Qt.LeftButton && model.isFolder && model.hasChildren
                             && m.x >= triX - 2 && m.x <= triX + 18) {
@@ -148,7 +148,7 @@ ColumnLayout {
                 }
             }
 
-            // destaque do alvo de drop
+            // drop target highlight
             Rectangle {
                 anchors.fill: parent
                 color: "transparent"
@@ -157,7 +157,7 @@ ColumnLayout {
                 visible: app.dropTarget === model.relPath
             }
 
-            // triângulo de colapsar (só visual; o clique é tratado na MouseArea)
+            // collapse triangle (visual only; the click is handled in the MouseArea)
             Kirigami.Icon {
                 visible: model.isFolder && model.hasChildren
                 anchors.left: parent.left
@@ -170,7 +170,7 @@ ColumnLayout {
                 opacity: 0.75
             }
 
-            // ação rápida (⋯): aparece no hover / item selecionado
+            // quick action (⋯): appears on hover / selected item
             ToolButton {
                 id: itemMenuBtn
                 anchors.right: parent.right

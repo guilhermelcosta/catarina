@@ -6,8 +6,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// Environments globais (lista nome→variáveis + o ativo), persistidos num arquivo.
-// Recebe listas já sanitizadas (sem segredos) — não mexe em segredos.
+// Global environments (list name→variables + the active one), persisted in a file.
+// Receives already-sanitized lists (without secrets) — it doesn't touch secrets.
 class EnvironmentStore : public QObject
 {
     Q_OBJECT
@@ -19,7 +19,7 @@ public:
 
     QVariantList list() const;                                    // {name, count}
     QVariantList variables(const QString &name) const;
-    QVariantList activeVariables() const;                         // para o resolver
+    QVariantList activeVariables() const;                         // for the resolver
     QString active() const;
 
     bool save(const QString &name, const QVariantList &vars);
@@ -27,7 +27,7 @@ public:
     bool rename(const QString &oldName, const QString &newName);
     void setActive(const QString &name);
 
-    // troca oldName por newName no escopo das variáveis de ambiente (rename de coleção)
+    // swaps oldName for newName in the environment variables' scope (collection rename)
     bool renameCollectionScope(const QString &oldName, const QString &newName);
 
 signals:

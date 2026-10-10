@@ -68,7 +68,7 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
     const QString abs = m_root + (rel.isEmpty() ? QString() : QLatin1Char('/') + rel);
     QDir dir(abs);
     for (const QString &sub : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
-        if (sub.startsWith(QLatin1Char('.')))   // .catarina e afins ficam fora da árvore
+        if (sub.startsWith(QLatin1Char('.')))   // .catarina and the like stay out of the tree
             continue;
         const QString childRel = rel.isEmpty() ? sub : rel + QLatin1Char('/') + sub;
         out.append(QVariantMap{{QStringLiteral("name"), sub},
@@ -83,7 +83,7 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
         QString base = file;
         base.chop(5);
         const QString childRel = rel.isEmpty() ? base : rel + QLatin1Char('/') + base;
-        // method com cache (mtime): evita reabrir/parsear cada request a cada reload
+        // method with cache (mtime): avoids reopening/parsing each request on every reload
         const QString absFile = m_root + QLatin1Char('/') + childRel + QStringLiteral(".json");
         const qint64 mt = QFileInfo(absFile).lastModified().toMSecsSinceEpoch();
         QString method;
@@ -109,7 +109,7 @@ QVariantList CollectionStorage::tree() const
 {
     QVariantList out;
     walk(QString(), 0, out);
-    // hasChildren em O(n): marca os ancestrais de cada entrada
+    // hasChildren in O(n): marks the ancestors of each entry
     QSet<QString> parents;
     for (const QVariant &v : out) {
         QString rp = v.toMap().value(QStringLiteral("relPath")).toString();
@@ -199,8 +199,8 @@ bool CollectionStorage::renameEntry(const QString &relPath, const QString &newNa
     const bool ok = isDir ? QDir().rename(srcAbs, dstAbs)
                           : QFile::rename(srcAbs + QStringLiteral(".json"), dstAbs + QStringLiteral(".json"));
     if (ok) {
-        // renomear uma coleção (pasta de topo) precisa reapontar o escopo das
-        // variáveis de ambiente que a referenciam pelo nome
+        // renaming a collection (top-level folder) needs to repoint the scope of the
+        // environment variables that reference it by name
         if (isDir && !relPath.contains(QLatin1Char('/')))
             emit collectionRenamed(relPath, newName);
         emit changed();
@@ -236,7 +236,7 @@ bool CollectionStorage::moveEntry(const QString &from, const QString &toFolder)
     if (from.isEmpty())
         return false;
     if (toFolder == from || toFolder.startsWith(from + QLatin1Char('/')))
-        return false;   // não pode mover para dentro de si mesmo
+        return false;   // can't move into itself
 
     const QString base = from.section(QLatin1Char('/'), -1);
     const QString dest = (toFolder.isEmpty() ? QString() : toFolder + QLatin1Char('/')) + base;
@@ -247,9 +247,9 @@ bool CollectionStorage::moveEntry(const QString &from, const QString &toFolder)
     const QString dstAbs = m_root + QLatin1Char('/') + dest;
     const bool isDir = QFileInfo(srcAbs).isDir();
     if (QFileInfo::exists(dstAbs) || QFileInfo::exists(dstAbs + QStringLiteral(".json")))
-        return false;   // já existe no destino
+        return false;   // already exists at the destination
 
-    // cria só o diretório PAI do destino (o destino em si não pode existir)
+    // creates only the destination's PARENT directory (the destination itself can't exist)
     QDir().mkpath(QFileInfo(isDir ? dstAbs : dstAbs + QStringLiteral(".json")).absolutePath());
 
     bool ok = false;
@@ -263,7 +263,7 @@ bool CollectionStorage::moveEntry(const QString &from, const QString &toFolder)
     return ok;
 }
 
-// lê um campo de um .json (com cache validado por mtime); escrever o arquivo invalida sozinho
+// reads a field from a .json (with cache validated by mtime); writing the file invalidates it by itself
 QVariant CollectionStorage::cachedJson(const QString &path, const QString &key, CachedJson &slot) const
 {
     const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
@@ -299,7 +299,7 @@ bool CollectionStorage::saveVariables(const QString &collection, const QVariantL
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
     if (ok) {
-        m_varsCache[collection].mtime = -1;   // força releitura (mtime pode ter granularidade grossa)
+        m_varsCache[collection].mtime = -1;   // forces a re-read (mtime may have coarse granularity)
         emit changed();
     }
     return ok;

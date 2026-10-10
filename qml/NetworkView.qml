@@ -5,11 +5,11 @@ import org.kde.kirigami as Kirigami
 import "Util.js" as Util
 import "Strings.js" as Strings
 
-// Visão da rede: o que foi enviado (request) e como foi a conexão.
-// O Qt não expõe DNS/TLS por fase; mostramos o que ele fornece.
+// Network view: what was sent (request) and how the connection went.
+// Qt doesn't expose DNS/TLS per phase; we show what it provides.
 Item {
     id: net
-    property var meta: ({})      // vindo do Backend::responseMeta
+    property var meta: ({})      // coming from Backend::responseMeta
 
     ScrollView {
         anchors.fill: parent
@@ -18,7 +18,7 @@ Item {
             width: net.width
             spacing: Kirigami.Units.smallSpacing
 
-            // ---- linha de topo: método url status tempo ----
+            // ---- top row: method url status time ----
             Rectangle {
                 Layout.fillWidth: true
                 Layout.topMargin: Kirigami.Units.smallSpacing
@@ -48,7 +48,7 @@ Item {
                 }
             }
 
-            // ---- conexão ----
+            // ---- connection ----
             Label { text: Strings.t.connection; font.bold: true; Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.topMargin: Kirigami.Units.smallSpacing }
             GridLayout {
                 columns: 2

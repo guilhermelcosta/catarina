@@ -4,9 +4,9 @@ import QtTest
 import org.kde.kirigami as Kirigami
 import "../../qml"
 
-// Comportamento de tela: instancia o Main real (com backend/settings injetados
-// pelo tst_app.cpp) e exercita o AppController — abas, preview/pin, sessão,
-// aplicar/coletar request, alvo de criação, abas singleton de ambiente/coleção.
+// Screen behavior: instantiates the real Main (with backend/settings injected
+// by tst_app.cpp) and exercises AppController — tabs, preview/pin, session,
+// apply/collect request, creation target, environment/collection singleton tabs.
 TestCase {
     id: root
     name: "AppBehavior"
@@ -18,7 +18,7 @@ TestCase {
     function init() {
         if (win) { win.destroy(); win = null; }
         win = appComponent.createObject(null);
-        verify(win, "não consegui criar o Main");
+        verify(win, "could not create Main");
         win.visible = true;
     }
     function cleanupTestCase() {
@@ -26,7 +26,7 @@ TestCase {
     }
 
     function baseReq(method) {
-        return { method: method !== undefined ? method : "GET", url: "http://exemplo/x",
+        return { method: method !== undefined ? method : "GET", url: "http://example/x",
                  params: [], headers: [], fields: [], body: "", bodyType: "none",
                  auth: { type: "none" }, vars: [] };
     }
@@ -41,22 +41,22 @@ TestCase {
         compare(win.appController.currentTab, -1);
     }
 
-    function test_preview_tab_e_pin() {
+    function test_preview_tab_and_pin() {
         backend.saveRequest("t/a", baseReq("GET"));
         backend.saveRequest("t/b", baseReq("POST"));
         win.appController.openRequest("t/a");
         compare(win.appController.tabsModel.count, 1);
-        // a segunda request reutiliza a aba preview (transiente)
+        // the second request reuses the preview (transient) tab
         win.appController.openRequest("t/b");
         compare(win.appController.tabsModel.count, 1);
         compare(win.appController.tabsModel.get(0).relPath, "t/b");
-        // fixando, a próxima abre uma nova aba
+        // pinning makes the next one open a new tab
         win.appController.pinTab(0);
         win.appController.openRequest("t/a");
         compare(win.appController.tabsModel.count, 2);
     }
 
-    function test_switch_aplica_editor() {
+    function test_switch_applies_editor() {
         backend.saveRequest("t/g", baseReq("GET"));
         backend.saveRequest("t/p", baseReq("POST"));
         win.appController.openRequest("t/g");
@@ -102,7 +102,7 @@ TestCase {
         win.appController.openEnvTab("");
         var n = win.appController.tabsModel.count;
         win.appController.openEnvTab("");
-        compare(win.appController.tabsModel.count, n);   // não duplica
+        compare(win.appController.tabsModel.count, n);   // doesn't duplicate
         compare(win.appController.showingEnv, true);
     }
 
@@ -114,7 +114,7 @@ TestCase {
         compare(win.appController.collectionPath, "colA");
     }
 
-    function test_session_restore_pins_e_ambiente() {
+    function test_session_restore_pins_and_environment() {
         backend.saveRequest("t/s1", baseReq());
         win.appController.restoreSessionTabs(["t/s1", "__environment__"]);
         compare(win.appController.tabsModel.count, 2);
@@ -134,8 +134,8 @@ TestCase {
         compare(win.appController.tabsModel.get(0).relPath, "t/rc");
     }
 
-    // ---- edição: dirty / despin / reverter / salvar ----
-    function test_editar_marca_dirty_e_reverter() {
+    // ---- editing: dirty / unpin / revert / save ----
+    function test_edit_marks_dirty_and_reverts() {
         backend.saveRequest("t/e", baseReq());
         win.appController.openRequest("t/e");
         compare(win.appController.tabsModel.get(0).dirty, false);
@@ -145,19 +145,19 @@ TestCase {
         compare(win.appController.currentDirty, true);
         win.appController.revertCurrent();
         compare(win.appController.tabsModel.get(0).dirty, false);
-        compare(win.appController.collectRequest().url, "http://exemplo/x");
+        compare(win.appController.collectRequest().url, "http://example/x");
     }
 
-    function test_edicao_desfixa_preview() {
+    function test_edit_unpins_preview() {
         backend.saveRequest("t/pv", baseReq());
         win.appController.openRequest("t/pv");
         compare(win.appController.tabsModel.get(0).preview, true);
         win.appController.requestEditor.url = "http://x2";
         win.appController.markDirty();
-        compare(win.appController.tabsModel.get(0).preview, false);   // editar fixa a aba
+        compare(win.appController.tabsModel.get(0).preview, false);   // editing pins the tab
     }
 
-    function test_save_persiste_e_limpa_dirty() {
+    function test_save_persists_and_clears_dirty() {
         backend.saveRequest("t/sv", baseReq());
         win.appController.openRequest("t/sv");
         win.appController.requestEditor.url = "http://salvo";
@@ -167,20 +167,20 @@ TestCase {
         compare(win.appController.tabsModel.get(0).dirty, false);
     }
 
-    // digitação no campo de URL dispara textEdited → markDirty (mesmo caminho do teclado)
-    function test_edicao_dispara_dirty() {
+    // typing in the URL field triggers textEdited → markDirty (same keyboard path)
+    function test_edit_triggers_dirty() {
         backend.saveRequest("t/kb", baseReq());
         win.appController.openRequest("t/kb");
         compare(win.appController.tabsModel.get(0).dirty, false);
         var f = win.appController.requestEditor.urlInput;
-        verify(f, "campo de URL exposto");
+        verify(f, "URL field exposed");
         f.text = "http://digitado";
         f.textEdited();
         compare(win.appController.tabsModel.get(0).dirty, true);
     }
 
-    // ---- reordenar / mover ----
-    function test_move_tab_reordena() {
+    // ---- reorder / move ----
+    function test_move_tab_reorders() {
         backend.saveRequest("t/1", baseReq("GET"));
         backend.saveRequest("t/2", baseReq("POST"));
         win.appController.openRequest("t/1");
@@ -188,72 +188,72 @@ TestCase {
         win.appController.openRequest("t/2");
         compare(win.appController.tabsModel.get(0).relPath, "t/1");
         compare(win.appController.tabsModel.get(1).relPath, "t/2");
-        win.appController.moveTab(0, 2);   // move t/1 para o fim
+        win.appController.moveTab(0, 2);   // move t/1 to the end
         compare(win.appController.tabsModel.get(0).relPath, "t/2");
         compare(win.appController.tabsModel.get(1).relPath, "t/1");
     }
 
-    function test_tab_index_at_insercao() {
+    function test_tab_index_at_insertion() {
         backend.saveRequest("t/idx", baseReq());
         win.appController.openRequest("t/idx");
         wait(50);
-        compare(win.appController.tabIndexAt(-1), 0);       // antes do primeiro
-        compare(win.appController.tabIndexAt(100000), 1);   // depois do último
+        compare(win.appController.tabIndexAt(-1), 0);       // before the first
+        compare(win.appController.tabIndexAt(100000), 1);   // after the last
     }
 
-    // ---- exclusão respeita settings.confirmDelete ----
-    function test_delete_respeita_confirmacao() {
+    // ---- deletion respects settings.confirmDelete ----
+    function test_delete_respects_confirmation() {
         backend.saveRequest("t/del", baseReq());
         win.appController.selectedPath = "t/del";
         settings.confirmDelete = true;
         win.appController.askDelete();
-        compare(backend.loadRequest("t/del").method, "GET");   // diálogo aberto, nada apagado
+        compare(backend.loadRequest("t/del").method, "GET");   // dialog open, nothing deleted
         settings.confirmDelete = false;
         win.appController.askDelete();
-        compare(backend.loadRequest("t/del").method, undefined);   // apagado
-        settings.confirmDelete = true;   // restaura o padrão
+        compare(backend.loadRequest("t/del").method, undefined);   // deleted
+        settings.confirmDelete = true;   // restores the default
     }
 
-    // ---- import de cURL abre a request importada ----
+    // ---- cURL import opens the imported request ----
     function test_import_curl() {
-        win.appController.importCurl("curl -X POST https://exemplo/api -H 'X-Test: 1' -d '{\"a\":1}'");
+        win.appController.importCurl("curl -X POST https://example/api -H 'X-Test: 1' -d '{\"a\":1}'");
         compare(win.appController.tabsModel.count, 1);
         compare(win.appController.collectRequest().method, "POST");
         verify(win.appController.collectRequest().headers.length >= 1);
     }
 
-    // guias de indentação: uma linha por nível de ancestral (profundidade = nº de guias)
-    function test_indent_guides_por_profundidade() {
+    // indent guides: one line per ancestor level (depth = number of guides)
+    function test_indent_guides_by_depth() {
         backend.saveRequest("col/sub/r", baseReq());
         win.appController.reloadTree();
-        wait(100);   // rebuildTree é coalescido via Qt.callLater
+        wait(100);   // rebuildTree is coalesced via Qt.callLater
 
         var tree = win.appController.treeModel;
         var idx = -1;
         for (var i = 0; i < tree.count; i++)
             if (tree.get(i).relPath === "col/sub/r") { idx = i; break; }
-        verify(idx >= 0, "request na árvore");
+        verify(idx >= 0, "request in the tree");
 
         var del = win.appController.sidebar.view.itemAtIndex(idx);
-        verify(del, "delegate visível");
+        verify(del, "delegate visible");
         compare(del.itemDepth, 2);   // col(0) > sub(1) > r(2)
 
         var rep = findChild(del, "indentRepeater");
-        verify(rep, "repeater de guias presente");
-        compare(rep.count, 2);       // um guia por nível de ancestral
+        verify(rep, "indent repeater present");
+        compare(rep.count, 2);       // one guide per ancestor level
     }
 
-    // o FolderPicker do Main deve receber o campo de diretório da tela de configurações
-    // (regressão: `dirField: dirField` apontava p/ um id de outro arquivo → null)
+    // Main's FolderPicker must receive the settings screen's directory field
+    // (regression: `dirField: dirField` pointed to an id from another file → null)
     function test_folder_picker_wired() {
         var fp = findChild(win, "folderPicker");
-        verify(fp, "FolderPicker presente no Main");
-        verify(fp.dirField, "campo de diretório ligado ao FolderPicker");
+        verify(fp, "FolderPicker present in Main");
+        verify(fp.dirField, "directory field wired to the FolderPicker");
         compare(fp.dirField.text, settings.storageDir);
     }
 
-    // os modelos injetados chegam de fato aos filhos do editor (regressão de escopo QML:
-    // `X: X` com propriedade de mesmo nome vira auto-referência e chega undefined)
+    // injected models actually reach the editor's children (QML scope regression:
+    // `X: X` with a same-named property becomes self-reference and arrives undefined)
     function test_editor_models_wired() {
         backend.saveRequest("t/w", baseReq());
         win.appController.openRequest("t/w");
@@ -261,8 +261,8 @@ TestCase {
         var ed = win.appController.requestEditor;
         var rve = findChild(ed, "reqVarsEditor");
         var be = findChild(ed, "bodyEditor");
-        verify(rve, "aba de variáveis presente");
-        verify(be, "editor de corpo presente");
+        verify(rve, "variables tab present");
+        verify(be, "body editor present");
         compare(rve.requestVarsModel, win.appController.requestVarsModel);   // === (mesmo objeto)
         compare(be.fieldsModel, win.appController.fieldsModel);
     }

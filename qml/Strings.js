@@ -1,15 +1,15 @@
 .pragma library
 
-// Central de textos da UI (inglês). É o único arquivo a editar para mudar qualquer
-// texto exibido no app. Uso: `import "Strings.js" as Strings` → `text: Strings.t.save`.
+// UI text hub (English). This is the only file to edit to change any
+// text shown in the app. Usage: `import "Strings.js" as Strings` → `text: Strings.t.save`.
 //
-// Não coloque aqui valores de lógica (métodos HTTP, tipos de corpo, escopos, ids),
-// nem texto que o usuário digita. Só rótulos exibidos.
+// Don't put logic values here (HTTP methods, body types, scopes, ids),
+// nor text the user types. Only displayed labels.
 
 var t = {
     appName: "catarina",
 
-    // ---- barra superior / painéis ----
+    // ---- top bar / panels ----
     history: "History",
     settings: "Settings",
     deleteSelected: "Delete selected",
@@ -20,7 +20,7 @@ var t = {
     showResponse: "Show response panel",
     noEnvironment: "No environment",
 
-    // ---- ambientes ----
+    // ---- environments ----
     activeEnvironment: "Active environment",
     readyToStart: "Ready to start?",
     createEnvHint: "Create an environment to have variables like base_url and tokens.",
@@ -35,7 +35,7 @@ var t = {
     saveBeforeRenameEnv: "Save before renaming",
     renameEnvTooltip: "Rename environment",
 
-    // ---- coleções / barra lateral ----
+    // ---- collections / sidebar ----
     collections: "Collections",
     collection: "Collection",
     overview: "Overview",
@@ -111,7 +111,7 @@ var t = {
     headerName: "Header name",
     value: "Value",
 
-    // ---- resposta ----
+    // ---- response ----
     responseBody: "Body",
     responseTree: "Tree",
     responseHeaders: "Headers",
@@ -132,7 +132,7 @@ var t = {
     clearFind: "Clear search",
     findTooltip: "Find in response (Ctrl+F)",
 
-    // ---- rede ----
+    // ---- network ----
     connection: "Connection",
     host: "Host",
     port: "Port",
@@ -147,7 +147,7 @@ var t = {
     bodySent: "Body sent",
     networkEmpty: "Send a request to see network data.",
 
-    // ---- tabelas / árvore ----
+    // ---- tables / tree ----
     active: "Active",
     key: "Key",
     scope: "Scope",
@@ -168,7 +168,7 @@ var t = {
     origin: "Origin",
     name: "Name",
 
-    // ---- diálogos ----
+    // ---- dialogs ----
     newRequestTitle: "New request",
     nameLabel: "Name",
     urlLabel: "URL",
@@ -208,7 +208,7 @@ var t = {
     deleteTitle: "Delete",
     cannotBeUndone: "This action can't be undone.",
 
-    // ---- erros ----
+    // ---- errors ----
     errorPrefix: "Error: ",
     sending: "Sending…",
     canceled: "Canceled",
@@ -231,16 +231,16 @@ var t = {
     itemExists: "An item with this name already exists here.",
     nameCannotContainSlash: "The name can't contain '/'.",
 
-    // ---- validação de variável repetida ----
+    // ---- duplicate variable validation ----
     duplicateNameHint: "Variable name repeated in this scope",
 
-    // ---- escopo da variável (chip) ----
+    // ---- variable scope (chip) ----
     validForAllCollections: "Applies to all collections",
     noCollectionSelected: "No collection selected",
     chooseCollections: "choose collections…",
     authNoneOption: "none",
 
-    // ---- configurações ----
+    // ---- settings ----
     view: "View:",
     appearance: "Appearance",
     editorFont: "Editor font:",
@@ -271,7 +271,7 @@ var t = {
     duplicate: "Duplicate",
     exportCode: "Export code…",
 
-    // ---- paleta de comandos ----
+    // ---- command palette ----
     paletteGroupGlobal: "Global",
     paletteGroupContext: "Current context",
     newFolder: "New folder…",
@@ -285,7 +285,7 @@ var t = {
     renameSelected: "Rename selected…",
     duplicateSelected: "Duplicate selected",
 
-    // ---- atalhos ----
+    // ---- shortcuts ----
     shortcutSend: "Send request",
     shortcutNewRequest: "New request",
     shortcutCloseTab: "Close tab",
@@ -297,7 +297,7 @@ var t = {
     shortcutFind: "Find in response"
 };
 
-// ---- mensagens parametrizadas ----
+// ---- parameterized messages ----
 
 function variableRepeated(name) { return "Repeated variable: " + name; }
 function unresolvedVariables(list) { return "Unresolved variables: " + list; }
@@ -323,14 +323,14 @@ function unsavedItem(name, kind) {
     var noun = kind === "collection" ? "collection" : (kind === "environment" ? "environment" : "request");
     return "The " + noun + " '" + name + "' has unsaved changes.";
 }
-// motivo de uma variável não resolver (vindo do backend por código)
+// reason a variable doesn't resolve (comes from the backend by code)
 function variableNote(code, collections) {
     if (code === "disabled") return t.disabled;
     if (code === "restricted") return restrictedTo((collections || []).join(", "));
     if (code === "undefined") return t.notDefined;
     return "";
 }
-// erro de rede do backend por código
+// backend network error by code
 function backendError(code, args) {
     args = args || [];
     if (code === "unresolved") return t.errorPrefix + unresolvedVariables((args[0] || []).join(", "));

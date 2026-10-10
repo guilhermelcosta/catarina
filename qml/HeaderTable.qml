@@ -3,16 +3,16 @@ import QtQuick.Controls
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Tabela simples de cabeçalhos HTTP (nome/valor) para a resposta.
-// As células são selecionáveis (copiar com o mouse) e há "Copiar tudo" no cabeçalho.
-// A altura da linha acompanha o maior texto (nome ou valor) — evita sobreposição.
+// Simple HTTP header (name/value) table for the response.
+// Cells are selectable (copy with the mouse) and there's "Copy all" in the header.
+// Row height follows the largest text (name or value) — avoids overlap.
 Item {
     id: table
     property var headers: []            // [{ name, value }]
     signal copyRequested(string text)
     readonly property real nameWidth: Math.max(80, width * 0.33)
-    readonly property int copyColWidth: 36   // espaço à direita reservado ao botão copiar
-    // altura natural (cabeçalho + linhas) — permite usar embutido sem altura explícita
+    readonly property int copyColWidth: 36   // space on the right reserved for the copy button
+    // natural height (header + rows) — allows using it inline without an explicit height
     implicitHeight: 29 + view.contentHeight
 
     function allHeadersText() {
@@ -25,7 +25,7 @@ Item {
     Column {
         anchors.fill: parent
         spacing: 0
-        // cabeçalho das colunas
+        // column header
         Rectangle {
             width: parent.width
             height: 28

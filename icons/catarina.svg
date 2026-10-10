@@ -1,22 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Catarina — ícone simbólico (monocromático), estilo KDE/Breeze.
-     Sem fundo; a cor vem do tema (currentColor/máscara).
-     Cabeça do cachorro: orelhas pontudas, olhos e focinho vazados (evenodd). -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <path fill="currentColor" fill-rule="evenodd" d="M2.7 1.3
-    L3.4 5.6
-    C3.3 7.2 3.5 8.7 4.3 10.1
-    C5.0 12.2 6.3 13.4 8.0 13.4
-    C9.7 13.4 11.0 12.2 11.7 10.1
-    C12.5 8.7 12.7 7.2 12.6 5.6
-    L13.3 1.3
-    C12.5 2.6 11.3 3.8 10.0 5.0
-    C9.3 4.8 8.7 4.7 8.0 4.7
-    C7.3 4.7 6.7 4.8 6.0 5.0
-    C4.7 3.8 3.5 2.6 2.7 1.3 Z
-    M5.9 7.85 A0.62 0.62 0 1 0 7.14 7.85 A0.62 0.62 0 1 0 5.9 7.85 Z
-    M8.86 7.85 A0.62 0.62 0 1 0 10.1 7.85 A0.62 0.62 0 1 0 8.86 7.85 Z
-    M7.4 10.1 C7.62 9.92 8.38 9.92 8.6 10.1
-    C8.43 10.62 8.24 10.85 8.0 10.85
-    C7.76 10.85 7.57 10.62 7.4 10.1 Z"/>
+<!-- Placeholder. Replace with the final icons/catarina.svg:
+     square (viewBox), transparent background, one file for all sizes. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="#1d99f3"/>
+  <path d="M338.3 158 A128 128 0 1 0 338.3 354" fill="none" stroke="#ffffff" stroke-width="64" stroke-linecap="round"/>
 </svg>

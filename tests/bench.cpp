@@ -1,7 +1,7 @@
-// Benchmark dos caminhos quentes do Backend: resolução de variáveis e árvore.
-// Roda com: ./build/bin/bench_storage
-// Compara o custo de um "refresh" completo (o que a UI fazia por edição/troca)
-// e de reconstruir a árvore de coleções.
+// Benchmark of the Backend hot paths: variable resolution and tree.
+// Run with: ./build/bin/bench_storage
+// Compares the cost of a full "refresh" (what the UI did per edit/switch)
+// and of rebuilding the collections tree.
 #include "backend.h"
 
 #include <QCoreApplication>
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     Backend b;
 
-    // 10 coleções x 30 requests, cada coleção com 20 variáveis
+    // 10 collections x 30 requests, each collection with 20 variables
     for (int c = 0; c < 10; ++c) {
         const QString col = QStringLiteral("col%1").arg(c);
         b.createFolder(col);
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
                            {QStringLiteral("vars"), QVariantList{}}});
     }
 
-    // ambiente com 30 variáveis, 10 delas secretas
+    // environment with 30 variables, 10 of them secret
     QVariantList ev;
     for (int k = 0; k < 30; ++k) {
         QVariantMap m{{QStringLiteral("name"), QStringLiteral("g%1").arg(k)},
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
             m[QStringLiteral("secret")] = true;
             const QString id = QStringLiteral("sid%1").arg(k);
             m[QStringLiteral("secretId")] = id;
-            b.saveSecret(id, QStringLiteral("segredo"));
+            b.saveSecret(id, QStringLiteral("secret"));
         }
         ev.append(m);
     }
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     const int WARM = 20;
     const int N = 500;
 
-    // ---- refresh de variáveis (uma passada, como a UI faz hoje) ----
+    // ---- variable refresh (one pass, as the UI does today) ----
     for (int i = 0; i < WARM; ++i) {
         const auto st = b.variablesState(req, QStringLiteral("col0"));
         Q_UNUSED(st);
@@ -78,20 +78,20 @@ int main(int argc, char **argv)
     }
     std::printf("resolve        x%d: %lld ms\n", N, static_cast<long long>(t.elapsed()));
 
-    // ---- rajada de digitação (30 teclas) ----
-    // antes: re-resolve a cada tecla; depois: debounce => 1 resolução no fim
+    // ---- typing burst (30 keys) ----
+    // before: re-resolves on every key; after: debounce => 1 resolution at the end
     const int KEYS = 30;
     const int BURSTS = 20;
     t.restart();
     for (int burst = 0; burst < BURSTS; ++burst) {
-        // teclas só marcam "dirty"; o debounce dispara uma vez após a rajada
+        // keys only mark "dirty"; the debounce fires once after the burst
         const auto st = b.variablesState(req, QStringLiteral("col0"));
         Q_UNUSED(st);
     }
-    std::printf("digitar %dx%d teclas: %lld ms\n", BURSTS, KEYS,
+    std::printf("type %dx%d keys: %lld ms\n", BURSTS, KEYS,
                 static_cast<long long>(t.elapsed()));
 
-    // ---- árvore de coleções ----
+    // ---- collections tree ----
     for (int i = 0; i < WARM; ++i) {
         const auto tree = b.collectionTree();
         Q_UNUSED(tree);

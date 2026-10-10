@@ -6,8 +6,8 @@ import ".."
 import "../Strings.js" as Strings
 import "../Util.js" as Util
 
-// Painel de resposta (corpo/árvore/cabeçalhos/cookies/rede) + busca e status.
-// `app` = janela; recebe os sinais de rede do backend diretamente.
+// Response pane (body/tree/headers/cookies/network) + find and status.
+// `app` = window; receives the backend's network signals directly.
 ColumnLayout {
     id: responsePane
     property var app
@@ -66,17 +66,17 @@ ColumnLayout {
         bodyScroll.contentItem.contentX = 0;
     }
     function setResponseBody(body) {
-        responseBody.text = body;   // corpo completo: o Ctrl+F busca em todo o conteúdo
+        responseBody.text = body;   // full body: Ctrl+F searches all of the content
     }
-    // parseia o JSON só quando a aba "Árvore" está visível
+    // parses the JSON only when the "Tree" tab is visible
     function syncJsonTree() {
         if (respTabBar.currentIndex !== 1) return;
         jsonTree.load(responseBody.text);
     }
-    // limita o cache de respostas (o app é lightweight; não guarda tudo pra sempre)
+    // caps the response cache (the app is lightweight; it doesn't keep everything forever)
     function evictResponses() {
         var MAX_ENTRIES = 15;
-        var MAX_CHARS = 24 * 1024 * 1024;   // teto aproximado do cache
+        var MAX_CHARS = 24 * 1024 * 1024;   // approximate cache ceiling
         var keys = Object.keys(app.responses);
         var total = 0;
         for (var i = 0; i < keys.length; i++) {
@@ -121,7 +121,7 @@ ColumnLayout {
             if (code >= 300 && code < 400) return Kirigami.Theme.neutralTextColor;
             if (code >= 400) return Kirigami.Theme.negativeTextColor;
         }
-        return Kirigami.Theme.negativeTextColor;   // "Erro: …"
+        return Kirigami.Theme.negativeTextColor;   // "Error: …"
     }
 
     Connections {
@@ -141,7 +141,7 @@ ColumnLayout {
             var rec = { status: status, statusText: statusText, time: elapsedMs + " ms",
                         size: Util.fmtSize(sizeBytes), headers: headers,
                         cookies: cookieLines.join("\n"), body: body };
-            // guarda a resposta na aba do request (não numa aba de coleção)
+            // stores the response on the request tab (not on a collection tab)
             if (app.currentTab >= 0 && app.currentTab < app.tabsModel.count
                     && !app.tabsModel.get(app.currentTab).isCollection)
                 app.responses[app.tabsModel.get(app.currentTab).relPath] = rec;
@@ -161,7 +161,7 @@ ColumnLayout {
         }
         function onResponseMeta(meta) {
             netMeta = meta;
-            // guarda o meta junto da resposta da aba atual (para restaurar ao trocar de aba)
+            // stores the meta alongside the current tab's response (to restore when switching tabs)
             if (app.currentTab >= 0 && app.currentTab < app.tabsModel.count
                     && !app.tabsModel.get(app.currentTab).isCollection
                     && !app.tabsModel.get(app.currentTab).isEnvironment) {
@@ -180,7 +180,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.margins: Kirigami.Units.smallSpacing
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserva a altura mesmo sem resposta
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
         spacing: Kirigami.Units.smallSpacing
         Rectangle {
             visible: statusLabel.text.length > 0
@@ -228,7 +228,7 @@ ColumnLayout {
         TabButton { text: Strings.t.responseNetwork; onHoveredChanged: hint(hovered ? Strings.t.networkHint : "") }
     }
 
-    // busca embutida (Ctrl+F) — só aparece quando acionada
+    // inline find (Ctrl+F) — only appears when triggered
     RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: Kirigami.Units.smallSpacing
@@ -268,7 +268,7 @@ ColumnLayout {
         StackLayout {
             anchors.fill: parent
             currentIndex: respTabBar.currentIndex
-            // ---- Corpo ----
+            // ---- Body ----
             ScrollView {
                 id: bodyScroll
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -305,7 +305,7 @@ ColumnLayout {
                 meta: netMeta
             }
         }
-        // estado vazio (ainda sem resposta) — só na aba "Corpo"
+        // empty state (no response yet) — only on the "Body" tab
         EmptyState {
             anchors.centerIn: parent
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
@@ -319,7 +319,7 @@ ColumnLayout {
         }
     }
 
-    // faixa de status/hint do painel (substitui tooltips flutuantes)
+    // panel status/hint strip (replaces floating tooltips)
     Kirigami.Separator { Layout.fillWidth: true }
     Rectangle {
         Layout.fillWidth: true

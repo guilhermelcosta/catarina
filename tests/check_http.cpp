@@ -1,7 +1,7 @@
-// Teste de integração HTTP do Backend, sem internet: um QTcpServer local devolve
-// respostas fixas e captura o request recebido. Cobre o caminho real do send()
-// (QNetworkAccessManager): status, headers/cookies de resposta, JSON indentado,
-// metadados, erro de rede, cancelamento, multipart e falha ao abrir arquivo.
+// Backend HTTP integration test, no internet: a local QTcpServer returns
+// fixed responses and captures the received request. Covers the real send() path
+// (QNetworkAccessManager): status, response headers/cookies, indented JSON,
+// metadata, network error, cancellation, multipart and failure to open a file.
 #include "backend.h"
 
 #include <QtTest>
@@ -15,7 +15,7 @@
 
 namespace {
 
-// Servidor HTTP mínimo de loopback: guarda o request e devolve uma resposta fixa.
+// Minimal loopback HTTP server: stores the request and returns a fixed response.
 class Loopback : public QObject
 {
     Q_OBJECT
@@ -23,7 +23,7 @@ public:
     explicit Loopback(QObject *parent = nullptr) : QObject(parent)
     {
         connect(&m_server, &QTcpServer::newConnection, this, &Loopback::onConnection);
-        QVERIFY(m_server.listen(QHostAddress::LocalHost, 0));   // 0 = porta livre
+        QVERIFY(m_server.listen(QHostAddress::LocalHost, 0));   // 0 = free port
     }
     QString url(const QString &path = QStringLiteral("/x")) const
     {
@@ -35,8 +35,8 @@ public:
     QByteArray statusLine = QByteArrayLiteral("HTTP/1.1 200 OK\r\n");
     QList<QByteArray> extraHeaders;
     QByteArray body;
-    bool holdOpen = false;          // não responde (para testar cancelamento)
-    bool closeWithoutReply = false; // fecha sem responder (erro de rede)
+    bool holdOpen = false;          // doesn't respond (to test cancellation)
+    bool closeWithoutReply = false; // closes without replying (network error)
 
 private:
     void onConnection()
@@ -49,7 +49,7 @@ private:
         m_buf += c->readAll();
         const int hdrEnd = m_buf.indexOf("\r\n\r\n");
         if (hdrEnd < 0)
-            return;   // ainda faltam headers
+            return;   // headers still missing
         if (requestHeaders.isEmpty())
             requestHeaders = m_buf.left(hdrEnd + 4);
         const QByteArray lower = requestHeaders.toLower();
@@ -60,9 +60,9 @@ private:
             cl = lower.mid(pos + 15, eol - pos - 15).trimmed().toInt();
         }
         if (m_buf.size() < hdrEnd + 4 + cl)
-            return;   // corpo incompleto
+            return;   // incomplete body
         requestBody = m_buf.mid(hdrEnd + 4, cl);
-        disconnect(c, nullptr, this, nullptr);   // já temos tudo
+        disconnect(c, nullptr, this, nullptr);   // we already have everything
         if (closeWithoutReply) { c->close(); return; }
         if (holdOpen)
             return;
@@ -108,8 +108,8 @@ private slots:
         QVERIFY(m_tmp->isValid());
         qputenv("XDG_CONFIG_HOME", m_tmp->path().toUtf8());
         qputenv("XDG_DATA_HOME", m_tmp->path().toUtf8());
-        qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermético
-        QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);   // não roteia localhost
+        qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermetic
+        QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);   // doesn't route localhost
         m_backend = new Backend;
         m_backend->setStorageDir(m_tmp->path() + QStringLiteral("/collections"));
     }
@@ -119,7 +119,7 @@ private slots:
         delete m_tmp;
     }
 
-    void resposta_status_headers_metadados()
+    void response_status_headers_metadata()
     {
         Loopback srv;
         srv.statusLine = QByteArrayLiteral("HTTP/1.1 201 Created\r\n");
@@ -130,24 +130,24 @@ private slots:
         QSignalSpy meta(m_backend, &Backend::responseMeta);
         QSignalSpy err(m_backend, &Backend::error);
         m_backend->send(baseRequest(srv.url()), QString());
-        QVERIFY2(ready.wait(3000), "sem responseReady");
+        QVERIFY2(ready.wait(3000), "no responseReady");
         QCOMPARE(err.count(), 0);
 
         const QVariantList a = ready.takeFirst();
         QCOMPARE(a.at(0).toInt(), 201);
         QCOMPARE(a.at(1).toString(), QStringLiteral("Created"));
-        QVERIFY(a.at(2).toList().size() >= 3);                       // headers de resposta
-        QVERIFY(a.at(3).toString().contains(QStringLiteral("\"k\""))); // corpo JSON indentado
+        QVERIFY(a.at(2).toList().size() >= 3);                       // response headers
+        QVERIFY(a.at(3).toString().contains(QStringLiteral("\"k\""))); // indented JSON body
         QVERIFY(a.at(5).toInt() > 0);                                 // sizeBytes
 
-        QVERIFY(meta.count() >= 1);   // responseMeta é emitido logo após o responseReady
+        QVERIFY(meta.count() >= 1);   // responseMeta is emitted right after responseReady
         const QVariantMap m = meta.takeFirst().at(0).toMap();
         QCOMPARE(m.value(QStringLiteral("method")).toString(), QStringLiteral("GET"));
         QVERIFY(m.value(QStringLiteral("url")).toString().startsWith(QStringLiteral("http://127.0.0.1")));
         QVERIFY(m.value(QStringLiteral("sizeBytes")).toInt() > 0);
     }
 
-    void headers_e_query_params_enviados()
+    void headers_and_query_params_sent()
     {
         Loopback srv;
         srv.body = QByteArrayLiteral("ok");
@@ -167,48 +167,48 @@ private slots:
         QVERIFY(srv.requestHeaders.contains("X-Custom: 42"));
     }
 
-    void erro_de_rede()
+    void network_error()
     {
         Loopback srv;
         srv.closeWithoutReply = true;
         QSignalSpy err(m_backend, &Backend::error);
         m_backend->send(baseRequest(srv.url()), QString());
-        QVERIFY2(err.wait(3000), "sem error");
+        QVERIFY2(err.wait(3000), "no error");
         QCOMPARE(err.takeFirst().at(0).toString(), QStringLiteral("network"));
     }
 
-    void cancelamento()
+    void cancellation()
     {
         Loopback srv;
-        srv.holdOpen = true;   // nunca responde
+        srv.holdOpen = true;   // never responds
         QSignalSpy started(m_backend, &Backend::started);
         QSignalSpy canceled(m_backend, &Backend::canceled);
         m_backend->send(baseRequest(srv.url()), QString());
-        QCOMPARE(started.count(), 1);   // started é emitido de forma síncrona
+        QCOMPARE(started.count(), 1);   // started is emitted synchronously
         m_backend->cancel();
         QTRY_COMPARE(canceled.count(), 1);
     }
 
-    void multipart_envia_fields()
+    void multipart_sends_fields()
     {
         Loopback srv;
         srv.body = QByteArrayLiteral("ok");
         QVariantMap r = baseRequest(srv.url(QStringLiteral("/up")), QStringLiteral("POST"),
                                     QStringLiteral("multipart"));
         r[QStringLiteral("fields")] = QVariantList{
-            QVariantMap{{QStringLiteral("name"), QStringLiteral("campo")},
-                        {QStringLiteral("value"), QStringLiteral("valor")},
+            QVariantMap{{QStringLiteral("name"), QStringLiteral("field")},
+                        {QStringLiteral("value"), QStringLiteral("value")},
                         {QStringLiteral("type"), QStringLiteral("text")},
                         {QStringLiteral("enabled"), true}}};
         QSignalSpy ready(m_backend, &Backend::responseReady);
         m_backend->send(r, QString());
         QVERIFY(ready.wait(3000));
         QVERIFY(srv.requestHeaders.contains("multipart/form-data"));
-        QVERIFY(srv.requestBody.contains("name=\"campo\""));
-        QVERIFY(srv.requestBody.contains("valor"));
+        QVERIFY(srv.requestBody.contains("name=\"field\""));
+        QVERIFY(srv.requestBody.contains("value"));
     }
 
-    void multipart_arquivo_inexistente()
+    void multipart_missing_file()
     {
         Loopback srv;
         QVariantMap r = baseRequest(srv.url(QStringLiteral("/up")), QStringLiteral("POST"),
@@ -221,15 +221,15 @@ private slots:
                         {QStringLiteral("enabled"), true}}};
         QSignalSpy err(m_backend, &Backend::error);
         m_backend->send(r, QString());
-        QCOMPARE(err.count(), 1);   // fileOpen é síncrono
+        QCOMPARE(err.count(), 1);   // fileOpen is synchronous
         QCOMPARE(err.takeFirst().at(0).toString(), QStringLiteral("fileOpen"));
     }
 
-    void url_invalida()
+    void invalid_url()
     {
         QSignalSpy err(m_backend, &Backend::error);
         m_backend->send(baseRequest(QString()), QString());
-        QCOMPARE(err.count(), 1);   // invalidUrl é síncrono
+        QCOMPARE(err.count(), 1);   // invalidUrl is synchronous
         QCOMPARE(err.takeFirst().at(0).toString(), QStringLiteral("invalidUrl"));
     }
 

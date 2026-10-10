@@ -12,7 +12,7 @@ Dialog {
     title: Strings.t.renameTitle; modal: true; anchors.centerIn: parent; width: 360
     header: DialogHeader { dialogTitle: renameDialog.title }
     property string relPath: ""
-    // erro ao vivo (conforme digita); nome vazio não mostra nada
+    // live error (as you type); an empty name shows nothing
     function errorText() {
         var n = renameField.text.trim();
         if (n.length === 0) return "";

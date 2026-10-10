@@ -5,33 +5,33 @@
 
 #include <memory>
 
-// Armazenamento de segredos (id -> valor) num único blob JSON, carregado uma vez
-// e mantido em memória. A persistência fica atrás de readRaw/writeRaw, então o
-// meio (cofre do SO, arquivo 0600, memória) é trocável sem tocar na lógica.
+// Secret storage (id -> value) in a single JSON blob, loaded once
+// and kept in memory. Persistence sits behind readRaw/writeRaw, so the
+// medium (OS keychain, 0600 file, memory) is swappable without touching the logic.
 //
-// Sem I/O no cabeçalho: testes injetam a implementação em memória via
-// createInMemory() e nunca tocam no cofre real nem no disco.
+// No I/O in the header: tests inject the in-memory implementation via
+// createInMemory() and never touch the real keychain or disk.
 class SecretStore
 {
 public:
     virtual ~SecretStore() = default;
 
-    QString value(const QString &id) const;          // "" se não existir
+    QString value(const QString &id) const;          // "" if it doesn't exist
     bool save(const QString &id, const QString &value);
     bool remove(const QString &id);
 
-    // carrega o blob agora (o Backend faz no ctor, antes do QML)
+    // loads the blob now (the Backend does it in the ctor, before the QML)
     void preload() const;
 
-    // Cofre do SO quando disponível (e não forçado a arquivo por
-    // CATARINA_SECRETS_BACKEND=file); senão arquivo 0600 em filePath.
-    // Na primeira vez que o cofre existe vazio, migra o arquivo pra lá e apaga.
+    // OS keychain when available (and not forced to a file by
+    // CATARINA_SECRETS_BACKEND=file); otherwise a 0600 file at filePath.
+    // The first time the keychain exists but is empty, it migrates the file there and deletes it.
     static std::unique_ptr<SecretStore> create(const QString &filePath);
-    // implementação em memória, para testes
+    // in-memory implementation, for tests
     static std::unique_ptr<SecretStore> createInMemory();
 
 protected:
-    // JSON bruto tipo {"id":"valor"}; "" quando vazio/não existe
+    // raw JSON like {"id":"value"}; "" when empty/absent
     virtual QString readRaw() const = 0;
     virtual bool writeRaw(const QString &json) const = 0;
 

@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Criar ambiente (só o nome).
+// Create environment (name only).
 Dialog {
     id: createEnvDialog
     property var app

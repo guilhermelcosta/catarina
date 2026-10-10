@@ -8,10 +8,10 @@
 namespace {
 namespace RS = RequestSchema;
 
-// Teto de passadas ao resolver {{variavel}} em nome/valor. Cada passada reconstrói
-// o mapa nome→valor, então cadeias encadeadas se resolvem em ~1 passada por nível.
-// Também é o limite de segurança: referência cíclica ({{a}}↔{{b}}) não converge e
-// para aqui em vez de girar para sempre. 10 cobre folgado os níveis usados na UI.
+// Cap on passes when resolving {{variable}} in name/value. Each pass rebuilds
+// the name→value map, so chained references resolve in ~1 pass per level.
+// It's also the safety limit: a cyclic reference ({{a}}↔{{b}}) doesn't converge and
+// stops here instead of spinning forever. 10 comfortably covers the levels used in the UI.
 constexpr int kMaxVariableResolvePasses = 10;
 } // namespace
 
@@ -42,8 +42,8 @@ QList<ResolvedVar> VariableResolver::chain(const QVariantList &globalVars, const
     auto add = [&](const QVariantList &vars, const QString &source, bool global) {
         for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();
-            // nome sempre "aparado": espaços/tabs nas pontas quebram a referência
-            // {{nome}} (o substitute captura o nome já sem espaços). Ver check_storage.
+            // name always "trimmed": leading/trailing spaces/tabs break the
+            // {{name}} reference (substitute captures the name already without spaces). See check_storage.
             const QString name = m.value(RS::kName).toString().trimmed();
             if (name.isEmpty())
                 continue;
@@ -69,14 +69,14 @@ QList<ResolvedVar> VariableResolver::chain(const QVariantList &globalVars, const
     add(collectionVars, RS::kSourceCollection, false);
     add(requestVars, RS::kSourceRequest, false);
 
-    // Uma variável pode ter {{outra}} no nome e/ou no valor, e a referência pode
-    // encadear. Itera até estabilizar; o teto de passadas é kMaxVariableResolvePasses.
+    // A variable can have {{another}} in the name and/or the value, and the reference can
+    // chain. Iterates until stable; the pass cap is kMaxVariableResolvePasses.
     QVariantMap vals;
     for (int pass = 0; pass < kMaxVariableResolvePasses; ++pass) {
         vals.clear();
         for (const ResolvedVar &r : chain)
             if (r.enabled)
-                vals.insert(r.name, r.value);          // precedência: o último vence
+                vals.insert(r.name, r.value);          // precedence: the last one wins
         bool changed = false;
         for (ResolvedVar &r : chain) {
             if (!r.enabled)
@@ -95,10 +95,10 @@ QList<ResolvedVar> VariableResolver::chain(const QVariantList &globalVars, const
 
 QVariantList VariableResolver::resolvedFromChain(const QList<ResolvedVar> &chain) const
 {
-    QMap<QString, QVariantMap> byName;   // melhor precedência por nome
+    QMap<QString, QVariantMap> byName;   // best precedence per name
     for (const ResolvedVar &r : chain) {
         if (byName.contains(r.name) && !r.enabled)
-            continue;                    // desabilitada não sobrescreve o que já resolve
+            continue;                    // a disabled one doesn't override what already resolves
         byName.insert(r.name, {{RS::kName, r.name},
                                {RS::kValue, r.value},
                                {RS::kSecret, r.secret},
@@ -133,11 +133,11 @@ QVariantMap VariableResolver::state(const QVariantMap &request, const QVariantLi
                                     const QString &collection, const QVariantList &collectionVars,
                                     const QVariantMap &collectionAuth) const
 {
-    // uma única passada pela cadeia: resolve a lista, o mapa efetivo e o que falta
+    // a single pass over the chain: resolves the list, the effective map and what's missing
     const QList<ResolvedVar> ch =
         chain(globalVars, collection, collectionVars, request.value(RS::kVars).toList());
 
-    QVariantMap effective;               // só habilitadas (é o que substitui {{...}})
+    QVariantMap effective;               // enabled only (that's what replaces {{...}})
     for (const ResolvedVar &r : ch)
         if (r.enabled)
             effective.insert(r.name, r.value);
@@ -145,7 +145,7 @@ QVariantMap VariableResolver::state(const QVariantMap &request, const QVariantLi
 
     QStringList missing;
     QStringList texts = collectTexts(request);
-    // auth efetiva: com "inherit", o token da coleção também é escaneado
+    // effective auth: with "inherit", the collection token is scanned too
     for (const QVariant &v : RequestLogic::effectiveAuth(request.value(RS::kAuth).toMap(),
                                                          collectionAuth))
         texts << v.toString();
@@ -164,8 +164,8 @@ QVariantMap VariableResolver::state(const QVariantMap &request, const QVariantLi
 QVariantMap VariableResolver::note(const QString &name, const QVariantList &globalVars,
                                    const QString &collection, const QVariantList &collectionVars) const
 {
-    // Por que "name" não resolve, por código (a UI traduz): "disabled", "restricted"
-    // (com a lista em "collections"), "" (resolve) ou "undefined".
+    // Why "name" doesn't resolve, as a code (the UI translates): "disabled", "restricted"
+    // (with the list in "collections"), "" (resolves) or "undefined".
     auto note = [&](const QVariantList &vars, bool global, QVariantMap *out) {
         for (const QVariant &v : vars) {
             const QVariantMap m = v.toMap();

@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Aba "Variáveis": editáveis (topo) + efetivas resolvidas (embaixo), divisor arrastável.
+// "Variables" tab: editable (top) + resolved effective ones (bottom), draggable divider.
 SplitView {
     property var app
     property var requestVarsModel
@@ -28,12 +28,12 @@ SplitView {
     }
     Item {
         id: requestResolvedPane
-        // abre neste tamanho e não deixa encolher abaixo dele
+        // opens at this size and won't let it shrink below it
         readonly property int defaultHeight: 190
         SplitView.fillWidth: true
         SplitView.preferredHeight: defaultHeight
         SplitView.minimumHeight: defaultHeight
-        // teto = metade da altura; guarda o 0 do primeiro layout
+        // ceiling = half the height; guards against the 0 of the first layout
         SplitView.maximumHeight: requestVarsSplit.height > 0
                                 ? requestVarsSplit.height / 2 : 10000
         ColumnLayout {
@@ -56,8 +56,8 @@ SplitView {
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
             }
-            // sem tabela (count 0) nada preenche; o filler segura
-            // os labels no topo em vez de redistribuir o espaço.
+            // with no table (count 0) nothing fills; the filler holds
+            // the labels at the top instead of redistributing the space.
             Item {
                 Layout.fillHeight: true
                 visible: requestResolvedTable.count === 0
