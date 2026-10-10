@@ -86,6 +86,10 @@ ColumnLayout {
                                 urlField.width - x - urlField.rightPadding)
                 radius: 3
                 color: Qt.rgba(accent.r, accent.g, accent.b, 0.16)
+                // the width is clamped to the field, but a Text with a width
+                // smaller than its margins goes negative and Qt paints it at
+                // full implicit width; clip keeps it inside the field
+                clip: true
                 Text {
                     id: queryGhostText
                     anchors.fill: parent
