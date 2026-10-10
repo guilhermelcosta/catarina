@@ -278,7 +278,8 @@ In `qml/` (atomic and shell components):
 - **Query preview in the URL bar**: the active params appear concatenated right after the typed
   text, highlighted (`Kirigami.Theme.highlightColor`, background at 14%), to show what will be
   sent without opening the Network tab. It's visual only — it doesn't enter the editable text — and
-  disappears if the URL overflows the field. Pure logic in `Util.querySuffix` (same semantics as
+  disappears if the URL overflows the field (clipped to the field when the preview itself doesn't
+  fit). Pure logic in `Util.querySuffix` (same semantics as
   `Backend::buildUrl`), tested in `tst_components`.
 - **Session**: only **pinned** tabs come back when reopening the app (`Util.sessionPaths`);
   preview and other non-pinned ones are transient. `restoreSessionTabs` recreates the pinned ones
