@@ -134,6 +134,8 @@ Item {
                             app.dragLabel = model.name;
                             app.dragMethod = model.isFolder ? "" : model.method;
                             app.dragIsCollection = model.isFolder && (model.depth || 0) === 0;
+                            app.dragIsFolder = model.isFolder;
+                            app.dropRoot = false;
                         }
                         var gp = mainMouse.mapToItem(mainPage, m.x, m.y);
                         app.ghostX = gp.x;
@@ -144,8 +146,11 @@ Item {
                             var e = treeModel.get(idx);
                             app.dropTarget = (e.relPath === app.dragFrom) ? "" : e.relPath;
                             app.dropIsFolder = e.isFolder;
+                            app.dropRoot = false;
                         } else {
+                            // outside the rows: only a request can drop to the root
                             app.dropTarget = "";
+                            app.dropRoot = !app.dragIsFolder;
                         }
                     }
                     onReleased: {
@@ -153,16 +158,16 @@ Item {
                             return;
                         app.justDragged = true;
                         var from = app.dragFrom;
-                        var to = "";
-                        if (app.dropTarget.length > 0 && app.dropTarget !== from)
-                            to = app.dropIsFolder ? app.dropTarget : app.parentOf(app.dropTarget);
+                        var to = app.dragDestination(from, app.dropTarget, app.dropIsFolder,
+                                                     app.dropRoot && !app.dragIsFolder);
                         // clears the ghost BEFORE moving (the move recreates the list and kills this delegate)
                         app.dragging = false;
                         app.dropTarget = "";
-                        if (to.length > 0 && to !== from)
+                        app.dropRoot = false;
+                        if (to !== from)
                             app.moveEntry(from, to);
                     }
-                    onCanceled: { app.dragging = false; app.dropTarget = ""; }
+                    onCanceled: { app.dragging = false; app.dropTarget = ""; app.dropRoot = false; }
                     onClicked: function (m) {
                         if (app.justDragged) { app.justDragged = false; return; }
                         // click on the triangle = collapse/expand
