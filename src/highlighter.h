@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QColor>
+#include <QList>
 #include <QObject>
+#include <QPointer>
 #include <QRegularExpression>
+#include <QStringList>
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 
@@ -15,12 +18,16 @@ public:
                    const QColor &strColor = QColor(), const QColor &numColor = QColor(),
                    const QColor &kwColor = QColor(), const QColor &keyColor = QColor());
 
+    // names that don't resolve: their {{token}} is painted red instead of the variable color
+    void setMissing(const QStringList &names);
+
 protected:
     void highlightBlock(const QString &text) override;
 
 private:
     QRegularExpression m_var, m_str, m_num, m_kw, m_key;
-    QTextCharFormat m_varFmt, m_strFmt, m_numFmt, m_kwFmt, m_keyFmt;
+    QTextCharFormat m_varFmt, m_strFmt, m_numFmt, m_kwFmt, m_keyFmt, m_missingFmt;
+    QStringList m_missing;
     bool m_json;
 };
 
@@ -35,8 +42,15 @@ public:
     Q_INVOKABLE void attach(QObject *textDocument, const QColor &color, bool bold = true,
                             bool json = false, const QColor &strColor = QColor(),
                             const QColor &numColor = QColor(), const QColor &kwColor = QColor(),
-                            const QColor &keyColor = QColor()) const;
+                            const QColor &keyColor = QColor());
+
+    // unresolved {{variables}} for the current request — painted red in every attached editor
+    Q_INVOKABLE void setMissing(const QStringList &names);
 
     // clipboard
     Q_INVOKABLE void copyText(const QString &text) const;
+
+private:
+    QStringList m_missing;
+    QList<QPointer<VarHighlighter>> m_highlighters;
 };

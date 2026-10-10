@@ -85,9 +85,9 @@ property bool sending: false
 property var envList: []
 property string activeEnv: ""
 property var resolvedVars: []
+property var missingVars: []          // unresolved names (highlighted red); for tests/debug
 property var collectionResolvedVars: []
 property string currentCollection: ""
-property string missingText: ""
 // warnings for duplicate variable names in the same scope (block save/send)
 property string requestVarsWarning: ""
 property string collectionVarsWarning: ""
@@ -314,21 +314,23 @@ function refreshResolved() {
     resolvedDebounce.stop();   // cancels a scheduled refresh (this is the one running now)
     if (currentTab < 0 || currentTab >= tabsModel.count) {
         resolvedVars = [];
-        missingText = "";
+        setMissingVars([]);
         currentDirty = false;
         return;
     }
     var curTab = tabsModel.get(currentTab);
     if (curTab.isEnvironment || curTab.isSettings) {
         resolvedVars = [];
-        missingText = "";
+        if (curTab.isEnvironment && envScreen)
+            envScreen.refreshResolved();   // env vars highlight their own missing references
+        else
+            setMissingVars([]);
         currentDirty = false;
         return;
     }
     if (curTab.isCollection) {
         // in the collection tab the effective list is the collection's, not the request's
         resolvedVars = [];
-        missingText = "";
         currentDirty = false;
         refreshCollectionResolved();
         return;
@@ -339,20 +341,16 @@ function refreshResolved() {
     const state = backend.variablesState(collectRequest(), collection);
     const miss = state.missing;
     const res = state.resolved;
-    var notes = [];
-    for (var i = 0; i < miss.length; i++) {
-        var n = backend.variableNoteFor(miss[i], collection);
-        var code = n.code;
-        for (var j = 0; j < res.length; j++)   // disabled in the request is not "undefined"
-            if (res[j].name === miss[i] && res[j].enabled === false)
-                code = "disabled";
-        var note = Strings.variableNote(code, n.collections);
-        notes.push(note.length > 0 ? miss[i] + " (" + note + ")" : miss[i]);
-    }
-    missingText = notes.length > 0 ? Strings.unresolvedVariables(notes.join(", ")) : "";
+    setMissingVars(miss);   // unresolved {{vars}} are painted red in the editors
     res.sort(function (a, b) { return a.name.localeCompare(b.name); });
     resolvedVars = res;
     currentDirty = tabsModel.get(currentTab).dirty;
+}
+// unresolved variable names are highlighted red by the C++ highlighter (VarSupport)
+function setMissingVars(list) {
+    missingVars = list;
+    if (typeof varSupport !== "undefined" && varSupport)
+        varSupport.setMissing(list);
 }
 // re-resolve with delay: typing does not recompute on every key
 property Timer resolvedDebounce: Timer {
@@ -680,10 +678,18 @@ function revealCollection(relPath) {
 }
 // recomputes the collection's "Effective variables" (reopen the tab and return to the overview)
 function refreshCollectionResolved() {
-    if (collectionPath.length === 0 || collectionIsSubfolder) { collectionResolvedVars = []; return; }
+    if (collectionPath.length === 0 || collectionIsSubfolder) {
+        collectionResolvedVars = [];
+        setMissingVars([]);   // a folder has no variables
+        return;
+    }
+    const collection = collectionOf(collectionPath);
     // includes the variables being edited (unsaved) so one can reference another,
     // but keeping the "collection" origin (not "request") in the overview
-    collectionResolvedVars = backend.resolvedCollectionVariables(collectionOf(collectionPath), modelToArray(collectionVarsModel));
+    const vars = modelToArray(collectionVarsModel);
+    collectionResolvedVars = backend.resolvedCollectionVariables(collection, vars);
+    // {{refs}} inside the collection's own variables are validated too (red highlight)
+    setMissingVars(backend.variablesState({ vars: vars }, collection).missing);
 }
 // populates the collection panel from disk
 function loadCollection(relPath) {

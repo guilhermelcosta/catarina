@@ -13,11 +13,13 @@ Item {
     function sourceColor(s) {
         if (s === "global") return Kirigami.Theme.positiveTextColor;
         if (s === "collection") return Kirigami.Theme.activeTextColor;
+        if (s === "dynamic") return "#b180d7";
         return Kirigami.Theme.neutralTextColor;
     }
     function sourceIcon(s) {
         if (s === "global") return "globe";
         if (s === "collection") return "folder-documents";
+        if (s === "dynamic") return "tools-wizard";
         return "document-send";
     }
 

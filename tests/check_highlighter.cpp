@@ -50,6 +50,20 @@ private slots:
         QCOMPARE(colorAt(block, 9), key);    // "ok"
         QCOMPARE(colorAt(block, 15), kw);    // true
     }
+
+    // an unresolved variable turns red; the rest keep the variable color
+    void missing_variable_is_red()
+    {
+        QTextDocument doc;
+        VarHighlighter h(&doc, QColor("#ff0000"), true, false);
+        doc.setPlainText(QStringLiteral("{{known}} {{gone}}"));
+        h.setMissing({QStringLiteral("gone")});
+        h.rehighlight();
+
+        const QTextBlock block = doc.firstBlock();
+        QCOMPARE(colorAt(block, 2), QColor("#ff0000"));            // {{known}}
+        QCOMPARE(colorAt(block, 12), QColor(0xda, 0x44, 0x53));    // {{gone}} → red
+    }
 };
 
 QTEST_MAIN(CheckHighlighter)

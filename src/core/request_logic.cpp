@@ -1,8 +1,12 @@
 #include "request_logic.h"
 #include "request_schema.h"
 
+#include <QDateTime>
+#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QUrlQuery>
+#include <QUuid>
+#include <QVector>
 
 namespace {
 namespace RS = RequestSchema;
@@ -12,6 +16,65 @@ const QRegularExpression &varRefRegex()
 {
     static const QRegularExpression re(QStringLiteral("\\{\\{\\s*([^{}]+?)\\s*\\}\\}"));
     return re;
+}
+
+// --- dynamic variables: SINGLE source of truth ---------------------------------
+// A dynamic variable's name is always "$random" + suffix, built by `dynamicName()`
+// so the prefix can't be forgotten when a new one is added. To add one, append a
+// line to `dynamicTable()` (suffix, generator).
+QString dynamicName(const char *suffix)
+{
+    QString s = QString::fromLatin1(suffix);
+    while (s.startsWith(QLatin1Char('$')))            // tolerate a hand-typed "$"
+        s.remove(0, 1);
+    if (s.left(6).compare(QLatin1String("random"), Qt::CaseInsensitive) == 0)
+        s.remove(0, 6);                               // ...or a hand-typed "random"
+    return QStringLiteral("$random") + s;
+}
+
+template <typename T, int N>
+const T &pickRandom(const T (&arr)[N])
+{
+    return arr[QRandomGenerator::global()->bounded(N)];
+}
+
+QString genUuid() { return QUuid::createUuid().toString(QUuid::WithoutBraces); }
+QString genTimestamp() { return QString::number(QDateTime::currentSecsSinceEpoch()); }
+QString genIsoTimestamp() { return QDateTime::currentDateTimeUtc().toString(Qt::ISODate); }
+// ponytail: 0..1000 range; widen if a collection needs another bound
+QString genRandomInt() { return QString::number(QRandomGenerator::global()->bounded(1001)); }
+QString genRandomBoolean() { return QRandomGenerator::global()->bounded(2) ? QStringLiteral("true")
+                                                                            : QStringLiteral("false"); }
+QString genRandomDecimal() { return QString::number(QRandomGenerator::global()->generateDouble() * 1000.0, 'f', 2); }
+QString genRandomName()
+{
+    // ponytail: a small built-in pool; swap for a faker lib if realistic names matter
+    static const char *first[] = {"Alice", "Bruno", "Carla", "Diego", "Emma", "Felipe", "Gina",
+                                  "Hugo", "Iris", "Jonas", "Karina", "Liam", "Maya", "Nina",
+                                  "Oscar", "Paula", "Rita", "Sam", "Tina", "Vera"};
+    static const char *last[] = {"Almeida", "Bianchi", "Costa", "Dias", "Esteves", "Ferreira",
+                                 "Gomes", "Herrera", "Ibarra", "Jensen", "Klein", "Lima",
+                                 "Moraes", "Nakamura", "Oliveira", "Pereira", "Rocha", "Silva",
+                                 "Torres", "Vargas"};
+    return QString::fromLatin1(pickRandom(first)) + QLatin1Char(' ') + QString::fromLatin1(pickRandom(last));
+}
+
+struct DynamicVar {
+    const char *suffix;
+    QString (*gen)();
+};
+const QVector<DynamicVar> &dynamicTable()
+{
+    static const QVector<DynamicVar> table{
+        {"Uuid", &genUuid},
+        {"Timestamp", &genTimestamp},
+        {"IsoTimestamp", &genIsoTimestamp},
+        {"Int", &genRandomInt},
+        {"Boolean", &genRandomBoolean},
+        {"Decimal", &genRandomDecimal},
+        {"Name", &genRandomName},
+    };
+    return table;
 }
 } // namespace
 
@@ -25,10 +88,40 @@ QString RequestLogic::substitute(const QString &text, const QVariantMap &vars)
         const QRegularExpressionMatch m = it.next();
         out += text.mid(last, m.capturedStart() - last);
         const QString name = m.captured(1);
-        out += vars.contains(name) ? vars.value(name).toString() : m.captured(0);
+        if (vars.contains(name))
+            out += vars.value(name).toString();
+        else if (isDynamicVariable(name))
+            out += dynamicValue(name);
+        else
+            out += m.captured(0);   // an unknown name stays literal
         last = m.capturedEnd();
     }
     out += text.mid(last);
+    return out;
+}
+
+bool RequestLogic::isDynamicVariable(const QString &name)
+{
+    for (const DynamicVar &d : dynamicTable())
+        if (name == dynamicName(d.suffix))
+            return true;
+    return false;
+}
+
+QString RequestLogic::dynamicValue(const QString &name)
+{
+    for (const DynamicVar &d : dynamicTable())
+        if (name == dynamicName(d.suffix))
+            return d.gen();
+    return {};
+}
+
+QVariantList RequestLogic::dynamicVariables()
+{
+    QVariantList out;
+    for (const DynamicVar &d : dynamicTable())
+        out.append(QVariantMap{{QStringLiteral("name"), dynamicName(d.suffix)},
+                               {QStringLiteral("value"), d.gen()}});
     return out;
 }
 
