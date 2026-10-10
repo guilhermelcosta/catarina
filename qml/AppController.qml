@@ -50,12 +50,15 @@ property string collectionPath: ""
 property bool collectionIsSubfolder: false
 property string dropTarget: ""
 property bool dropIsFolder: false
+// dropping outside the rows (above the first / below the last item) → root
+property bool dropRoot: false
 property bool dragging: false
 property bool justDragged: false
 property string dragFrom: ""
 property string dragLabel: ""
 property string dragMethod: ""
 property bool dragIsCollection: false
+property bool dragIsFolder: false
 property int tabDragIndex: -1
 property int tabDropIndex: -1
 property real ghostX: 0
@@ -201,6 +204,15 @@ function activateEnv(name) {
 function targetFolder() {
     if (selectedPath.length === 0) return "";
     return selectedIsFolder ? selectedPath : parentOf(selectedPath);
+}
+// where a tree drag lands: a folder target, the parent of a request target,
+// or the root ("") when dropped outside the rows (root=true). Returns
+// `from` when there is no move to make.
+function dragDestination(from, target, targetIsFolder, root) {
+    if (root) return from.indexOf("/") < 0 ? from : "";
+    if (target.length > 0 && target !== from)
+        return targetIsFolder ? target : parentOf(target);
+    return from;
 }
 function entryOf(o) {
     return { name: o.name !== undefined ? o.name : "",

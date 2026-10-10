@@ -36,6 +36,9 @@ public:
     // injection (tests): swaps the secret storage for an in-memory one,
     // avoiding touching the OS keychain or files
     void setSecretStore(std::unique_ptr<SecretStore> store);
+    // injection (tests): overrides where the built-in example collection is read
+    // from (default ":/seed"), so tests don't depend on the bundled seed contents
+    void setSeedSource(const QString &src);
 
     QString storageDir() const;
     Q_INVOKABLE void setStorageDir(const QString &dir);
@@ -152,6 +155,7 @@ private:
     QString m_envFile;     // <dir>/.catarina/environments.json
     QString m_appData;     // ~/.local/share/catarina
     QString m_secretsFile; // <m_appData>/secrets.json
+    QString m_seedSource;  // where seedDefaultCollection copies from (default ":/seed")
     std::unique_ptr<SecretStore> m_secrets;
 
     HttpClient *m_http = nullptr;

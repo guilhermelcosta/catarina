@@ -744,35 +744,53 @@ int main(int argc, char **argv)
     CHECK(b.history().isEmpty());
 
     // ---------------------------------------------------------------- example collection (seed)
+    // self-sufficient: the seed source is injected (a temp fixture), so the test
+    // never depends on the project's bundled :/seed contents
+    const QString fixture = tmp.path() + QStringLiteral("/seed-fixture");
+    QDir().mkpath(fixture + QStringLiteral("/MyCol"));
+    {
+        const QString reqPath = fixture + QStringLiteral("/MyCol/Get thing.json");
+        QFile f(reqPath);
+        CHECK(f.open(QIODevice::WriteOnly));
+        f.write(QByteArrayLiteral("{\"method\":\"PUT\",\"url\":\"{{base}}/thing\"}"));
+        f.close();
+        // mimic the read-only resource the real seed is copied from
+        QFile::setPermissions(reqPath, QFile::ReadOwner);
+    }
+    QDir().mkpath(fixture + QStringLiteral("/.catarina"));
+    {
+        QFile f(fixture + QStringLiteral("/.catarina/environments.json"));
+        CHECK(f.open(QIODevice::WriteOnly));
+        f.write(QByteArrayLiteral(
+            "{\"active\":\"Fake\",\"environments\":[{\"name\":\"Fake\",\"variables\":[]}]}"));
+    }
+
     // created on first use of an empty storage and only once
     {
         const QString d3 = tmp.path() + QStringLiteral("/seed-vazio");
         Backend bSeed;
         bSeed.setStorageDir(d3);
+        bSeed.setSeedSource(fixture);
         bSeed.seedDefaultCollection();
-        bool hasDummy = false;
+
+        bool hasCol = false, hasReq = false;
         int tops = 0;
         for (const QVariant &v : bSeed.collectionTree()) {
             const QVariantMap m = v.toMap();
-            if (m.value(QStringLiteral("relPath")).toString() == QStringLiteral("DummyJSON"))
-                hasDummy = true;
-            if (m.value(QStringLiteral("depth")).toInt() == 0)
-                tops++;
+            const QString rp = m.value(QStringLiteral("relPath")).toString();
+            if (rp == QStringLiteral("MyCol")) hasCol = true;
+            if (rp == QStringLiteral("MyCol/Get thing")) hasReq = true;
+            if (m.value(QStringLiteral("depth")).toInt() == 0) tops++;
         }
-        CHECK(hasDummy);
+        CHECK(hasCol);
+        CHECK(hasReq);
         CHECK(tops == 1);
-        // the seed also brings an example environment (provides the "global" source variable)
+        // the fixture's request was copied verbatim
+        CHECK(bSeed.loadRequest(QStringLiteral("MyCol/Get thing"))
+                  .value(QStringLiteral("method")).toString() == QStringLiteral("PUT"));
+        // the fixture's environment was loaded
         CHECK(bSeed.environments().size() == 1);
-        CHECK(bSeed.activeEnvironment() == QStringLiteral("Demo"));
-        CHECK(bSeed.environmentVariables(QStringLiteral("Demo")).size() == 1);
-        // the seeded request came with URL and method
-        const QVariantMap login = bSeed.loadRequest(QStringLiteral("DummyJSON/Login"));
-        CHECK(login.value(QStringLiteral("method")).toString() == QStringLiteral("POST"));
-        CHECK(login.value(QStringLiteral("url")).toString() == QStringLiteral("{{baseUrl}}/auth/login"));
-        // the password (secret) resolves from the seeded keychain
-        CHECK(effective(bSeed, QStringLiteral("DummyJSON"),
-                        login.value(QStringLiteral("vars")).toList())
-                  .value(QStringLiteral("password")).toString() == QStringLiteral("emilyspass"));
+        CHECK(bSeed.activeEnvironment() == QStringLiteral("Fake"));
         // second call doesn't duplicate
         bSeed.seedDefaultCollection();
         int tops2 = 0;
@@ -780,11 +798,11 @@ int main(int argc, char **argv)
             if (v.toMap().value(QStringLiteral("depth")).toInt() == 0)
                 tops2++;
         CHECK(tops2 == 1);
-        // saving over a seeded request (file came from qrc) should work
-        CHECK(bSeed.saveRequest(QStringLiteral("DummyJSON/List users"),
+        // saving over a seeded request works even though the source was read-only
+        CHECK(bSeed.saveRequest(QStringLiteral("MyCol/Get thing"),
                                 {{QStringLiteral("method"), QStringLiteral("GET")},
                                  {QStringLiteral("url"), QStringLiteral("editado")}}));
-        CHECK(bSeed.loadRequest(QStringLiteral("DummyJSON/List users"))
+        CHECK(bSeed.loadRequest(QStringLiteral("MyCol/Get thing"))
                   .value(QStringLiteral("url")).toString() == QStringLiteral("editado"));
     }
     // storage with a user collection does NOT receive the seed
@@ -792,6 +810,7 @@ int main(int argc, char **argv)
         const QString d4 = tmp.path() + QStringLiteral("/seed-existente");
         Backend bSeed2;
         bSeed2.setStorageDir(d4);
+        bSeed2.setSeedSource(fixture);
         bSeed2.saveRequest(QStringLiteral("minha"),
                            {{QStringLiteral("method"), QStringLiteral("GET")}});
         bSeed2.seedDefaultCollection();

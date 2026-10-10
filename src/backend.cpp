@@ -16,7 +16,7 @@ namespace {
 // recreating the same subfolder tree
 void copyResourceDir(const QString &srcRoot, const QString &dstRoot)
 {
-    QDirIterator it(srcRoot, QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(srcRoot, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         const QString src = it.next();
         const QString dst = dstRoot + src.mid(srcRoot.length());
@@ -35,6 +35,7 @@ Backend::Backend(QObject *parent)
     : QObject(parent)
 {
     m_dir = m_settings.storageDir();
+    m_seedSource = QStringLiteral(":/seed");
     m_envFile = m_dir + QStringLiteral("/.catarina/environments.json");
     m_appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     m_secretsFile = m_appData + QStringLiteral("/secrets.json");
@@ -82,6 +83,12 @@ void Backend::setSecretStore(std::unique_ptr<SecretStore> store)
     m_secrets->preload();
 }
 
+void Backend::setSeedSource(const QString &src)
+{
+    if (!src.isEmpty())
+        m_seedSource = src;
+}
+
 void Backend::setStorageDir(const QString &dir)
 {
     if (dir.isEmpty() || dir == m_dir)
@@ -106,7 +113,7 @@ void Backend::seedDefaultCollection()
     if (QFileInfo::exists(marker))
         return;   // already seeded (even if the user deletes the collection later)
     if (collectionTree().isEmpty()) {
-        copyResourceDir(QStringLiteral(":/seed"), m_dir);
+        copyResourceDir(m_seedSource, m_dir);
         // the public DummyJSON password lives in the keychain (the versioned file only stores
         // the secretId), so the example works out of the box without exposing the password
         saveSecret(QStringLiteral("seed-dummyjson-password"), QStringLiteral("emilyspass"));

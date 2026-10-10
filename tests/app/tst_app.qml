@@ -285,6 +285,32 @@ TestCase {
         compare(win.appController.responsePane.visible, false);
     }
 
+    // drag destination: folder target, parent of a request target, or root ("")
+    // when dropped outside the rows (root=true)
+    function test_drag_destination() {
+        var c = win.appController;
+        compare(c.dragDestination("col/req", "", false, true), "");              // dropped outside → root
+        compare(c.dragDestination("req", "", false, true), "req");              // already at root → no-op
+        compare(c.dragDestination("col/req", "col/sub", true, false), "col/sub");   // into a folder
+        compare(c.dragDestination("col/req", "col/sub/other", false, false), "col/sub"); // parent of a request
+        compare(c.dragDestination("col/req", "col/req", false, false), "col/req");  // onto itself → no-op
+        compare(c.dragDestination("col/req", "", false, false), "col/req");     // no target → no move
+    }
+
+    // a request can be moved to the root (top level, sibling of the collections)
+    function test_move_request_to_root() {
+        backend.saveRequest("roothold/req", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+        win.appController.moveEntry("roothold/req", "");
+        wait(100);
+        var tree = win.appController.treeModel;
+        var found = false;
+        for (var i = 0; i < tree.count; i++)
+            if (tree.get(i).relPath === "req" && !tree.get(i).isFolder) found = true;
+        verify(found, "request now at the root");
+    }
+
     // Main's FolderPicker must receive the settings screen's directory field
     // (regression: `dirField: dirField` pointed to an id from another file → null)
     function test_folder_picker_wired() {
