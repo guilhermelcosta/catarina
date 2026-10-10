@@ -219,7 +219,9 @@ In `qml/` (atomic and shell components):
   auth, Name/Value columns of the `KvTable`). It is a `TextArea` because the highlight needs the
   `QQuickTextDocument` — hence masked fields (`echoMode`, password/secret) have no highlight.
   Being a `TextArea`, it **blocks Enter/Return** (it's a single-line field; without that, Enter
-  would insert a line break in the value).
+  would insert a line break in the value). It does **not** scroll by itself, so it scrolls the
+  *text* by offsetting the horizontal padding (`horizontalPadding`, `scroll` + `ensureVisible`) —
+  the background/border stays fixed (moving the item would drag the frame too).
 - **`NetworkView.qml`** — "Network" tab.
 - **`Util.js`** — pure/testable logic (cURL, formatting, tab reordering). Put any function with no
   UI dependency here.
@@ -245,6 +247,14 @@ In `qml/` (atomic and shell components):
 
 - **Variables** have `enabled`; a disabled one doesn't resolve in `{{...}}`, is dimmed, and
   autocomplete doesn't offer it. Resolution is unique (`Backend::variableChain`) for all scopes.
+- **Unresolved variables**: a `{{name}}` that doesn't resolve is painted **red (Breeze negative) +
+  bold** by the highlighter — same visual language as a repeated name in `KvTable`. There is **no
+  banner** under the request bar. The scan (`VariableResolver::collectTexts`) covers URL, params,
+  headers, body, auth **and the name/value of the variables themselves** — in the request, the
+  collection and the environment editors — so a `{{ref}}` inside a variable definition is flagged
+  too. `AppController.setMissingVars` feeds the names to `varSupport.setMissing(names)`
+  (`VarSupport` keeps the attached highlighters and rehighlights them; `AppController.missingVars`
+  exposes the last set for tests). `{{name}}` with a value keeps the variable color (`#c678dd`).
 - **Dynamic variables**: `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomIsoTimestamp}}`,
   `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}`. Every name is
   built by `RequestLogic::dynamicName(suffix)` as `"$random" + suffix`, so the prefix can't be
@@ -278,8 +288,15 @@ In `qml/` (atomic and shell components):
   (`gridUnit * 1.7`), otherwise the `echoMode` dots change the row height depending on the font.
 - **Delete confirmations**: all follow `settings.confirmDelete` (either confirm on everything, or
   on nothing).
-- **Response**: Ctrl+F searches the full body; JSON always pretty; the status area reserves a fixed
-  height.
+- **Response**: Ctrl+F searches the full body; JSON always pretty; the status area reserves a
+  **minimum** height (`gridUnit * 2`) but **wraps** long messages instead of clipping. Error texts
+  carry no "Error:" prefix, and the unresolved-variable error is **concise** (a count, not the list
+  of names).
+- **Single-line fields with long content**: `TextArea` does **not** scroll itself, and moving the
+  item would drag its native border, so every `VarField` scrolls the *text* by offsetting
+  `horizontalPadding` (`scroll` + `ensureVisible(cursorRectangle)`) — the frame stays put, only the
+  text shifts — for the URL bar and the `KvTable` cells (header/param/variable values). The
+  query-suffix preview hides once the URL is scrolled.
 - **Example collection**: on first use (empty storage, `.catarina/.seeded` marker) the backend
   copies `seed/` (resources `:/seed`, embedded in the binary) — the demo **DummyJSON** collection
   (GET/POST/PUT/DELETE, params, variables, and inherited auth) and a **Demo environment** with a

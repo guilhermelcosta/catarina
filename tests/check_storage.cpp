@@ -476,6 +476,19 @@ int main(int argc, char **argv)
     CHECK(missing(b, {{QStringLiteral("url"), QStringLiteral("{{$randomUuid}}/{{$randomTimestamp}}")}},
                   QStringLiteral("colA")).isEmpty());
 
+    // a reference inside the request's own variables is scanned too (name and value)
+    {
+        const QVariantMap dangling{{QStringLiteral("url"), QStringLiteral("http://x")},
+                                   {QStringLiteral("vars"),
+                                    QVariantList{item(QStringLiteral("{{gone}}"), QStringLiteral("v"))}}};
+        CHECK(missing(b, dangling, QStringLiteral("colA")) == QStringList{QStringLiteral("gone")});
+
+        const QVariantMap ok{{QStringLiteral("url"), QStringLiteral("http://x")},
+                             {QStringLiteral("vars"),
+                              QVariantList{item(QStringLiteral("alias"), QStringLiteral("{{pub}}"))}}};
+        CHECK(missing(b, ok, QStringLiteral("colA")).isEmpty());   // {{pub}} is a global → resolves
+    }
+
     // variablesState: resolved + missing + effective in a single pass
     {
         const QVariantMap req{{QStringLiteral("url"), QStringLiteral("{{pub}}/{{nope}}")},

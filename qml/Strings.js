@@ -7,7 +7,7 @@
 // nor text the user types. Only displayed labels.
 
 var t = {
-    appName: "catarina",
+    appName: "Catarina",
 
     // ---- top bar / panels ----
     history: "History",
@@ -209,7 +209,6 @@ var t = {
     cannotBeUndone: "This action can't be undone.",
 
     // ---- errors ----
-    errorPrefix: "Error: ",
     sending: "Sending…",
     canceled: "Canceled",
     invalidJsonShort: "Invalid JSON",
@@ -300,7 +299,9 @@ var t = {
 // ---- parameterized messages ----
 
 function variableRepeated(name) { return "Repeated variable: " + name; }
-function unresolvedVariables(list) { return "Unresolved variables: " + list; }
+function unresolvedInRequest(n) {
+    return (n === 1 ? "Unresolved variable" : " Unresolved variables") + " in the request";
+}
 function notFound(q) { return "Not found: " + q; }
 function duplicateInCollection(name) { return "Repeated variable name in collection: " + name; }
 function duplicateInRequest(name) { return "Repeated variable name in request: " + name; }
@@ -333,9 +334,9 @@ function variableNote(code, collections) {
 // backend network error by code
 function backendError(code, args) {
     args = args || [];
-    if (code === "unresolved") return t.errorPrefix + unresolvedVariables((args[0] || []).join(", "));
-    if (code === "invalidUrl") return t.errorPrefix + "Invalid URL";
-    if (code === "fileOpen") return t.errorPrefix + "Couldn't open the file: " + args[0];
-    if (code === "network") return t.errorPrefix + args[0];
-    return t.errorPrefix + code;
+    if (code === "unresolved") return unresolvedInRequest((args[0] || []).length);
+    if (code === "invalidUrl") return "Invalid URL";
+    if (code === "fileOpen") return "Couldn't open the file: " + args[0];
+    if (code === "network") return args[0];
+    return code;
 }
