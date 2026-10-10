@@ -155,7 +155,10 @@ ColumnLayout {
         KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
         KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
 
-        BodyEditor { id: bodyEditor; app: editor.app; fieldsModel: fieldsModel; fileDialog: fileDialog }
+        // NB: qualificar com `editor.` — `fieldsModel`/`fileDialog` são propriedades
+        // deste componente; sem o prefixo o QML resolveria para a própria propriedade
+        // (ainda indefinida) em vez da do pai.
+        BodyEditor { id: bodyEditor; objectName: "bodyEditor"; app: editor.app; fieldsModel: editor.fieldsModel; fileDialog: editor.fileDialog }
 
         AuthEditor {
             id: requestAuthEditor
@@ -167,6 +170,6 @@ ColumnLayout {
 
         // variáveis editáveis (topo) + efetivas (embaixo), com divisor
         // arrastável — no máximo metade da altura da aba.
-        ReqVarsEditor { id: reqVars; app: editor.app; requestVarsModel: requestVarsModel }
+        ReqVarsEditor { id: reqVars; objectName: "reqVarsEditor"; app: editor.app; requestVarsModel: editor.requestVarsModel }
     }
 }

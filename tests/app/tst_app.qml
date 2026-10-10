@@ -242,4 +242,19 @@ TestCase {
         verify(rep, "repeater de guias presente");
         compare(rep.count, 2);       // um guia por nível de ancestral
     }
+
+    // os modelos injetados chegam de fato aos filhos do editor (regressão de escopo QML:
+    // `X: X` com propriedade de mesmo nome vira auto-referência e chega undefined)
+    function test_editor_models_wired() {
+        backend.saveRequest("t/w", baseReq());
+        win.appController.openRequest("t/w");
+        wait(50);
+        var ed = win.appController.requestEditor;
+        var rve = findChild(ed, "reqVarsEditor");
+        var be = findChild(ed, "bodyEditor");
+        verify(rve, "aba de variáveis presente");
+        verify(be, "editor de corpo presente");
+        compare(rve.requestVarsModel, win.appController.requestVarsModel);   // === (mesmo objeto)
+        compare(be.fieldsModel, win.appController.fieldsModel);
+    }
 }
