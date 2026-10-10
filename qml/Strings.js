@@ -24,10 +24,10 @@ var t = {
     activeEnvironment: "Active environment",
     readyToStart: "Ready to start?",
     createEnvHint: "Create an environment to have variables like base_url and tokens.",
-    createEnvironment: "Create environment…",
-    manageVariables: "Manage variables…",
+    createEnvironment: "Create environment",
+    manageVariables: "Manage variables",
     environments: "Environments",
-    newEnvironment: "New environment…",
+    newEnvironment: "New environment",
     delete: "Delete",
     viewAllVariables: "All variables",
     globalsEverywhere: "globals show in every view",
@@ -59,7 +59,7 @@ var t = {
     collectionAuthSaved: "Collection authentication saved",
     noRequestOpen: "No request open",
     noRequestOpenHint: "Select a request in the sidebar or create a new one.",
-    newRequest: "New request…",
+    newRequest: "New request",
 
     // ---- request ----
     parameters: "Parameters",
@@ -70,7 +70,7 @@ var t = {
     type: "Type",
     bodyNone: "none",
     bodyText: "text",
-    formatJson: "Indent the JSON",
+    formatJson: "Prettify the JSON",
     noBody: "No body.",
     authNone: "No authentication.",
     variable: "variable",
@@ -93,7 +93,7 @@ var t = {
     clear: "Clear",
     apply: "Apply",
     browse: "Browse…",
-    formatButton: "Format",
+    formatButton: "Prettify",
     unsavedMarker: "unsaved changes",
     discardTooltip: "Discard unsaved changes",
     saveTooltip: "Save (Ctrl+S)",
@@ -152,10 +152,10 @@ var t = {
     key: "Key",
     scope: "Scope",
     secret: "Secret",
-    secretInVault: "secret (in vault)",
+    secretInVault: "Secret value",
     showSecret: "Show value",
     hideSecret: "Hide value",
-    chooseFile: "Choose file…",
+    chooseFile: "Choose file",
     removeRow: "Remove row",
     nothingHere: "Nothing here yet.",
     add: "Add",
@@ -300,7 +300,7 @@ var t = {
 
 function variableRepeated(name) { return "Repeated variable: " + name; }
 function unresolvedInRequest(n) {
-    return (n === 1 ? "Unresolved variable" : " Unresolved variables") + " in the request";
+    return (n === 1 ? "Unresolved variable" : "Unresolved variables") + " in the request";
 }
 function notFound(q) { return "Not found: " + q; }
 function duplicateInCollection(name) { return "Repeated variable name in collection: " + name; }
