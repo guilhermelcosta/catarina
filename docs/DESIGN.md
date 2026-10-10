@@ -147,6 +147,7 @@ Use Breeze names and **confirm they exist in the theme** (missing icons show up 
 | Folder/subfolder | `folder` |
 | New folder | `folder-new` |
 | Environment(s) | `vcs-branch` |
+| Dynamic variable badge | `tools-wizard` (purple `#b180d7`) |
 | New request | `document-new` |
 | Save / Revert / Rename | `document-save` / `edit-undo` / `edit-rename` |
 | Delete / Remove row | `edit-delete` / `list-remove` |
@@ -194,7 +195,8 @@ In `qml/` (atomic and shell components):
   The Source column has **color and icon per scope** (global/collection/request) and the list is
   sorted by source (global → collection → request) and then by name.
 - **`SourceChip.qml`** — variable source chip (tinted background + icon + text, color/icon per
-  scope: global/collection/request). Used by `ResolvedVarsTable` and `VarCompleter`.
+  scope: global/collection/request, plus `dynamic` = purple + `tools-wizard`). Used by
+  `ResolvedVarsTable` and `VarCompleter`.
 - **`MethodBadge.qml`** — HTTP method badge (colored abbreviation; color comes from
   `app.methodColor`). Used in the tree, tabs, collection view, and history.
 - **Tree (`qml/Sidebar.qml`)** — nested collections/requests. **12px indent per level**.
@@ -243,6 +245,16 @@ In `qml/` (atomic and shell components):
 
 - **Variables** have `enabled`; a disabled one doesn't resolve in `{{...}}`, is dimmed, and
   autocomplete doesn't offer it. Resolution is unique (`Backend::variableChain`) for all scopes.
+- **Dynamic variables**: `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomIsoTimestamp}}`,
+  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}`. Every name is
+  built by `RequestLogic::dynamicName(suffix)` as `"$random" + suffix`, so the prefix can't be
+  forgotten. The **single source of truth** is the `dynamicTable()` in
+  `src/core/request_logic.cpp` — add one line there and it flows to generation (`dynamicValue`),
+  the "missing" filter (`isDynamicVariable`) and the autocomplete. `VariableResolver::state`
+  appends them to `resolved` with `source: "dynamic"`, so they show up in `{{}}` autocomplete
+  (only after the user types `$`) and hover, but are hidden from the "Effective variables" table
+  (`ResolvedVarsTable`). Nothing is written to the file — they exist only at send. A user variable
+  with the same name wins.
 - **A variable name is unique per scope** (environment, collection, or request). The same name in
   different scopes is ok (they overlap); repeated in the same scope is rejected
   (`Backend::duplicateVariableName`, trimmed names). The UI blocks **Save** and the duplicated

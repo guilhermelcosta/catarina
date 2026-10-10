@@ -334,4 +334,13 @@ TestCase {
         compare(rve.requestVarsModel, win.appController.requestVarsModel);   // === (mesmo objeto)
         compare(be.fieldsModel, win.appController.fieldsModel);
     }
+
+    // dynamic variables are offered to autocomplete/hover (source "dynamic") for every request
+    function test_dynamic_variables_offered() {
+        backend.saveRequest("dyn/r", baseReq());
+        win.appController.openRequest("dyn/r");
+        var names = win.appController.resolvedVars.map(function (v) { return v.name; });
+        verify(names.indexOf("$randomTimestamp") >= 0);
+        verify(win.appController.resolvedVars.filter(function (v) { return v.name === "$randomTimestamp"; })[0].source === "dynamic");
+    }
 }
