@@ -154,7 +154,18 @@ Checagem rápida: `find /usr/share/icons -iname "<nome>.svg"`.
 
 ## 5. Componentes compartilhados (reutilize)
 
-Todos em `qml/`:
+**Organização:** componentes atômicos em `qml/`; telas em `qml/screens/` (`CollectionScreen`,
+`EnvironmentScreen`, `SettingsScreen`, `RequestEditor` + `BodyEditor`/`ReqVarsEditor`,
+`ResponsePane`, `Sidebar`, `TabStrip`); modais/popups em `qml/dialogs/`; lógica pura em
+`qml/Util.js` e `qml/js/` (`VarTokens.js`).
+
+**Estado e orquestração:** `Main.qml` é **só a janela + wiring**. O estado e as ações (árvore,
+abas, coleção, ambientes, sessão, envio) vivem em `AppController.qml` — um `QtObject` não-visual.
+Telas e diálogos recebem `property var app`, que aponta para o **AppController**, e falam com ele
+via `app.<propriedade|função>`. **Não acesse ids da janela dentro de uma tela**; se precisar de
+algo novo do controlador, exponha uma propriedade/função nele.
+
+Em `qml/` (atômicos e de shell):
 
 - **`KvTable.qml`** — tabela editável chave/valor (params, cabeçalhos, campos, variáveis de
   request/coleção/ambiente). Opções: `secretColumn`, `allowFiles`, `scopeColumn`
@@ -181,8 +192,14 @@ Todos em `qml/`:
   origem (global → coleção → request) e depois por nome.
 - **`SourceChip.qml`** — chip de origem da variável (fundo tingido + ícone + texto, cor/ícone por
   escopo: global/coleção/request). Usado por `ResolvedVarsTable` e `VarCompleter`.
-- **`MethodBadge.qml`** — badge do método HTTP (sigla colorida; cor vem de `root.methodColor`).
+- **`MethodBadge.qml`** — badge do método HTTP (sigla colorida; cor vem de `app.methodColor`).
   Usado na árvore, nas abas, na visão da coleção e no histórico.
+- **Árvore (`qml/Sidebar.qml`)** — coleções/requests aninhados. Recuo de **12px por nível**.
+  **Guias de indentação** (estilo VS Code): uma linha vertical de `1px` por nível de ancestral,
+  alinhada ao centro do triângulo daquele nível (`x = nível*12 + 9`), em
+  `Kirigami.Theme.textColor` com `opacity: 0.15`. O delegate guarda `itemDepth` e o `Repeater`
+  das guias usa `treeItem.itemDepth` (dentro de um `Repeater`, `model` é sombreado pelo modelo
+  dele). Regressão: `tests/app/tst_app.qml::test_indent_guides_por_profundidade`.
 - **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
 - **`AuthEditor.qml`** — editor de autenticação compartilhado (aba Authentication do request e da
   coleção). `load(auth)` preenche, `value()` devolve o mapa, sinal `edited` quando o usuário muda.
@@ -291,4 +308,5 @@ Todos em `qml/`:
 4. Botões: posição e forma conforme a seção 3 (`SaveBar` para seções editáveis).
 5. Ícone existe no tema e segue a convenção — seção 4.
 6. Se é tabela: use `KvTable`; se precisa de coluna/opção nova, **estenda o `KvTable`**.
-7. Se surgiu um padrão novo → **documente aqui**.
+7. Tela/delegate novo fala com o app via `app` (AppController) — **não** acesse ids da janela.
+8. Se surgiu um padrão novo → **documente aqui**.

@@ -3,8 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtTest
 import org.kde.kirigami as Kirigami
-import "../qml"
-import "../qml/Util.js" as Util
+import "../../qml"
+import "../../qml/Util.js" as Util
+import "../../qml/js/VarTokens.js" as VarTokens
 
 // Testes dos componentes reutilizáveis e da lógica pura do JsonTree.
 TestCase {
@@ -354,20 +355,16 @@ TestCase {
         verify(withBody.indexOf("-d 'oi'") >= 0);
     }
 
-    function test_util_querySuffix() {
-        var p = [{ name: "a", value: "1", enabled: true }];
-        compare(Util.querySuffix("https://x/y", p), "?a=1");
-        compare(Util.querySuffix("https://x/y?z=0", p), "&a=1");
-        compare(Util.querySuffix("https://x/y?", p), "a=1");          // '?' final: sem separador
-        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "", enabled: true }]), "?a=");
-        // desabilitado / sem nome são ignorados
-        compare(Util.querySuffix("https://x/y", [{ name: "a", value: "1", enabled: false }]), "");
-        compare(Util.querySuffix("https://x/y", [{ name: "", value: "1", enabled: true }]), "");
-        // vários params na ordem
-        compare(Util.querySuffix("https://x/y", [
-            { name: "a", value: "1", enabled: true },
-            { name: "b", value: "2", enabled: true }]), "?a=1&b=2");
-        compare(Util.querySuffix("https://x/y", []), "");
+    function test_vartokens() {
+        var rv = [{ name: "teste", enabled: true }, { name: "off", enabled: false },
+                  { name: "{{a}}", enabled: true }, { name: "", enabled: true }];
+        compare(VarTokens.matchingNames(rv, ""), ["teste"]);
+        compare(VarTokens.matchingNames(rv, "te"), ["teste"]);
+        compare(VarTokens.matchingNames(rv, "z"), []);
+        compare(VarTokens.tokenAt("x {{base}}/u", 5).name, "base");
+        compare(VarTokens.tokenAt("x {{base}}/u", 1), null);
+        compare(VarTokens.valueOf(rv, "teste").name, "teste");
+        compare(VarTokens.valueOf(rv, "nope"), null);
     }
 
     // JSON canônico: ignora a ordem das chaves (é o que decide o dirty ao desfazer)
