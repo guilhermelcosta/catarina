@@ -166,8 +166,10 @@ ColumnLayout {
                 implicitWidth: 12
                 implicitHeight: 12
                 source: model.collapsed ? "arrow-right" : "arrow-down"
-                color: Kirigami.Theme.textColor
-                opacity: 0.75
+                // blue on hover (same effect as the tab pin icon)
+                color: collapseHover.hovered ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                opacity: collapseHover.hovered ? 1.0 : 0.75
+                HoverHandler { id: collapseHover }
             }
 
             // quick action (⋯): appears on hover / selected item
