@@ -12,7 +12,7 @@ Dialog {
 
     title: Strings.t.exportTitle; anchors.centerIn: parent; modal: true; width: 640; height: 400
     header: DialogHeader { dialogTitle: curlExportDialog.title }
-    function refresh() { curlExportArea.text = Util.exportCode(backend.requestParts(app.collectRequest())); }
+    function refresh() { curlExportArea.text = Util.exportCode(backend.resolvedRequestParts(app.collectRequest(), app.currentCollection)); }
     contentItem: ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
         RowLayout {

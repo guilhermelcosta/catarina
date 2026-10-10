@@ -129,6 +129,36 @@ QVariantMap Backend::requestParts(const QVariantMap &request) const
     return RequestLogic::requestParts(request);
 }
 
+QVariantMap Backend::resolvedRequestParts(const QVariantMap &request, const QString &collection) const
+{
+    // valores efetivos (global → coleção → request), já com segredos resolvidos
+    const QVariantMap vars = variablesState(request, collection)
+                                 .value(QStringLiteral("effective")).toMap();
+
+    QVariantMap r = request;
+    r[QStringLiteral("url")] =
+        RequestLogic::substitute(request.value(QStringLiteral("url")).toString(), vars);
+    r[QStringLiteral("params")] =
+        RequestLogic::substituteList(request.value(QStringLiteral("params")).toList(), vars);
+    r[QStringLiteral("headers")] =
+        RequestLogic::substituteList(request.value(QStringLiteral("headers")).toList(), vars);
+    r[QStringLiteral("fields")] =
+        RequestLogic::substituteList(request.value(QStringLiteral("fields")).toList(), vars);
+    r[QStringLiteral("body")] =
+        RequestLogic::substitute(request.value(QStringLiteral("body")).toString(), vars);
+    // auth efetiva ("inherit" → a da coleção), já com as variáveis resolvidas
+    const QVariantMap effAuth = RequestLogic::effectiveAuth(
+        request.value(QStringLiteral("auth")).toMap(), collectionAuth(collection));
+    r[QStringLiteral("auth")] = RequestLogic::substituteList({effAuth}, vars).value(0).toMap();
+
+    QVariantMap parts = RequestLogic::requestParts(r);
+    // anexa os params ativos à URL, como o send faz
+    parts[QStringLiteral("url")] = RequestLogic::buildUrl(
+        r.value(QStringLiteral("url")).toString(),
+        r.value(QStringLiteral("params")).toList()).toString();
+    return parts;
+}
+
 QString Backend::querySuffix(const QString &url, const QVariantList &params) const
 {
     return RequestLogic::querySuffix(url, params);

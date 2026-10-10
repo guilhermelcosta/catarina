@@ -48,6 +48,10 @@ public:
     // partes efetivas de um request (method/url/headers/body) para exportação: aplica
     // auth e Content-Type padrão como no send, sem resolver {{variaveis}}
     Q_INVOKABLE QVariantMap requestParts(const QVariantMap &request) const;
+    // como requestParts, mas com {{variaveis}} resolvidas (valores efetivos, inclusive
+    // segredos), auth herdada aplicada e params anexados à URL — é o cURL "que funciona"
+    Q_INVOKABLE QVariantMap resolvedRequestParts(const QVariantMap &request,
+                                                 const QString &collection) const;
     // preview do sufixo de query anexado pelos params ativos (mesma semântica do send)
     Q_INVOKABLE QString querySuffix(const QString &url, const QVariantList &params) const;
 

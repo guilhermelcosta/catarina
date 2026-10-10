@@ -184,6 +184,41 @@ int main(int argc, char **argv)
         CHECK(parts.value(QStringLiteral("body")) == QStringLiteral("{\"a\":1}"));
     }
 
+    // resolvedRequestParts: {{variaveis}} viram valores reais (inclusive segredos),
+    // params entram na URL e a auth (inherit) é aplicada — é o que o cURL exportado mostra
+    {
+        QVariantList vars;
+        vars.append(item(QStringLiteral("base"), QStringLiteral("https://api.exemplo.com")));
+        vars.append(item(QStringLiteral("tok"), QStringLiteral("s3cr3t")));
+        vars.append(item(QStringLiteral("term"), QStringLiteral("ana")));
+        const QVariantMap r{
+            {QStringLiteral("method"), QStringLiteral("GET")},
+            {QStringLiteral("url"), QStringLiteral("{{base}}/users")},
+            {QStringLiteral("params"), QVariantList{item(QStringLiteral("q"), QStringLiteral("{{term}}"))}},
+            {QStringLiteral("headers"), QVariantList{item(QStringLiteral("X-T"), QStringLiteral("{{tok}}"))}},
+            {QStringLiteral("fields"), QVariantList{}},
+            {QStringLiteral("body"), QString()},
+            {QStringLiteral("bodyType"), QStringLiteral("none")},
+            {QStringLiteral("auth"), QVariantMap{{QStringLiteral("type"), QStringLiteral("bearer")},
+                                                 {QStringLiteral("token"), QStringLiteral("{{tok}}")}}},
+            {QStringLiteral("vars"), vars}};
+        const QVariantMap parts = b.resolvedRequestParts(r, QString());
+        CHECK(parts.value(QStringLiteral("url")).toString()
+              == QStringLiteral("https://api.exemplo.com/users?q=ana"));
+        bool xt = false, authHeader = false;
+        for (const QVariant &v : parts.value(QStringLiteral("headers")).toList()) {
+            const QVariantMap h = v.toMap();
+            if (h.value(QStringLiteral("name")) == QStringLiteral("X-T")
+                && h.value(QStringLiteral("value")) == QStringLiteral("s3cr3t")) xt = true;
+            if (h.value(QStringLiteral("name")) == QStringLiteral("Authorization")
+                && h.value(QStringLiteral("value")) == QStringLiteral("Bearer s3cr3t")) authHeader = true;
+        }
+        CHECK(xt && authHeader);
+        // requestParts (cru) NÃO resolve — comportamento preservado
+        CHECK(RequestLogic::requestParts(r).value(QStringLiteral("url")).toString()
+              == QStringLiteral("{{base}}/users"));
+    }
+
     b.deleteEnvironment(QStringLiteral("__e1__"));
     QVariantList ev;
     ev.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("pub")},
