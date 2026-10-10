@@ -11,7 +11,7 @@ Settings::Settings(QObject *parent)
 
 QString Settings::defaultStorageDir()
 {
-    return QDir::homePath() + QStringLiteral("/catarina-collections");
+    return QDir::homePath() + QStringLiteral("/Documents/catarina");
 }
 
 QString Settings::storageDir() const

@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QHostAddress>
 #include <QNetworkProxy>
+#include <QSettings>
 #include <QSignalSpy>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -110,8 +111,16 @@ private slots:
         qputenv("XDG_DATA_HOME", m_tmp->path().toUtf8());
         qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermetic
         QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);   // doesn't route localhost
+        // point storageDir at the temp dir BEFORE constructing Backend: its ctor
+        // mkpaths the storage dir, otherwise it would create the default
+        // ~/Documents/catarina on the real home
+        {
+            QSettings s(QSettings::IniFormat, QSettings::UserScope,
+                        QStringLiteral("catarina"), QStringLiteral("catarina"));
+            s.setValue(QStringLiteral("storageDir"), m_tmp->path() + QStringLiteral("/collections"));
+            s.sync();
+        }
         m_backend = new Backend;
-        m_backend->setStorageDir(m_tmp->path() + QStringLiteral("/collections"));
     }
     void cleanupTestCase()
     {

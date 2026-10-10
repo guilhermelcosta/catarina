@@ -261,15 +261,15 @@ var t = {
     pressCombination: "Press the combination…",
 
     // ---- menus ----
-    newCollection: "New collection…",
-    importCurl: "Import cURL…",
-    newRequestHere: "New request here…",
-    newFolderHere: "New folder here",
-    moveToEllipsis: "Move to…",
+    newCollection: "New collection",
+    importCurl: "Import cURL",
+    newRequestHere: "New request",
+    newFolderHere: "New folder",
+    moveToEllipsis: "Move to",
     rootTop: "Root (top)",
-    renameEllipsis: "Rename…",
+    renameEllipsis: "Rename",
     duplicate: "Duplicate",
-    exportCode: "Export code…",
+    exportCode: "Export code",
 
     // ---- command palette ----
     paletteGroupGlobal: "Global",
@@ -306,7 +306,7 @@ function duplicateInCollection(name) { return "Repeated variable name in collect
 function duplicateInRequest(name) { return "Repeated variable name in request: " + name; }
 function duplicateInEnvironment(name) { return "Repeated variable name in environment: " + name; }
 function collectionsNow(dir) { return "Collections now at " + dir; }
-function savedTo(path) { return "Saved to ~/catarina-collections/" + path + ".json"; }
+function savedTo(dir, path) { return "Saved to " + dir + "/" + path + ".json"; }
 function curlNoUrl() { return "Couldn't find a URL in the command."; }
 function willBeCreatedIn(folder) { return "Will be created in: " + folder; }
 function rootFolder() { return "root"; }
