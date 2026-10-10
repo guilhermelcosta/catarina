@@ -6,7 +6,11 @@ import org.kde.kirigami as Kirigami
 // suggests (autocomplete) and shows the value on hover. Centralizes what used
 // to be repeated in each field (varSupport.attach + VarCompleter + Keys.onPressed).
 // It's a TextArea (not TextField) because the highlight needs QQuickTextDocument,
-// which only TextArea/TextEdit expose.
+// hence masked fields (echoMode, password/secret) have no highlight.
+//
+// TextArea does NOT scroll by itself, and moving the item would drag its background/
+// border too. So we scroll the TEXT by offsetting the horizontal padding (`scroll`):
+// the frame stays put, only the text shifts. See `ensureVisible`.
 TextArea {
     id: root
     property var resolved: []          // [{name, value, secret, source, enabled}]
@@ -15,14 +19,38 @@ TextArea {
     property var tabHandler: null      // function(dir): Tab navigation between cells (KvTable); null = native
     signal accepted()                  // Enter/Return (single-line cell): consumed, the caller decides
 
+    // base horizontal padding; the text is drawn at (horizontalPadding - scroll)
+    property real horizontalPadding: 6
+    property real scroll: 0            // current horizontal offset of the text (>= 0)
+    leftPadding: horizontalPadding - scroll
+    rightPadding: horizontalPadding
+
     wrapMode: TextEdit.NoWrap
     selectByMouse: true
     activeFocusOnTab: true
+    clip: true                         // hide the text that scrolls out of the field
     implicitHeight: Kirigami.Units.gridUnit * 1.7
-    topPadding: 3; bottomPadding: 3; leftPadding: 6; rightPadding: 6
+    topPadding: 3; bottomPadding: 3
     // repeated name: text in red and bold (like the {{variable}} highlight)
     color: root.errorText.length > 0 ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
     font.bold: root.errorText.length > 0
+
+    // keeps the caret in view by shifting `scroll` (cursorRectangle is unaffected by the
+    // item position, so this converges in one step)
+    function ensureVisible() {
+        var hp = horizontalPadding;
+        var cx = cursorRectangle.x - (hp - scroll);       // caret x within the text (scroll-independent)
+        var cw = cursorRectangle.width;
+        var lo = cx + cw - width + 2 * hp;                // min scroll to show the caret's right edge
+        var hi = cx;                                      // max scroll to show the caret's left edge
+        var s = scroll;
+        if (s > hi) s = hi;
+        else if (s < lo) s = lo;
+        if (s < 0) s = 0;
+        if (s !== scroll) scroll = s;
+    }
+    onCursorRectangleChanged: ensureVisible()
+    onWidthChanged: ensureVisible()
 
     function updateErrorPopup() {
         if (root.hovered && root.errorText.length > 0) errPop.open();

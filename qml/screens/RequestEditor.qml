@@ -54,7 +54,7 @@ ColumnLayout {
                 anchors.fill: parent
                 placeholderText: Strings.t.urlExample
                 font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
-                topPadding: 5; bottomPadding: 5; leftPadding: 8; rightPadding: 8
+                topPadding: 5; bottomPadding: 5; horizontalPadding: 8
                 resolved: app.resolvedVars
                 collection: app.currentCollection
                 onTextEdited: app.markDirty()
@@ -78,6 +78,7 @@ ColumnLayout {
                 readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
                 enabled: false
                 visible: app.querySuffix().length > 0 && urlField.text.length > 0
+                         && urlField.scroll === 0
                          && startX <= urlField.width - urlField.rightPadding
                 x: startX
                 y: urlField.topPadding
@@ -119,25 +120,6 @@ ColumnLayout {
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
             ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
-        }
-    }
-
-    RowLayout {
-        visible: app.missingText.length > 0
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-        Layout.rightMargin: Kirigami.Units.smallSpacing
-        Layout.fillWidth: true
-        spacing: Kirigami.Units.smallSpacing
-        Kirigami.Icon {
-            source: "dialog-warning"
-            color: Kirigami.Theme.negativeTextColor
-            implicitWidth: 16; implicitHeight: 16
-        }
-        Label {
-            text: app.missingText
-            color: Kirigami.Theme.negativeTextColor
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
         }
     }
 

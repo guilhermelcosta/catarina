@@ -32,6 +32,9 @@ Item {
                        secret: v.secret === true, secretId: v.secretId });
         }
         resolvedVars = backend.resolvedVariables("", arr);
+        // {{refs}} inside the environment's own variables are validated too (red highlight)
+        if (app)
+            app.setMissingVars(backend.variablesState({ vars: arr }, "").missing);
     }
     // current state of the variables (includes scope) as canonical JSON
     function snapshot() {

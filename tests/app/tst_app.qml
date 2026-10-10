@@ -343,4 +343,78 @@ TestCase {
         verify(names.indexOf("$randomTimestamp") >= 0);
         verify(win.appController.resolvedVars.filter(function (v) { return v.name === "$randomTimestamp"; })[0].source === "dynamic");
     }
+
+    // an unresolved {{ref}} inside the request's own variables is flagged (red highlight)
+    function test_missing_ref_in_request_variable() {
+        backend.saveRequest("dv/r", baseReq());
+        win.appController.openRequest("dv/r");
+        win.appController.requestVarsModel.append({ name: "{{gone}}", value: "v", enabled: true });
+        win.appController.refreshResolved();
+        verify(win.appController.missingVars.indexOf("gone") >= 0, "request variable reference flagged");
+    }
+
+    // ...and inside the collection's own variables
+    function test_missing_ref_in_collection_variable() {
+        backend.createFolder("colmiss");
+        win.appController.openCollection("colmiss");
+        win.appController.collectionVarsModel.append({ name: "{{gone2}}", value: "v", enabled: true });
+        win.appController.refreshCollectionResolved();
+        verify(win.appController.missingVars.indexOf("gone2") >= 0, "collection variable reference flagged");
+    }
+
+    // ...and inside the environment's own variables
+    function test_missing_ref_in_environment_variable() {
+        backend.saveEnvironment("misse", []);
+        win.appController.openEnvTab("misse");
+        win.appController.envScreen.varsModel.append({ name: "{{gone3}}", value: "v", enabled: true,
+                                                       scope: "all", collections: "" });
+        win.appController.envScreen.refreshResolved();
+        verify(win.appController.missingVars.indexOf("gone3") >= 0, "environment variable reference flagged");
+    }
+
+    // a URL longer than the field scrolls the text (not the box) so the caret stays visible
+    function test_long_url_scrolls_to_cursor() {
+        backend.saveRequest("scroll/r", baseReq());
+        win.appController.openRequest("scroll/r");
+        wait(50);
+        var f = win.appController.requestEditor.urlInput;
+        f.text = "http://example.com/" + "a".repeat(300);
+        wait(50);                                   // let the layout settle with the long text
+        var x0 = f.mapToItem(null, 0, 0).x, w0 = f.width;
+        f.forceActiveFocus();
+        f.cursorPosition = f.text.length;
+        wait(80);
+        verify(f.scroll > 0, "URL text scrolled to the caret");
+        verify(f.leftPadding < f.horizontalPadding, "text offset via padding");
+        compare(f.mapToItem(null, 0, 0).x, x0, "the URL box didn't move on screen");
+        compare(f.width, w0, "the URL box kept its width");
+    }
+
+    // the concise "unresolved" message no longer lists every variable
+    function test_unresolved_status_is_concise() {
+        var vars = [];
+        for (var i = 0; i < 20; i++) vars.push("{{missing" + i + "}}");
+        backend.send({ method: "GET", url: "http://127.0.0.1:1/" + vars.join(""),
+                       params: [], headers: [], fields: [], body: "", bodyType: "none",
+                       auth: { type: "none" }, vars: [] }, "");
+        wait(80);
+        var label = findChild(win, "statusLabel");
+        verify(label, "status label present");
+        verify(label.text.indexOf("unresolved variables in the request") >= 0, "concise message");
+        verify(label.text.indexOf("missing0") < 0, "does not list the variable names");
+    }
+
+    // a long error status wraps instead of being clipped by the pane
+    function test_long_error_status_wraps() {
+        backend.send({ method: "POST", url: "http://127.0.0.1:1/up",
+                       params: [], headers: [],
+                       fields: [{ name: "f", value: "", type: "file",
+                                  fileName: "/" + "a".repeat(300), enabled: true }],
+                       body: "", bodyType: "multipart", auth: { type: "none" }, vars: [] }, "");
+        wait(80);
+        var label = findChild(win, "statusLabel");
+        verify(label, "status label present");
+        verify(label.text.indexOf("open the file") >= 0, "error shown");
+        verify(label.lineCount > 1, "long error wraps to multiple lines");
+    }
 }

@@ -126,6 +126,8 @@ QStringList VariableResolver::collectTexts(const QVariantMap &request)
     append(request.value(RS::kParams).toList());
     append(request.value(RS::kHeaders).toList());
     append(request.value(RS::kFields).toList());
+    // the request's own variables may reference others ({{name}} in the name or value)
+    append(request.value(RS::kVars).toList());
     return texts;
 }
 

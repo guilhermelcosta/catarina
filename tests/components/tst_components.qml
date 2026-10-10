@@ -324,6 +324,25 @@ TestCase {
         kvModel.clear();
     }
 
+    // a long value in a table cell scrolls horizontally (text shifts, the box doesn't move)
+    function test_kvtable_cell_scrolls_to_cursor() {
+        kvModel.clear();
+        kvModel.append({ name: "k", value: "http://example.com/" + "b".repeat(200), enabled: true });
+        wait(50);
+        var lv = findChild(kv, "kvList");
+        var row = lv.itemAtIndex(0);
+        verify(row !== null, "delegate not created");
+        var valField = row.children[4];
+        var x0 = valField.mapToItem(null, 0, 0).x, w0 = valField.width;
+        valField.forceActiveFocus();
+        valField.cursorPosition = valField.text.length;
+        wait(50);
+        verify(valField.scroll > 0, "cell text scrolled to the caret");
+        compare(valField.mapToItem(null, 0, 0).x, x0, "the cell box didn't move on screen");
+        compare(valField.width, w0, "the cell box kept its width");
+        kvModel.clear();
+    }
+
     // ---- Util.js: pure domain ----
     function test_util_fmtSize() {
         compare(Util.fmtSize(512), "512 B");
