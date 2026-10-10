@@ -243,6 +243,48 @@ TestCase {
         compare(rep.count, 2);       // one guide per ancestor level
     }
 
+    // collapse/expand keeps every row in the model and only flips the "hidden"
+    // role (the delegate animates its height to 0). Rebuilding/filtering the
+    // model here would reset the ListView and kill the open/close animation.
+    function test_collapse_keeps_rows_and_marks_hidden() {
+        backend.saveRequest("collapsecol/sub/r", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var tree = win.appController.treeModel;
+        var before = tree.count;
+        win.appController.toggleCollapse("collapsecol");
+
+        var hiddenCount = 0;
+        for (var i = 0; i < tree.count; i++) {
+            var e = tree.get(i);
+            if (e.relPath === "collapsecol") compare(e.collapsed, true);
+            else if (e.relPath.indexOf("collapsecol/") === 0) { compare(e.hidden, true); hiddenCount++; }
+        }
+        compare(tree.count, before, "rows are kept, not removed");
+        compare(hiddenCount, 2, "sub + r marked hidden");
+
+        win.appController.toggleCollapse("collapsecol");
+        for (var j = 0; j < tree.count; j++)
+            if (tree.get(j).relPath.indexOf("collapsecol/") === 0)
+                compare(tree.get(j).hidden, false, "expanded again");
+    }
+
+    // toggling the side panels actually hides them (guards the imperative
+    // splitWidth/preferredWidth handling; a broken binding would leave visible=true)
+    function test_panels_toggle() {
+        win.appController.sidebarVisible = false;
+        wait(300);
+        compare(win.appController.sidebar.visible, false);
+        win.appController.sidebarVisible = true;
+        wait(300);
+        compare(win.appController.sidebar.visible, true);
+
+        win.appController.responseVisible = false;
+        wait(300);
+        compare(win.appController.responsePane.visible, false);
+    }
+
     // Main's FolderPicker must receive the settings screen's directory field
     // (regression: `dirField: dirField` pointed to an id from another file → null)
     function test_folder_picker_wired() {

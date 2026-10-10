@@ -8,7 +8,7 @@ import "../Util.js" as Util
 
 // Response pane (body/tree/headers/cookies/network) + find and status.
 // `app` = window; receives the backend's network signals directly.
-ColumnLayout {
+Item {
     id: responsePane
     property var app
     property var responseHeaders: []
@@ -172,169 +172,201 @@ ColumnLayout {
         }
     }
 
-    visible: app.responseVisible
-    SplitView.preferredWidth: 330
-    SplitView.minimumWidth: 230
-    spacing: 0
-
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.smallSpacing
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
-        spacing: Kirigami.Units.smallSpacing
-        Rectangle {
-            visible: statusLabel.text.length > 0
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: statusLabel.implicitWidth + 14
-            implicitHeight: statusLabel.implicitHeight + 6
-            radius: 4
-            color: Qt.rgba(statusColor(statusLabel.text).r,
-                           statusColor(statusLabel.text).g,
-                           statusColor(statusLabel.text).b, 0.18)
-            Label {
-                id: statusLabel
-                anchors.centerIn: parent
-                font.bold: true
-                elide: Text.ElideRight
-                color: statusColor(text)
+    property real expandedWidth: 330
+    // current width of the split item. Applied imperatively (not via a binding)
+    // because dragging the handle makes SplitView overwrite preferredWidth, which
+    // would destroy a binding and break the animation.
+    property real splitWidth: 330
+    SplitView.preferredWidth: splitWidth
+    onSplitWidthChanged: SplitView.preferredWidth = splitWidth
+    visible: app.responseVisible || splitWidth > 0.5
+    // min follows the animation so collapse/expand slides instead of clamping
+    SplitView.minimumWidth: app.responseVisible ? Math.min(230, splitWidth) : 0
+    NumberAnimation { id: splitAnim; target: responsePane; property: "splitWidth"; duration: 160; easing.type: Easing.InOutQuad }
+    Connections {
+        target: app
+        function onResponseVisibleChanged() {
+            splitAnim.stop();
+            if (app.responseVisible) {
+                splitAnim.from = responsePane.splitWidth;
+                splitAnim.to = responsePane.expandedWidth;
+            } else {
+                responsePane.expandedWidth = responsePane.width;   // remember the dragged size
+                responsePane.splitWidth = responsePane.width;      // sync before collapsing
+                splitAnim.from = responsePane.width;
+                splitAnim.to = 0;
             }
-        }
-        Item { Layout.fillWidth: true }
-        Label { id: timeLabel; visible: text.length > 0; opacity: 0.7 }
-        Label { id: sizeLabel; visible: text.length > 0; opacity: 0.7 }
-        ToolButton {
-            visible: responseBody.text.length > 0
-            icon.name: "edit-copy"; text: Strings.t.copy
-            display: AbstractButton.TextBesideIcon
-            onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); app.notify(Strings.t.responseCopied); }
-            onHoveredChanged: hint(hovered ? Strings.t.copyResponse : "")
-        }
-        ToolButton {
-            visible: responseBody.text.length > 0
-            icon.name: "edit-find"
-            onClicked: openFind()
-            onHoveredChanged: hint(hovered ? Strings.t.findTooltip : "")
+            splitAnim.start();
         }
     }
+    // keep the content at full width and clip it: collapsing slides it out
+    // instead of squeezing the labels/badges to zero
+    clip: true
+    ColumnLayout {
+        anchors.right: parent.right
+        width: splitAnim.running ? responsePane.expandedWidth : responsePane.width
+        height: responsePane.height
+        spacing: 0
 
-    TabBar {
-        id: respTabBar
-        Layout.fillWidth: true
-        onCurrentIndexChanged: if (currentIndex === 1) syncJsonTree()
-        TabButton { text: Strings.t.responseBody; onHoveredChanged: hint(hovered ? Strings.t.bodyHint : "") }
-        TabButton { text: Strings.t.responseTree; onHoveredChanged: hint(hovered ? Strings.t.treeHint : "") }
-        TabButton { text: Strings.t.responseHeaders; onHoveredChanged: hint(hovered ? Strings.t.headersHint : "") }
-        TabButton { text: Strings.t.responseCookies; onHoveredChanged: hint(hovered ? Strings.t.cookiesHint : "") }
-        TabButton { text: Strings.t.responseNetwork; onHoveredChanged: hint(hovered ? Strings.t.networkHint : "") }
-    }
-
-    // inline find (Ctrl+F) — only appears when triggered
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-        Layout.rightMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.smallSpacing
-        visible: findVisible
-        TextField {
-            id: findField
+        RowLayout {
             Layout.fillWidth: true
-            placeholderText: Strings.t.searchResponse
-            onAccepted: findNext(false)
-            onTextChanged: { if (text.length > 0) findNext(false); else updateFindCounter(); }
-            Keys.onEscapePressed: closeFind()
-        }
-        Label {
-            visible: findMatchTotal > 0
-            text: findMatchIndex + "/" + findMatchTotal
-            opacity: 0.75
-            font.family: "monospace"
-        }
-        ToolButton {
-            icon.name: "go-up"; onClicked: findNext(true)
-            onHoveredChanged: hint(hovered ? Strings.t.prevMatch : "")
-        }
-        ToolButton {
-            icon.name: "go-down"; onClicked: findNext(false)
-            onHoveredChanged: hint(hovered ? Strings.t.nextMatch : "")
-        }
-        ToolButton {
-            icon.name: "window-close"; onClicked: closeFind()
-            onHoveredChanged: hint(hovered ? Strings.t.clearFind : "")
-        }
-    }
-    Item {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        StackLayout {
-            anchors.fill: parent
-            currentIndex: respTabBar.currentIndex
-            // ---- Body ----
-            ScrollView {
-                id: bodyScroll
-                Layout.fillWidth: true; Layout.fillHeight: true
-                padding: Kirigami.Units.smallSpacing
-                TextArea {
-                    id: responseBody
-                    readOnly: true
-                    font.family: "monospace"
-                    font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
-                    wrapMode: TextEdit.Wrap
-                    selectionColor: Kirigami.Theme.highlightColor
-                    selectedTextColor: Kirigami.Theme.highlightedTextColor
-                    Component.onCompleted:
-                        varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
-                            app.jsonStringColor, app.jsonNumberColor, app.jsonKeywordColor,
-                            app.jsonKeyColor)
+            Layout.margins: Kirigami.Units.smallSpacing
+            Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
+            spacing: Kirigami.Units.smallSpacing
+            Rectangle {
+                visible: statusLabel.text.length > 0
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: statusLabel.implicitWidth + 14
+                implicitHeight: statusLabel.implicitHeight + 6
+                radius: 4
+                color: Qt.rgba(statusColor(statusLabel.text).r,
+                               statusColor(statusLabel.text).g,
+                               statusColor(statusLabel.text).b, 0.18)
+                Label {
+                    id: statusLabel
+                    anchors.centerIn: parent
+                    font.bold: true
+                    elide: Text.ElideRight
+                    color: statusColor(text)
                 }
             }
-            JsonTree { id: jsonTree; Layout.fillWidth: true; Layout.fillHeight: true }
-            HeaderTable {
-                id: responseHeadersTable
-                Layout.fillWidth: true; Layout.fillHeight: true
-                Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
-                headers: responseHeaders
-                onCopyRequested: function (text) { varSupport.copyText(text); app.notify(Strings.t.headersCopied); }
+            Item { Layout.fillWidth: true }
+            Label { id: timeLabel; visible: text.length > 0; opacity: 0.7 }
+            Label { id: sizeLabel; visible: text.length > 0; opacity: 0.7 }
+            ToolButton {
+                visible: responseBody.text.length > 0
+                icon.name: "edit-copy"; text: Strings.t.copy
+                display: AbstractButton.TextBesideIcon
+                onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); app.notify(Strings.t.responseCopied); }
+                onHoveredChanged: hint(hovered ? Strings.t.copyResponse : "")
             }
-            ScrollView {
-                Layout.fillWidth: true; Layout.fillHeight: true
-                padding: Kirigami.Units.smallSpacing
-                TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
-            }
-            NetworkView {
-                Layout.fillWidth: true; Layout.fillHeight: true
-                meta: netMeta
+            ToolButton {
+                visible: responseBody.text.length > 0
+                icon.name: "edit-find"
+                onClicked: openFind()
+                onHoveredChanged: hint(hovered ? Strings.t.findTooltip : "")
             }
         }
-        // empty state (no response yet) — only on the "Body" tab
-        EmptyState {
-            anchors.centerIn: parent
-            width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-            visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
-            iconSource: "qrc:/icons/catarina.svg"
-            iconIsMask: true
-            title: Strings.t.noResponseYet
-            message: Strings.t.noResponseHint
-            shortcut: "Ctrl+K"
-            shortcutLabel: Strings.t.openPaletteHint
-        }
-    }
 
-    // panel status/hint strip (replaces floating tooltips)
-    Kirigami.Separator { Layout.fillWidth: true }
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: hintLabel.implicitHeight + Kirigami.Units.smallSpacing * 2
-        color: Kirigami.Theme.alternateBackgroundColor
-        Label {
-            id: hintLabel
-            anchors.fill: parent
-            anchors.leftMargin: Kirigami.Units.smallSpacing
-            anchors.rightMargin: Kirigami.Units.smallSpacing
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-            font.pixelSize: Kirigami.Theme.smallFont.pointSize
-            opacity: 0.75
-            text: responseHint
+        TabBar {
+            id: respTabBar
+            Layout.fillWidth: true
+            onCurrentIndexChanged: if (currentIndex === 1) syncJsonTree()
+            TabButton { text: Strings.t.responseBody; onHoveredChanged: hint(hovered ? Strings.t.bodyHint : "") }
+            TabButton { text: Strings.t.responseTree; onHoveredChanged: hint(hovered ? Strings.t.treeHint : "") }
+            TabButton { text: Strings.t.responseHeaders; onHoveredChanged: hint(hovered ? Strings.t.headersHint : "") }
+            TabButton { text: Strings.t.responseCookies; onHoveredChanged: hint(hovered ? Strings.t.cookiesHint : "") }
+            TabButton { text: Strings.t.responseNetwork; onHoveredChanged: hint(hovered ? Strings.t.networkHint : "") }
+        }
+
+        // inline find (Ctrl+F) — only appears when triggered
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Kirigami.Units.smallSpacing
+            Layout.rightMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
+            visible: findVisible
+            TextField {
+                id: findField
+                Layout.fillWidth: true
+                placeholderText: Strings.t.searchResponse
+                onAccepted: findNext(false)
+                onTextChanged: { if (text.length > 0) findNext(false); else updateFindCounter(); }
+                Keys.onEscapePressed: closeFind()
+            }
+            Label {
+                visible: findMatchTotal > 0
+                text: findMatchIndex + "/" + findMatchTotal
+                opacity: 0.75
+                font.family: "monospace"
+            }
+            ToolButton {
+                icon.name: "go-up"; onClicked: findNext(true)
+                onHoveredChanged: hint(hovered ? Strings.t.prevMatch : "")
+            }
+            ToolButton {
+                icon.name: "go-down"; onClicked: findNext(false)
+                onHoveredChanged: hint(hovered ? Strings.t.nextMatch : "")
+            }
+            ToolButton {
+                icon.name: "window-close"; onClicked: closeFind()
+                onHoveredChanged: hint(hovered ? Strings.t.clearFind : "")
+            }
+        }
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            StackLayout {
+                anchors.fill: parent
+                currentIndex: respTabBar.currentIndex
+                // ---- Body ----
+                ScrollView {
+                    id: bodyScroll
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    padding: Kirigami.Units.smallSpacing
+                    TextArea {
+                        id: responseBody
+                        readOnly: true
+                        font.family: "monospace"
+                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                        wrapMode: TextEdit.Wrap
+                        selectionColor: Kirigami.Theme.highlightColor
+                        selectedTextColor: Kirigami.Theme.highlightedTextColor
+                        Component.onCompleted:
+                            varSupport.attach(responseBody.textDocument, "#c678dd", true, true,
+                                app.jsonStringColor, app.jsonNumberColor, app.jsonKeywordColor,
+                                app.jsonKeyColor)
+                    }
+                }
+                JsonTree { id: jsonTree; Layout.fillWidth: true; Layout.fillHeight: true }
+                HeaderTable {
+                    id: responseHeadersTable
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    Layout.leftMargin: Kirigami.Units.smallSpacing; Layout.rightMargin: Kirigami.Units.smallSpacing; Layout.bottomMargin: Kirigami.Units.smallSpacing
+                    headers: responseHeaders
+                    onCopyRequested: function (text) { varSupport.copyText(text); app.notify(Strings.t.headersCopied); }
+                }
+                ScrollView {
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    padding: Kirigami.Units.smallSpacing
+                    TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
+                }
+                NetworkView {
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    meta: netMeta
+                }
+            }
+            // empty state (no response yet) — only on the "Body" tab
+            EmptyState {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
+                iconSource: "qrc:/icons/catarina.svg"
+                iconIsMask: true
+                title: Strings.t.noResponseYet
+                message: Strings.t.noResponseHint
+                shortcut: "Ctrl+K"
+                shortcutLabel: Strings.t.openPaletteHint
+            }
+        }
+
+        // panel status/hint strip (replaces floating tooltips)
+        Kirigami.Separator { Layout.fillWidth: true }
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: hintLabel.implicitHeight + Kirigami.Units.smallSpacing * 2
+            color: Kirigami.Theme.alternateBackgroundColor
+            Label {
+                id: hintLabel
+                anchors.fill: parent
+                anchors.leftMargin: Kirigami.Units.smallSpacing
+                anchors.rightMargin: Kirigami.Units.smallSpacing
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+                font.pixelSize: Kirigami.Theme.smallFont.pointSize
+                opacity: 0.75
+                text: responseHint
+            }
         }
     }
 }

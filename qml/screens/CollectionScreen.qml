@@ -55,7 +55,7 @@ ColumnLayout {
                 columnSpacing: Kirigami.Units.largeSpacing
                 rowSpacing: Kirigami.Units.smallSpacing
                 Label { text: Strings.t.location; font.bold: true }
-                Label { text: "~/catarina-collections/" + app.collectionPath; opacity: 0.8 }
+                Label { text: backend.storageDir + "/" + app.collectionPath; opacity: 0.8 }
                 Label { text: Strings.t.requests; font.bold: true }
                 Label { text: app.collectionRequests.length }
                 Label { text: Strings.t.subfolders; font.bold: true }

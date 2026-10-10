@@ -137,20 +137,37 @@ function rebuildTree() {
                 break;
             }
         }
-        if (hidden)
-            continue;
         treeModel.append({ name: e.name, relPath: e.relPath, isFolder: e.isFolder,
                            method: e.method !== undefined ? e.method : "",
                            depth: e.depth !== undefined ? e.depth : 0,
                            hasChildren: e.hasChildren === true,
-                           collapsed: controller.collapsedFolders[e.relPath] === true });
+                           collapsed: controller.collapsedFolders[e.relPath] === true,
+                           hidden: hidden });
+    }
+}
+// updates the "hidden"/"collapsed" roles in place (no model reset) so the
+// delegate height can animate when a folder is expanded/collapsed
+function applyCollapse() {
+    var collapsed = Object.keys(controller.collapsedFolders);
+    for (var i = 0; i < treeModel.count; i++) {
+        var e = treeModel.get(i);
+        var hidden = false;
+        for (var k = 0; k < collapsed.length; k++) {
+            if (e.relPath !== collapsed[k] && e.relPath.indexOf(collapsed[k] + "/") === 0) {
+                hidden = true;
+                break;
+            }
+        }
+        if (e.hidden !== hidden) treeModel.setProperty(i, "hidden", hidden);
+        var isCollapsed = controller.collapsedFolders[e.relPath] === true;
+        if (e.collapsed !== isCollapsed) treeModel.setProperty(i, "collapsed", isCollapsed);
     }
 }
 function toggleCollapse(relPath) {
     var c = Object.assign({}, controller.collapsedFolders);
     if (c[relPath]) delete c[relPath]; else c[relPath] = true;
     controller.collapsedFolders = c;
-    reloadTree();
+    applyCollapse();
 }
 function remapTabs(from, to) {
     var prefix = from + "/";
@@ -761,7 +778,7 @@ function saveCurrent() {
         currentDirty = false;
         refreshResolved();
         reloadTree();
-        notify(Strings.savedTo(t.relPath));
+        notify(Strings.savedTo(backend.storageDir, t.relPath));
     }
 }
 function revertCurrent() {

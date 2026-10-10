@@ -14,7 +14,7 @@ Kirigami**, with an English interface.
 ## Why another API client?
 
 - **File-based, versionable collections.** Each request is a `.json` in
-  `~/catarina-collections`. Version it with `git`, review it in a diff, share it by folder —
+  `~/Documents/catarina` (configurable). Version it with `git`, review it in a diff, share it by folder —
   no export/import.
 - **Secrets out of the repository.** Passwords and tokens live in the **system keyring**
   (Secret Service/KWallet via QtKeychain); the versioned file only stores a `secretId`.
@@ -136,7 +136,7 @@ docs/DESIGN.md    visual and component standards
 
 | What | Where |
 |---|---|
-| Collections/requests | `~/catarina-collections` (configurable) |
+| Collections/requests | `~/Documents/catarina` (configurable) |
 | Preferences | `~/.config/catarina/catarina.ini` |
 | Secrets | OS keyring or `~/.local/share/catarina/secrets.json` (`0600`) |
 | History | `~/.local/share/catarina/history.json` |

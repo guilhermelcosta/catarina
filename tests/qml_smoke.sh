@@ -8,9 +8,13 @@ if [ -z "$bin" ] || [ ! -x "$bin" ]; then
 fi
 
 log="$(mktemp)"
-trap 'rm -f "$log"' EXIT
+tmp="$(mktemp -d)"
+trap 'rm -f "$log"; rm -rf "$tmp"' EXIT
 
-timeout 6 "$bin" >"$log" 2>&1
+# hermetic: temp home/config/data so the smoke test never touches the user's
+# real settings/collections (and never creates the default ~/Documents/catarina)
+HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" \
+    CATARINA_SECRETS_BACKEND=file timeout 6 "$bin" >"$log" 2>&1
 rc=$?
 
 if [ "$rc" -ne 124 ]; then
