@@ -243,6 +243,15 @@ TestCase {
         compare(rep.count, 2);       // um guia por nível de ancestral
     }
 
+    // o FolderPicker do Main deve receber o campo de diretório da tela de configurações
+    // (regressão: `dirField: dirField` apontava p/ um id de outro arquivo → null)
+    function test_folder_picker_wired() {
+        var fp = findChild(win, "folderPicker");
+        verify(fp, "FolderPicker presente no Main");
+        verify(fp.dirField, "campo de diretório ligado ao FolderPicker");
+        compare(fp.dirField.text, settings.storageDir);
+    }
+
     // os modelos injetados chegam de fato aos filhos do editor (regressão de escopo QML:
     // `X: X` com propriedade de mesmo nome vira auto-referência e chega undefined)
     function test_editor_models_wired() {

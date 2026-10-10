@@ -385,7 +385,7 @@ Kirigami.ApplicationWindow {
     QuitDialog { id: quitDialog; app: controller }
     CurlImportDialog { id: curlImportDialog; app: controller }
     CurlExportDialog { id: curlExportDialog; app: controller }
-    FolderPicker { id: folderPicker; dirField: dirField }
+    FolderPicker { id: folderPicker; objectName: "folderPicker"; dirField: settingsPage.dirField }
     MoveDialog { id: moveDialog; app: controller; treeModel: treeModel; treeView: sidebar.view }
     RenameDialog { id: renameDialog; app: controller }
     HistoryDialog { id: historyDialog; app: controller; newReqDialog: newReqDialog }
