@@ -10,6 +10,7 @@ Item {
     id: settingsPage
     property var app
     property var folderPicker
+    property alias dirField: storageDirField   // exposto p/ o Main ligar ao FolderPicker
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.largeSpacing
@@ -36,12 +37,12 @@ Item {
                 Label { text: Strings.t.collectionsFolder; opacity: 0.7 }
                 RowLayout {
                     spacing: Kirigami.Units.smallSpacing
-                    TextField { id: dirField; Layout.fillWidth: true; text: settings.storageDir }
+                    TextField { id: storageDirField; Layout.fillWidth: true; text: settings.storageDir }
                     Button { text: Strings.t.browse; onClicked: folderPicker.open() }
                     Button {
                         text: Strings.t.apply; highlighted: true
-                        enabled: dirField.text.length > 0 && dirField.text !== backend.storageDir
-                        onClicked: app.applyStorageDir(dirField.text)
+                        enabled: storageDirField.text.length > 0 && storageDirField.text !== backend.storageDir
+                        onClicked: app.applyStorageDir(storageDirField.text)
                     }
                 }
                 Label {
