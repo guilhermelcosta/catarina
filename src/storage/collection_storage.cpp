@@ -68,7 +68,7 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
     const QString abs = m_root + (rel.isEmpty() ? QString() : QLatin1Char('/') + rel);
     QDir dir(abs);
     for (const QString &sub : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
-        if (sub.startsWith(QLatin1Char('.')))   // .katarina e afins ficam fora da árvore
+        if (sub.startsWith(QLatin1Char('.')))   // .catarina e afins ficam fora da árvore
             continue;
         const QString childRel = rel.isEmpty() ? sub : rel + QLatin1Char('/') + sub;
         out.append(QVariantMap{{QStringLiteral("name"), sub},

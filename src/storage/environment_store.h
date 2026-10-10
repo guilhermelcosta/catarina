@@ -14,7 +14,7 @@ class EnvironmentStore : public QObject
 public:
     explicit EnvironmentStore(QObject *parent = nullptr);
 
-    void setFile(const QString &path);   // <dir>/.katarina/environments.json
+    void setFile(const QString &path);   // <dir>/.catarina/environments.json
     void load();
 
     QVariantList list() const;                                    // {name, count}

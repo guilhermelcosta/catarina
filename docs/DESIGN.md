@@ -1,4 +1,4 @@
-# Guia de design e componentes — Katarina
+# Guia de design e componentes — Catarina
 
 Regras visuais e de implementação do app. **Antes de criar/alterar qualquer elemento de UI,
 valide aqui qual é o padrão.** Se o padrão não existir, defina-o, implemente de forma
@@ -183,7 +183,7 @@ Em `qml/` (atômicos e de shell):
   opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
   título, mensagem (`opacity 0.6`), atalho e ação opcional (`highlighted`). Fundo transparente
-  (herda o painel). Para ícone monocromático próprio (ex.: `katarina.svg`), passe `iconIsMask: true`
+  (herda o painel). Para ícone monocromático próprio (ex.: `catarina.svg`), passe `iconIsMask: true`
   (fica com a cor do tema). **Todo placeholder usa este componente** — centralize com
   `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
@@ -251,16 +251,16 @@ Em `qml/` (atômicos e de shell):
 - **Segredos**: o valor real é carregado do cofre para edição (mascarado no campo com segredo),
   mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
   O armazenamento é o **cofre do SO** via QtKeychain (Secret Service/KWallet/Keychain) — um blob
-  JSON sob o serviço `katarina`; sem o QtKeychain na build, cai para
-  `~/.local/share/katarina/katarina/secrets.json` (`0600`). Um `secrets.json` antigo é migrado pro
-  cofre e removido no primeiro uso (`KATARINA_SECRETS_BACKEND=file` força o arquivo — usado nos testes).
+  JSON sob o serviço `catarina`; sem o QtKeychain na build, cai para
+  `~/.local/share/catarina/catarina/secrets.json` (`0600`). Um `secrets.json` antigo é migrado pro
+  cofre e removido no primeiro uso (`CATARINA_SECRETS_BACKEND=file` força o arquivo — usado nos testes).
   O campo mascarado (`KvTable`) traz um **olho** (`view-visible`/`view-hidden`) que alterna o
   `echoMode` para espiar o valor sem desmarcar segredo. Esse `TextField` repete a
   `implicitHeight`/padding do `VarField` (`gridUnit * 1.7`), senão as bolinhas do `echoMode`
   mudam a altura da linha conforme a fonte.
 - **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
 - **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
-- **Coleção de exemplo**: no primeiro uso (storage vazio, marca `.katarina/.seeded`) o backend copia
+- **Coleção de exemplo**: no primeiro uso (storage vazio, marca `.catarina/.seeded`) o backend copia
   `seed/` (recursos `:/seed`, embutidos no binário) — a coleção **DummyJSON** de demonstração
   (GET/POST/PUT/DELETE, params, variáveis e auth herdada) e um **ambiente Demo** com variável
   global (`locale`), para o exemplo já mostrar os três tipos de variável (global/coleção/request).

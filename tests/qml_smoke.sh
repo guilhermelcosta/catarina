@@ -14,7 +14,7 @@ timeout 6 "$bin" >"$log" 2>&1
 rc=$?
 
 if [ "$rc" -ne 124 ]; then
-    echo "katarina encerrou sozinho (rc=$rc) — provável falha ao carregar o QML:"
+    echo "catarina encerrou sozinho (rc=$rc) — provável falha ao carregar o QML:"
     cat "$log"
     exit 1
 fi

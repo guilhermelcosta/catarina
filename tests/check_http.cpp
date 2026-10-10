@@ -108,7 +108,7 @@ private slots:
         QVERIFY(m_tmp->isValid());
         qputenv("XDG_CONFIG_HOME", m_tmp->path().toUtf8());
         qputenv("XDG_DATA_HOME", m_tmp->path().toUtf8());
-        qputenv("KATARINA_SECRETS_BACKEND", "file");   // hermético
+        qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermético
         QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);   // não roteia localhost
         m_backend = new Backend;
         m_backend->setStorageDir(m_tmp->path() + QStringLiteral("/collections"));

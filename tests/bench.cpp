@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
 
     QSettings s(QSettings::IniFormat, QSettings::UserScope,
-                QStringLiteral("katarina"), QStringLiteral("katarina"));
+                QStringLiteral("catarina"), QStringLiteral("catarina"));
     s.setValue(QStringLiteral("storageDir"), tmp.path() + QStringLiteral("/collections"));
     s.sync();
 

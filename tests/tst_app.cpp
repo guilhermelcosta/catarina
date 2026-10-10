@@ -18,7 +18,7 @@ public:
         m_tmp = new QTemporaryDir;
         qputenv("XDG_CONFIG_HOME", m_tmp->path().toUtf8());
         qputenv("XDG_DATA_HOME", m_tmp->path().toUtf8());
-        qputenv("KATARINA_SECRETS_BACKEND", "file");
+        qputenv("CATARINA_SECRETS_BACKEND", "file");
         m_backend = new Backend;
         m_backend->setStorageDir(m_tmp->path() + QStringLiteral("/collections"));
         m_settings = new Settings;

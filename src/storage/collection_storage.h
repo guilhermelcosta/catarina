@@ -17,7 +17,7 @@ class CollectionStorage : public QObject
 public:
     explicit CollectionStorage(QObject *parent = nullptr);
 
-    void setRoot(const QString &dir);   // ~/katarina-collections
+    void setRoot(const QString &dir);   // ~/catarina-collections
     QString root() const;
 
     QVariantList tree() const;          // itens com name/relPath/isFolder/method/depth/hasChildren

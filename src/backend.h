@@ -19,10 +19,10 @@ class HttpClient;
 
 // Backend: fachada QML. Envia requests (variáveis resolvidas por escopo, params,
 // auth, multipart) e delega a persistência aos stores:
-//   - CollectionStorage  ~/katarina-collections (.json versionáveis)
-//   - EnvironmentStore   <dir>/.katarina/environments.json
-//   - HistoryStore       ~/.local/share/katarina/history.json
-//   - SecretStore        cofre do SO ou ~/.local/share/katarina/secrets.json (0600)
+//   - CollectionStorage  ~/catarina-collections (.json versionáveis)
+//   - EnvironmentStore   <dir>/.catarina/environments.json
+//   - HistoryStore       ~/.local/share/catarina/history.json
+//   - SecretStore        cofre do SO ou ~/.local/share/catarina/secrets.json (0600)
 // Mantém os sinais e a API Q_INVOKABLE que o QML já usa.
 class Backend : public QObject
 {
@@ -41,7 +41,7 @@ public:
     Q_INVOKABLE void setStorageDir(const QString &dir);
     QString activeEnvironment() const;
     // copia a coleção de exemplo embutida (:/seed) no primeiro uso; só quando o
-    // storage ainda está vazio e uma única vez (marca .katarina/.seeded)
+    // storage ainda está vazio e uma única vez (marca .catarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
 
     // ---- lógica pura: movida para RequestLogic (src/core/request_logic.h) ----
@@ -148,9 +148,9 @@ private:
     QVariantList sanitizeSecrets(const QVariantList &vars);
 
     Settings m_settings;                       // mesma config do app (storageDir/timeout/ignoreSsl)
-    QString m_dir;         // ~/katarina-collections
-    QString m_envFile;     // <dir>/.katarina/environments.json
-    QString m_appData;     // ~/.local/share/katarina
+    QString m_dir;         // ~/catarina-collections
+    QString m_envFile;     // <dir>/.catarina/environments.json
+    QString m_appData;     // ~/.local/share/catarina
     QString m_secretsFile; // <m_appData>/secrets.json
     std::unique_ptr<SecretStore> m_secrets;
 

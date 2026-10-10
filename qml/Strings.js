@@ -7,7 +7,7 @@
 // nem texto que o usuário digita. Só rótulos exibidos.
 
 var t = {
-    appName: "katarina",
+    appName: "catarina",
 
     // ---- barra superior / painéis ----
     history: "History",
@@ -179,7 +179,7 @@ var t = {
     folderNamePlaceholder: "folder name",
     collectionNamePlaceholder: "collection name",
     unsavedChangesTitle: "Unsaved changes",
-    quitTitle: "Quit katarina",
+    quitTitle: "Quit catarina",
     importCurlTitle: "Import cURL",
     importCurlLabel: "Paste a cURL command:",
     importCurlPlaceholder: "curl 'https://…' -H '…' -d '…'",
@@ -246,7 +246,7 @@ var t = {
     editorFont: "Editor font:",
     defaultZero: "0 = default",
     collectionsFolder: "Folder where collections are saved:",
-    storageDirHint: "When applied, katarina uses this folder. Current collections are not moved — to bring them, copy the files there.",
+    storageDirHint: "When applied, catarina uses this folder. Current collections are not moved — to bring them, copy the files there.",
     network: "Network",
     timeoutSeconds: "Timeout (seconds):",
     noLimit: "0 = no limit",
@@ -306,7 +306,7 @@ function duplicateInCollection(name) { return "Repeated variable name in collect
 function duplicateInRequest(name) { return "Repeated variable name in request: " + name; }
 function duplicateInEnvironment(name) { return "Repeated variable name in environment: " + name; }
 function collectionsNow(dir) { return "Collections now at " + dir; }
-function savedTo(path) { return "Saved to ~/katarina-collections/" + path + ".json"; }
+function savedTo(path) { return "Saved to ~/catarina-collections/" + path + ".json"; }
 function curlNoUrl() { return "Couldn't find a URL in the command."; }
 function willBeCreatedIn(folder) { return "Will be created in: " + folder; }
 function rootFolder() { return "root"; }

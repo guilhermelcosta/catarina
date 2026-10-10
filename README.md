@@ -1,20 +1,20 @@
-# Katarina
+# Catarina
 
 ![Qt](https://img.shields.io/badge/Qt-6.5%2B-41CD52?logo=qt&logoColor=white)
 ![KDE Kirigami](https://img.shields.io/badge/KDE%20Kirigami-6-1D99F3?logo=kde&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux-informational)
 ![Tests](https://img.shields.io/badge/tests-ctest-success)
 
-**Katarina é um cliente de API offline para Linux** — as coleções e requests são arquivos
+**Catarina é um cliente de API offline para Linux** — as coleções e requests são arquivos
 `.json` versionáveis no seu disco, não registros num banco remoto. Feito com **Qt 6 / QML /
 Kirigami**, com interface em português.
 
-![Katarina](docs/screenshot.png)
+![Catarina](docs/screenshot.png)
 
 ## Por que mais um cliente de API?
 
 - **Coleções em arquivos, versionáveis.** Cada request é um `.json` em
-  `~/katarina-collections`. Você versiona com `git`, revisa em diff, compartilha por pasta — sem
+  `~/catarina-collections`. Você versiona com `git`, revisa em diff, compartilha por pasta — sem
   exportar/importar.
 - **Segredos fora do repositório.** Senhas e tokens ficam no **cofre do sistema**
   (Secret Service/KWallet via QtKeychain); o arquivo versionado guarda só um `secretId`.
@@ -79,15 +79,15 @@ sudo apt install cmake g++ extra-cmake-modules \
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
-./build/bin/katarina
+./build/bin/catarina
 ```
 
 ### Flatpak
 
-O manifesto em `packaging/org.katarina.Katarina.yml` já inclui o QtKeychain:
+O manifesto em `packaging/org.catarina.Catarina.yml` já inclui o QtKeychain:
 
 ```sh
-flatpak-builder --user --install --force-clean build-flatpak packaging/org.katarina.Katarina.yml
+flatpak-builder --user --install --force-clean build-flatpak packaging/org.catarina.Catarina.yml
 ```
 
 ### Instalar no sistema
@@ -136,10 +136,10 @@ docs/DESIGN.md    padrões visuais e de componentes
 
 | O quê | Onde |
 |---|---|
-| Coleções/requests | `~/katarina-collections` (configurável) |
-| Preferências | `~/.config/katarina/katarina.ini` |
-| Segredos | cofre do SO ou `~/.local/share/katarina/secrets.json` (`0600`) |
-| Histórico | `~/.local/share/katarina/history.json` |
+| Coleções/requests | `~/catarina-collections` (configurável) |
+| Preferências | `~/.config/catarina/catarina.ini` |
+| Segredos | cofre do SO ou `~/.local/share/catarina/secrets.json` (`0600`) |
+| Histórico | `~/.local/share/catarina/history.json` |
 
 ## Contribuindo
 

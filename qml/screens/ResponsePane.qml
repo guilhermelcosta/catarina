@@ -310,7 +310,7 @@ ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
             visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
-            iconSource: "qrc:/icons/katarina.svg"
+            iconSource: "qrc:/icons/catarina.svg"
             iconIsMask: true
             title: Strings.t.noResponseYet
             message: Strings.t.noResponseHint
