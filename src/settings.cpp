@@ -5,13 +5,13 @@
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
-    , m_s(QSettings::IniFormat, QSettings::UserScope, QStringLiteral("katarina"), QStringLiteral("katarina"))
+    , m_s(QSettings::IniFormat, QSettings::UserScope, QStringLiteral("catarina"), QStringLiteral("catarina"))
 {
 }
 
 QString Settings::defaultStorageDir()
 {
-    return QDir::homePath() + QStringLiteral("/katarina-collections");
+    return QDir::homePath() + QStringLiteral("/catarina-collections");
 }
 
 QString Settings::storageDir() const

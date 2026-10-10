@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
-// Preferências do app, persistidas em ~/.config/katarina/katarina.ini
+// Preferências do app, persistidas em ~/.config/catarina/catarina.ini
 class Settings : public QObject
 {
     Q_OBJECT

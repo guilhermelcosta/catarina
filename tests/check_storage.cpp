@@ -55,13 +55,13 @@ int main(int argc, char **argv)
     CHECK(tmp.isValid());
     qputenv("XDG_DATA_HOME", tmp.path().toUtf8());
     qputenv("XDG_CONFIG_HOME", tmp.path().toUtf8());
-    qputenv("KATARINA_SECRETS_BACKEND", "file");   // hermético: não toca no cofre do SO
+    qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermético: não toca no cofre do SO
 
     QCoreApplication app(argc, argv);
 
     // aponta as coleções para o temp e persiste via a mesma QSettings do app
     QSettings s(QSettings::IniFormat, QSettings::UserScope,
-                QStringLiteral("katarina"), QStringLiteral("katarina"));
+                QStringLiteral("catarina"), QStringLiteral("catarina"));
     s.setValue(QStringLiteral("storageDir"), tmp.path() + QStringLiteral("/collections"));
     s.sync();
 
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
     CHECK(c.value(QStringLiteral("tok")).toString() == QStringLiteral("s3cr3t"));
 
     // o arquivo versionado NÃO pode conter o valor do segredo
-    QFile ef(b.storageDir() + QStringLiteral("/.katarina/environments.json"));
+    QFile ef(b.storageDir() + QStringLiteral("/.catarina/environments.json"));
     CHECK(ef.open(QIODevice::ReadOnly));
     CHECK(!QString::fromUtf8(ef.readAll()).contains(QStringLiteral("s3cr3t")));
     ef.close();
@@ -732,7 +732,7 @@ int main(int argc, char **argv)
         b.setActiveEnvironment(QStringLiteral("__eref__"));
         const QVariantMap eff3 = effective(b, QStringLiteral("colA"), {});
         CHECK(eff3.value(QStringLiteral("tok")).toString() == QStringLiteral("http://h/s3cr3t"));
-        QFile f3(b.storageDir() + QStringLiteral("/.katarina/environments.json"));
+        QFile f3(b.storageDir() + QStringLiteral("/.catarina/environments.json"));
         CHECK(f3.open(QIODevice::ReadOnly));
         CHECK(!QString::fromUtf8(f3.readAll()).contains(QStringLiteral("s3cr3t")));   // segredo não vaza
         f3.close();

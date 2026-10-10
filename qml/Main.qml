@@ -117,7 +117,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.smallSpacing
                 spacing: Kirigami.Units.smallSpacing
-                Kirigami.Icon { source: "qrc:/icons/katarina.svg"; implicitWidth: 22; implicitHeight: 22
+                Kirigami.Icon { source: "qrc:/icons/catarina.svg"; implicitWidth: 22; implicitHeight: 22
                                 isMask: true; color: Kirigami.Theme.textColor }
                 Label { text: Strings.t.appName; font.bold: true }
                 Item { Layout.fillWidth: true }

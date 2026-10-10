@@ -1,4 +1,4 @@
-# Instruções para agentes — Katarina
+# Instruções para agentes — Catarina
 
 App de cliente de API em Qt 6 / QML / Kirigami. UI em português (pt-BR).
 

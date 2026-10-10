@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=katarina
+Name=catarina
 GenericName=API Client
 Comment=Cliente de API offline com coleções em arquivos
-Exec=@KDE_INSTALL_FULL_BINDIR@/katarina
-Icon=katarina
+Exec=@KDE_INSTALL_FULL_BINDIR@/catarina
+Icon=catarina
 Terminal=false
 Categories=Development;

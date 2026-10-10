@@ -35,7 +35,7 @@ Backend::Backend(QObject *parent)
     : QObject(parent)
 {
     m_dir = m_settings.storageDir();
-    m_envFile = m_dir + QStringLiteral("/.katarina/environments.json");
+    m_envFile = m_dir + QStringLiteral("/.catarina/environments.json");
     m_appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     m_secretsFile = m_appData + QStringLiteral("/secrets.json");
     QDir().mkpath(m_dir);
@@ -88,7 +88,7 @@ void Backend::setStorageDir(const QString &dir)
         return;
     m_settings.setStorageDir(dir);
     m_dir = dir;
-    m_envFile = m_dir + QStringLiteral("/.katarina/environments.json");
+    m_envFile = m_dir + QStringLiteral("/.catarina/environments.json");
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
     m_collections->setRoot(m_dir);   // limpa os caches
@@ -102,7 +102,7 @@ QString Backend::activeEnvironment() const { return m_envs->active(); }
 
 void Backend::seedDefaultCollection()
 {
-    const QString marker = m_dir + QStringLiteral("/.katarina/.seeded");
+    const QString marker = m_dir + QStringLiteral("/.catarina/.seeded");
     if (QFileInfo::exists(marker))
         return;   // já foi semeado (mesmo que o usuário apague a coleção depois)
     if (collectionTree().isEmpty()) {

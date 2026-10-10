@@ -1,8 +1,8 @@
-app-id: org.katarina.Katarina
+app-id: org.catarina.Catarina
 runtime: org.kde.Platform
 runtime-version: '6.11'
 sdk: org.kde.Sdk
-command: katarina
+command: catarina
 finish-args:
   - --share=network
   - --socket=wayland
@@ -23,7 +23,7 @@ modules:
       - type: archive
         url: https://github.com/frankosterfeld/qtkeychain/archive/refs/tags/0.16.0.tar.gz
         sha256: 3be26ec4ae30eecf0c2ff7572ba83799791b157c76e15a05ef35f23dc25e4054
-  - name: katarina
+  - name: catarina
     buildsystem: cmake-ninja
     builddir: true
     config-opts:

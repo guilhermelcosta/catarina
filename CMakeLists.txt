@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(katarina VERSION 0.1.0 LANGUAGES CXX)
+project(catarina VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(ECM 6.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
@@ -15,18 +15,18 @@ find_package(KF6Kirigami REQUIRED)
 find_package(Qt6Keychain QUIET)
 if(Qt6Keychain_FOUND)
     message(STATUS "QtKeychain encontrado: segredos no cofre do sistema")
-    set(KATARINA_SECRETS_DEFS KATARINA_HAVE_KEYCHAIN)
-    set(KATARINA_SECRETS_LIBS Qt6Keychain::Qt6Keychain)
+    set(CATARINA_SECRETS_DEFS CATARINA_HAVE_KEYCHAIN)
+    set(CATARINA_SECRETS_LIBS Qt6Keychain::Qt6Keychain)
 else()
     message(STATUS "QtKeychain não encontrado: segredos em arquivo (0600)")
-    set(KATARINA_SECRETS_DEFS "")
-    set(KATARINA_SECRETS_LIBS "")
+    set(CATARINA_SECRETS_DEFS "")
+    set(CATARINA_SECRETS_LIBS "")
 endif()
 
 qt_standard_project_setup(REQUIRES 6.5)
 
 # core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
-qt_add_library(katarina_core OBJECT
+qt_add_library(catarina_core OBJECT
     src/backend.cpp
     src/core/request_logic.cpp
     src/core/variable_resolver.cpp
@@ -38,27 +38,27 @@ qt_add_library(katarina_core OBJECT
     src/storage/secret_store.cpp
     src/settings.cpp
 )
-target_include_directories(katarina_core PRIVATE src)
-target_compile_definitions(katarina_core PRIVATE ${KATARINA_SECRETS_DEFS})
-target_link_libraries(katarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
+target_include_directories(catarina_core PRIVATE src)
+target_compile_definitions(catarina_core PRIVATE ${CATARINA_SECRETS_DEFS})
+target_link_libraries(catarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
 # coleção de exemplo embutida (seed/), copiada no primeiro uso
 # (Backend::seedDefaultCollection) — recursos em :/seed/...
-file(GLOB_RECURSE KATARINA_SEED_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE CATARINA_SEED_FILES CONFIGURE_DEPENDS
      ${CMAKE_CURRENT_SOURCE_DIR}/seed/*)
-qt_add_resources(katarina_core "seed"
+qt_add_resources(catarina_core "seed"
     PREFIX "/"
     BASE ${CMAKE_CURRENT_SOURCE_DIR}
-    FILES ${KATARINA_SEED_FILES})
+    FILES ${CATARINA_SEED_FILES})
 
-qt_add_executable(katarina
+qt_add_executable(catarina
     src/main.cpp
     src/highlighter.cpp
 )
-target_sources(katarina PRIVATE $<TARGET_OBJECTS:katarina_core>)
-target_include_directories(katarina PRIVATE src)
+target_sources(catarina PRIVATE $<TARGET_OBJECTS:catarina_core>)
+target_include_directories(catarina PRIVATE src)
 
-target_link_libraries(katarina PRIVATE
+target_link_libraries(catarina PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Qml
@@ -66,10 +66,10 @@ target_link_libraries(katarina PRIVATE
     Qt6::QuickControls2
     Qt6::Network
     KF6::Kirigami
-    ${KATARINA_SECRETS_LIBS}
+    ${CATARINA_SECRETS_LIBS}
 )
 
-qt_add_resources(katarina "qml"
+qt_add_resources(catarina "qml"
     PREFIX "/"
     FILES
         qml/Main.qml
@@ -121,23 +121,23 @@ qt_add_resources(katarina "qml"
         qml/screens/ResponsePane.qml
 )
 
-qt_add_resources(katarina "appicon"
+qt_add_resources(catarina "appicon"
     PREFIX "/icons"
     BASE icons
-    FILES icons/katarina.svg
+    FILES icons/catarina.svg
 )
 
 # Autochecagem da lógica do Backend (sem rede), hermética.
 qt_add_executable(check_storage tests/check_storage.cpp)
-target_sources(check_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_sources(check_storage PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(check_storage PRIVATE src)
-target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
+target_link_libraries(check_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
 # Benchmark dos caminhos quentes (não é teste; roda à mão).
 qt_add_executable(bench_storage tests/bench.cpp)
-target_sources(bench_storage PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_sources(bench_storage PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(bench_storage PRIVATE src)
-target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${KATARINA_SECRETS_LIBS})
+target_link_libraries(bench_storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
 # ---- testes (ctest) ----
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
@@ -153,10 +153,10 @@ add_test(NAME tst_components COMMAND tst_components)
 
 # comportamento de tela: instancia o Main com backend/settings reais e dirige o AppController
 qt_add_executable(tst_app tests/tst_app.cpp src/highlighter.cpp)
-target_sources(tst_app PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_sources(tst_app PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(tst_app PRIVATE src)
 target_link_libraries(tst_app PRIVATE
-    Qt6::Core Qt6::Gui Qt6::Quick Qt6::QuickTest Qt6::Network ${KATARINA_SECRETS_LIBS})
+    Qt6::Core Qt6::Gui Qt6::Quick Qt6::QuickTest Qt6::Network ${CATARINA_SECRETS_LIBS})
 target_compile_definitions(tst_app PRIVATE
     QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/app")
 add_test(NAME tst_app COMMAND tst_app)
@@ -170,23 +170,23 @@ add_test(NAME check_highlighter COMMAND check_highlighter)
 # integração HTTP hermética (QTcpServer local): resposta, headers, querystring,
 # erro de rede, cancelamento, multipart e falha ao abrir arquivo
 qt_add_executable(check_http tests/check_http.cpp)
-target_sources(check_http PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_sources(check_http PRIVATE $<TARGET_OBJECTS:catarina_core>)
 target_include_directories(check_http PRIVATE src)
-target_link_libraries(check_http PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Test ${KATARINA_SECRETS_LIBS})
+target_link_libraries(check_http PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Test ${CATARINA_SECRETS_LIBS})
 add_test(NAME check_http COMMAND check_http)
 
 # garante que o Main.qml carrega sem erros de QML
 add_test(NAME qml_smoke
-         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:katarina>)
+         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:catarina>)
 
 set_tests_properties(check_storage tst_components tst_app check_highlighter check_http qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ---- instalação: binário, ícone e lançador ----
-install(TARGETS katarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(FILES icons/katarina.svg DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps)
+install(TARGETS catarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(FILES icons/catarina.svg DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps)
 
-configure_file(packaging/org.katarina.Katarina.desktop.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/org.katarina.Katarina.desktop @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.katarina.Katarina.desktop
+configure_file(packaging/org.catarina.Catarina.desktop.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/org.catarina.Catarina.desktop @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.catarina.Catarina.desktop
         DESTINATION ${KDE_INSTALL_APPDIR})

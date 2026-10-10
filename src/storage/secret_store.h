@@ -24,7 +24,7 @@ public:
     void preload() const;
 
     // Cofre do SO quando disponível (e não forçado a arquivo por
-    // KATARINA_SECRETS_BACKEND=file); senão arquivo 0600 em filePath.
+    // CATARINA_SECRETS_BACKEND=file); senão arquivo 0600 em filePath.
     // Na primeira vez que o cofre existe vazio, migra o arquivo pra lá e apaga.
     static std::unique_ptr<SecretStore> create(const QString &filePath);
     // implementação em memória, para testes

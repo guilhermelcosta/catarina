@@ -5,7 +5,7 @@
 #include <QJsonObject>
 #include <QSaveFile>
 
-#ifdef KATARINA_HAVE_KEYCHAIN
+#ifdef CATARINA_HAVE_KEYCHAIN
 #include <QEventLoop>
 #include <qt6keychain/keychain.h>
 #endif
@@ -57,13 +57,13 @@ QString readLegacyFile(const QString &path)
     return QString::fromUtf8(f.readAll());
 }
 
-#ifdef KATARINA_HAVE_KEYCHAIN
-constexpr auto kKeychainService = "katarina";
+#ifdef CATARINA_HAVE_KEYCHAIN
+constexpr auto kKeychainService = "catarina";
 constexpr auto kKeychainEntry = "secrets";
 
 bool keychainAllowed()
 {
-    return qgetenv("KATARINA_SECRETS_BACKEND").toLower() != "file" && QKeychain::isAvailable();
+    return qgetenv("CATARINA_SECRETS_BACKEND").toLower() != "file" && QKeychain::isAvailable();
 }
 
 bool keychainWrite(const QString &data)
@@ -109,7 +109,7 @@ private:
     QKeychain::Error m_error = QKeychain::NoError;
     QString m_blob;
 };
-#endif // KATARINA_HAVE_KEYCHAIN
+#endif // CATARINA_HAVE_KEYCHAIN
 
 } // namespace
 
@@ -165,7 +165,7 @@ bool SecretStore::remove(const QString &id)
 
 std::unique_ptr<SecretStore> SecretStore::create(const QString &filePath)
 {
-#ifdef KATARINA_HAVE_KEYCHAIN
+#ifdef CATARINA_HAVE_KEYCHAIN
     if (keychainAllowed()) {
         auto kc = std::make_unique<KeychainStore>();
         if (kc->error() == QKeychain::NoError)
