@@ -299,6 +299,30 @@ QVariantMap Backend::requestParts(const QVariantMap &request) const
             {QStringLiteral("body"), hasBody ? body : QString()}};
 }
 
+QVariantMap Backend::resolvedRequestParts(const QVariantMap &request, const QString &collection) const
+{
+    // valores efetivos (global → coleção → request), já com segredos resolvidos
+    const QVariantMap vars = variablesState(request, collection)
+                                 .value(QStringLiteral("effective")).toMap();
+
+    QVariantMap r = request;
+    r[QStringLiteral("url")] = substitute(request.value(QStringLiteral("url")).toString(), vars);
+    r[QStringLiteral("params")] = substituteList(request.value(QStringLiteral("params")).toList(), vars);
+    r[QStringLiteral("headers")] = substituteList(request.value(QStringLiteral("headers")).toList(), vars);
+    r[QStringLiteral("fields")] = substituteList(request.value(QStringLiteral("fields")).toList(), vars);
+    r[QStringLiteral("body")] = substitute(request.value(QStringLiteral("body")).toString(), vars);
+    // auth efetiva ("inherit" → a da coleção), já com as variáveis resolvidas
+    const QVariantMap effAuth = effectiveAuth(request.value(QStringLiteral("auth")).toMap(),
+                                              collectionAuth(collection));
+    r[QStringLiteral("auth")] = substituteList({effAuth}, vars).value(0).toMap();
+
+    QVariantMap parts = requestParts(r);
+    // anexa os params ativos à URL, como o send faz
+    parts[QStringLiteral("url")] = buildUrl(r.value(QStringLiteral("url")).toString(),
+                                            r.value(QStringLiteral("params")).toList()).toString();
+    return parts;
+}
+
 QString Backend::defaultContentType(const QString &bodyType)
 {
     if (bodyType == QLatin1String("json"))
