@@ -112,6 +112,16 @@ TestCase {
         compare(rvt.activeVars[0].name, "a");
     }
 
+    // ...nor dynamic ones (they resolve, but aren't user variables)
+    function test_resolved_vars_hides_dynamic() {
+        rvt.vars = [
+            { name: "a", value: "1", enabled: true },
+            { name: "$randomUuid", value: "zzz", enabled: true, source: "dynamic" }
+        ];
+        compare(rvt.activeVars.map(function (v) { return v.name; }).join(","), "a");
+        rvt.vars = [{ name: "a", value: "1", enabled: true }, { name: "b", value: "2", enabled: false }];
+    }
+
     // sorts by source (global → collection → request) and, within it, by name
     function test_resolved_vars_order_by_source() {
         rvt.vars = [
@@ -365,6 +375,19 @@ TestCase {
         compare(VarTokens.tokenAt("x {{base}}/u", 1), null);
         compare(VarTokens.valueOf(rv, "test").name, "test");
         compare(VarTokens.valueOf(rv, "nope"), null);
+    }
+
+    // dynamic variables reach autocomplete/hover through the resolved list (source "dynamic"),
+    // but only appear once the user types `$` (a plain `{{` shows just their own variables)
+    function test_vartokens_dynamic() {
+        var rv = [{ name: "$randomTimestamp", value: "1", enabled: true, source: "dynamic" },
+                  { name: "token", value: "x", enabled: true, source: "collection" }];
+        compare(VarTokens.matchingNames(rv, ""), ["token"]);
+        compare(VarTokens.matchingNames(rv, "$"), ["$randomTimestamp"]);
+        compare(VarTokens.matchingNames(rv, "$time"), []);
+        compare(VarTokens.matchingNames(rv, "$randomT"), ["$randomTimestamp"]);
+        compare(VarTokens.matchingNames(rv, "tok"), ["token"]);
+        compare(VarTokens.valueOf(rv, "$randomTimestamp").value, "1");
     }
 
     // canonical JSON: ignores key order (it's what decides dirty on undo)

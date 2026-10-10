@@ -32,6 +32,9 @@ Kirigami**, with an English interface.
   (VS Code style) in the tree.
 - **Variables** `{{variable}}` with autocomplete, hover showing the value, and undefined-variable
   warning — in the URL, headers, body, auth, and tables.
+- **Dynamic variables** `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomIsoTimestamp}}`,
+  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}` generated on each
+  send (all names carry the `$random` prefix).
 - **Global environments**, scoped per collection or to "all".
 - **Response**: body, **JSON tree**, headers, cookies, and a **Network tab** (timeline).
 - **VS Code-style tabs**: transient preview, pin/unpin, reorder, reopen closed, and

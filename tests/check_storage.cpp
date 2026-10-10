@@ -86,6 +86,46 @@ int main(int argc, char **argv)
     CHECK(RequestLogic::substitute(QStringLiteral("{{missing}}"), {{QStringLiteral("x"), QStringLiteral("1")}})
           == QStringLiteral("{{missing}}"));
 
+    // dynamic variables: all "$random"-prefixed, generated on each substitute
+    CHECK(RequestLogic::isDynamicVariable(QStringLiteral("$randomUuid")));
+    CHECK(RequestLogic::isDynamicVariable(QStringLiteral("$randomTimestamp")));
+    CHECK(!RequestLogic::isDynamicVariable(QStringLiteral("$uuid")));   // no bare/alias names
+    CHECK(!RequestLogic::isDynamicVariable(QStringLiteral("uuid")));
+    CHECK(RequestLogic::dynamicValue(QStringLiteral("nope")).isEmpty());
+    {
+        const QString uuid = RequestLogic::substitute(QStringLiteral("{{$randomUuid}}"), {});
+        CHECK(uuid.length() == 36 && uuid.count(QLatin1Char('-')) == 4);
+        CHECK(uuid != RequestLogic::substitute(QStringLiteral("{{$randomUuid}}"), {}));   // fresh each time
+        CHECK(RequestLogic::substitute(QStringLiteral("{{$randomTimestamp}}"), {}).toLongLong() > 0);
+        CHECK(RequestLogic::substitute(QStringLiteral("{{$randomIsoTimestamp}}"), {}).contains(QLatin1Char('T')));
+        const int ri = RequestLogic::substitute(QStringLiteral("{{$randomInt}}"), {}).toInt();
+        CHECK(ri >= 0 && ri <= 1000);
+        const QString rb = RequestLogic::substitute(QStringLiteral("{{$randomBoolean}}"), {});
+        CHECK(rb == QStringLiteral("true") || rb == QStringLiteral("false"));
+        const QString rd = RequestLogic::substitute(QStringLiteral("{{$randomDecimal}}"), {});
+        CHECK(rd.contains(QLatin1Char('.')) && rd.section(QLatin1Char('.'), 1).length() == 2);
+        CHECK(RequestLogic::substitute(QStringLiteral("{{$randomName}}"), {}).contains(QLatin1Char(' ')));
+        // a user variable with the same name wins over the dynamic one
+        CHECK(RequestLogic::substitute(QStringLiteral("{{$randomUuid}}"),
+                                       {{QStringLiteral("$randomUuid"), QStringLiteral("fixed")}})
+              == QStringLiteral("fixed"));
+    }
+    // the table is the single source: every name carries the "$random" prefix
+    {
+        const QVariantList dyn = RequestLogic::dynamicVariables();
+        CHECK(!dyn.isEmpty());
+        bool seenUuid = false;
+        for (const QVariant &v : dyn) {
+            const QVariantMap m = v.toMap();
+            const QString n = m.value(QStringLiteral("name")).toString();
+            CHECK(n.startsWith(QStringLiteral("$random")));
+            CHECK(!m.value(QStringLiteral("value")).toString().isEmpty());
+            CHECK(RequestLogic::isDynamicVariable(n));
+            if (n == QStringLiteral("$randomUuid")) seenUuid = true;
+        }
+        CHECK(seenUuid);
+    }
+
     CHECK(RequestLogic::defaultContentType(QStringLiteral("json")) == QStringLiteral("application/json"));
     CHECK(RequestLogic::defaultContentType(QStringLiteral("urlencoded"))
           == QStringLiteral("application/x-www-form-urlencoded"));
@@ -431,6 +471,10 @@ int main(int argc, char **argv)
         CHECK(missing(b, r, QStringLiteral("colA"))
               == QStringList({QStringLiteral("body_var"), QStringLiteral("hdr")}));
     }
+
+    // dynamic variables resolve on send, so they're never in the "missing" list
+    CHECK(missing(b, {{QStringLiteral("url"), QStringLiteral("{{$randomUuid}}/{{$randomTimestamp}}")}},
+                  QStringLiteral("colA")).isEmpty());
 
     // variablesState: resolved + missing + effective in a single pass
     {

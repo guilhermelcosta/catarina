@@ -21,6 +21,13 @@ public:
     static QVariantList substituteList(const QVariantList &list, const QVariantMap &vars);
     // {{x}} names in a text, without repetition
     static QStringList variableRefs(const QString &text);
+    // dynamic variables ({{$randomUuid}}, {{$randomTimestamp}}, ...): generated on
+    // each substitute, so they never appear in the "missing" list. Names are case-sensitive.
+    // The single source of truth is the table `dynamicTable()` in request_logic.cpp —
+    // add a new one there and it flows to substitute, autocomplete and listing.
+    static bool isDynamicVariable(const QString &name);
+    static QString dynamicValue(const QString &name);   // "" if not dynamic
+    static QVariantList dynamicVariables();              // [{name, value}] with a sample value
     // assumes http:// when the scheme is missing; skips disabled/unnamed params
     static QUrl buildUrl(const QString &url, const QVariantList &params);
     // query suffix that the active params append to the URL ("?a=1&b=" / "&x=2" / "").

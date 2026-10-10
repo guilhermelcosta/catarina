@@ -141,8 +141,25 @@ QVariantMap VariableResolver::state(const QVariantMap &request, const QVariantLi
     for (const ResolvedVar &r : ch)
         if (r.enabled)
             effective.insert(r.name, r.value);
-    const QVariantList resolved = resolvedFromChain(ch);
-
+    QVariantList resolved = resolvedFromChain(ch);
+    // dynamic variables ({{$randomUuid}}, ...) are always resolvable: they show in autocomplete
+    // and on hover (source "dynamic"), but carry no stored value. Single source: RequestLogic.
+    for (const QVariant &v : RequestLogic::dynamicVariables()) {
+        const QVariantMap d = v.toMap();
+        const QString name = d.value(RS::kName).toString();
+        bool exists = false;
+        for (const QVariant &r : resolved)
+            if (r.toMap().value(RS::kName).toString() == name) { exists = true; break; }
+        if (!exists) {
+            QVariantMap entry;
+            entry[RS::kName] = name;
+            entry[RS::kValue] = d.value(RS::kValue);
+            entry[RS::kSecret] = false;
+            entry[QStringLiteral("source")] = QStringLiteral("dynamic");
+            entry[RS::kEnabled] = true;
+            resolved.append(entry);
+        }
+    }
     QStringList missing;
     QStringList texts = collectTexts(request);
     // effective auth: with "inherit", the collection token is scanned too
@@ -151,7 +168,9 @@ QVariantMap VariableResolver::state(const QVariantMap &request, const QVariantLi
         texts << v.toString();
     for (const QString &text : texts) {
         for (const QString &name : RequestLogic::variableRefs(text)) {
-            if (!effective.contains(name) && !missing.contains(name))
+            // dynamic ({{$randomUuid}}, ...) resolve on send, so they're never "missing"
+            if (!effective.contains(name) && !RequestLogic::isDynamicVariable(name)
+                && !missing.contains(name))
                 missing.append(name);
         }
     }
