@@ -110,7 +110,7 @@ void HttpClient::send(const BuiltRequest &request)
                                           : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
         emit responseReady(status, statusText, respHeaders, text, int(timer.elapsed()), bytes.size());
 
-        // metadados de rede para a aba correspondente
+        // network metadata for the corresponding tab
         const bool encrypted = reply->attribute(QNetworkRequest::ConnectionEncryptedAttribute).toBool();
         const bool http2 = reply->attribute(QNetworkRequest::Http2WasUsedAttribute).toBool();
         emit responseMeta({

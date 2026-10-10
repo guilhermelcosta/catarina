@@ -3,12 +3,12 @@ import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 import "Util.js" as Util
 
-// Controlador não-visual: estado + orquestração (árvore, abas, coleção, ambientes,
-// sessão, envio). A janela e os componentes falam com ele via `app`.
+// Non-visual controller: state + orchestration (tree, tabs, collection, environments,
+// session, sending). The window and components talk to it via `app`.
 QtObject {
     id: controller
 
-    // injetados pela janela / componentes
+    // injected by the window / components
     property var window
     property var tabsModel
     property var paramsModel
@@ -43,7 +43,7 @@ property bool selectedIsFolder: false
 property bool showingCollection: false
 property bool showingEnv: false
 property bool showingSettings: false
-readonly property bool envTabDirty: envScreen ? envScreen.envVarsDirty : false   // estado não-salvo da aba de ambientes
+readonly property bool envTabDirty: envScreen ? envScreen.envVarsDirty : false   // unsaved state of the environments tab
 property bool sidebarVisible: true
 property bool responseVisible: true
 property string collectionPath: ""
@@ -67,7 +67,7 @@ property bool collectionVarsDirty: false
 property int collectionTab: 0
 property bool collectionHeadersDirty: false
 property bool collectionAuthDirty: false
-// estado salvo da coleção, para o dirty cair sozinho ao desfazer na mão
+// saved collection state, so dirty clears itself on manual undo
 property string collectionVarsBaseline: ""
 property string collectionHeadersBaseline: ""
 property string collectionAuthBaseline: ""
@@ -78,20 +78,20 @@ property var responses: ({})       // relPath -> { status, statusText, time, siz
 property bool treeReloadQueued: false
 property bool sending: false
 
-// ---- ambientes ----
+// ---- environments ----
 property var envList: []
 property string activeEnv: ""
 property var resolvedVars: []
 property var collectionResolvedVars: []
 property string currentCollection: ""
 property string missingText: ""
-// avisos de nome de variável repetido no mesmo escopo (bloqueiam salvar/enviar)
+// warnings for duplicate variable names in the same scope (block save/send)
 property string requestVarsWarning: ""
 property string collectionVarsWarning: ""
 property string envVarsWarning: ""
 property bool currentDirty: false
-property int paramsRevision: 0   // bump nas edições da tabela de params (preview da URL)
-// cores dos tokens JSON (tema escuro/claro) usadas pelos editores (corpo e resposta)
+property int paramsRevision: 0   // bump on params table edits (URL preview)
+// JSON token colors (dark/light theme) used by the editors (body and response)
 readonly property bool darkTheme: Kirigami.Theme.backgroundColor.hsvValue < 0.5
 readonly property color jsonStringColor: darkTheme ? "#98c379" : "#2e7d32"
 readonly property color jsonNumberColor: darkTheme ? "#d19a66" : "#b26a00"
@@ -119,7 +119,7 @@ function collectionNames() {
     }
     return out;
 }
-function reloadTree() {   // coalesce: vários pedidos no mesmo tick viram 1 rebuild
+function reloadTree() {   // coalesce: several requests in the same tick become 1 rebuild
     if (treeReloadQueued) return;
     treeReloadQueued = true;
     Qt.callLater(function () { treeReloadQueued = false; rebuildTree(); });
@@ -178,8 +178,8 @@ function reloadEnvs() {
 function activateEnv(name) {
     if (name === undefined || name === null || name.length === 0)
         return;
-    controller.activeEnv = name;                 // otimista: o rótulo atualiza na hora
-    backend.setActiveEnvironment(name);    // emite environmentsChanged → reloadEnvs + refreshResolved
+    controller.activeEnv = name;                 // optimistic: the label updates immediately
+    backend.setActiveEnvironment(name);    // emits environmentsChanged → reloadEnvs + refreshResolved
 }
 function targetFolder() {
     if (selectedPath.length === 0) return "";
@@ -198,7 +198,7 @@ function modelToArray(model) {
     for (var i = 0; i < model.count; i++) out.push(entryOf(model.get(i)));
     return out;
 }
-// mensagem quando há nome de variável repetido no mesmo escopo ("" se ok)
+// message when a variable name is duplicated in the same scope ("" if ok)
 function varsWarning(model) {
     var d = backend.duplicateVariableName(modelToArray(model));
     return d.length > 0 ? Strings.variableRepeated(d) : "";
@@ -211,8 +211,8 @@ function updateVarsWarnings() {
 function currentAuth() {
     return requestEditor.authEditor.value();
 }
-// Preview na barra da query que os params ativos anexam à URL (lógica em Util.js).
-// Lê `paramsRevision` só para a binding reavaliar a cada edição da tabela de params.
+// Preview in the query bar that the active params append to the URL (logic in Util.js).
+// Reads `paramsRevision` only so the binding re-evaluates on each params table edit.
 function querySuffix() {
     var rev = paramsRevision;
     return backend.querySuffix(requestEditor.url, modelToArray(paramsModel));
@@ -225,7 +225,7 @@ function collectRequest() {
              auth: currentAuth(),
              vars: modelToArray(requestVarsModel) };
 }
-// estado atual do editor num JSON canônico (compara com o salvo p/ dirty)
+// current editor state as canonical JSON (compared with saved for dirty)
 function requestSnapshot() { return Util.stableStringify(collectRequest()); }
 function recomputeCollectionDirty() {
     collectionVarsDirty = Util.stableStringify(modelToArray(collectionVarsModel)) !== collectionVarsBaseline;
@@ -251,12 +251,12 @@ function applyRequest(r, relPath) {
     var auth = r.auth !== undefined ? r.auth : {};
     requestEditor.authEditor.load(auth);
     responsePane.restoreResponse(relPath);
-    collectionVarsDirty = false;        // saímos da coleção: edições pendentes não valem mais
+    collectionVarsDirty = false;        // we left the collection: pending edits no longer count
     collectionHeadersDirty = false;
     collectionAuthDirty = false;
     refreshResolved();
     updateVarsWarnings();
-    // aba limpa: o estado exibido vira a referência do "salvo" (desfazer zera o dirty)
+    // clean tab: the displayed state becomes the "saved" reference (undo clears dirty)
     if (currentTab >= 0 && currentTab < tabsModel.count && tabsModel.get(currentTab).dirty !== true)
         tabsModel.setProperty(currentTab, "savedJson", requestSnapshot());
 }
@@ -282,7 +282,7 @@ function formatBody() {
     }
 }
 function refreshResolved() {
-    resolvedDebounce.stop();   // cancela um refresh agendado (é este que está rodando agora)
+    resolvedDebounce.stop();   // cancels a scheduled refresh (this is the one running now)
     if (currentTab < 0 || currentTab >= tabsModel.count) {
         resolvedVars = [];
         missingText = "";
@@ -297,7 +297,7 @@ function refreshResolved() {
         return;
     }
     if (curTab.isCollection) {
-        // na aba da coleção a lista efetiva é a da coleção, não a do request
+        // in the collection tab the effective list is the collection's, not the request's
         resolvedVars = [];
         missingText = "";
         currentDirty = false;
@@ -306,7 +306,7 @@ function refreshResolved() {
     }
     const collection = collectionOf(curTab.relPath);
     currentCollection = collection;
-    // uma passada só no backend: lista resolvida + o que falta
+    // single backend pass: resolved list + what's missing
     const state = backend.variablesState(collectRequest(), collection);
     const miss = state.missing;
     const res = state.resolved;
@@ -314,7 +314,7 @@ function refreshResolved() {
     for (var i = 0; i < miss.length; i++) {
         var n = backend.variableNoteFor(miss[i], collection);
         var code = n.code;
-        for (var j = 0; j < res.length; j++)   // desabilitada no request não é "não definida"
+        for (var j = 0; j < res.length; j++)   // disabled in the request is not "undefined"
             if (res[j].name === miss[i] && res[j].enabled === false)
                 code = "disabled";
         var note = Strings.variableNote(code, n.collections);
@@ -325,21 +325,21 @@ function refreshResolved() {
     resolvedVars = res;
     currentDirty = tabsModel.get(currentTab).dirty;
 }
-// re-resolve com atraso: digitar não recalcula a cada tecla
+// re-resolve with delay: typing does not recompute on every key
 property Timer resolvedDebounce: Timer {
     interval: 180
     onTriggered: controller.refreshResolved()
 }
 
-// ================= abas =================
+// ================= tabs =================
 function snapshotCurrent() {
     if (currentTab < 0 || currentTab >= tabsModel.count) return;
     var t = tabsModel.get(currentTab);
-    if (t.isCollection || t.isEnvironment || t.isSettings) return;   // abas utilitárias não têm editor
+    if (t.isCollection || t.isEnvironment || t.isSettings) return;   // utility tabs have no editor
     tabsModel.setProperty(currentTab, "dataJson", JSON.stringify(collectRequest()));
     tabsModel.setProperty(currentTab, "method", requestEditor.method);
 }
-// índice da aba com esse relPath e tipo (request vs coleção), ou -1
+// index of the tab with this relPath and type (request vs collection), or -1
 function tabIndexFor(relPath, isCollection) {
     for (var i = 0; i < tabsModel.count; i++) {
         var t = tabsModel.get(i);
@@ -347,14 +347,14 @@ function tabIndexFor(relPath, isCollection) {
     }
     return -1;
 }
-// índice da aba "preview" (transiente) de request, ou -1
+// index of the transient "preview" request tab, or -1
 function previewTabIndex() {
     for (var i = 0; i < tabsModel.count; i++)
         if (tabsModel.get(i).preview === true) return i;
     return -1;
 }
-// fixa/desfixa uma aba: fixadas não são substituídas; desfixar volta a prévia
-// (transiente) para a próxima request abrir sobre ela (modelo do VS Code).
+// pins/unpins a tab: pinned tabs are not replaced; unpinning restores the
+// transient preview so the next request opens over it (VS Code model).
 function pinTab(i) {
     var tabs = [];
     for (var k = 0; k < tabsModel.count; k++) {
@@ -371,15 +371,15 @@ function markDirty() {
     if (currentTab < 0 || currentTab >= tabsModel.count) return;
     var t = tabsModel.get(currentTab);
     if (t.isCollection || t.isEnvironment || t.isSettings) return;
-    // dirty = estado atual != estado salvo; desfazer na mão volta a ficar limpo
+    // dirty = current state != saved state; manual undo makes it clean again
     var changed = requestSnapshot() !== t.savedJson;
     tabsModel.setProperty(currentTab, "dirty", changed);
     if (changed)
-        tabsModel.setProperty(currentTab, "preview", false);   // editar tira a aba da prévia (fica permanente), como no VS Code
+        tabsModel.setProperty(currentTab, "preview", false);   // editing takes the tab out of preview (becomes permanent), like VS Code
     currentDirty = changed;
-    resolvedDebounce.restart();   // debounce: não re-resolve a cada tecla
+    resolvedDebounce.restart();   // debounce: does not re-resolve on every key
 }
-// expande as pastas acima de relPath e o seleciona na árvore
+// expands the folders above relPath and selects it in the tree
 function revealPath(relPath) {
     var c = Object.assign({}, controller.collapsedFolders);
     var parts = relPath.split("/"), prefix = "";
@@ -393,22 +393,22 @@ function revealPath(relPath) {
     reloadTree();
 }
 function openRequest(relPath) {
-    revealPath(relPath);           // seleciona na árvore e expande as pastas acima
-    // já aberta? vai para ela (não abre de novo)
+    revealPath(relPath);           // selects in the tree and expands the folders above
+    // already open? go to it (don't open again)
     for (var i = 0; i < tabsModel.count; i++) {
         var t = tabsModel.get(i);
         if (!t.isCollection && !t.isEnvironment && !t.isSettings && t.relPath === relPath) { switchTab(i); return; }
     }
     var r = backend.loadRequest(relPath);
     if (r.method === undefined) return;
-    r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
+    r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // real vault value
 
-    // reutiliza a aba "preview" (transiente); se tiver edições, fixa-a antes
+    // reuses the transient "preview" tab; if it has edits, pin it first
     var target = -1;
     var prev = previewTabIndex();
     if (prev >= 0) {
         if (tabsModel.get(prev).dirty === true) {
-            tabsModel.setProperty(prev, "pinned", true);   // não perde as edições
+            tabsModel.setProperty(prev, "pinned", true);   // don't lose the edits
             tabsModel.setProperty(prev, "preview", false);
         } else {
             target = prev;
@@ -444,7 +444,7 @@ function switchTab(i) {
         showingEnv = false;
         showingCollection = false;
     } else if (t.isEnvironment) {
-        if (envScreen.editing.length === 0) envScreen.openFor(controller.activeEnv);   // primeira exibição
+        if (envScreen.editing.length === 0) envScreen.openFor(controller.activeEnv);   // first display
         showingSettings = false;
         showingEnv = true;
         showingCollection = false;
@@ -452,14 +452,14 @@ function switchTab(i) {
         showingSettings = false;
         loadCollection(t.relPath);
     } else {
-        revealPath(t.relPath);   // mantém a árvore em sincronia com a aba ativa
+        revealPath(t.relPath);   // keeps the tree in sync with the active tab
         applyRequest(JSON.parse(t.dataJson), t.relPath);
         showingSettings = false;
         showingCollection = false;
         showingEnv = false;
     }
 }
-// abre (ou foca) a aba única de variáveis de ambiente
+// opens (or focuses) the single environment variables tab
 function openEnvTab(name) {
     var idx = -1;
     for (var i = 0; i < tabsModel.count; i++)
@@ -477,7 +477,7 @@ function openEnvTab(name) {
     showingEnv = true;
     showingCollection = false;
 }
-// abre (ou foca) a aba única de configurações
+// opens (or focuses) the single settings tab
 function openSettingsTab() {
     var idx = -1;
     for (var i = 0; i < tabsModel.count; i++)
@@ -495,7 +495,7 @@ function openSettingsTab() {
     showingEnv = false;
     showingCollection = false;
 }
-// aplica a aba ativa sem snapshot/guard (usado depois de fechar/excluir)
+// applies the active tab without snapshot/guard (used after close/delete)
 function activateCurrent() {
     if (currentTab < 0 || currentTab >= tabsModel.count) {
         clearEditor();
@@ -525,7 +525,7 @@ function activateCurrent() {
     showingCollection = false;
     showingEnv = false;
 }
-// restaura as abas salvas sem aplicar cada uma no editor (só a ativa é aplicada depois)
+// restores the saved tabs without applying each one to the editor (only the active one is applied later)
 function restoreSessionTabs(paths) {
     for (var i = 0; i < paths.length; i++) {
         var rp = paths[i];
@@ -550,27 +550,27 @@ function restoreSessionTabs(paths) {
         }
         var r = backend.loadRequest(rp);
         if (r.method === undefined) continue;
-        r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // valor real do cofre
-        // só abas fixadas são persistidas, então restauram já fixadas
+        r.vars = backend.withResolvedSecrets(r.vars !== undefined ? r.vars : []);   // real vault value
+        // only pinned tabs are persisted, so they restore already pinned
         tabsModel.append({ relPath: rp, name: rp.split("/").pop(),
                            method: r.method, dirty: false, dataJson: JSON.stringify(r), savedJson: Util.stableStringify(r),
                            isCollection: false, isEnvironment: false, isSettings: false,
                            pinned: true, preview: false });
     }
 }
-// ---- reordenar abas por drag and drop ----
+// ---- reorder tabs by drag and drop ----
 function moveTab(from, to) {
     const m = Util.tabMove(tabsModel.count, from, to, currentTab);
     if (m === null) return;
     tabsModel.move(from, m.dest, 1);
     currentTab = m.current;
 }
-// x em coordenadas do tabRow; devolve o ponto de inserção (0..count)
+// x in tabRow coordinates; returns the insertion point (0..count)
 function tabIndexAt(x) {
     var n = 0;
     for (var i = 0; i < tabStrip.row.children.length; i++) {
         var it = tabStrip.row.children[i];
-        if (!it.isTabDelegate) continue;   // ignora o Repeater e afins
+        if (!it.isTabDelegate) continue;   // ignores the Repeater and the like
         if (x < it.x + it.width / 2) return n;
         ++n;
     }
@@ -606,7 +606,7 @@ function doCloseTab(i, saveFirst) {
     }
     if (!t.isCollection && !t.isEnvironment && !t.isSettings) {
         closedTabs.push(relPath);
-        delete responses[relPath];   // libera a resposta guardada da aba fechada
+        delete responses[relPath];   // releases the stored response of the closed tab
     }
     tabsModel.remove(i);
     if (tabsModel.count === 0) { currentTab = -1; clearEditor(); showingCollection = false; showingEnv = false; reloadTree(); return; }
@@ -620,11 +620,11 @@ function reopenClosed() {
     openRequest(closedTabs.pop());
 }
 
-// abre o diálogo de novo item: pasta (dentro da seleção) ou coleção (raiz)
+// opens the new item dialog: folder (inside the selection) or collection (root)
 function openNewFolder() { nameDialog.base = controller.targetFolder(); nameDialog.asCollection = false; nameDialog.open(); }
 function openNewCollection() { nameDialog.base = ""; nameDialog.asCollection = true; nameDialog.open(); }
 
-// abre (ou foca) a aba da coleção/pasta
+// opens (or focuses) the collection/folder tab
 function openCollection(relPath) {
     var existing = tabIndexFor(relPath, true);
     if (existing >= 0) { switchTab(existing); return; }
@@ -636,7 +636,7 @@ function openCollection(relPath) {
     currentTab = tabsModel.count - 1;
     loadCollection(relPath);
 }
-// destaca a coleção/pasta na árvore (abas de coleção não têm applyRequest)
+// highlights the collection/folder in the tree (collection tabs have no applyRequest)
 function revealCollection(relPath) {
     var c = Object.assign({}, controller.collapsedFolders);
     var parts = relPath.split("/"), prefix = "";
@@ -649,18 +649,18 @@ function revealCollection(relPath) {
     controller.selectedIsFolder = true;
     reloadTree();
 }
-// recalcula "Variáveis efetivas" da coleção (reabrir a aba e voltar à visão geral)
+// recomputes the collection's "Effective variables" (reopen the tab and return to the overview)
 function refreshCollectionResolved() {
     if (collectionPath.length === 0 || collectionIsSubfolder) { collectionResolvedVars = []; return; }
-    // inclui as variáveis em edição (não salvas) para uma referenciar a outra,
-    // mas mantendo a origem "collection" (não "request") na visão geral
+    // includes the variables being edited (unsaved) so one can reference another,
+    // but keeping the "collection" origin (not "request") in the overview
     collectionResolvedVars = backend.resolvedCollectionVariables(collectionOf(collectionPath), modelToArray(collectionVarsModel));
 }
-// popula o painel da coleção a partir do disco
+// populates the collection panel from disk
 function loadCollection(relPath) {
     revealCollection(relPath);
     collectionPath = relPath;
-    // usa a árvore completa (não a visível): pastas colapsadas não escondem requests
+    // uses the full tree (not the visible one): collapsed folders don't hide requests
     var all = backend.collectionTree();
     var reqs = [], folders = 0, prefix = relPath + "/";
     for (var i = 0; i < all.length; i++) {
@@ -673,7 +673,7 @@ function loadCollection(relPath) {
     collectionIsSubfolder = relPath.indexOf("/") >= 0;
     collectionTab = 0;
     if (collectionIsSubfolder) {
-        collectionVarsModel.clear();       // pasta não tem variáveis: elas pertencem à coleção
+        collectionVarsModel.clear();       // folder has no variables: they belong to the collection
         collectionHeadersModel.clear();
         collectionScreen.authEditor.load({});
     } else {
@@ -693,13 +693,13 @@ function loadCollection(relPath) {
     showingEnv = false;
 }
 function saveCollectionVars() {
-    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem variáveis
+    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // folder has no variables
     var dup = backend.duplicateVariableName(modelToArray(collectionVarsModel));
     if (dup.length > 0) { notify(Strings.duplicateInCollection(dup)); return; }
     backend.saveCollectionVariables(collectionPath, modelToArray(collectionVarsModel));
     collectionVarsBaseline = Util.stableStringify(modelToArray(collectionVarsModel));
     collectionVarsDirty = false;
-    refreshCollectionResolved();   // visão geral reflete secret/normal sem precisar reabrir
+    refreshCollectionResolved();   // overview reflects secret/normal without needing to reopen
     notify(Strings.t.collectionVarsSaved);
 }
 function revertCollectionVars() {
@@ -710,7 +710,7 @@ function revertCollectionVars() {
     notify(Strings.t.changesDiscarded);
 }
 function saveCollectionHeaders() {
-    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem cabeçalhos
+    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // folder has no headers
     backend.saveCollectionHeaders(collectionPath, modelToArray(collectionHeadersModel));
     collectionHeadersBaseline = Util.stableStringify(modelToArray(collectionHeadersModel));
     collectionHeadersDirty = false;
@@ -724,7 +724,7 @@ function revertCollectionHeaders() {
     notify(Strings.t.changesDiscarded);
 }
 function saveCollectionAuth() {
-    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // pasta não tem auth
+    if (collectionPath.length === 0 || collectionIsSubfolder) return;   // folder has no auth
     backend.saveCollectionAuth(collectionPath, collectionScreen.authEditor.value());
     collectionAuthBaseline = Util.stableStringify(collectionScreen.authEditor.value());
     collectionAuthDirty = false;
@@ -741,12 +741,12 @@ function revertCollectionAuth() {
 function saveCurrent() {
     if (currentTab < 0 || currentTab >= tabsModel.count) return;
     var t = tabsModel.get(currentTab);
-    if (t.isSettings) return;       // configurações aplicam na hora
-    if (t.isEnvironment) {          // Ctrl+S na aba de ambientes salva o pendente
+    if (t.isSettings) return;       // settings apply immediately
+    if (t.isEnvironment) {          // Ctrl+S in the environments tab saves the pending changes
         if (envScreen.envVarsDirty) envScreen.save();
         return;
     }
-    if (t.isCollection) {          // Ctrl+S na coleção salva o que estiver pendente
+    if (t.isCollection) {          // Ctrl+S in the collection saves whatever is pending
         if (collectionVarsDirty) saveCollectionVars();
         if (collectionHeadersDirty) saveCollectionHeaders();
         if (collectionAuthDirty) saveCollectionAuth();
@@ -799,7 +799,7 @@ function applyStorageDir(dir) {
     reloadEnvs();
     notify(Strings.collectionsNow(dir));
 }
-// confirmação única de exclusão: respeita settings.confirmDelete em TODOS os fluxos
+// single delete confirmation: respects settings.confirmDelete in ALL flows
 function confirmDelete(message, onConfirm) {
     if (!settings.confirmDelete) { onConfirm(); return; }
     deleteDialog.message = message;
@@ -839,7 +839,7 @@ function doSend() {
     backend.send(collectRequest(), collectionOf(t.relPath));
 }
 function persistSession() {
-    // só abas fixadas voltam na próxima sessão (preview/não-fixadas são transientes)
+    // only pinned tabs come back in the next session (preview/unpinned are transient)
     var arr = [];
     for (var i = 0; i < tabsModel.count; i++) arr.push(tabsModel.get(i));
     var s = Util.sessionPaths(arr, currentTab);
@@ -861,7 +861,7 @@ function hasDirtyTabs() {
 function saveAllTabs() {
     for (var i = 0; i < tabsModel.count; i++) {
         var t = tabsModel.get(i);
-        if (t.isCollection || t.isEnvironment || t.isSettings) continue;   // não são requests
+        if (t.isCollection || t.isEnvironment || t.isSettings) continue;   // not requests
         var dataJson = (i === currentTab) ? JSON.stringify(collectRequest()) : t.dataJson;
         backend.saveRequest(t.relPath, JSON.parse(dataJson));
         tabsModel.setProperty(i, "dirty", false);
@@ -880,7 +880,7 @@ function saveAllTabs() {
 }
 
 // ================= cURL =================
-// acha um caminho de request livre dentro de folder, sufixando -N se já existir
+// finds a free request path inside folder, suffixing -N if it already exists
 function uniqueRequestPath(folder, base) {
     var prefix = folder.length > 0 ? folder + "/" : "";
     var path = prefix + base;
@@ -901,8 +901,8 @@ function importCurl(text) {
         curlImportDialog.close();
     }
 }
-// ponytail: base64/formatação/parse de cURL vivem em Util.js (domínio puro);
-// as partes efetivas (auth + Content-Type) vêm de Backend::requestParts.
+// ponytail: base64/formatting/cURL parsing live in Util.js (pure domain);
+// the effective parts (auth + Content-Type) come from Backend::requestParts.
 
 
 property var shortcutDefs: [

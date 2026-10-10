@@ -6,7 +6,7 @@ import ".."
 import "../Strings.js" as Strings
 import "../Util.js" as Util
 
-// Tela de variáveis de ambiente (aba própria). `app` = janela; escopo/criar/renomear/descartar injetados.
+// Environment variables screen (its own tab). `app` = window; scope/create/rename/discard injected.
 Item {
     id: envScreen
     property var app
@@ -20,7 +20,7 @@ Item {
     property bool envVarsDirty: false
     property string envVarsBaseline: ""
     property string pendingEnv: ""
-    property var resolvedVars: []   // p/ o autocomplete das variáveis do ambiente
+    property var resolvedVars: []   // for autocomplete of environment variables
 
     ListModel { id: envVarsModel }
 
@@ -33,7 +33,7 @@ Item {
         }
         resolvedVars = backend.resolvedVariables("", arr);
     }
-    // estado atual das variáveis (inclui escopo) num JSON canônico
+    // current state of the variables (includes scope) as canonical JSON
     function snapshot() {
         var arr = [];
         for (var i = 0; i < envVarsModel.count; i++) {
@@ -55,7 +55,7 @@ Item {
         envVarsDirty = false;
         envVarsModel.clear();
         if (name.length === 0) { resolvedVars = []; envVarsBaseline = snapshot(); return; }
-        var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // valor real do cofre
+        var vars = backend.withResolvedSecrets(backend.environmentVariables(name));   // real value from the vault
         for (var i = 0; i < vars.length; i++) {
             var v = vars[i];
             var cols = v.collections !== undefined ? v.collections : [];
@@ -115,7 +115,7 @@ Item {
         anchors.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.smallSpacing
 
-        // coluna esquerda: ambientes
+        // left column: environments
         ColumnLayout {
             Layout.preferredWidth: 200
             Layout.fillHeight: true
@@ -156,7 +156,7 @@ Item {
 
         Kirigami.Separator { Layout.fillHeight: true }
 
-        // coluna direita: variáveis do ambiente
+        // right column: environment variables
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -205,7 +205,7 @@ Item {
                     var v = envVarsModel.get(i);
                     return (v && v.scope === "collections") ? "folder-documents" : "globe";
                 }
-                // cor por escopo: global (verde) / restrita a coleções (azul)
+                // color by scope: global (green) / restricted to collections (blue)
                 scopeColor: function(i) {
                     var v = envVarsModel.get(i);
                     return (v && v.scope === "collections")

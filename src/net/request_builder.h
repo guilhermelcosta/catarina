@@ -7,9 +7,9 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// Um request já pronto para enviar: URL/método resolvidos, headers montados
-// (request + coleção + auth + Content-Type/Accept), corpo codificado e os
-// snapshots (headers/corpo) usados pela aba de rede. Sem I/O — testável isolado.
+// A request ready to send: URL/method resolved, headers built
+// (request + collection + auth + Content-Type/Accept), body encoded and the
+// snapshots (headers/body) used by the network tab. No I/O — testable in isolation.
 struct BuiltRequest {
     bool valid = false;
     bool ignoreSsl = false;
@@ -17,13 +17,13 @@ struct BuiltRequest {
     QString method;
     QString bodyType;
     QNetworkRequest req;
-    QVariantList fields;      // já substituídos (multipart/urlencoded)
-    QByteArray payload;       // corpo dos tipos não-multipart
-    QString sentBody;         // descrição do corpo para a aba de rede
-    QVariantList sentHeaders; // headers efetivamente enviados
+    QVariantList fields;      // already substituted (multipart/urlencoded)
+    QByteArray payload;       // body of the non-multipart types
+    QString sentBody;         // body description for the network tab
+    QVariantList sentHeaders; // headers actually sent
 };
 
-// Monta o BuiltRequest a partir de um request (com {{variáveis}} já resolvidas).
+// Builds the BuiltRequest from a request (with {{variables}} already resolved).
 class RequestBuilder
 {
 public:

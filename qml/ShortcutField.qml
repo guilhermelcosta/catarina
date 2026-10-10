@@ -3,10 +3,10 @@ import QtQuick.Controls
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Campo que captura uma combinação de teclas. Clique e pressione; Esc cancela.
+// Field that captures a key combination. Click and press; Esc cancels.
 FocusScope {
     id: field
-    property var window: null          // janela (para suspender os atalhos globais)
+    property var window: null          // window (to suspend global shortcuts)
     property string sequence: ""
     property bool recording: false
     signal captured(string sequence)
@@ -40,7 +40,7 @@ FocusScope {
         if (e.key === Qt.Key_Control || e.key === Qt.Key_Shift || e.key === Qt.Key_Alt || e.key === Qt.Key_Meta) return;
         var hasMod = (e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) !== 0;
         var isFn = e.key >= Qt.Key_F1 && e.key <= Qt.Key_F35;
-        if (!hasMod && !isFn) return;   // exige modificador (ou tecla de função)
+        if (!hasMod && !isFn) return;   // requires a modifier (or a function key)
         var seq = settings.keySequence(e.key, e.modifiers);
         if (seq.length > 0) { field.recording = false; field.captured(seq); }
     }

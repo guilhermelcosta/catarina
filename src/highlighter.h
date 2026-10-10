@@ -6,7 +6,7 @@
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 
-// Colore {{variavel}} (e, opcionalmente, tokens JSON) num editor.
+// Highlights {{variable}} (and, optionally, JSON tokens) in an editor.
 class VarHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
@@ -30,8 +30,8 @@ class VarSupport : public QObject
 public:
     using QObject::QObject;
 
-    // anexa um highlighter ao QQuickTextDocument de um editor (TextArea);
-    // as cores de chave/string/número/palavra-chave do JSON vêm do tema (opcionais)
+    // attaches a highlighter to an editor's QQuickTextDocument (TextArea);
+    // the JSON key/string/number/keyword colors come from the theme (optional)
     Q_INVOKABLE void attach(QObject *textDocument, const QColor &color, bool bold = true,
                             bool json = false, const QColor &strColor = QColor(),
                             const QColor &numColor = QColor(), const QColor &kwColor = QColor(),

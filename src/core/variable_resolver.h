@@ -8,7 +8,7 @@
 
 #include <functional>
 
-// item já resolvido da cadeia global → coleção → request
+// already-resolved item of the global → collection → request chain
 struct ResolvedVar {
     QString name;
     QString value;
@@ -17,38 +17,38 @@ struct ResolvedVar {
     bool enabled = true;
 };
 
-// Resolve {{variáveis}}: escopo (global/coleção/request), precedência, segredos
-// (delegados a um callback) e referências encadeadas. Puro — não toca disco nem
-// rede; por isso é testável isoladamente. As listas global/coleção são passadas
-// por parâmetro (o Backend lê dos seus stores e injeta aqui).
+// Resolves {{variables}}: scope (global/collection/request), precedence, secrets
+// (delegated to a callback) and chained references. Pure — it touches neither disk nor
+// network; so it's testable in isolation. The global/collection lists are passed
+// as parameters (the Backend reads from its stores and injects them here).
 class VariableResolver
 {
 public:
-    // resolve o valor de um segredo pelo secretId ("" se desconhecido)
+    // resolves the value of a secret by secretId ("" if unknown)
     using SecretFn = std::function<QString(const QString &secretId)>;
     explicit VariableResolver(SecretFn secretOf = {});
 
-    // primeiro nome de variável repetido na lista ("" se não houver); nomes aparados
+    // first duplicated variable name in the list ("" if none); names trimmed
     static QString duplicateVariableName(const QVariantList &vars);
 
-    // cadeia única já resolvida (escopo, segredos e flag enabled)
+    // single already-resolved chain (scope, secrets and flag enabled)
     QList<ResolvedVar> chain(const QVariantList &globalVars, const QString &collection,
                              const QVariantList &collectionVars,
                              const QVariantList &requestVars) const;
-    // agrupa por nome (origem de maior precedência vence) para a UI
+    // groups by name (highest-precedence origin wins) for the UI
     QVariantList resolvedFromChain(const QList<ResolvedVar> &chain) const;
 
-    // resolve tudo numa passada: { "resolved": [...], "missing": [...], "effective": {...} }
+    // resolves everything in one pass: { "resolved": [...], "missing": [...], "effective": {...} }
     QVariantMap state(const QVariantMap &request, const QVariantList &globalVars,
                       const QString &collection, const QVariantList &collectionVars,
                       const QVariantMap &collectionAuth) const;
 
-    // por que "name" não resolve: { "code", "collections" }
-    // codes: "" (resolve) | "disabled" | "restricted" | "undefined"
+    // why "name" doesn't resolve: { "code", "collections" }
+    // codes: "" (resolves) | "disabled" | "restricted" | "undefined"
     QVariantMap note(const QString &name, const QVariantList &globalVars,
                      const QString &collection, const QVariantList &collectionVars) const;
 
-    // textos de um request que podem conter {{variáveis}}
+    // request texts that may contain {{variables}}
     static QStringList collectTexts(const QVariantMap &request);
 
 private:

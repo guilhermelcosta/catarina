@@ -6,8 +6,8 @@
 #include <QTextLayout>
 #include <QtTest>
 
-// Autochecagem hermética do realce JSON: chave e valor-string precisam sair com cores
-// diferentes (antes a chave caía na cor de string e o JSON formatado ficava uniforme).
+// Hermetic self-check of JSON highlighting: key and string value must come out with
+// different colors (previously the key fell into the string color and formatted JSON looked uniform).
 class CheckHighlighter : public QObject
 {
     Q_OBJECT
@@ -31,9 +31,9 @@ private slots:
         h.rehighlight();
 
         const QTextBlock block = doc.firstBlock();
-        QCOMPARE(colorAt(block, 0), key);   // "name" (com aspas) = chave
+        QCOMPARE(colorAt(block, 0), key);   // "name" (with quotes) = key
         QCOMPARE(colorAt(block, 9), str);   // "value" = string
-        QVERIFY(colorAt(block, 0) != str);  // a chave não pode ficar com a cor de string
+        QVERIFY(colorAt(block, 0) != str);  // the key must not get the string color
     }
 
     void number_and_keyword_keep_their_colors()

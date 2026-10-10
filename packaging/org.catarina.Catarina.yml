@@ -8,11 +8,11 @@ finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
-  - --filesystem=home        # campos de arquivo e coleções fora do sandbox
-  - --talk-name=org.freedesktop.secrets   # cofre de segredos do SO
+  - --filesystem=home        # file fields and collections outside the sandbox
+  - --talk-name=org.freedesktop.secrets   # OS secret keychain
   - --talk-name=org.kde.kwalletd6
 modules:
-  # cofre de segredos (Secret Service/KWallet) usado pelo Backend quando presente
+  # secret keychain (Secret Service/KWallet) used by the Backend when present
   - name: qtkeychain
     buildsystem: cmake-ninja
     config-opts:

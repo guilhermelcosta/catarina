@@ -1,24 +1,25 @@
-# Instruções para agentes — Catarina
+# Agent instructions — Catarina
 
-App de cliente de API em Qt 6 / QML / Kirigami. UI em português (pt-BR).
+API client app built with Qt 6 / QML / Kirigami. UI in English.
 
-## Design e componentes
+## Design and components
 
-Antes de criar ou alterar qualquer elemento de UI, leia e siga **[`docs/DESIGN.md`](docs/DESIGN.md)**.
-Ele define o padrão de espaçamento, opacidades, botões, ícones e os componentes compartilhados
+Before creating or changing any UI element, read and follow **[`docs/DESIGN.md`](docs/DESIGN.md)**.
+It defines the spacing, opacity, button, icon, and shared-component patterns
 (`KvTable`, `SaveBar`, `HeaderTable`, `JsonTree`, `VarCompleter`, `NetworkView`, `Util.js`).
 
-Regras rápidas:
-- **Reuse componentes**; não reimplemente localmente algo que se repete.
-- Toda tabela editável usa `KvTable` (estenda com uma opção nova se precisar).
-- Seções editáveis usam `SaveBar` (título + "alterações não salvas" + Reverter + Salvar).
-- Estados vazios usam `EmptyState` (ícone/título/mensagem/ação; fundo transparente).
-- Padding de painel: `Kirigami.Units.largeSpacing`; entre controles: `Kirigami.Units.smallSpacing`.
-- `StackLayout` ignora `Layout.margins` — use `anchors.margins` (via `Item`) ou `ScrollView.padding`.
-- Confirme que todo ícone Breeze existe no tema antes de usar.
-- Surgiu um padrão novo? Documente em `docs/DESIGN.md`.
+Quick rules:
+- **Reuse components**; don't reimplement something that repeats locally.
+- Every editable table uses `KvTable` (extend it with a new option if needed).
+- Editable sections use `SaveBar` (title + "unsaved changes" + Revert + Save).
+- Empty states use `EmptyState` (icon/title/message/action; transparent background).
+- Panel padding: `Kirigami.Units.largeSpacing`; between controls: `Kirigami.Units.smallSpacing`.
+- `StackLayout` ignores `Layout.margins` — use `anchors.margins` (via `Item`) or `ScrollView.padding`.
+- Confirm every Breeze icon exists in the theme before using it.
+- New pattern? Document it in `docs/DESIGN.md`.
 
-## Testes
+## Tests
 
-Rode `ctest` no diretório `build/` (build: `cmake --build build`). Há também `./build/bin/check_storage`
-(lógica do backend, hermético) e `./build/bin/bench_storage` (benchmark dos caminhos quentes).
+Run `ctest` in the `build/` directory (build: `cmake --build build`). There is also
+`./build/bin/check_storage` (backend logic, hermetic) and `./build/bin/bench_storage`
+(benchmark of the hot paths).

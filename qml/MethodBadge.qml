@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Badge do método HTTP (sigla colorida). A cor vem do chamador (`root.methodColor`)
-// porque depende do tema; o fundo é a mesma cor a 18%.
+// HTTP method badge (colored abbreviation). The color comes from the caller
+// (`root.methodColor`) because it depends on the theme; the background is the same color at 18%.
 Item {
     id: badge
     property string method: ""

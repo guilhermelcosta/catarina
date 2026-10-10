@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Árvore JSON colapsável para o corpo da resposta.
+// Collapsible JSON tree for the response body.
 Item {
     id: treeRoot
     property string text: ""
@@ -38,7 +38,7 @@ Item {
     function addRow(key, value, depth, path) {
         var t = typeOf(value);
         var expandable = (t === "object" || t === "array");
-        // padrão: os 2 primeiros níveis vêm abertos; clique guarda estado explícito
+        // default: the first 2 levels come open; clicking stores explicit state
         var isOpen = (expanded[path] === undefined) ? (depth < 2) : (expanded[path] === true);
         nodes.append({ key: key, preview: previewOf(value, t), vtype: t, depth: depth,
                        expandable: expandable, open: isOpen, path: path });
@@ -72,11 +72,11 @@ Item {
     }
     function toggle(path) {
         var currently = isOpenAt(path);
-        expanded[path] = !currently;   // grava estado explícito
-        expanded = expanded;           // notifica
+        expanded[path] = !currently;   // store explicit state
+        expanded = expanded;           // notify
         rebuild();
     }
-    // descobre se está aberto agora (explícito ou padrão)
+    // finds out whether it's open right now (explicit or default)
     function isOpenAt(path) {
         for (var i = 0; i < nodes.count; i++)
             if (nodes.get(i).path === path) return nodes.get(i).open;

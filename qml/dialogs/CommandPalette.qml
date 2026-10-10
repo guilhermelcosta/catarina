@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Paleta de comandos (Ctrl+K).
+// Command palette (Ctrl+K).
 Popup {
     id: cmdPalette
     property var app

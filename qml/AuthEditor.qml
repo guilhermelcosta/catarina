@@ -4,14 +4,14 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "Strings.js" as Strings
 
-// Editor de autenticação compartilhado: aba Authentication do request
-// (com allowInherit, que herda a auth da coleção) e aba Authentication da coleção.
-// Uso: load(auth) → preenche; value() → mapa atual; edited() quando o usuário muda.
+// Shared authentication editor: the request's Authentication tab
+// (with allowInherit, which inherits the collection's auth) and the collection's Authentication tab.
+// Usage: load(auth) → fills; value() → current map; edited() when the user changes.
 ColumnLayout {
     id: root
-    property var resolvedVars: []      // [{name, value, ...}] para o autocomplete de {{var}}
-    property string collection: ""     // escopo das variáveis
-    property bool allowInherit: false  // mostra a opção "inherit" (herda da coleção)
+    property var resolvedVars: []      // [{name, value, ...}] for the {{var}} autocomplete
+    property string collection: ""     // scope of the variables
+    property bool allowInherit: false  // shows the "inherit" option (inherits from the collection)
     signal edited()
 
     function load(a) {

@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Aba "Corpo": tipo, form-urlencoded/multipart (fields) e editor JSON com autocomplete.
+// "Body" tab: type, form-urlencoded/multipart (fields) and JSON editor with autocomplete.
 ColumnLayout {
     property var app
     property var fieldsModel
@@ -13,11 +13,11 @@ ColumnLayout {
     property alias body: bodyArea.text
     readonly property string bodyType: bodyTypeBox.currentValue
     function setBodyType(v) { var i = bodyTypeBox.indexOfValue(v); bodyTypeBox.currentIndex = i >= 0 ? i : 0; }
-    // O StackLayout limita o filho atual pela altura máxima que
-    // calcula (newSize.expandedTo(min).boundedTo(max)) e, num
-    // ColumnLayout aninhado com ScrollView, esse máximo sai
-    // pequeno — o corpo do payload ficava "espremido" ao trocar
-    // de aba. Liberar o máximo resolve. Ver DESIGN.md.
+    // StackLayout constrains the current child by the maximum height it
+    // computes (newSize.expandedTo(min).boundedTo(max)) and, in a
+    // ColumnLayout nested with a ScrollView, that maximum comes out
+    // small — the payload body got "squeezed" when switching
+    // tabs. Lifting the maximum fixes it. See DESIGN.md.
     Layout.maximumHeight: Number.POSITIVE_INFINITY
     spacing: Kirigami.Units.smallSpacing
     RowLayout {
@@ -90,7 +90,7 @@ ColumnLayout {
                 resolved: app.resolvedVars
                 collection: app.currentCollection
             }
-            // auto-fecha pares e indenta no Enter (estilo Bruno)
+            // auto-closes pairs and indents on Enter (Bruno style)
             Keys.onPressed: function (event) {
                 if (bodyCompleter.handleKey(event)) { event.accepted = true; return; }
                 var pos = bodyArea.cursorPosition;
@@ -100,8 +100,8 @@ ColumnLayout {
                     bodyArea.insert(pos, "{}");
                     bodyArea.cursorPosition = pos + 1;
                     app.markDirty();
-                    // insert() programático não emite textEdited; sem
-                    // isto o popup de {{var}} só abre ao digitar o 1º caractere
+                    // programmatic insert() doesn't emit textEdited; without
+                    // this the {{var}} popup only opens when typing the 1st character
                     bodyCompleter.updateCompleter();
                 } else if (event.key === Qt.Key_BracketLeft) {
                     event.accepted = true;
@@ -125,7 +125,7 @@ ColumnLayout {
                     var before = pos > 0 ? t.charAt(pos - 1) : "";
                     var after = pos < t.length ? t.charAt(pos) : "";
                     if ((before === "{" && after === "}") || (before === "[" && after === "]")) {
-                        bodyArea.insert(pos, "\n" + indent + unit + "\n" + indent);   // expande em bloco
+                        bodyArea.insert(pos, "\n" + indent + unit + "\n" + indent);   // expands as a block
                         bodyArea.cursorPosition = pos + 1 + indent.length + unit.length;
                     } else if (before === "{" || before === "[") {
                         bodyArea.insert(pos, "\n" + indent + unit);
@@ -140,7 +140,7 @@ ColumnLayout {
                     var ls2 = t2.lastIndexOf("\n", pos - 1) + 1;
                     var prefix = t2.substring(ls2, pos);
                     if (/^[ \t]+$/.test(prefix) && prefix.length >= unit.length) {
-                        event.accepted = true;   // linha só com espaços: dedenta ao fechar
+                        event.accepted = true;   // line with only spaces: dedents on close
                         var kept = prefix.substring(0, prefix.length - unit.length);
                         bodyArea.remove(ls2, pos);
                         bodyArea.insert(ls2, kept + "}");
@@ -151,10 +151,10 @@ ColumnLayout {
             }
         }
     }
-    // com maximumHeight liberado, o ColumnLayout ocupa a altura
-    // inteira do StackLayout; sem filho que preencha, o Qt
-    // redistribui o espaço e o cabeçalho "estica". Este filler
-    // (só em "nenhum") âncora o topo, como na Autenticação.
+    // with maximumHeight lifted, the ColumnLayout takes the full
+    // height of the StackLayout; with no child to fill it, Qt
+    // redistributes the space and the header "stretches". This filler
+    // (only on "none") anchors the top, as in Authentication.
     Item {
         Layout.fillHeight: true
         visible: bodyTypeBox.currentValue === "none"

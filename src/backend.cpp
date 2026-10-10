@@ -12,8 +12,8 @@
 
 namespace {
 
-// copia recursivamente um diretório de recursos (ex.: ":/seed") para o disco,
-// recriando a mesma árvore de subpastas
+// recursively copies a resource directory (e.g. ":/seed") to disk,
+// recreating the same subfolder tree
 void copyResourceDir(const QString &srcRoot, const QString &dstRoot)
 {
     QDirIterator it(srcRoot, QDir::Files, QDirIterator::Subdirectories);
@@ -22,8 +22,8 @@ void copyResourceDir(const QString &srcRoot, const QString &dstRoot)
         const QString dst = dstRoot + src.mid(srcRoot.length());
         QDir().mkpath(QFileInfo(dst).absolutePath());
         QFile::copy(src, dst);
-        // QFile::copy preserva as permissões do recurso (somente leitura); sem isto o
-        // QSaveFile não consegue regravar o request e o save do usuário falha
+        // QFile::copy preserves the resource permissions (read-only); without this
+        // QSaveFile can't rewrite the request and the user's save fails
         QFile::setPermissions(dst, QFile::ReadOwner | QFile::WriteOwner
                                    | QFile::ReadGroup | QFile::ReadOther);
     }
@@ -41,7 +41,7 @@ Backend::Backend(QObject *parent)
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
     QDir().mkpath(m_appData);
-    // pasta de segredos só para o dono (o arquivo já é 0600)
+    // secrets folder owner-only (the file is already 0600)
     QFile::setPermissions(m_appData, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
 
     m_collections = new CollectionStorage(this);
@@ -69,7 +69,7 @@ Backend::Backend(QObject *parent)
             [this](const QVariantMap &entry) { m_history->add(entry); });
 
     m_envs->load();
-    // carrega cofre/arquivo uma vez, antes do QML (evita I/O no meio do binding)
+    // loads keychain/file once, before the QML (avoids I/O in the middle of a binding)
     m_secrets = SecretStore::create(m_secretsFile);
     m_secrets->preload();
 }
@@ -91,7 +91,7 @@ void Backend::setStorageDir(const QString &dir)
     m_envFile = m_dir + QStringLiteral("/.catarina/environments.json");
     QDir().mkpath(m_dir);
     QDir().mkpath(QFileInfo(m_envFile).absolutePath());
-    m_collections->setRoot(m_dir);   // limpa os caches
+    m_collections->setRoot(m_dir);   // clears the caches
     m_envs->setFile(m_envFile);
     m_envs->load();
     emit collectionsChanged();
@@ -104,14 +104,14 @@ void Backend::seedDefaultCollection()
 {
     const QString marker = m_dir + QStringLiteral("/.catarina/.seeded");
     if (QFileInfo::exists(marker))
-        return;   // já foi semeado (mesmo que o usuário apague a coleção depois)
+        return;   // already seeded (even if the user deletes the collection later)
     if (collectionTree().isEmpty()) {
         copyResourceDir(QStringLiteral(":/seed"), m_dir);
-        // a senha pública do DummyJSON fica no cofre (o arquivo versionado só guarda
-        // o secretId), então o exemplo funciona de primeira sem expor a senha
+        // the public DummyJSON password lives in the keychain (the versioned file only stores
+        // the secretId), so the example works out of the box without exposing the password
         saveSecret(QStringLiteral("seed-dummyjson-password"), QStringLiteral("emilyspass"));
-        // o seed trouxe um ambiente de exemplo; recarrega (o construtor já rodou
-        // antes da cópia, então sem isto as variáveis globais não apareceriam)
+        // the seed brought an example environment; reload (the constructor already ran
+        // before the copy, so without this the global variables wouldn't show up)
         m_envs->load();
         emit environmentsChanged();
     }
@@ -120,10 +120,10 @@ void Backend::seedDefaultCollection()
         f.close();
 }
 
-// ---------------------------------------------------------------- lógica pura
+// ---------------------------------------------------------------- pure logic
 
-// delegado para RequestLogic (src/core/request_logic.h); mantido Q_INVOKABLE
-// porque o QML chama backend.requestParts(...) para exportar cURL
+// delegated to RequestLogic (src/core/request_logic.h); kept Q_INVOKABLE
+// because the QML calls backend.requestParts(...) to export cURL
 QVariantMap Backend::requestParts(const QVariantMap &request) const
 {
     return RequestLogic::requestParts(request);
@@ -131,7 +131,7 @@ QVariantMap Backend::requestParts(const QVariantMap &request) const
 
 QVariantMap Backend::resolvedRequestParts(const QVariantMap &request, const QString &collection) const
 {
-    // valores efetivos (global → coleção → request), já com segredos resolvidos
+    // effective values (global → collection → request), with secrets already resolved
     const QVariantMap vars = variablesState(request, collection)
                                  .value(QStringLiteral("effective")).toMap();
 
@@ -146,13 +146,13 @@ QVariantMap Backend::resolvedRequestParts(const QVariantMap &request, const QStr
         RequestLogic::substituteList(request.value(QStringLiteral("fields")).toList(), vars);
     r[QStringLiteral("body")] =
         RequestLogic::substitute(request.value(QStringLiteral("body")).toString(), vars);
-    // auth efetiva ("inherit" → a da coleção), já com as variáveis resolvidas
+    // effective auth ("inherit" → the collection's), with variables already resolved
     const QVariantMap effAuth = RequestLogic::effectiveAuth(
         request.value(QStringLiteral("auth")).toMap(), collectionAuth(collection));
     r[QStringLiteral("auth")] = RequestLogic::substituteList({effAuth}, vars).value(0).toMap();
 
     QVariantMap parts = RequestLogic::requestParts(r);
-    // anexa os params ativos à URL, como o send faz
+    // appends the active params to the URL, like send does
     parts[QStringLiteral("url")] = RequestLogic::buildUrl(
         r.value(QStringLiteral("url")).toString(),
         r.value(QStringLiteral("params")).toList()).toString();
@@ -164,9 +164,9 @@ QString Backend::querySuffix(const QString &url, const QVariantList &params) con
     return RequestLogic::querySuffix(url, params);
 }
 
-// ---------------------------------------------------------------- segredos
+// ---------------------------------------------------------------- secrets
 
-// Delega ao SecretStore (cofre do SO ou arquivo 0600); ver storage/secret_store.h.
+// Delegates to SecretStore (OS keychain or 0600 file); see storage/secret_store.h.
 QString Backend::secretValue(const QString &id) const
 {
     return m_secrets->value(id);
@@ -189,7 +189,7 @@ QVariantList Backend::withResolvedSecrets(const QVariantList &vars) const
         QVariantMap m = v.toMap();
         if (m.value(QStringLiteral("secret")).toBool()) {
             const QString id = m.value(QStringLiteral("secretId")).toString();
-            if (!id.isEmpty())                 // sem id = segredo novo, mantém o que foi digitado
+            if (!id.isEmpty())                 // no id = new secret, keeps what was typed
                 m[QStringLiteral("value")] = secretValue(id);
         }
         v = m;
@@ -209,11 +209,11 @@ QVariantList Backend::sanitizeSecrets(const QVariantList &vars)
                 m[QStringLiteral("secretId")] = id;
             }
             saveSecret(id, m.value(QStringLiteral("value")).toString());
-            m[QStringLiteral("value")] = QString();       // nunca vai pro arquivo
+            m[QStringLiteral("value")] = QString();       // never goes to the file
         } else {
             const QString oldId = m.value(QStringLiteral("secretId")).toString();
             if (!oldId.isEmpty()) {
-                removeSecret(oldId);                       // deixou de ser segredo: limpa o cofre
+                removeSecret(oldId);                       // no longer a secret: clears the keychain
                 m[QStringLiteral("secretId")] = QString();
             }
         }
@@ -222,7 +222,7 @@ QVariantList Backend::sanitizeSecrets(const QVariantList &vars)
     return out;
 }
 
-// ---------------------------------------------------------------- variáveis
+// ---------------------------------------------------------------- variables
 
 QVariantList Backend::activeGlobalVars() const
 {
@@ -250,7 +250,7 @@ QVariantList Backend::resolvedVariables(const QString &collection, const QVarian
 QVariantList Backend::resolvedCollectionVariables(const QString &collection,
                                                   const QVariantList &collectionVars) const
 {
-    // visão geral da coleção: sem request, a lista em edição é a própria coleção
+    // collection overview: without a request, the list being edited is the collection itself
     const VariableResolver r = resolver();
     return r.resolvedFromChain(r.chain(activeGlobalVars(), collection, collectionVars, {}));
 }
@@ -260,7 +260,7 @@ QVariantMap Backend::variableNoteFor(const QString &name, const QString &collect
     return resolver().note(name, activeGlobalVars(), collection, collectionVariables(collection));
 }
 
-// ---------------------------------------------------------------- requisição
+// ---------------------------------------------------------------- request
 
 void Backend::send(const QVariantMap &request, const QString &collection)
 {
@@ -289,8 +289,8 @@ void Backend::cancel()
     m_http->cancel();
 }
 
-// ---------------------------------------------------------------- coleções
-// Tudo delegado ao CollectionStorage (src/storage/collection_storage.h).
+// ---------------------------------------------------------------- collections
+// Everything delegated to CollectionStorage (src/storage/collection_storage.h).
 
 QVariantList Backend::collectionTree() const { return m_collections->tree(); }
 bool Backend::isCollection(const QString &relPath) const { return m_collections->isCollection(relPath); }
@@ -306,14 +306,14 @@ bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
     QVariantMap d = data;
     if (d.contains(QStringLiteral("vars"))) {
         if (!VariableResolver::duplicateVariableName(d.value(QStringLiteral("vars")).toList()).isEmpty())
-            return false;   // nomes de variável repetidos no request
-        // segredos das variáveis do request nunca vão pro arquivo
+            return false;   // duplicated variable names in the request
+        // secrets of the request variables never go to the file
         d[QStringLiteral("vars")] = sanitizeSecrets(d.value(QStringLiteral("vars")).toList());
     }
     return m_collections->saveRequest(relPath, d);
 }
 
-// ---------------------------------------------------------------- vars de coleção
+// ---------------------------------------------------------------- collection vars
 
 QVariantList Backend::collectionVariables(const QString &collection) const
 {
@@ -372,7 +372,7 @@ bool Backend::deleteEnvironment(const QString &name) { return m_envs->remove(nam
 bool Backend::renameEnvironment(const QString &oldName, const QString &newName) { return m_envs->rename(oldName, newName); }
 void Backend::setActiveEnvironment(const QString &name) { m_envs->setActive(name); }
 
-// ---------------------------------------------------------------- histórico
+// ---------------------------------------------------------------- history
 
 QVariantList Backend::history() const { return m_history->list(); }
 void Backend::clearHistory() { m_history->clear(); }

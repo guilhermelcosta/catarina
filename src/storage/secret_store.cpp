@@ -12,7 +12,7 @@
 
 namespace {
 
-// ---- implementações de persistência (só o meio muda; cache fica na base) ----
+// ---- persistence implementations (only the medium changes; cache stays in the base) ----
 
 class MemoryStore : public SecretStore
 {
@@ -78,8 +78,8 @@ bool keychainWrite(const QString &data)
     return job.error() == QKeychain::NoError;
 }
 
-// Segredos no cofre do SO como um único blob JSON. O erro da leitura inicial decide
-// se o cofre é usável (NoError), só vazio (EntryNotFound) ou inacessível (outro).
+// Secrets in the OS keychain as a single JSON blob. The initial read's error decides
+// whether the keychain is usable (NoError), just empty (EntryNotFound) or unreachable (other).
 class KeychainStore : public SecretStore
 {
 public:
@@ -98,7 +98,7 @@ public:
 
     QKeychain::Error error() const { return m_error; }
 
-    // migra um blob legado (arquivo antigo) para o cofre
+    // migrates a legacy blob (old file) to the keychain
     bool importLegacy(const QString &json) { return writeRaw(json); }
 
 protected:
@@ -171,13 +171,13 @@ std::unique_ptr<SecretStore> SecretStore::create(const QString &filePath)
         if (kc->error() == QKeychain::NoError)
             return kc;
         if (kc->error() == QKeychain::EntryNotFound) {
-            // cofre vazio: migra o arquivo legado, se houver, e apaga o texto plano
+            // empty keychain: migrates the legacy file, if any, and deletes the plain text
             const QString legacy = readLegacyFile(filePath);
             if (!legacy.isEmpty() && kc->importLegacy(legacy))
                 QFile::remove(filePath);
             return kc;
         }
-        // qualquer outro erro (acesso negado etc.): mantém o arquivo em texto plano
+        // any other error (access denied etc.): keeps the file in plain text
     }
 #endif
     return std::make_unique<FileStore>(filePath);

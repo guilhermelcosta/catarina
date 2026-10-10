@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Dialogs
 import "../Strings.js" as Strings
 
-// Seleção de arquivo para um field multipart; grava o caminho no modelo injetado.
+// File selection for a multipart field; writes the path to the injected model.
 FileDialog {
     id: fileDialog
     property var fieldsModel

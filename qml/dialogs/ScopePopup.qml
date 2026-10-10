@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Escopo da variável (global ou coleções específicas) — popover ancorado.
+// Variable scope (global or specific collections) — anchored popover.
 Popup {
     id: scopePopup
     property var app
@@ -32,7 +32,7 @@ Popup {
         y = gy;
         open();
     }
-    // aplica ao vivo (sem OK/Cancelar)
+    // applies live (no OK/Cancel)
     function applyScope() {
         if (rowIndex < 0) return;
         if (global) {

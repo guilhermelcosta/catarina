@@ -5,8 +5,8 @@ import org.kde.kirigami as Kirigami
 
 import "Strings.js" as Strings
 
-// Barra de abas (flickable) com pin/fechar/drag. `app` = janela; `tabsModel` injetado;
-// a row é exposta p/ a janela calcular o ponto de inserção do drag.
+// Tab bar (flickable) with pin/close/drag. `app` = window; `tabsModel` injected;
+// the row is exposed so the window can compute the drag insertion point.
 Rectangle {
     id: tabStripRoot
     property var app
@@ -41,13 +41,13 @@ Rectangle {
                         color: index === app.currentTab ? Kirigami.Theme.backgroundColor : "transparent"
                         Rectangle { anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right; height: 2; visible: index === app.currentTab; color: Kirigami.Theme.highlightColor }
                     }
-                    // ponto de inserção (à esquerda desta aba)
+                    // insertion point (to the left of this tab)
                     Rectangle {
                         anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
                         width: 2; color: Kirigami.Theme.highlightColor
                         visible: app.dragging && app.tabDragIndex >= 0 && app.tabDropIndex === index
                     }
-                    // ponto de inserção no fim (após a última aba)
+                    // insertion point at the end (after the last tab)
                     Rectangle {
                         anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
                         width: 2; color: Kirigami.Theme.highlightColor
@@ -139,15 +139,15 @@ Rectangle {
                         implicitWidth: 20
                         implicitHeight: 20
                         source: "pin"
-                        // hover azul (como o × fica vermelho); fixada já aparece azul
+                        // blue on hover (like the × turns red); pinned already appears blue
                         color: (pinHover.hovered || model.pinned === true) ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
                         opacity: (pinHover.hovered || model.pinned === true) ? 1.0 : 0.6
                         visible: !model.isCollection && !model.isEnvironment && !model.isSettings
                                  && (tabHover.hovered || model.pinned === true)
                         HoverHandler { id: pinHover }
                         TapHandler { onTapped: app.pinTab(index) }
-                        // ponytail: NÃO usar ToolTip.visible:hovered aqui — o popup
-                        // do tooltip rouba o clique (pino e × deixam de responder)
+                        // ponytail: do NOT use ToolTip.visible:hovered here — the tooltip
+                        // popup steals the click (pin and × stop responding)
                     }
                     Label {
                         id: closeBtn
@@ -162,7 +162,7 @@ Rectangle {
                         opacity: closeHover.hovered ? 1.0 : 0.6
                         HoverHandler { id: closeHover }
                         TapHandler { onTapped: app.closeTab(index) }
-                        // idem pino: tooltip aqui rouba o clique do ×
+                        // same as pin: tooltip here steals the × click
                     }
                 }
             }

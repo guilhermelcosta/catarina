@@ -5,12 +5,12 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Tela de configurações do app (aba própria). `app` = janela; `folderPicker` = FolderDialog.
+// App settings screen (its own tab). `app` = window; `folderPicker` = FolderDialog.
 Item {
     id: settingsPage
     property var app
     property var folderPicker
-    property alias dirField: storageDirField   // exposto p/ o Main ligar ao FolderPicker
+    property alias dirField: storageDirField   // exposed for Main to wire to FolderPicker
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.largeSpacing

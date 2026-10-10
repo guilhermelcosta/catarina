@@ -5,52 +5,52 @@
 ![Platform](https://img.shields.io/badge/platform-Linux-informational)
 ![Tests](https://img.shields.io/badge/tests-ctest-success)
 
-**Catarina é um cliente de API offline para Linux** — as coleções e requests são arquivos
-`.json` versionáveis no seu disco, não registros num banco remoto. Feito com **Qt 6 / QML /
-Kirigami**, com interface em português.
+**Catarina is an offline API client for Linux** — collections and requests are versionable
+`.json` files on your disk, not records in a remote database. Built with **Qt 6 / QML /
+Kirigami**, with an English interface.
 
 ![Catarina](docs/screenshot.png)
 
-## Por que mais um cliente de API?
+## Why another API client?
 
-- **Coleções em arquivos, versionáveis.** Cada request é um `.json` em
-  `~/catarina-collections`. Você versiona com `git`, revisa em diff, compartilha por pasta — sem
-  exportar/importar.
-- **Segredos fora do repositório.** Senhas e tokens ficam no **cofre do sistema**
-  (Secret Service/KWallet via QtKeychain); o arquivo versionado guarda só um `secretId`.
-  Sem cofre disponível, cai para um arquivo `0600` fora da pasta das coleções.
-- **Variáveis com escopo de verdade.** `{{nome}}` resolvido na cadeia **global → coleção →
-  request**, com referências encadeadas, variáveis desabilitadas e escopo por coleção.
-- **Leve e nativo.** Sem Electron. Um binário Qt/Kirigami.
+- **File-based, versionable collections.** Each request is a `.json` in
+  `~/catarina-collections`. Version it with `git`, review it in a diff, share it by folder —
+  no export/import.
+- **Secrets out of the repository.** Passwords and tokens live in the **system keyring**
+  (Secret Service/KWallet via QtKeychain); the versioned file only stores a `secretId`.
+  With no keyring available, it falls back to a `0600` file outside the collections folder.
+- **Truly scoped variables.** `{{name}}` resolved across the **global → collection →
+  request** chain, with chained references, disabled variables, and per-collection scope.
+- **Light and native.** No Electron. A single Qt/Kirigami binary.
 
-## Funcionalidades
+## Features
 
-- **Requests**: método, URL com preview de querystring, params, headers (do request e da
-  coleção), **auth** (Bearer / Basic / API Key / herdar da coleção) e corpo
-  (none / JSON / texto / form-urlencoded / **multipart com arquivo**).
-- **Coleções aninhadas** com drag-and-drop, renomear, duplicar e mover; **guias de indentação**
-  (estilo VS Code) na árvore.
-- **Variáveis** `{{variavel}}` com autocomplete, hover com o valor e aviso de variável não
-  definida — na URL, headers, corpo, auth e tabelas.
-- **Environments** globais, com escopo por coleção ou "todas".
-- **Resposta**: corpo, **árvore JSON**, cabeçalhos, cookies e **aba de Rede** (timeline).
-- **Abas** no estilo do VS Code: prévia transiente, fixar/desafixar, reordenar, reabrir fechada e
-  **restaurar sessão**.
-- **Importar/exportar cURL**, **histórico** de envios e **paleta de comandos** (`Ctrl+K`).
-- **Atalhos** remapeáveis nas configurações.
-- **Coleção de exemplo** (DummyJSON) criada no primeiro uso.
+- **Requests**: method, URL with querystring preview, params, headers (from the request and the
+  collection), **auth** (Bearer / Basic / API Key / inherit from collection) and body
+  (none / JSON / text / form-urlencoded / **multipart with file**).
+- **Nested collections** with drag-and-drop, rename, duplicate, and move; **indent guides**
+  (VS Code style) in the tree.
+- **Variables** `{{variable}}` with autocomplete, hover showing the value, and undefined-variable
+  warning — in the URL, headers, body, auth, and tables.
+- **Global environments**, scoped per collection or to "all".
+- **Response**: body, **JSON tree**, headers, cookies, and a **Network tab** (timeline).
+- **VS Code-style tabs**: transient preview, pin/unpin, reorder, reopen closed, and
+  **restore session**.
+- **Import/export cURL**, send **history**, and a **command palette** (`Ctrl+K`).
+- **Remappable shortcuts** in settings.
+- **Example collection** (DummyJSON) created on first use.
 
-## Instalação
+## Installation
 
-### Dependências
+### Dependencies
 
 - **Qt 6.5+** — `Core`, `Gui`, `Qml`, `Quick`, `QuickControls2`, `Network`
 - **Extra CMake Modules (ECM) 6**
 - **KF6 Kirigami**
-- **QtKeychain** (opcional) — habilita o cofre do SO; sem ele, segredos vão para arquivo `0600`
+- **QtKeychain** (optional) — enables the OS keyring; without it, secrets go to a `0600` file
 
 <details>
-<summary>Nomes de pacote por distro</summary>
+<summary>Package names by distro</summary>
 
 **Fedora / KDE**
 ```sh
@@ -74,7 +74,7 @@ sudo apt install cmake g++ extra-cmake-modules \
 ```
 </details>
 
-### Compilar e rodar
+### Build and run
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -84,79 +84,79 @@ cmake --build build -j
 
 ### Flatpak
 
-O manifesto em `packaging/org.catarina.Catarina.yml` já inclui o QtKeychain:
+The manifest at `packaging/org.catarina.Catarina.yml` already includes QtKeychain:
 
 ```sh
 flatpak-builder --user --install --force-clean build-flatpak packaging/org.catarina.Catarina.yml
 ```
 
-### Instalar no sistema
+### Install to the system
 
 ```sh
 cmake --install build
 ```
 
-## Testes
+## Tests
 
 ```sh
 ctest --test-dir build --output-on-failure
 ```
 
-| Alvo | Cobre |
+| Target | Covers |
 |---|---|
-| `check_storage` | lógica pura de request, resolução de variáveis, segredos, persistência em disco, seed |
-| `check_http` | integração HTTP real com servidor local (resposta, erro, cancelamento, multipart) |
-| `tst_components` | componentes QML e lógica JS (QtQuickTest) |
-| `tst_app` | comportamento de tela: abas, sessão, edição/dirty, exclusão, import, guias |
-| `check_highlighter` | realce de sintaxe JSON |
-| `qml_smoke` | o app carrega sem erros de QML |
+| `check_storage` | pure request logic, variable resolution, secrets, disk persistence, seed |
+| `check_http` | real HTTP integration with a local server (response, error, cancellation, multipart) |
+| `tst_components` | QML components and JS logic (QtQuickTest) |
+| `tst_app` | screen behavior: tabs, session, editing/dirty, deletion, import, guides |
+| `check_highlighter` | JSON syntax highlighting |
+| `qml_smoke` | the app loads without QML errors |
 
-Os testes são **herméticos** (diretório temporário, sem tocar nos seus dados nem no cofre real).
+The tests are **hermetic** (temporary directory, touching neither your data nor the real keyring).
 
-## Estrutura do projeto
+## Project structure
 
 ```
 src/
-  core/       lógica pura: schema do request, substituição de variáveis, resolução
-  storage/    I/O atrás de injeção: coleções, ambientes, histórico, segredos
-  net/        montagem do request (RequestBuilder) e envio (HttpClient)
-  backend.*   fachada Q_INVOKABLE exposta ao QML
-  settings.*  preferências;  highlighter.*  realce de {{var}}/JSON;  main.cpp
+  core/       pure logic: request schema, variable substitution, resolution
+  storage/    I/O behind injection: collections, environments, history, secrets
+  net/        request assembly (RequestBuilder) and sending (HttpClient)
+  backend.*   Q_INVOKABLE facade exposed to QML
+  settings.*  preferences;  highlighter.*  {{var}}/JSON highlighting;  main.cpp
 qml/
-  Main.qml        janela + wiring (shell)
-  AppController   estado e orquestração (QtObject não-visual)
-  screens/        telas (RequestEditor, ResponsePane, CollectionScreen, ...)
-  dialogs/        modais e popups
-  js/, Util.js, Strings.js   lógica pura e textos
+  Main.qml        window + wiring (shell)
+  AppController   state and orchestration (non-visual QtObject)
+  screens/        screens (RequestEditor, ResponsePane, CollectionScreen, ...)
+  dialogs/        modals and popups
+  js/, Util.js, Strings.js   pure logic and texts
 tests/            check_*, tst_* (ctest)
-docs/DESIGN.md    padrões visuais e de componentes
+docs/DESIGN.md    visual and component standards
 ```
 
-**Onde ficam os dados**
+**Where the data lives**
 
-| O quê | Onde |
+| What | Where |
 |---|---|
-| Coleções/requests | `~/catarina-collections` (configurável) |
-| Preferências | `~/.config/catarina/catarina.ini` |
-| Segredos | cofre do SO ou `~/.local/share/catarina/secrets.json` (`0600`) |
-| Histórico | `~/.local/share/catarina/history.json` |
+| Collections/requests | `~/catarina-collections` (configurable) |
+| Preferences | `~/.config/catarina/catarina.ini` |
+| Secrets | OS keyring or `~/.local/share/catarina/secrets.json` (`0600`) |
+| History | `~/.local/share/catarina/history.json` |
 
-## Contribuindo
+## Contributing
 
-1. Leia **[`AGENTS.md`](AGENTS.md)** (regras para agentes/contribuidores) e
-   **[`docs/DESIGN.md`](docs/DESIGN.md)** antes de mexer na UI — os componentes e o espaçamento
-   seguem um padrão único.
-2. Reutilize os componentes existentes (`KvTable`, `SaveBar`, `EmptyState`, ...) em vez de criar
-   locais; se um padrão novo surgir, **documente no DESIGN.md**.
-3. Rode `ctest` antes de abrir o PR. Mantenha o histórico em commits pequenos e descritivos
+1. Read **[`AGENTS.md`](AGENTS.md)** (rules for agents/contributors) and
+   **[`docs/DESIGN.md`](docs/DESIGN.md)** before touching the UI — the components and spacing
+   follow a single pattern.
+2. Reuse the existing components (`KvTable`, `SaveBar`, `EmptyState`, ...) instead of creating
+   local ones; if a new pattern emerges, **document it in DESIGN.md**.
+3. Run `ctest` before opening the PR. Keep history in small, descriptive commits
    (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
 
-## Licença
+## License
 
-Ainda **não definida** — falta adicionar um arquivo `LICENSE`. Até lá, trate como
-"todos os direitos reservados". (Se quiser, abrimos um PR adicionando MIT/GPL.)
+Not **defined** yet — a `LICENSE` file still needs to be added. Until then, treat it as
+"all rights reserved". (If you'd like, we can open a PR adding MIT/GPL.)
 
-## Créditos
+## Credits
 
-Feito com [Qt](https://www.qt.io/) e [KDE Kirigami](https://invent.kde.org/frameworks/kirigami).
-A coleção de exemplo usa a API pública do [DummyJSON](https://dummyjson.com/).
+Built with [Qt](https://www.qt.io/) and [KDE Kirigami](https://invent.kde.org/frameworks/kirigami).
+The example collection uses the public [DummyJSON](https://dummyjson.com/) API.

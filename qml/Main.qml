@@ -15,9 +15,9 @@ Kirigami.ApplicationWindow {
     minimumWidth: 1000
     minimumHeight: 560
 
-    // ---- árvore/coleções ----
+    // ---- tree/collections ----
 
-    // ---- abas ----
+    // ---- tabs ----
     ListModel { id: tabsModel }
 
     ListModel { id: paramsModel }
@@ -28,7 +28,7 @@ Kirigami.ApplicationWindow {
     ListModel { id: collectionHeadersModel }
     ListModel { id: treeModel }
 
-    // exposto para os testes de comportamento de tela (tests/tst_app.qml)
+    // exposed for screen behavior tests (tests/tst_app.qml)
     readonly property var appController: controller
 
     AppController {
@@ -68,24 +68,24 @@ Kirigami.ApplicationWindow {
 
 
 
-    // ================= ciclo de vida =================
+    // ================= lifecycle =================
     Component.onCompleted: {
-        controller.rebuildTree();      // imediato (a restauração usa o modelo já preenchido)
+        controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
-        // A Kirigami registra Alt+Left/Right (StandardKey Back/Forward) no pageStack,
-        // o que dá atalho ambíguo e anula a nossa navegação entre abas. Desativamos.
+        // Kirigami registers Alt+Left/Right (StandardKey Back/Forward) on the pageStack,
+        // which gives an ambiguous shortcut and cancels our tab navigation. We disable it.
         var pr = pageStack.data;
         for (var pi = 0; pi < pr.length; pi++)
             if (pr[pi] && pr[pi].sequences !== undefined) pr[pi].enabled = false;
-        var saved = settings.openTabs;      // restaura as abas da sessão anterior
+        var saved = settings.openTabs;      // restores the tabs from the previous session
         controller.restoreSessionTabs(saved);
         if (tabsModel.count > 0) {
             var idx = settings.openTabIndex;
             if (idx < 0 || idx >= tabsModel.count) idx = 0;
             controller.switchTab(idx);
         }
-        // sem abas salvas: ficamos no placeholder "Nenhum request aberto"
-        // (não abrimos a primeira coleção da árvore automaticamente)
+        // no saved tabs: we stay on the "No request open" placeholder
+        // (we don't open the tree's first collection automatically)
     }
 
 
@@ -112,7 +112,7 @@ Kirigami.ApplicationWindow {
             anchors.fill: parent
             spacing: 0
 
-            // ---------- barra superior ----------
+            // ---------- top bar ----------
             RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.smallSpacing
@@ -121,7 +121,7 @@ Kirigami.ApplicationWindow {
                                 isMask: true; color: Kirigami.Theme.textColor }
                 Label { text: Strings.t.appName; font.bold: true }
                 Item { Layout.fillWidth: true }
-                // grupo de painéis: esquerda (coleções) e direita (resposta)
+                // panel group: left (collections) and right (response)
                 RowLayout {
                     spacing: 0
                     ToolButton {
@@ -228,12 +228,12 @@ Kirigami.ApplicationWindow {
                     ctxMenu: ctxMenu
                 }
 
-                // ================= ÁREA PRINCIPAL =================
+                // ================= MAIN AREA =================
                 ColumnLayout {
                     SplitView.fillWidth: true
                     spacing: 0
 
-                    // barra de abas
+                    // tab bar
                     TabStrip {
                         id: tabStrip
                         app: controller
@@ -248,7 +248,7 @@ Kirigami.ApplicationWindow {
                                       : (controller.showingEnv ? 3
                                       : (controller.showingCollection ? 1 : (controller.currentTab >= 0 ? 0 : 2)))
 
-                        // ---- 0: editor + resposta ----
+                        // ---- 0: editor + response ----
                         SplitView {
                             orientation: Qt.Horizontal
                             handle: SplitGrip {}
@@ -269,7 +269,7 @@ Kirigami.ApplicationWindow {
                             }
                         }
 
-                        // ---- 1: tela da coleção ----
+                        // ---- 1: collection screen ----
                         CollectionScreen {
                             id: collectionScreen
                             app: controller
@@ -278,12 +278,12 @@ Kirigami.ApplicationWindow {
                             collectionVarsModel: collectionVarsModel
                         }
 
-                        // ---- 2: vazio ----
+                        // ---- 2: empty ----
                         Item {
                             EmptyState {
                                 anchors.centerIn: parent
                                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-                                iconSource: "document-send"
+                                iconSource: "qrc:/icons/catarina.svg"
                                 title: Strings.t.noRequestOpen
                                 message: Strings.t.noRequestOpenHint
                                 actionText: Strings.t.newRequest
@@ -292,7 +292,7 @@ Kirigami.ApplicationWindow {
                             }
                         }
 
-                        // ---- 3: variáveis de ambiente (aba própria) ----
+                        // ---- 3: environment variables (own tab) ----
                         EnvironmentScreen {
                             id: envScreen
                             app: controller
@@ -302,7 +302,7 @@ Kirigami.ApplicationWindow {
                             discardEnvDialog: discardEnvDialog
                         }
 
-                        // ---- 4: configurações (aba própria) ----
+                        // ---- 4: settings (own tab) ----
                         SettingsScreen {
                             id: settingsPage
                             app: controller
@@ -315,7 +315,7 @@ Kirigami.ApplicationWindow {
             }
         }
 
-        // "bloco" que segue o mouse durante o arrasto
+        // "block" that follows the mouse during the drag
         Rectangle {
             id: dragGhost
             visible: controller.dragging
@@ -378,7 +378,7 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.delete; icon.name: "edit-delete"; onTriggered: controller.askDelete() }
     }
 
-    // ================= diálogos (extraídos p/ qml/dialogs) =================
+    // ================= dialogs (extracted to qml/dialogs) =================
     NewReqDialog { id: newReqDialog; app: controller }
     NameDialog { id: nameDialog; app: controller }
     ConfirmCloseDialog { id: confirmCloseDialog; app: controller; tabsModel: tabsModel }
@@ -398,8 +398,8 @@ Kirigami.ApplicationWindow {
     Connections {
         target: backend
         function onCollectionsChanged() { controller.reloadTree(); }
-        // recarrega também as variáveis em edição (se não houver alterações não salvas),
-        // para o escopo refletir um rename de coleção sem fechar a aba
+        // also reloads the variables being edited (if there are no unsaved changes),
+        // so the scope reflects a collection rename without closing the tab
         function onEnvironmentsChanged() {
             controller.reloadEnvs();
             controller.refreshResolved();
@@ -420,6 +420,6 @@ Kirigami.ApplicationWindow {
         curlExportDialog: curlExportDialog
     }
 
-    // Declarado por último para ficar acima de qualquer outra tela/dialog aberto.
+    // Declared last so it stays above any other open screen/dialog.
     DeleteDialog { id: deleteDialog }
 }

@@ -1,5 +1,5 @@
-// Setup do tst_app: sobe o backend/settings reais em diretórios temporários
-// (hermético) e os injeta como context properties, como o main.cpp faz.
+// tst_app setup: brings up the real backend/settings in temporary directories
+// (hermetic) and injects them as context properties, like main.cpp does.
 #include <QtQuickTest>
 #include <QQmlContext>
 #include <QQmlEngine>

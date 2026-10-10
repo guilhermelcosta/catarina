@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 import ".."
 import "../Strings.js" as Strings
 
-// Popover "mover para", ancorado à linha selecionada da árvore.
+// "Move to" popover, anchored to the selected tree row.
 Popup {
     id: moveDialog
     property var app
@@ -27,10 +27,10 @@ Popup {
         for (var i = 0; i < t.length; i++) {
             var e = t[i];
             if (!e.isFolder) continue;
-            if (e.relPath === item || e.relPath.indexOf(item + "/") === 0) continue;  // não mover pra dentro de si
+            if (e.relPath === item || e.relPath.indexOf(item + "/") === 0) continue;  // don't move into itself
             moveModel.append({ label: e.relPath, path: e.relPath });
         }
-        // ancora na linha selecionada da árvore
+        // anchors to the selected tree row
         var idx = -1;
         for (var k = 0; k < treeModel.count; k++)
             if (treeModel.get(k).relPath === relPath) { idx = k; break; }

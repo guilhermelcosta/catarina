@@ -1,312 +1,325 @@
-# Guia de design e componentes — Catarina
+# Design and component guide — Catarina
 
-Regras visuais e de implementação do app. **Antes de criar/alterar qualquer elemento de UI,
-valide aqui qual é o padrão.** Se o padrão não existir, defina-o, implemente de forma
-reutilizável e **adicione-o a este documento**.
+Visual and implementation rules for the app. **Before creating/changing any UI element,
+check here what the pattern is.** If the pattern doesn't exist, define it, implement it in a
+reusable way, and **add it to this document**.
 
-Regra de ouro: se um elemento se repete (ou pode se repetir) em mais de um lugar, ele é um
-**componente compartilhado** — nunca reimplemente localmente.
+Golden rule: if an element repeats (or could repeat) in more than one place, it is a
+**shared component** — never reimplement it locally.
 
 ---
 
-## 1. Espaçamento (respiro)
+## 1. Spacing (breathing room)
 
-- **Padding de um painel/aba**: `Kirigami.Units.largeSpacing` em todas as bordas.
-- **Entre controles** e margens internas de linhas/cabeçalhos de tabela: `Kirigami.Units.smallSpacing`.
-- **Colunas de tabela**: espaçamento `smallSpacing` (no `KvTable`, `colSpacing`).
-- **Rótulo de estado vazio abaixo de um `ComboBox`** ("Sem corpo.", "Sem autenticação."): a
-  distância vertical vem **só** do `spacing` do `ColumnLayout` (`smallSpacing`) — use apenas
-  `Layout.leftMargin` para alinhar. **Não** some `Layout.topMargin` (o "Sem corpo." somava e
-  ficava com o dobro da distância do "Sem autenticação.").
+- **Padding of a panel/tab**: `Kirigami.Units.largeSpacing` on all edges.
+- **Between controls** and internal margins of table rows/headers: `Kirigami.Units.smallSpacing`.
+- **Table columns**: `smallSpacing` spacing (in `KvTable`, `colSpacing`).
+- **Empty-state label below a `ComboBox`** ("No body.", "No authentication."): the vertical
+  distance comes **only** from the `ColumnLayout` `spacing` (`smallSpacing`) — use only
+  `Layout.leftMargin` to align. Do **not** add `Layout.topMargin` (the "No body." label was
+  adding it and ended up with double the distance of "No authentication.").
 
-### ⚠️ `StackLayout` ignora `Layout.margins`
-Filhos de um `StackLayout` **não** respeitam `Layout.margins` (verificado). Para dar respiro:
-- envolva o conteúdo num `Item` e use `anchors.fill: parent; anchors.margins: <valor>` na
-  `ColumnLayout`/`RowLayout` interna; **ou**
-- use `padding: <valor>` em `ScrollView`.
+### ⚠️ `StackLayout` ignores `Layout.margins`
+Children of a `StackLayout` do **not** respect `Layout.margins` (verified). To give breathing room:
+- wrap the content in an `Item` and use `anchors.fill: parent; anchors.margins: <value>` on the
+  inner `ColumnLayout`/`RowLayout`; **or**
+- use `padding: <value>` on the `ScrollView`.
 
-### ⚠️ `StackLayout` espreme filho que é `Layout` com `ScrollView`
-O `StackLayout` dimensiona o filho atual com `newSize.expandedTo(min).boundedTo(max)`; num
-filho que é `ColumnLayout`/`RowLayout` (layout aninhado) contendo um `ScrollView`, o `max`
-calculado sai pequeno e o conteúdo aparece **espremido** (ex.: o corpo do payload virava uma
-linha só ao trocar para a aba). Verificado no app (xcb).
-- No filho `Layout` do `StackLayout`, defina `Layout.maximumHeight: Number.POSITIVE_INFINITY`
-  (ou `Layout.maximumWidth`, no eixo correspondente).
-- Filhos que são `Item`, `KvTable` ou `ScrollView` direto não sofrem disso.
-- Com o máximo liberado, o `ColumnLayout` passa a ocupar a altura toda do `StackLayout`; se
-  nenhum filho visível tiver `Layout.fillHeight: true`, o Qt **redistribui** o espaço sobrando
-  entre os filhos comuns e o cabeçalho "estica" (o combo ia parar no meio da página). Termine o
-  `ColumnLayout` com um `Item { Layout.fillHeight: true }`, deixando-o `visible` só quando
-  nenhum outro filho preenche (ex.: corpo em "nenhum", variáveis efetivas vazias).
+### ⚠️ `StackLayout` squeezes a child that is a `Layout` with a `ScrollView`
+The `StackLayout` sizes the current child with `newSize.expandedTo(min).boundedTo(max)`; for a
+child that is a `ColumnLayout`/`RowLayout` (nested layout) containing a `ScrollView`, the
+computed `max` comes out small and the content appears **squeezed** (e.g. the payload body
+collapsed to a single line when switching to the tab). Verified in the app (xcb).
+- On the `Layout` child of the `StackLayout`, set `Layout.maximumHeight: Number.POSITIVE_INFINITY`
+  (or `Layout.maximumWidth`, on the corresponding axis).
+- Children that are an `Item`, `KvTable`, or `ScrollView` directly do not suffer from this.
+- With the maximum released, the `ColumnLayout` starts occupying the full height of the
+  `StackLayout`; if no visible child has `Layout.fillHeight: true`, Qt **redistributes** the
+  leftover space among the ordinary children and the header "stretches" (the combo ended up in
+  the middle of the page). End the `ColumnLayout` with an `Item { Layout.fillHeight: true }`,
+  leaving it `visible` only when no other child fills (e.g. body set to "none", empty effective
+  variables).
 
-### Divisores arrastáveis (`SplitView`): área de agarrar generosa
-A área que o mouse acerta para redimensionar é o **tamanho implícito do `handle`**, não o
-traço desenhado. Um handle de `1px` é quase impossível de pegar. Padrão do app:
-`SplitGrip` (`qml/Main.qml`) — quadrado **transparente** de `smallSpacing*2 + 1` (zona de
-arraste) com uma linha de `1px` centralizada (visual), `cursorShape` conforme a orientação e
-realce no hover/arraste. Todo `SplitView` novo usa `handle: SplitGrip {}`.
+### Draggable dividers (`SplitView`): generous grab area
+The area the mouse actually hits to resize is the **implicit size of the `handle`**, not the
+drawn line. A `1px` handle is nearly impossible to grab. The app's pattern:
+`SplitGrip` (`qml/Main.qml`) — a **transparent** square of `smallSpacing*2 + 1` (drag zone) with
+a centered `1px` line (visual), `cursorShape` according to orientation, and hover/drag
+highlighting. Every new `SplitView` uses `handle: SplitGrip {}`.
 
-### ⚠️ `ListModel`: declare as roles no `append`, não via `setProperty`
-Uma role criada por `setProperty` **depois** que o delegate já existe **não chega ao
-delegate**: `model.<role>` fica `undefined` para sempre (o `get(i)` até enxerga o valor, mas
-a UI não). Já quebrou o pino das abas — ao restaurar a sessão as abas eram inseridas sem
-`pinned`/`preview`, e `setProperty(k, "pinned", true)` não aparecia na aba (o X continuava).
-- Sempre inclua **todas** as roles em **todo** `append` (ex.: `pinned: false, preview: false`).
-- Teste de regressão em `tests/tst_components.qml` (`test_listmodel_roles_declaradas`).
+### ⚠️ `ListModel`: declare roles in `append`, not via `setProperty`
+A role created by `setProperty` **after** the delegate already exists **does not reach the
+delegate**: `model.<role>` stays `undefined` forever (`get(i)` even sees the value, but the UI
+doesn't). This once broke the tab pin — when restoring the session, tabs were inserted without
+`pinned`/`preview`, and `setProperty(k, "pinned", true)` didn't show up on the tab (the X stayed).
+- Always include **all** roles in **every** `append` (e.g. `pinned: false, preview: false`).
+- Regression test in `tests/tst_components.qml` (`test_listmodel_roles_declaradas`).
 
-### ⚠️ `ToolTip.visible: hovered` rouba o clique
-Mostrar tooltip no hover de um item que precisa ser **clicado** (pino/X de aba, botões de
-ícone) faz o popup do tooltip engolir o clique — o `TapHandler`/`MouseArea` do item não
-dispara. Verificado em `qmltestrunner` (offscreen e xcb).
-- Preferir `ToolButton` (control) com `ToolTip.text` + `ToolTip.delay` (tooltip nativo, não
-  quebra o clique); **ou**
-- simplesmente não auto-mostrar tooltip nesses itens.
+### ⚠️ `ToolTip.visible: hovered` steals the click
+Showing a tooltip on hover for an item that must be **clicked** (tab pin/X, icon buttons) makes
+the tooltip popup swallow the click — the item's `TapHandler`/`MouseArea` never fires. Verified
+in `qmltestrunner` (offscreen and xcb).
+- Prefer a `ToolButton` (control) with `ToolTip.text` + `ToolTip.delay` (native tooltip, doesn't
+  break the click); **or**
+- simply don't auto-show tooltips on those items.
 
-### ⚠️ `text` programático não emite `textEdited`
-Setar `TextArea.text` por código (ex.: `VarCompleter.choose`) **não** dispara `textEdited` —
-ele só sai de edição do usuário. Quem escuta `onTextEdited` (o `KvTable` grava o modelo,
-o corpo/URL marcam dirty) fica desatualizado. Por isso o `VarCompleter.choose` emite
-`target.textEdited()` na mão (QML permite emitir um sinal C++). Regressão em
+### ⚠️ Programmatic `text` does not emit `textEdited`
+Setting `TextArea.text` from code (e.g. `VarCompleter.choose`) does **not** fire `textEdited` —
+that only comes from user editing. Whoever listens to `onTextEdited` (the `KvTable` writes the
+model, the body/URL mark dirty) becomes stale. That's why `VarCompleter.choose` emits
+`target.textEdited()` by hand (QML allows emitting a C++ signal). Regression in
 `tests/tst_components.qml` (`test_varcompleter_choose_notifica_edicao`).
 
 ---
 
-## 2. Opacidades (valores padrão)
+## 2. Opacities (default values)
 
-| Elemento | Opacidade |
+| Element | Opacity |
 |---|---|
-| Mensagem de estado vazio ("Nada aqui ainda.", "Sem resposta.", etc.) | `0.6` |
-| Cabeçalho de coluna de tabela (`font.bold: true`) | `0.65` |
-| Texto secundário/ajuda ("globais aparecem em toda visão", descrições) | `0.6` |
-| Linha de tabela desabilitada | `0.45` |
-| Variável efetiva desabilitada (lista) | `0.4` |
+| Empty-state message ("Nothing here yet.", "No response.", etc.) | `0.6` |
+| Table column header (`font.bold: true`) | `0.65` |
+| Secondary/help text ("globals appear in every view", descriptions) | `0.6` |
+| Disabled table row | `0.45` |
+| Disabled effective variable (list) | `0.4` |
 
 ---
 
-## 3. Botões e ações
+## 3. Buttons and actions
 
-Padrão de **posicionamento**: ações no **topo à direita**; "Adicionar" no **rodapé** da lista.
-Diferença de importância: primária = `highlighted` (ou `Accessible.defaultButton` dentro de diálogo — ver abaixo); secundária = `ToolButton` só com ícone + tooltip.
+**Positioning** pattern: actions at the **top right**; "Add" at the **footer** of the list.
+Difference in importance: primary = `highlighted` (or `Accessible.defaultButton` inside a dialog —
+see below); secondary = `ToolButton` with icon only + tooltip.
 
-| Ação | Forma | Ícone | Onde |
+| Action | Form | Icon | Where |
 |---|---|---|---|
-| Salvar (primária) | `Button { highlighted: true }` com texto | `document-save` | topo à direita; habilitado só quando há alterações |
-| Reverter/Descartar (secundária) | `ToolButton` só ícone + tooltip | `edit-undo` | antes do Salvar |
-| Renomear | `ToolButton` só ícone | `edit-rename` | ao lado do título |
-| Adicionar ("Adicionar"/"Novo …") | `Button`/`ToolButton` com texto | `list-add` | rodapé da lista/tabela |
-| Remover linha | `ToolButton` | `list-remove` | última coluna |
-| Excluir (destrutivo) | `Button`/`ToolButton` | `edit-delete` | toolbar (árvore) / rodapé (lista de ambientes) |
-| Duplicar | `MenuItem` | `edit-duplicate` | menus |
-| Enviar request | `Button { highlighted }` | `document-send` | toolbar do request |
+| Save (primary) | `Button { highlighted: true }` with text | `document-save` | top right; enabled only when there are changes |
+| Revert/Discard (secondary) | `ToolButton` with icon only + tooltip | `edit-undo` | before Save |
+| Rename | `ToolButton` with icon only | `edit-rename` | next to the title |
+| Add ("Add"/"New …") | `Button`/`ToolButton` with text | `list-add` | footer of the list/table |
+| Remove row | `ToolButton` | `list-remove` | last column |
+| Delete (destructive) | `Button`/`ToolButton` | `edit-delete` | toolbar (tree) / footer (environment list) |
+| Duplicate | `MenuItem` | `edit-duplicate` | menus |
+| Send request | `Button { highlighted }` | `document-send` | request toolbar |
 
-- **Diálogos (padrão)** — use as peças compartilhadas, todas com as mesmas distâncias:
-  1. `header: DialogHeader { dialogTitle: <id>.title }` (título negrito; o texto auxiliar não é).
-  2. corpo = **o próprio `contentItem`**, para o diálogo dimensionar pelo conteúdo:
+- **Dialogs (pattern)** — use the shared pieces, all with the same distances:
+  1. `header: DialogHeader { dialogTitle: <id>.title }` (bold title; the auxiliary text is not).
+  2. body = **the `contentItem` itself**, so the dialog sizes to its content:
      `contentItem: ColumnLayout { spacing: Kirigami.Units.smallSpacing; ... }`.
-     Rótulo de campo acima do input: `Layout.bottomMargin: smallSpacing`.
-  3. ações no fim, dentro do corpo: `DialogActions { Button {...}; Button {...} }` — ele já
-     empurra os botões para a direita, com `spacing`/`Layout.bottomMargin: smallSpacing` e o
-     primário `Accessible.defaultButton: true` (ver acima).
-  - **Não** fixe `height` nem use `Item { Layout.fillHeight: true }`: o diálogo auto-dimensiona e
-    a distância input ↔ botões fica sempre `smallSpacing`. Só use `height` quando o corpo tiver
-    lista/`ScrollView` (aí o `contentItem` continua sendo o `ColumnLayout`).
-  - Diálogo de confirmação/toast simples: mesmo padrão (é o que dá o respiro uniforme).
-  - **Ação primária de diálogo usa `Accessible.defaultButton: true`, não `highlighted`.** No estilo
-    Breeze (`org.kde.desktop/Button.qml`), `hasFocus: activeFocus || highlighted` — ou seja, um
-    botão `highlighted` é desenhado **como se estivesse focado** mesmo sem foco. Em diálogo, isso
-    fazia o primário parecer focado e, ao dar Tab, o primário e o botão realmente focado ficavam
-    ambos com borda de foco (parecia foco duplicado/preso). `Accessible.defaultButton` desenha o
-    realce de "ação padrão" (fundo tingido + borda suave), distinto da borda de foco.
-    Use `highlighted: true` só em ações primárias **fora** de diálogo (toolbar/SaveBar/EmptyState).
-- **Validação de diálogo é ao vivo** (conforme digita): `Label` vermelho abaixo do campo
-  (`negativeTextColor`) + botão primário desabilitado enquanto inválido. O diálogo tem **altura
-  fixa** já reservando o espaço da mensagem (senão, ou cresce ao digitar, ou os botões vazam).
-  Não use erro só-no-clique.
-- **Rótulo de formulário acima do campo**: não-negrito + `Layout.bottomMargin: smallSpacing`
-  (folga `2×smallSpacing` até o campo) — só o `spacing` do `ColumnLayout` deixa o texto "colado".
-- **Editor contextual pequeno**: prefira um **popover ancorado e não-modal** (aplica ao vivo), em vez
-  de um diálogo modal; a célula que o abre pode ser um **chip** (ícone + texto,
-  `alternateBackgroundColor`, borda `disabledTextColor`, `radius: 4`). Ex.: escopo da variável.
-- **Seção editável** (título + "alterações não salvas" + Reverter + Salvar): use **`SaveBar.qml`**.
-  Não recrie esse cabeçalho à mão.
+     Field label above the input: `Layout.bottomMargin: smallSpacing`.
+  3. actions at the end, inside the body: `DialogActions { Button {...}; Button {...} }` — it
+     already pushes the buttons to the right, with `spacing`/`Layout.bottomMargin: smallSpacing`
+     and the primary one `Accessible.defaultButton: true` (see above).
+  - Do **not** fix `height` nor use `Item { Layout.fillHeight: true }`: the dialog auto-sizes and
+    the input ↔ buttons distance always stays `smallSpacing`. Only use `height` when the body has
+    a list/`ScrollView` (then the `contentItem` is still the `ColumnLayout`).
+  - Simple confirmation/toast dialog: same pattern (it's what gives the uniform breathing room).
+  - **A dialog's primary action uses `Accessible.defaultButton: true`, not `highlighted`.** In the
+    Breeze style (`org.kde.desktop/Button.qml`), `hasFocus: activeFocus || highlighted` — that is, a
+    `highlighted` button is drawn **as if it were focused** even without focus. In a dialog, this
+    made the primary look focused and, when pressing Tab, the primary and the actually focused
+    button both showed a focus border (it looked like duplicated/stuck focus). `Accessible.defaultButton`
+    draws the "default action" highlight (tinted background + soft border), distinct from the focus
+    border. Use `highlighted: true` only for primary actions **outside** a dialog
+    (toolbar/SaveBar/EmptyState).
+- **Dialog validation is live** (as you type): a red `Label` below the field
+  (`negativeTextColor`) + primary button disabled while invalid. The dialog has a **fixed height**
+  already reserving the message space (otherwise it grows as you type, or the buttons leak out).
+  Don't use click-only errors.
+- **Form label above the field**: non-bold + `Layout.bottomMargin: smallSpacing`
+  (a `2×smallSpacing` gap to the field) — the `ColumnLayout` `spacing` alone leaves the text
+  "glued".
+- **Small contextual editor**: prefer an **anchored, non-modal popover** (applies live) over a
+  modal dialog; the cell that opens it can be a **chip** (icon + text, `alternateBackgroundColor`,
+  `disabledTextColor` border, `radius: 4`). E.g. variable scope.
+- **Editable section** (title + "unsaved changes" + Revert + Save): use **`SaveBar.qml`**.
+  Don't recreate that header by hand.
 
 ---
 
-## 4. Ícones
+## 4. Icons
 
-Use nomes do Breeze e **confirme que existem no tema** (ícones inexistentes ficam quebrados;
-ex.: `vcs-repo` não existe). Convenção fixa:
+Use Breeze names and **confirm they exist in the theme** (missing icons show up broken; e.g.
+`vcs-repo` doesn't exist). Fixed convention:
 
-| Conceito | Ícone |
+| Concept | Icon |
 |---|---|
-| Coleção (nível raiz) | `folder-documents` |
-| Pasta/subpasta | `folder` |
-| Nova pasta | `folder-new` |
-| Ambiente(s) | `vcs-branch` |
-| Novo request | `document-new` |
-| Salvar / Reverter / Renomear | `document-save` / `edit-undo` / `edit-rename` |
-| Excluir / Remover linha | `edit-delete` / `list-remove` |
-| Revelar/ocultar segredo | `view-visible` / `view-hidden` |
+| Collection (root level) | `folder-documents` |
+| Folder/subfolder | `folder` |
+| New folder | `folder-new` |
+| Environment(s) | `vcs-branch` |
+| New request | `document-new` |
+| Save / Revert / Rename | `document-save` / `edit-undo` / `edit-rename` |
+| Delete / Remove row | `edit-delete` / `list-remove` |
+| Reveal/hide secret | `view-visible` / `view-hidden` |
 
-Checagem rápida: `find /usr/share/icons -iname "<nome>.svg"`.
+Quick check: `find /usr/share/icons -iname "<name>.svg"`.
 
 ---
 
-## 5. Componentes compartilhados (reutilize)
+## 5. Shared components (reuse)
 
-**Organização:** componentes atômicos em `qml/`; telas em `qml/screens/` (`CollectionScreen`,
+**Organization:** atomic components in `qml/`; screens in `qml/screens/` (`CollectionScreen`,
 `EnvironmentScreen`, `SettingsScreen`, `RequestEditor` + `BodyEditor`/`ReqVarsEditor`,
-`ResponsePane`, `Sidebar`, `TabStrip`); modais/popups em `qml/dialogs/`; lógica pura em
-`qml/Util.js` e `qml/js/` (`VarTokens.js`).
+`ResponsePane`, `Sidebar`, `TabStrip`); modals/popups in `qml/dialogs/`; pure logic in
+`qml/Util.js` and `qml/js/` (`VarTokens.js`).
 
-**Estado e orquestração:** `Main.qml` é **só a janela + wiring**. O estado e as ações (árvore,
-abas, coleção, ambientes, sessão, envio) vivem em `AppController.qml` — um `QtObject` não-visual.
-Telas e diálogos recebem `property var app`, que aponta para o **AppController**, e falam com ele
-via `app.<propriedade|função>`. **Não acesse ids da janela dentro de uma tela**; se precisar de
-algo novo do controlador, exponha uma propriedade/função nele.
+**State and orchestration:** `Main.qml` is **just the window + wiring**. State and actions (tree,
+tabs, collection, environments, session, sending) live in `AppController.qml` — a non-visual
+`QtObject`. Screens and dialogs receive `property var app`, which points to the **AppController**,
+and talk to it via `app.<property|function>`. **Don't access window ids from inside a screen**; if
+you need something new from the controller, expose a property/function on it.
 
-Em `qml/` (atômicos e de shell):
+In `qml/` (atomic and shell components):
 
-- **`KvTable.qml`** — tabela editável chave/valor (params, cabeçalhos, campos, variáveis de
-  request/coleção/ambiente). Opções: `secretColumn`, `allowFiles`, `scopeColumn`
+- **`KvTable.qml`** — editable key/value table (params, headers, fields, request/collection/
+  environment variables). Options: `secretColumn`, `allowFiles`, `scopeColumn`
   (+ `scopeText`/`scopeIcon`/`scopeColor`/`scopeRequested`), `rowFilter`, `resolved`/`collection`,
-  `uniqueNames` (nome repetido no mesmo escopo: texto em **vermelho e negrito** + motivo num
-  popup no hover do campo).
-  O `scopeColor(index)` pinta o chip de escopo por escopo (verde = global, azul = restrita a
-  coleções; **null** = neutro). **Toda tabela editável nova usa este componente** — estenda com
-  uma opção nova em vez de criar outra tabela.
-- **`DialogHeader.qml`** — cabeçalho padrão de diálogo (título negrito, mesmo padding).
-- **`DialogActions.qml`** — rodapé padrão de diálogo: botões à direita, mesmo `spacing` e
-  `Layout.bottomMargin`. **Todo diálogo usa os dois** — assim as distâncias (título ↔ input ↔
-  botões) são iguais em todos e um modal novo já nasce no padrão.
-- **`SaveBar.qml`** — cabeçalho de seção com indicador de rascunho + Reverter + Salvar;
-  opções `showDiscard`, `showRename`/`canRename` (lápis de renomear) e sinais `save`/`discard`/`rename`.
-- **`EmptyState.qml`** — estado vazio (placeholder) padronizado: ícone opcional (área fixa de 72px),
-  título, mensagem (`opacity 0.6`), atalho e ação opcional (`highlighted`). Fundo transparente
-  (herda o painel). Para ícone monocromático próprio (ex.: `catarina.svg`), passe `iconIsMask: true`
-  (fica com a cor do tema). **Todo placeholder usa este componente** — centralize com
-  `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
-- **`HeaderTable.qml`** — tabela somente-leitura (cabeçalhos HTTP da resposta); células selecionáveis + "Copiar tudo".
-- **`ResolvedVarsTable.qml`** — tabela somente-leitura das variáveis efetivas (Origem/Nome/Valor).
-  A coluna Origem tem **cor e ícone por escopo** (global/coleção/request) e a lista é ordenada por
-  origem (global → coleção → request) e depois por nome.
-- **`SourceChip.qml`** — chip de origem da variável (fundo tingido + ícone + texto, cor/ícone por
-  escopo: global/coleção/request). Usado por `ResolvedVarsTable` e `VarCompleter`.
-- **`MethodBadge.qml`** — badge do método HTTP (sigla colorida; cor vem de `app.methodColor`).
-  Usado na árvore, nas abas, na visão da coleção e no histórico.
-- **Árvore (`qml/Sidebar.qml`)** — coleções/requests aninhados. Recuo de **12px por nível**.
-  **Guias de indentação** (estilo VS Code): uma linha vertical de `1px` por nível de ancestral,
-  alinhada ao centro do triângulo daquele nível (`x = nível*12 + 9`), em
-  `Kirigami.Theme.textColor` com `opacity: 0.15`. O delegate guarda `itemDepth` e o `Repeater`
-  das guias usa `treeItem.itemDepth` (dentro de um `Repeater`, `model` é sombreado pelo modelo
-  dele). Regressão: `tests/app/tst_app.qml::test_indent_guides_por_profundidade`.
-- **`JsonTree.qml`** — árvore JSON da resposta (lazy: só parseia quando a aba "Árvore" está ativa).
-- **`AuthEditor.qml`** — editor de autenticação compartilhado (aba Authentication do request e da
-  coleção). `load(auth)` preenche, `value()` devolve o mapa, sinal `edited` quando o usuário muda.
-  Com `allowInherit: true` (request) oferece a opção **inherit**, que aplica a auth da coleção ao
-  request (`Backend::effectiveAuth`). **Todo editor de auth usa este componente.**
-- **`VarCompleter.qml`** — autocomplete/hover de `{{variavel}}` (usado por `VarField`). O popup de
-  hover mostra `nome = valor` + um **chip do escopo** (mesma cor/ícone de origem: global/coleção/
-  request), em vez de `(escopo)` entre parênteses.
-- **`VarField.qml`** — campo de texto de uma linha com `{{variavel}}` **embutido** (highlight +
-  autocomplete + hover). **Todo campo que aceita variáveis usa este componente** (URL, corpo,
-  auth, colunas Nome/Valor do `KvTable`). É `TextArea` porque o highlight precisa do
-  `QQuickTextDocument` — logo campos mascarados (`echoMode`, senha/segredo) não têm highlight.
-  Por ser `TextArea`, ele **bloqueia Enter/Return** (é campo de uma linha; sem isso Enter inseriria
-  quebra de linha no valor).
-- **`NetworkView.qml`** — aba "Rede".
-- **`Util.js`** — lógica pura/testável (cURL, formatação, reordenação de abas).
-  Coloque aqui qualquer função sem dependência de UI.
-- **`Strings.js`** — **todos os textos da UI** (inglês), num só arquivo. Use
-  `import "Strings.js" as Strings` e `text: Strings.t.<chave>` (ou `Strings.<função>(...)`
-  para mensagens parametrizadas). **Nunca** coloque literal de texto visível direto no QML, nem
-  valores de lógica (método, tipo, escopo, id) no `Strings.js`. O backend devolve **códigos**
-  (ex.: `variableNoteFor`, sinal `error`), e o QML traduz via `Strings.variableNote` /
+  `uniqueNames` (duplicate name in the same scope: text in **red and bold** + reason in a popup on
+  field hover). `scopeColor(index)` paints the scope chip per scope (green = global, blue =
+  restricted to collections; **null** = neutral). **Every new editable table uses this component** —
+  extend it with a new option instead of creating another table.
+- **`DialogHeader.qml`** — standard dialog header (bold title, same padding).
+- **`DialogActions.qml`** — standard dialog footer: buttons to the right, same `spacing` and
+  `Layout.bottomMargin`. **Every dialog uses both** — so the distances (title ↔ input ↔ buttons)
+  are the same across all of them and a new modal is born on-pattern.
+- **`SaveBar.qml`** — section header with a draft indicator + Revert + Save; options
+  `showDiscard`, `showRename`/`canRename` (rename pencil) and signals `save`/`discard`/`rename`.
+- **`EmptyState.qml`** — standardized empty state (placeholder): optional icon (fixed 72px area),
+  title, message (`opacity 0.6`), shortcut, and optional action (`highlighted`). Transparent
+  background (inherits the panel). For your own monochrome icon (e.g. `catarina.svg`), pass
+  `iconIsMask: true` (it takes the theme color). **Every placeholder uses this component** — center
+  it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
+- **`HeaderTable.qml`** — read-only table (response HTTP headers); selectable cells + "Copy all".
+- **`ResolvedVarsTable.qml`** — read-only table of effective variables (Source/Name/Value).
+  The Source column has **color and icon per scope** (global/collection/request) and the list is
+  sorted by source (global → collection → request) and then by name.
+- **`SourceChip.qml`** — variable source chip (tinted background + icon + text, color/icon per
+  scope: global/collection/request). Used by `ResolvedVarsTable` and `VarCompleter`.
+- **`MethodBadge.qml`** — HTTP method badge (colored abbreviation; color comes from
+  `app.methodColor`). Used in the tree, tabs, collection view, and history.
+- **Tree (`qml/Sidebar.qml`)** — nested collections/requests. **12px indent per level**.
+  **Indent guides** (VS Code style): a vertical `1px` line per ancestor level, aligned to the
+  center of that level's triangle (`x = level*12 + 9`), in `Kirigami.Theme.textColor` with
+  `opacity: 0.15`. The delegate stores `itemDepth` and the guide `Repeater` uses
+  `treeItem.itemDepth` (inside a `Repeater`, `model` is shadowed by its own model). Regression:
+  `tests/app/tst_app.qml::test_indent_guides_por_profundidade`.
+- **`JsonTree.qml`** — JSON tree of the response (lazy: only parses when the "Tree" tab is active).
+- **`AuthEditor.qml`** — shared authentication editor (request and collection Authentication tab).
+  `load(auth)` fills it in, `value()` returns the map, `edited` signal when the user changes it.
+  With `allowInherit: true` (request) it offers the **inherit** option, which applies the
+  collection's auth to the request (`Backend::effectiveAuth`). **Every auth editor uses this
+  component.**
+- **`VarCompleter.qml`** — autocomplete/hover for `{{variable}}` (used by `VarField`). The hover
+  popup shows `name = value` + a **scope chip** (same color/icon as the source: global/collection/
+  request), instead of `(scope)` in parentheses.
+- **`VarField.qml`** — single-line text field with `{{variable}}` **built in** (highlight +
+  autocomplete + hover). **Every field that accepts variables uses this component** (URL, body,
+  auth, Name/Value columns of the `KvTable`). It is a `TextArea` because the highlight needs the
+  `QQuickTextDocument` — hence masked fields (`echoMode`, password/secret) have no highlight.
+  Being a `TextArea`, it **blocks Enter/Return** (it's a single-line field; without that, Enter
+  would insert a line break in the value).
+- **`NetworkView.qml`** — "Network" tab.
+- **`Util.js`** — pure/testable logic (cURL, formatting, tab reordering). Put any function with no
+  UI dependency here.
+- **`Strings.js`** — **all UI texts** (English), in a single file. Use
+  `import "Strings.js" as Strings` and `text: Strings.t.<key>` (or `Strings.<function>(...)`
+  for parameterized messages). **Never** put a visible text literal directly in QML, nor logic
+  values (method, type, scope, id) in `Strings.js`. The backend returns **codes** (e.g.
+  `variableNoteFor`, `error` signal), and QML translates via `Strings.variableNote` /
   `Strings.backendError`.
 
-### Tabelas responsivas (regra)
-- Colunas flexíveis: `Layout.fillWidth: true` + **`Layout.preferredWidth` e `Layout.minimumWidth`
-  explícitos** (nunca dependa do tamanho implícito de `Label` vs `TextField` — foi o que desalinhou).
-- Colunas pequenas fixas: `preferred = minimum = maximum` (Ativo 48, Tipo 90, Segredo 64, Remover 40 no `KvTable`).
-- **Cabeçalho e linhas usam os mesmos `preferred`/`minimum`** → ficam alinhados.
-- **Nunca** derive a largura de coluna da própria `width` da tabela (cria loop de polish do layout).
+### Responsive tables (rule)
+- Flexible columns: `Layout.fillWidth: true` + **explicit `Layout.preferredWidth` and
+  `Layout.minimumWidth`** (never rely on the implicit size of `Label` vs `TextField` — that's what
+  misaligned things).
+- Small fixed columns: `preferred = minimum = maximum` (Active 48, Type 90, Secret 64, Remove 40
+  in `KvTable`).
+- **Header and rows use the same `preferred`/`minimum`** → they stay aligned.
+- **Never** derive a column width from the table's own `width` (creates a layout polish loop).
 
 ---
 
-## 6. Regras de dados / UX
+## 6. Data / UX rules
 
-- **Variáveis** têm `enabled`; desabilitada não resolve em `{{...}}`, fica esmaecida e o
-  autocomplete não a oferece. A resolução é única (`Backend::variableChain`) para todos os escopos.
-- **Nome de variável é único por escopo** (ambiente, coleção ou request). O mesmo nome em escopos
-  diferentes é ok (eles se sobrepõem); repetido no mesmo escopo é recusado
-  (`Backend::duplicateVariableName`, nomes aparados). A UI bloqueia o **Salvar** e o campo
-  duplicado mostra o motivo num **popup no hover** (mesmo estilo do hover de `{{variavel}}`).
-- **Nome e valor podem referenciar outra variável** via `{{outra}}` (ex.: nome `{{env}}_url`
-  vira o valor de `env`; valor `{{host}}/x` encadeia). Resolvido em `Backend::variableChain`
-  (nome **e** valor num laço único, reconstruindo o mapa de nomes a cada passada até
-  estabilizar — cobre referência encadeada, ex.: `{{variavel-1}}` → `valor 1` e `{{valor 1}}`
-  → `valor 2`). O número máximo de passadas é a constante
-  `kMaxVariableResolvePasses` (`src/backend.cpp`): ~1 passada por nível encadeado e, ao mesmo
-  tempo, teto de segurança para referência cíclica (`{{a}}`↔`{{b}}`), que não converge.
-- **Segredos**: o valor real é carregado do cofre para edição (mascarado no campo com segredo),
-  mas **nunca** é escrito no arquivo versionado; desmarcar "segredo" grava em claro e limpa o cofre.
-  O armazenamento é o **cofre do SO** via QtKeychain (Secret Service/KWallet/Keychain) — um blob
-  JSON sob o serviço `catarina`; sem o QtKeychain na build, cai para
-  `~/.local/share/catarina/catarina/secrets.json` (`0600`). Um `secrets.json` antigo é migrado pro
-  cofre e removido no primeiro uso (`CATARINA_SECRETS_BACKEND=file` força o arquivo — usado nos testes).
-  O campo mascarado (`KvTable`) traz um **olho** (`view-visible`/`view-hidden`) que alterna o
-  `echoMode` para espiar o valor sem desmarcar segredo. Esse `TextField` repete a
-  `implicitHeight`/padding do `VarField` (`gridUnit * 1.7`), senão as bolinhas do `echoMode`
-  mudam a altura da linha conforme a fonte.
-- **Confirmações de exclusão**: todas seguem `settings.confirmDelete` (ou confirma em tudo, ou em nada).
-- **Resposta**: Ctrl+F busca no corpo completo; JSON sempre pretty; área de status reserva altura fixa.
-- **Coleção de exemplo**: no primeiro uso (storage vazio, marca `.catarina/.seeded`) o backend copia
-  `seed/` (recursos `:/seed`, embutidos no binário) — a coleção **DummyJSON** de demonstração
-  (GET/POST/PUT/DELETE, params, variáveis e auth herdada) e um **ambiente Demo** com variável
-  global (`locale`), para o exemplo já mostrar os três tipos de variável (global/coleção/request).
-  Não sobrescreve quem já tem coleções e
-  não recria depois que o usuário apaga. Só o app chama (`main.cpp`), não o construtor do `Backend`.
-- **Preview da query na barra de URL**: os params ativos aparecem concatenados logo após o texto
-  digitado, em destaque (`Kirigami.Theme.highlightColor`, fundo a 14%), para mostrar o que será
-  enviado sem abrir a aba Rede. É só visual — não entra no texto editável — e some se a URL
-  transborda o campo. Lógica pura em `Util.querySuffix` (mesma semântica de `Backend::buildUrl`),
-  testada em `tst_components`.
-- **Sessão**: só abas **fixadas** voltam ao reabrir o app (`Util.sessionPaths`); preview e demais
-  não-fixadas são transientes. `restoreSessionTabs` recria as fixadas já com o pino.
-- **Renomear coleção**: reaponta o escopo (`collections`) das variáveis de ambiente que a
-  referenciam (`Backend::renameCollectionScope`), senão o escopo fica órfão.
-- **Autenticação de coleção**: fica em `.auth.json` (mesma pasta da coleção, versionável) e é
-  aplicada a todo request cuja auth seja `inherit` (`Backend::effectiveAuth`); qualquer outro
-  tipo usa a auth do próprio request. O request tem prioridade, como nos cabeçalhos.
-- **Idioma da UI**: inglês, **centralizado em `qml/Strings.js`**. Mudar qualquer texto = editar
-  só esse arquivo.
-- **Origem de variável**: valores `"global"` / `"collection"` / `"request"` (usados por lógica e
-  exibidos nos chips de origem). Na visão geral da coleção, as variáveis em edição são resolvidas
-  por `Backend::resolvedCollectionVariables` para manter a origem `"collection"` (não `"request"`).
-- **Alterações não salvas (dirty)**: o indicador de rascunho (SaveBar/aba) só aparece quando o
-  estado atual **difere do salvo** — mudar e desfazer na mão zera o dirty. A comparação usa
-  `Util.stableStringify` (JSON canônico, ignora a ordem das chaves). Cada escopo guarda o seu
-  baseline: `savedJson` da aba de request, `collectionVarsBaseline`/`Headers`/`Auth` e
-  `envVarsBaseline`. Ao editar, **recompute** contra o baseline (não ligue um booleano); ao
-  carregar/salvar/reverter, atualize o baseline.
-- **Navegação por teclado**:
-  - `KvTable`: Tab/Shift+Tab andam célula a célula (`moveFocus`), por linha/coluna; campos
-    `VarField` recebem `tabHandler` e o delegate cobre os demais controles.
-  - Modais com input: foco automático no campo (`onOpened`); Left/Right navegam entre os botões
-    (`KeyNavigation`), Up/Down ligam campo ↔ botões. O `TextField` mantém Left/Right para o cursor.
-  - Modais: **Enter/Return clica o botão focado** (além de Espaço), via `Keys.onReturnPressed` no
-    `DialogActions` — o botão não consome Return, então a tecla sobe até o rodapé, que chama
-    `click()` no `Window.activeFocusItem`. Campos de texto consomem Return sozinhos (`onAccepted`).
+- **Variables** have `enabled`; a disabled one doesn't resolve in `{{...}}`, is dimmed, and
+  autocomplete doesn't offer it. Resolution is unique (`Backend::variableChain`) for all scopes.
+- **A variable name is unique per scope** (environment, collection, or request). The same name in
+  different scopes is ok (they overlap); repeated in the same scope is rejected
+  (`Backend::duplicateVariableName`, trimmed names). The UI blocks **Save** and the duplicated
+  field shows the reason in a **popup on hover** (same style as the `{{variable}}` hover).
+- **Name and value can reference another variable** via `{{other}}` (e.g. name `{{env}}_url`
+  becomes the value of `env`; value `{{host}}/x` chains). Resolved in `Backend::variableChain`
+  (name **and** value in a single loop, rebuilding the name map each pass until it stabilizes —
+  covers chained references, e.g. `{{variable-1}}` → `value 1` and `{{value 1}}` → `value 2`).
+  The maximum number of passes is the constant `kMaxVariableResolvePasses` (`src/backend.cpp`):
+  ~1 pass per chained level and, at the same time, a safety ceiling for cyclic references
+  (`{{a}}`↔`{{b}}`), which doesn't converge.
+- **Secrets**: the real value is loaded from the keyring for editing (masked in the field with a
+  secret), but is **never** written to the versioned file; unchecking "secret" writes it in clear
+  and clears the keyring. Storage is the **OS keyring** via QtKeychain (Secret
+  Service/KWallet/Keychain) — a JSON blob under the service `catarina`; without QtKeychain in the
+  build, it falls back to `~/.local/share/catarina/catarina/secrets.json` (`0600`). An old
+  `secrets.json` is migrated to the keyring and removed on first use
+  (`CATARINA_SECRETS_BACKEND=file` forces the file — used in tests). The masked field (`KvTable`)
+  brings an **eye** (`view-visible`/`view-hidden`) that toggles `echoMode` to peek at the value
+  without unchecking secret. This `TextField` repeats the `implicitHeight`/padding of `VarField`
+  (`gridUnit * 1.7`), otherwise the `echoMode` dots change the row height depending on the font.
+- **Delete confirmations**: all follow `settings.confirmDelete` (either confirm on everything, or
+  on nothing).
+- **Response**: Ctrl+F searches the full body; JSON always pretty; the status area reserves a fixed
+  height.
+- **Example collection**: on first use (empty storage, `.catarina/.seeded` marker) the backend
+  copies `seed/` (resources `:/seed`, embedded in the binary) — the demo **DummyJSON** collection
+  (GET/POST/PUT/DELETE, params, variables, and inherited auth) and a **Demo environment** with a
+  global variable (`locale`), so the example already shows the three variable types
+  (global/collection/request). It doesn't overwrite anyone who already has collections and
+  doesn't recreate after the user deletes it. Only the app calls it (`main.cpp`), not the
+  `Backend` constructor.
+- **Query preview in the URL bar**: the active params appear concatenated right after the typed
+  text, highlighted (`Kirigami.Theme.highlightColor`, background at 14%), to show what will be
+  sent without opening the Network tab. It's visual only — it doesn't enter the editable text — and
+  disappears if the URL overflows the field. Pure logic in `Util.querySuffix` (same semantics as
+  `Backend::buildUrl`), tested in `tst_components`.
+- **Session**: only **pinned** tabs come back when reopening the app (`Util.sessionPaths`);
+  preview and other non-pinned ones are transient. `restoreSessionTabs` recreates the pinned ones
+  already pinned.
+- **Rename collection**: repoints the scope (`collections`) of the environment variables that
+  reference it (`Backend::renameCollectionScope`), otherwise the scope is left orphaned.
+- **Collection authentication**: lives in `.auth.json` (same folder as the collection,
+  versionable) and is applied to every request whose auth is `inherit`
+  (`Backend::effectiveAuth`); any other type uses the request's own auth. The request takes
+  priority, as with headers.
+- **UI language**: English, **centralized in `qml/Strings.js`**. Changing any text = editing only
+  that file.
+- **Variable source**: values `"global"` / `"collection"` / `"request"` (used by logic and shown
+  in the source chips). In the collection overview, the variables being edited are resolved by
+  `Backend::resolvedCollectionVariables` to keep the source `"collection"` (not `"request"`).
+- **Unsaved changes (dirty)**: the draft indicator (SaveBar/tab) only appears when the current
+  state **differs from the saved one** — changing and undoing by hand clears the dirty flag. The
+  comparison uses `Util.stableStringify` (canonical JSON, ignores key order). Each scope keeps its
+  own baseline: the request tab's `savedJson`, `collectionVarsBaseline`/`Headers`/`Auth`, and
+  `envVarsBaseline`. When editing, **recompute** against the baseline (don't flip a boolean);
+  when loading/saving/reverting, update the baseline.
+- **Keyboard navigation**:
+  - `KvTable`: Tab/Shift+Tab move cell by cell (`moveFocus`), by row/column; `VarField` fields
+    receive a `tabHandler` and the delegate covers the remaining controls.
+  - Modals with input: focus automatically on the field (`onOpened`); Left/Right navigate between
+    buttons (`KeyNavigation`), Up/Down link field ↔ buttons. The `TextField` keeps Left/Right for
+    the cursor.
+  - Modals: **Enter/Return clicks the focused button** (in addition to Space), via
+    `Keys.onReturnPressed` on `DialogActions` — the button doesn't consume Return, so the key rises
+    to the footer, which calls `click()` on `Window.activeFocusItem`. Text fields consume Return
+    themselves (`onAccepted`).
 
 ---
 
-## 7. Checklist ao criar um elemento novo
+## 7. Checklist when creating a new element
 
-1. Já existe componente/padrão para isso? Reutilize (seção 5).
-2. Espaçamento: `largeSpacing` (painel) / `smallSpacing` (interno) — seção 1.
-3. Opacidade conforme a tabela — seção 2.
-4. Botões: posição e forma conforme a seção 3 (`SaveBar` para seções editáveis).
-5. Ícone existe no tema e segue a convenção — seção 4.
-6. Se é tabela: use `KvTable`; se precisa de coluna/opção nova, **estenda o `KvTable`**.
-7. Tela/delegate novo fala com o app via `app` (AppController) — **não** acesse ids da janela.
-8. Se surgiu um padrão novo → **documente aqui**.
+1. Does a component/pattern for this already exist? Reuse it (section 5).
+2. Spacing: `largeSpacing` (panel) / `smallSpacing` (internal) — section 1.
+3. Opacity per the table — section 2.
+4. Buttons: position and form per section 3 (`SaveBar` for editable sections).
+5. Icon exists in the theme and follows the convention — section 4.
+6. If it's a table: use `KvTable`; if you need a new column/option, **extend the `KvTable`**.
+7. A new screen/delegate talks to the app via `app` (AppController) — do **not** access window ids.
+8. If a new pattern emerged → **document it here**.

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Dialogs
 import "../Strings.js" as Strings
 
-// FolderDialog das configurações: aplica a pasta escolhida no campo da tela (injetado).
+// Settings FolderDialog: applies the chosen folder to the screen's field (injected).
 FolderDialog {
     id: folderPicker
     property var dirField

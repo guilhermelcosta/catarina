@@ -1,8 +1,8 @@
 .pragma library
 
-// Lógica de domínio pura, independente da UI: parsing/geração de cURL e
-// formatação. Mantido fora do Main.qml de propósito — aqui só entra
-// código sem dependência de estado da tela, então dá pra reusar e testar isolado.
+// Pure domain logic, independent of the UI: cURL parsing/generation and
+// formatting. Kept out of Main.qml on purpose — only code with no screen-state
+// dependency goes here, so it can be reused and tested in isolation.
 
 function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
 
@@ -40,7 +40,7 @@ function parseCurl(text) {
         else if (a === "-u" || a === "--user") { var up = t[++i].split(":"); r.auth = { type: "basic", user: up[0] || "", pass: up[1] || "" }; }
         else if (a === "--url") r.url = t[++i];
         else if (a === "-I" || a === "--head") r.method = "HEAD";
-        else if (a.charAt(0) === "-") { /* ignora flags desconhecidas */ }
+        else if (a.charAt(0) === "-") { /* ignore unknown flags */ }
         else if (r.url === "") r.url = a;
     }
     if (r.method === "") r.method = r.body.length > 0 ? "POST" : "GET";
@@ -51,7 +51,7 @@ function parseCurl(text) {
     return r;
 }
 
-// gera um comando cURL a partir de um objeto { method, url, headers[], body }
+// generates a cURL command from an object { method, url, headers[], body }
 function exportCode(p) {
     var hs = p.headers;
     var s = "curl -X " + p.method + " " + q(p.url);
@@ -60,9 +60,9 @@ function exportCode(p) {
     return s;
 }
 
-// JSON canônico: ordena as chaves de objeto recursivamente (arrays mantêm a ordem).
-// Serve para comparar estados ("dirty") ignorando a ordem das chaves — voltar ao
-// valor original tem que dar igual, mesmo que o objeto tenha sido remontado.
+// Canonical JSON: sorts object keys recursively (arrays keep their order).
+// Used to compare ("dirty") states ignoring key order — returning to the
+// original value must compare equal, even if the object was rebuilt.
 function stableStringify(v) {
     if (Array.isArray(v))
         return "[" + v.map(stableStringify).join(",") + "]";
@@ -77,10 +77,10 @@ function stableStringify(v) {
     return JSON.stringify(v);
 }
 
-// Fixação de abas (modelo do VS Code): fixada = permanente; desfixar devolve a
-// aba ao estado "preview" (transiente, a próxima request abre sobre ela) e garante
-// que só exista um preview. Recebe o estado atual [{pinned, preview}] e o índice
-// clicado; devolve só as mudanças [{index, pinned, preview}] a aplicar.
+// Tab pinning (VS Code model): pinned = permanent; unpinning returns the
+// tab to the "preview" state (transient, the next request opens over it) and ensures
+// only one preview exists. Takes the current state [{pinned, preview}] and the
+// clicked index; returns only the changes [{index, pinned, preview}] to apply.
 function tabPin(tabs, i) {
     if (i < 0 || i >= tabs.length)
         return [];
@@ -94,15 +94,15 @@ function tabPin(tabs, i) {
     return changes;
 }
 
-// Reordenação de abas: dado o ponto de inserção "to" (0..count), devolve o
-// índice de destino para ListModel.move() e o novo índice da aba ativa.
-// Devolve null quando não há mudança.
+// Tab reordering: given the insertion point "to" (0..count), returns the
+// destination index for ListModel.move() and the new index of the active tab.
+// Returns null when there is no change.
 function tabMove(count, from, to, current) {
     if (from < 0 || from >= count)
         return null;
     if (to < 0) to = 0;
     if (to > count) to = count;
-    var dest = to > from ? to - 1 : to;   // após a remoção o índice desloca
+    var dest = to > from ? to - 1 : to;   // after removal the index shifts
     if (dest === from)
         return null;
     if (current === from)
@@ -114,9 +114,9 @@ function tabMove(count, from, to, current) {
     return { dest: dest, current: current };
 }
 
-// Sessão persistida: só abas fixadas sobrevivem ao restart (as demais são
-// transientes). Recebe os tabs [{ relPath, pinned }] e o índice ativo; devolve
-// a lista de paths a salvar e o índice ativo remapeado (0 se a ativa sumiu).
+// Persisted session: only pinned tabs survive a restart (the rest are
+// transient). Takes the tabs [{ relPath, pinned }] and the active index; returns
+// the list of paths to save and the remapped active index (0 if the active one is gone).
 function sessionPaths(tabs, current) {
     var paths = [], idx = 0;
     for (var i = 0; i < tabs.length; i++) {
