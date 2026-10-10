@@ -1,23 +1,29 @@
 #pragma once
 
-#include <QHash>
-#include <QList>
-#include <QNetworkAccessManager>
 #include <QObject>
-#include <QPair>
 #include <QString>
 #include <QStringList>
-#include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
 
 #include "settings.h"
+#include "core/variable_resolver.h"
+#include "storage/collection_storage.h"
+#include "storage/environment_store.h"
+#include "storage/history_store.h"
+#include "storage/secret_store.h"
 
-class QNetworkReply;
+#include <memory>
 
-// Backend: envia requests (variáveis resolvidas por escopo, params, auth, multipart)
-// e guarda coleções como arquivos .json versionáveis em ~/katarina-collections.
-// Segredos ficam fora do repositório (~/.local/share/katarina/secrets.json, 0600).
+class HttpClient;
+
+// Backend: fachada QML. Envia requests (variáveis resolvidas por escopo, params,
+// auth, multipart) e delega a persistência aos stores:
+//   - CollectionStorage  ~/katarina-collections (.json versionáveis)
+//   - EnvironmentStore   <dir>/.katarina/environments.json
+//   - HistoryStore       ~/.local/share/katarina/history.json
+//   - SecretStore        cofre do SO ou ~/.local/share/katarina/secrets.json (0600)
+// Mantém os sinais e a API Q_INVOKABLE que o QML já usa.
 class Backend : public QObject
 {
     Q_OBJECT
@@ -27,6 +33,10 @@ class Backend : public QObject
 public:
     explicit Backend(QObject *parent = nullptr);
 
+    // injeção (testes): troca o armazenamento de segredos por um em memória,
+    // evitando tocar no cofre do SO ou em arquivos
+    void setSecretStore(std::unique_ptr<SecretStore> store);
+
     QString storageDir() const;
     Q_INVOKABLE void setStorageDir(const QString &dir);
     QString activeEnvironment() const;
@@ -34,16 +44,7 @@ public:
     // storage ainda está vazio e uma única vez (marca .katarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
 
-    // ---- lógica pura, testável sem rede ----
-    static QString substitute(const QString &text, const QVariantMap &vars);
-    static QVariantList substituteList(const QVariantList &list, const QVariantMap &vars);
-    static QUrl buildUrl(const QString &url, const QVariantList &params);
-    static QVariantMap authHeader(const QVariantMap &auth);
-    static QString defaultContentType(const QString &bodyType);
-    static QStringList variableRefs(const QString &text);            // nomes {{x}} num texto
-    static QString encodeForm(const QVariantList &fields);           // x-www-form-urlencoded
-    // auth efetiva: "inherit" usa a da coleção; qualquer outro tipo usa a do request
-    static QVariantMap effectiveAuth(const QVariantMap &requestAuth, const QVariantMap &collectionAuth);
+    // ---- lógica pura: movida para RequestLogic (src/core/request_logic.h) ----
     // partes efetivas de um request (method/url/headers/body) para exportação: aplica
     // auth e Content-Type padrão como no send, sem resolver {{variaveis}}
     Q_INVOKABLE QVariantMap requestParts(const QVariantMap &request) const;
@@ -51,6 +52,8 @@ public:
     // segredos), auth herdada aplicada e params anexados à URL — é o cURL "que funciona"
     Q_INVOKABLE QVariantMap resolvedRequestParts(const QVariantMap &request,
                                                  const QString &collection) const;
+    // preview do sufixo de query anexado pelos params ativos (mesma semântica do send)
+    Q_INVOKABLE QString querySuffix(const QString &url, const QVariantList &params) const;
 
     // ---- requisição ----
     // request: { method, url, params[], headers[], body, bodyType, fields[], auth{}, vars[] }
@@ -136,64 +139,23 @@ signals:
     void historyChanged();
 
 private:
-    struct Env {
-        QString name;
-        QVariantList variables;
-    };
+    // variáveis do ambiente ativo (candidatas a globais na resolução)
+    QVariantList activeGlobalVars() const;
+    // resolver puro com o acesso a segredos deste Backend injetado
+    VariableResolver resolver() const;
 
-    // item já resolvido da cadeia global → coleção → request
-    struct ResolvedVar {
-        QString name;
-        QString value;
-        QString source;
-        bool secret = false;
-        bool enabled = true;
-    };
-
-    QString requestPath(const QString &relPath) const;
-    QString historyPath() const;
-    void addHistory(const QVariantMap &entry);
-    void loadEnvironments();
-    void saveEnvironments() const;
-    // troca oldName por newName no escopo "collections" das variáveis de ambiente
-    bool renameCollectionScope(const QString &oldName, const QString &newName);
-    // fonte da verdade das variáveis: escopo, segredos e enabled numa só passada
-    QList<ResolvedVar> variableChain(const QString &collection,
-                                     const QVariantList &collectionVars,
-                                     const QVariantList &requestVars) const;
-    // agrupa a cadeia por nome (origem de maior precedência vence) para a UI
-    QVariantList resolvedFromChain(const QList<ResolvedVar> &chain) const;
-    // árvore de coleções (com hasChildren), lendo o method de cada request (com cache)
-    void walkCollection(const QString &rel, int depth, QVariantList &out) const;
-
-    void ensureSecrets() const;    // carrega secrets.json uma única vez
-    bool writeSecrets() const;     // persiste o cache de segredos
     // tira os segredos do arquivo (vão pro cofre); limpa o cofre se deixou de ser segredo
     QVariantList sanitizeSecrets(const QVariantList &vars);
 
-    // cache de um campo de .variables.json / .headers.json / .auth.json, validado por mtime
-    struct CachedJson {
-        qint64 mtime = -1;
-        QVariant value;
-    };
-    QVariant cachedJson(const QString &path, const QString &key, CachedJson &slot) const;
-
-    QNetworkAccessManager m_nam;
-    QNetworkReply *m_currentReply = nullptr;   // para cancelar
     Settings m_settings;                       // mesma config do app (storageDir/timeout/ignoreSsl)
     QString m_dir;         // ~/katarina-collections
     QString m_envFile;     // <dir>/.katarina/environments.json
     QString m_appData;     // ~/.local/share/katarina
     QString m_secretsFile; // <m_appData>/secrets.json
+    std::unique_ptr<SecretStore> m_secrets;
 
-    mutable bool m_secretsLoaded = false;
-    mutable bool m_keychain = false;   // backend em uso: cofre do SO (true) ou arquivo (false)
-    mutable QHash<QString, QString> m_secretsCache;              // id -> valor
-    mutable QHash<QString, QPair<qint64, QString>> m_methodCache; // relPath -> (mtime, método)
-    mutable QHash<QString, CachedJson> m_colVarsCache;           // coleção -> variáveis
-    mutable QHash<QString, CachedJson> m_colHeadersCache;        // coleção -> cabeçalhos
-    mutable QHash<QString, CachedJson> m_colAuthCache;           // coleção -> auth
-
-    QList<Env> m_envs;
-    QString m_activeEnv;
+    HttpClient *m_http = nullptr;
+    CollectionStorage *m_collections = nullptr;
+    EnvironmentStore *m_envs = nullptr;
+    HistoryStore *m_history = nullptr;
 };

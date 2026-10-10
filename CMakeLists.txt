@@ -28,6 +28,14 @@ qt_standard_project_setup(REQUIRES 6.5)
 # core compartilhado (backend + settings) compilado uma vez só, usado pelo app e testes
 qt_add_library(katarina_core OBJECT
     src/backend.cpp
+    src/core/request_logic.cpp
+    src/core/variable_resolver.cpp
+    src/net/http_client.cpp
+    src/net/request_builder.cpp
+    src/storage/collection_storage.cpp
+    src/storage/environment_store.cpp
+    src/storage/history_store.cpp
+    src/storage/secret_store.cpp
     src/settings.cpp
 )
 target_include_directories(katarina_core PRIVATE src)
@@ -67,6 +75,7 @@ qt_add_resources(katarina "qml"
         qml/Main.qml
         qml/Util.js
         qml/Strings.js
+        qml/js/VarTokens.js
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
@@ -82,6 +91,34 @@ qt_add_resources(katarina "qml"
         qml/ShortcutField.qml
         qml/MethodBadge.qml
         qml/SourceChip.qml
+        qml/SplitGrip.qml
+        qml/AppController.qml
+        qml/Sidebar.qml
+        qml/TabStrip.qml
+        qml/dialogs/NewReqDialog.qml
+        qml/dialogs/NameDialog.qml
+        qml/dialogs/ConfirmCloseDialog.qml
+        qml/dialogs/QuitDialog.qml
+        qml/dialogs/CurlImportDialog.qml
+        qml/dialogs/CurlExportDialog.qml
+        qml/dialogs/FolderPicker.qml
+        qml/dialogs/MoveDialog.qml
+        qml/dialogs/RenameDialog.qml
+        qml/dialogs/HistoryDialog.qml
+        qml/dialogs/CreateEnvDialog.qml
+        qml/dialogs/DiscardEnvDialog.qml
+        qml/dialogs/RenameEnvDialog.qml
+        qml/dialogs/ScopePopup.qml
+        qml/dialogs/FilePickDialog.qml
+        qml/dialogs/DeleteDialog.qml
+        qml/dialogs/CommandPalette.qml
+        qml/screens/SettingsScreen.qml
+        qml/screens/EnvironmentScreen.qml
+        qml/screens/CollectionScreen.qml
+        qml/screens/RequestEditor.qml
+        qml/screens/BodyEditor.qml
+        qml/screens/ReqVarsEditor.qml
+        qml/screens/ResponsePane.qml
 )
 
 qt_add_resources(katarina "appicon"
@@ -111,8 +148,18 @@ add_test(NAME check_storage COMMAND check_storage)
 qt_add_executable(tst_components tests/tst_components.cpp)
 target_link_libraries(tst_components PRIVATE Qt6::Quick Qt6::QuickTest)
 target_compile_definitions(tst_components PRIVATE
-    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/components")
 add_test(NAME tst_components COMMAND tst_components)
+
+# comportamento de tela: instancia o Main com backend/settings reais e dirige o AppController
+qt_add_executable(tst_app tests/tst_app.cpp src/highlighter.cpp)
+target_sources(tst_app PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_include_directories(tst_app PRIVATE src)
+target_link_libraries(tst_app PRIVATE
+    Qt6::Core Qt6::Gui Qt6::Quick Qt6::QuickTest Qt6::Network ${KATARINA_SECRETS_LIBS})
+target_compile_definitions(tst_app PRIVATE
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/app")
+add_test(NAME tst_app COMMAND tst_app)
 
 # realce JSON (chave != valor) — lógica pura sobre QTextDocument
 qt_add_executable(check_highlighter tests/check_highlighter.cpp src/highlighter.cpp)
@@ -120,11 +167,19 @@ target_include_directories(check_highlighter PRIVATE src)
 target_link_libraries(check_highlighter PRIVATE Qt6::Gui Qt6::Quick Qt6::Test)
 add_test(NAME check_highlighter COMMAND check_highlighter)
 
+# integração HTTP hermética (QTcpServer local): resposta, headers, querystring,
+# erro de rede, cancelamento, multipart e falha ao abrir arquivo
+qt_add_executable(check_http tests/check_http.cpp)
+target_sources(check_http PRIVATE $<TARGET_OBJECTS:katarina_core>)
+target_include_directories(check_http PRIVATE src)
+target_link_libraries(check_http PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Test ${KATARINA_SECRETS_LIBS})
+add_test(NAME check_http COMMAND check_http)
+
 # garante que o Main.qml carrega sem erros de QML
 add_test(NAME qml_smoke
          COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml_smoke.sh $<TARGET_FILE:katarina>)
 
-set_tests_properties(check_storage tst_components check_highlighter qml_smoke PROPERTIES
+set_tests_properties(check_storage tst_components tst_app check_highlighter check_http qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ---- instalação: binário, ícone e lançador ----
