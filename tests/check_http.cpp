@@ -97,6 +97,12 @@ QVariantMap baseRequest(const QString &url, const QString &method = QStringLiter
             {QStringLiteral("vars"), QVariantList{}}};
 }
 
+QVariantMap varItem(const QString &name, const QVariant &value, bool enabled = true)
+{
+    return {{QStringLiteral("name"), name}, {QStringLiteral("value"), value},
+            {QStringLiteral("enabled"), enabled}};
+}
+
 } // namespace
 
 class CheckHttp : public QObject
@@ -174,6 +180,83 @@ private slots:
         QVERIFY(ready.wait(3000));
         QVERIFY(srv.requestHeaders.contains("GET /y?q=1"));
         QVERIFY(srv.requestHeaders.contains("X-Custom: 42"));
+    }
+
+    // {{variables}} in url, params, headers and body are resolved before sending
+    void variables_resolved_on_send()
+    {
+        Loopback srv;
+        srv.body = QByteArrayLiteral("ok");
+        QVariantMap r = baseRequest(srv.url(QStringLiteral("/{{path}}")), QStringLiteral("POST"),
+                                    QStringLiteral("json"));
+        r[QStringLiteral("params")] = QVariantList{varItem(QStringLiteral("q"), QStringLiteral("{{id}}"))};
+        r[QStringLiteral("headers")] = QVariantList{varItem(QStringLiteral("X-V"), QStringLiteral("{{tok}}"))};
+        r[QStringLiteral("body")] = QStringLiteral("{\"k\":\"{{id}}\"}");
+        r[QStringLiteral("vars")] = QVariantList{varItem(QStringLiteral("path"), QStringLiteral("users")),
+                                                 varItem(QStringLiteral("id"), QStringLiteral("7")),
+                                                 varItem(QStringLiteral("tok"), QStringLiteral("abc"))};
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        QSignalSpy err(m_backend, &Backend::error);
+        m_backend->send(r, QString());
+        QVERIFY2(ready.wait(3000), "no responseReady");
+        QCOMPARE(err.count(), 0);
+        QVERIFY(srv.requestHeaders.contains("POST /users?q=7"));
+        QVERIFY(srv.requestHeaders.contains("X-V: abc"));
+        QVERIFY(srv.requestBody.contains("\"k\":\"7\""));
+    }
+
+    // headers, auth (inherit) and variables defined on the collection reach the wire
+    void collection_values_inherited_on_send()
+    {
+        Loopback srv;
+        srv.body = QByteArrayLiteral("ok");
+        const QString col = QStringLiteral("__inh__");
+        QVERIFY(m_backend->saveCollectionHeaders(col, QVariantList{
+            varItem(QStringLiteral("X-Col"), QStringLiteral("c1"))}));
+        QVERIFY(m_backend->saveCollectionAuth(col, QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("bearer")},
+            {QStringLiteral("token"), QStringLiteral("coltok")}}));
+        QVERIFY(m_backend->saveCollectionVariables(col, QVariantList{
+            varItem(QStringLiteral("seg"), QStringLiteral("from-col"))}));
+
+        QVariantMap r = baseRequest(srv.url(QStringLiteral("/{{seg}}")));
+        r[QStringLiteral("auth")] = QVariantMap{{QStringLiteral("type"), QStringLiteral("inherit")}};
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        m_backend->send(r, col);
+        QVERIFY2(ready.wait(3000), "no responseReady");
+        QVERIFY(srv.requestHeaders.contains("GET /from-col"));          // collection variable resolved
+        QVERIFY(srv.requestHeaders.contains("X-Col: c1"));              // collection header
+        QVERIFY(srv.requestHeaders.contains("Authorization: Bearer coltok"));   // inherited auth
+        m_backend->deleteEntry(col);
+    }
+
+    // a request header with the same name as a collection header wins (collection doesn't override)
+    void request_header_wins_over_collection()
+    {
+        Loopback srv;
+        srv.body = QByteArrayLiteral("ok");
+        const QString col = QStringLiteral("__dup__");
+        QVERIFY(m_backend->saveCollectionHeaders(col, QVariantList{
+            varItem(QStringLiteral("X-Dup"), QStringLiteral("from-col"))}));
+        QVariantMap r = baseRequest(srv.url(QStringLiteral("/d")));
+        r[QStringLiteral("headers")] = QVariantList{varItem(QStringLiteral("X-Dup"), QStringLiteral("from-req"))};
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        m_backend->send(r, col);
+        QVERIFY2(ready.wait(3000), "no responseReady");
+        QVERIFY(srv.requestHeaders.contains("X-Dup: from-req"));
+        QVERIFY(!srv.requestHeaders.contains("from-col"));
+        m_backend->deleteEntry(col);
+    }
+
+    // an unresolved variable blocks the send with error("unresolved"), without touching the network
+    void unresolved_variable_blocks_send()
+    {
+        QSignalSpy err(m_backend, &Backend::error);
+        m_backend->send(baseRequest(QStringLiteral("http://127.0.0.1:1/{{missing}}")), QString());
+        QCOMPARE(err.count(), 1);
+        const QVariantList a = err.takeFirst();
+        QCOMPARE(a.at(0).toString(), QStringLiteral("unresolved"));
+        QCOMPARE(a.at(1).toList().value(0).toString(), QStringLiteral("missing"));
     }
 
     void network_error()

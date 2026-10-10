@@ -20,6 +20,9 @@ VarHighlighter::VarHighlighter(QTextDocument *doc, const QColor &varColor, bool 
 {
     m_varFmt.setForeground(varColor);
     m_varFmt.setFontWeight(bold ? QFont::Bold : QFont::Normal);
+    // unresolved variable: red + bold (same visual language as a repeated name in KvTable)
+    m_missingFmt.setForeground(QColor(0xda, 0x44, 0x53));   // Breeze negative
+    m_missingFmt.setFontWeight(QFont::Bold);
 
     // JSON token colors (only used when json=true; the caller always passes them)
     m_strFmt.setForeground(strColor);
@@ -50,13 +53,22 @@ void VarHighlighter::highlightBlock(const QString &text)
     auto it = m_var.globalMatch(text);
     while (it.hasNext()) {
         const QRegularExpressionMatch m = it.next();
-        setFormat(m.capturedStart(), m.capturedLength(), m_varFmt);
+        // inner name of "{{ name }}" (m.captured(0) includes the braces)
+        const QString name = m.captured(0).mid(2, m.capturedLength() - 4).trimmed();
+        setFormat(m.capturedStart(), m.capturedLength(),
+                  m_missing.contains(name) ? m_missingFmt : m_varFmt);
     }
+}
+
+void VarHighlighter::setMissing(const QStringList &names)
+{
+    m_missing = names;
+    rehighlight();
 }
 
 void VarSupport::attach(QObject *textDocument, const QColor &color, bool bold, bool json,
                         const QColor &strColor, const QColor &numColor, const QColor &kwColor,
-                        const QColor &keyColor) const
+                        const QColor &keyColor)
 {
     auto *qdoc = qobject_cast<QQuickTextDocument *>(textDocument);
     if (!qdoc || !qdoc->textDocument())
@@ -64,6 +76,19 @@ void VarSupport::attach(QObject *textDocument, const QColor &color, bool bold, b
     auto *h = new VarHighlighter(qdoc->textDocument(), color, bold, json, strColor, numColor, kwColor,
                                  keyColor);
     h->setParent(qdoc);
+    h->setMissing(m_missing);
+    m_highlighters.append(h);
+}
+
+void VarSupport::setMissing(const QStringList &names)
+{
+    m_missing = names;
+    for (int i = m_highlighters.size() - 1; i >= 0; --i) {
+        if (m_highlighters[i])
+            m_highlighters[i]->setMissing(names);
+        else
+            m_highlighters.removeAt(i);   // the editor (and its highlighter) was destroyed
+    }
 }
 
 void VarSupport::copyText(const QString &text) const

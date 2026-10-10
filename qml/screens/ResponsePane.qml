@@ -121,7 +121,7 @@ Item {
             if (code >= 300 && code < 400) return Kirigami.Theme.neutralTextColor;
             if (code >= 400) return Kirigami.Theme.negativeTextColor;
         }
-        return Kirigami.Theme.negativeTextColor;   // "Error: …"
+        return Kirigami.Theme.negativeTextColor;   // errors (unresolved vars, network, …)
     }
 
     Connections {
@@ -211,22 +211,31 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.smallSpacing
-            Layout.preferredHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
+            Layout.minimumHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
             spacing: Kirigami.Units.smallSpacing
             Rectangle {
+                id: statusBadge
                 visible: statusLabel.text.length > 0
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: statusLabel.implicitWidth + 14
+                // content-sized, but allowed to shrink (and wrap) when the row is narrow:
+                // fillWidth lets the layout compress it, maximumWidth stops it stretching
+                Layout.fillWidth: true
+                Layout.preferredWidth: statusMetrics.width + 14
+                Layout.maximumWidth: statusMetrics.width + 14
+                Layout.minimumWidth: 0
                 implicitHeight: statusLabel.implicitHeight + 6
                 radius: 4
                 color: Qt.rgba(statusColor(statusLabel.text).r,
                                statusColor(statusLabel.text).g,
                                statusColor(statusLabel.text).b, 0.18)
+                TextMetrics { id: statusMetrics; font: statusLabel.font; text: statusLabel.text }
                 Label {
                     id: statusLabel
-                    anchors.centerIn: parent
+                    objectName: "statusLabel"
+                    x: 7; y: 3
+                    width: parent.width - 14
+                    wrapMode: Text.WordWrap
                     font.bold: true
-                    elide: Text.ElideRight
                     color: statusColor(text)
                 }
             }

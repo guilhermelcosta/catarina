@@ -76,7 +76,7 @@ BuiltRequest RequestBuilder::build(const QVariantMap &request, const QVariantMap
     if (out.bodyType == RS::kUrlencoded)
         out.payload = RequestLogic::encodeForm(out.fields).toUtf8();
     else if (out.bodyType != RS::kNone && out.bodyType != RS::kMultipart)
-        out.payload = RequestLogic::substitute(request.value(RS::kBody).toString(), vars).toUtf8();
+        out.payload = out.sentBody.toUtf8();   // same resolution as the snapshot (dynamic vars stay consistent)
 
     out.valid = true;
     return out;

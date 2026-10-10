@@ -12,9 +12,13 @@ ColumnLayout {
     id: root
     property var vars: []
     // only those that actually resolve (disabled ones don't appear in this view);
-    // sorts by origin (global → collection → request) and, within it, by name
+    // dynamic ones ($randomUuid, ...) are offered in autocomplete but aren't user variables,
+    // so they stay out of this table. Sorts by origin (global → collection → request)
+    // and, within it, by name.
     readonly property var activeVars: {
-        var list = vars ? vars.filter(function (v) { return v.enabled !== false; }) : [];
+        var list = vars ? vars.filter(function (v) {
+            return v.enabled !== false && v.source !== "dynamic";
+        }) : [];
         list.sort(function (a, b) {
             var d = sourceRank(a.source) - sourceRank(b.source);
             return d !== 0 ? d : String(a.name).localeCompare(String(b.name));
