@@ -89,10 +89,11 @@ cmake --build build -j
 
 ### Flatpak
 
-The manifest at `packaging/org.catarina.Catarina.yml` already includes QtKeychain:
+The manifest at `packaging/io.github.guilhermelcosta.Catarina.yml` already includes QtKeychain:
 
 ```sh
-flatpak-builder --user --install --force-clean build-flatpak packaging/org.catarina.Catarina.yml
+flatpak run --command=flathub-build org.flatpak.Builder --install \
+    packaging/io.github.guilhermelcosta.Catarina.yml
 ```
 
 ### Install to the system
@@ -158,8 +159,7 @@ docs/DESIGN.md    visual and component standards
 
 ## License
 
-Not **defined** yet — a `LICENSE` file still needs to be added. Until then, treat it as
-"all rights reserved". (If you'd like, we can open a PR adding MIT/GPL.)
+GPL-3.0-or-later. See [`LICENSE`](LICENSE).
 
 ## Credits
 
