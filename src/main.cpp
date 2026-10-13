@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(QStringLiteral("catarina"));
     QCoreApplication::setOrganizationName(QStringLiteral("catarina"));
     // Window/taskbar icon (the placeholder lives in the qrc "appicon").
-    // setDesktopFileName makes Wayland match the window to org.catarina.Catarina.desktop.
-    app.setDesktopFileName(QStringLiteral("org.catarina.Catarina"));
+    // setDesktopFileName makes Wayland match the window to io.github.guilhermelcosta.Catarina.desktop.
+    app.setDesktopFileName(QStringLiteral("io.github.guilhermelcosta.Catarina"));
     app.setWindowIcon(QIcon(QStringLiteral(":/icons/catarina.svg")));
 
     Settings settings;
