@@ -400,7 +400,7 @@ TestCase {
         wait(80);
         var label = findChild(win, "statusLabel");
         verify(label, "status label present");
-        verify(label.text.indexOf("unresolved variables in the request") >= 0, "concise message");
+        verify(label.text.indexOf("Unresolved variables in the request") >= 0, "concise message");
         verify(label.text.indexOf("missing0") < 0, "does not list the variable names");
     }
 
