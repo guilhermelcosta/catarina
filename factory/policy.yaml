@@ -1,0 +1,56 @@
+version: 1
+timezone: America/Sao_Paulo
+repo: catarina
+verify: factory/verify.yaml
+
+# Judgment roles use the expensive model. Execution roles use the cheap one.
+# These are OpenCode model ids; change them per host.
+models:
+  judgment: deepseek/deepseek-flash#max
+  execution: deepseek/deepseek-flash#low
+
+limits:
+  max_attempts: 2          # then blocked + inbox
+  max_pr_lines: 400
+  max_pr_files: 10
+  max_open_prs: 3
+  build_timeout_s: 900
+  budget_per_task_usd: 5
+
+worktree:
+  root: .worktrees
+  branch: "factory/<spec-id>/<task-id>"
+
+gates:
+  g0:
+    mode: human_if
+    when: [new_product, feature_risk_high, revalidation]
+  brief: human
+  spec: human
+  design:
+    mode: human_if
+    when: [new_dependency, schema, auth, payment, infra, secrets]
+  qa: auto
+  validate:
+    mode: auto
+    require_evidence: true
+    allow_partial_for_risk: [low]
+  ui_review:
+    mode: auto_if
+    when: [touches_ui]
+    block_on: [generic_pattern, missing_empty_state, missing_error_state, contrast_fail, no_direction]
+  merge:
+    # Flip to auto_if with the same `when` list only after 5 clean manual merges.
+    mode: human
+    when: [risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
+  close: own_pr_only
+
+escalate_if:
+  - touches: [auth, payment, migrations, infra, secrets, packaging]
+  - pr_lines_gt: 400
+  - attempts_gt: 2
+  - qa_blocked: true
+  - validate_partial: true
+  - reviewer_disagrees_with_validator: true
+  - verify_yaml_changed: true
+  - baseline_red: true

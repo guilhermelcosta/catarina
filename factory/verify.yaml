@@ -1,0 +1,52 @@
+# How this project proves a change is correct.
+# Owned by factory-discover-verify. Changing it is a human gate.
+version: 1
+stack: cmake-qt
+workdir: .
+env:
+  QT_QPA_PLATFORM: offscreen   # CMake already sets it on the test properties
+
+build:
+  configure: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  build: cmake --build build -j
+
+profiles:
+  fast:
+    cmd: ctest --test-dir build -R "check_storage|check_highlighter" --output-on-failure
+    timeout_s: 120
+    scope: backend logic and JSON highlight, hermetic, no display
+  unit:
+    cmd: ctest --test-dir build -R "check_storage|check_highlighter|check_http" --output-on-failure
+    timeout_s: 300
+    scope: backend, highlight, hermetic HTTP
+  ui:
+    cmd: ctest --test-dir build -R "tst_components|tst_app|qml_smoke" --output-on-failure
+    timeout_s: 600
+    needs_display: false
+    scope: QML components, real Main instance, binary load smoke
+  full:
+    cmd: ctest --test-dir build --output-on-failure
+    timeout_s: 900
+    scope: everything CI runs
+
+not_gates:
+  - ./build/bin/bench_storage
+
+baseline:
+  verified_at: 2026-11-05
+  result: red
+  failing: tst_app::AppBehavior::test_unresolved_status_is_concise
+  detail: >
+    The test asserts lowercase "unresolved variables in the request"; Strings.js
+    returns "Unresolved variables in the request" for n != 1. Stale test after a
+    capitalization change. Plural also carries a leading space.
+  consequence: >
+    Until full is green, every gate below is untrustworthy. Fix the test or the
+    string as the first factory task, with human approval.
+
+notes:
+  - configure and build are a precondition for every ctest profile
+  - qml_smoke runs the real binary offscreen
+  - tests do not need network, keyring or a display
+
+unverified: []

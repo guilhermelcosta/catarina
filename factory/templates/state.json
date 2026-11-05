@@ -1,0 +1,17 @@
+{
+  "task": "<nnn-slug>",
+  "spec": "<spec-id>",
+  "state": "pending",
+  "attempt": 0,
+  "risk": "low",
+  "branch": "factory/<spec-id>/<task-id>",
+  "worktree": ".worktrees/<task-id>",
+  "pr": null,
+  "artifacts": {
+    "qa": "factory/runs/<task>/qa-report.md",
+    "evidence": "factory/runs/<task>/evidence.md",
+    "review": "factory/runs/<task>/review.md"
+  },
+  "history": [],
+  "updated_at": ""
+}

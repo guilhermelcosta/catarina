@@ -1,0 +1,123 @@
+# Factory
+
+Agentic pipeline for this repository. Roles are OpenCode subagents, procedures
+are skills, state is files in this directory.
+
+## Lifecycle
+
+```
+idea ─▶ G0 ─▶ brief ─▶ spec ─▶ design ─▶ tasks ─▶ build ─▶ qa ─▶ validate ─▶ PR ─▶ review ─▶ merge
+         │     🔒       🔒       🔒(risco)           │        │       │                  │
+         ├─ kill ─▶ ideas/killed/                    └────────┴───────┴── fail? ─────────┘
+         └─ test ─▶ experiments/                                              attempt++ (max 2)
+```
+
+`🔒` is a human gate. Everything else is automatic and recorded.
+
+## Layout
+
+| path | owner | purpose |
+| --- | --- | --- |
+| `policy.yaml` | human | models, limits, gates, escalation rules |
+| `verify.yaml` | human, via `factory-discover-verify` | what "green" means here |
+| `inbox.md` | orchestrator writes, human answers | escalations |
+
+Author context for G0 lives at `~/.config/opencode/factory-profile.md`, outside
+any repo. It contains capital, network and constraints; never version it.
+| `ideas/` | `factory-idea-gate` | verdicts and killed ideas |
+| `experiments/` | `factory-idea-gate` | tests that are not product work |
+| `specs/<id>/` | spec and design agents | brief, spec, design, tasks |
+| `runs/<task>/` | qa, validator, reviewer | state, reports, evidence |
+| `templates/` | human | the shape of every artifact |
+
+## Skills and roles
+
+| Step | Skill | Agent |
+| --- | --- | --- |
+| drive the loop | `factory-orchestrate` | primary session |
+| G0 | `factory-idea-gate` | `idea-validator` |
+| spec | `factory-spec` | `factory-spec` |
+| design | (design contract in the agent) | `factory-design` |
+| breakdown | `factory-breakdown` | `factory-design` |
+| verify profile | `factory-discover-verify` | primary session |
+| build | (builder rules in the agent) | `factory-builder` |
+| QA | `factory-qa` | `factory-qa` |
+| functional | `factory-validate` | `factory-validator` |
+| UI direction and UI review | `factory-ui-design` | `factory-ui-designer` |
+| PR mechanics | `factory-pr` | primary session |
+| review | `factory-review` | `factory-reviewer` |
+| second opinion | `plan-arbiter` | any |
+| audit a session | `agent-watchdog` | any |
+
+## Start here
+
+### Phase 0, instrumentation
+
+- [x] `policy.yaml`, `verify.yaml`, `inbox.md`, templates
+- [x] PR template
+- [x] `gh` installed and authenticated
+- [x] Author profile filled at `~/.config/opencode/factory-profile.md`
+- [ ] Fix the red baseline: see `inbox.md`
+
+### Phase 1, front half
+
+- [ ] Run `factory-idea-gate` on a real idea and produce `ideas/<slug>/idea.md`
+- [ ] Approve a brief, run `factory-spec`, approve a spec
+- [ ] Run the design agent, then `factory-breakdown`
+- [ ] Stop. Do not build until the task list is approved.
+
+### Phase 2, one task end to end
+
+- [ ] Take one low-risk task
+- [ ] `factory-builder` in a worktree, `factory-qa`, `factory-validator`
+- [ ] `factory-pr`, `factory-review`
+- [ ] Merge by hand, even if policy allows auto. The first merge is a human one.
+
+### Phase 3, reliability
+
+- [ ] 5 tasks in a row with no manual fix
+- [ ] Record `false_green` when QA passed and a defect shows up later
+- [ ] `factory-discover-verify` after any CI change
+
+### Phase 4, parallelism
+
+- [ ] `max_open_prs: 3`, one worktree per task
+- [ ] Add `factory-review-prs` and `factory-babysit-pr` from the Builder catalog
+- [ ] Escalate only on the policy risk list
+
+### Phase 5, operation
+
+- [ ] `factory-collect` and `factory-lookback` feeding the G0
+- [ ] `factory-human-digest` as the daily inbox
+- [ ] `factory-ship` only after 10 clean merges
+
+## Worktrees
+
+```sh
+git worktree add .worktrees/<task> -b factory/<spec>/<task>
+git worktree remove .worktrees/<task>
+git worktree list
+```
+
+One task per worktree. The builder never works in the main checkout.
+
+## Rules that are not negotiable
+
+1. Green comes from `verify.yaml`. If a command is not there, the criterion is
+   `manual` and a human decides.
+2. `verify.yaml` changes are a human gate. An agent that redefines green can pass
+   any gate.
+3. The builder does not review. The reviewer does not write.
+4. QA and validation are different gates. Unit tests are not functional proof.
+5. Any task with `touches_ui: true` needs a declared direction and a UI review
+   with screenshots before the PR. Missing empty or error state is a block.
+6. No merge without evidence files, and no closing a PR the run did not open.
+7. Attempt limit is 2. Then `blocked` and one row in `inbox.md`.
+8. Every gate quotes the command and its result. "All good" is not a result.
+
+## Current status
+
+Baseline is **red**: `tst_app::AppBehavior::test_unresolved_status_is_concise`
+asserts a lowercase message that `qml/Strings.js` no longer produces. Until
+`full` is green, treat every other gate as suspect. Details in `verify.yaml` and
+`inbox.md`.

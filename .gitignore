@@ -1,2 +1,6 @@
 /build/
 /build-keychain/
+
+# factory worktrees
+.worktrees/
+factory/profile.md
