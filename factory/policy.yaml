@@ -27,6 +27,9 @@ conditions:
   risk_medium: the declared risk of the idea, feature or task is medium
   risk_high: the declared risk of the idea, feature or task is high
   risk_low: the declared risk of the idea, feature or task is low
+  verified_risk_low: the reviewer re-derived the risk from the diff as low
+  verified_risk_medium: the reviewer re-derived the risk from the diff as medium
+  verified_risk_high: the reviewer re-derived the risk from the diff as high
   qa_pass: the QA verdict is pass
   validate_pass: the functional verdict is pass
   review_approve: the reviewer verdict is approve
@@ -96,7 +99,7 @@ gates:
     when: [risk_medium, risk_high, touches_ui, pr_lines_gt_400, verify_yaml_changed]
   merge:
     mode: auto_if
-    when: [risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
+    when: [verified_risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
   close:
     applies_if: [own_pr_only]
     mode: auto
