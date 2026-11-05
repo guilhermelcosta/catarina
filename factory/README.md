@@ -48,15 +48,18 @@ from the task frontmatter.
 | --- | --- | --- |
 | `policy.yaml` | human | models, limits, gates, escalation rules |
 | `verify.yaml` | human, via `factory-discover-verify` | what "green" means here |
+| `verify-state.yaml` | `factory-discover-verify` | last measured baseline |
 | `inbox.md` | orchestrator writes, human answers | escalations |
-
-Author context for G0 lives at `~/.config/opencode/factory-profile.md`, outside
-any repo. It contains capital, network and constraints; never version it.
 | `ideas/` | `factory-idea-gate` | verdicts and killed ideas |
 | `experiments/` | `factory-idea-gate` | tests that are not product work |
 | `specs/<id>/` | spec and design agents | brief, spec, design, tasks |
 | `runs/<task>/` | qa, validator, reviewer | state, reports, evidence |
-| `templates/` | human | the shape of every artifact |
+
+Templates are global: `~/.config/opencode/factory/templates/`. The repo does not
+carry copies.
+
+Author context for G0 lives at `~/.config/opencode/factory-profile.md`, outside
+any repo. It contains capital, network and constraints; never version it.
 
 ## Skills and roles
 
@@ -81,7 +84,7 @@ any repo. It contains capital, network and constraints; never version it.
 
 ### Phase 0, instrumentation
 
-- [x] `policy.yaml`, `verify.yaml`, `inbox.md`, templates
+- [x] `policy.yaml`, `verify.yaml`, `inbox.md` (templates are global)
 - [x] PR template
 - [x] `gh` installed and authenticated
 - [x] Author profile filled at `~/.config/opencode/factory-profile.md`
