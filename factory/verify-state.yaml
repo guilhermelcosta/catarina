@@ -1,0 +1,6 @@
+# Last measured baseline of the profiles in factory/verify.yaml.
+# Written by factory-discover-verify after a full run.
+# Not protected: it records a measurement, it does not define what green means.
+baseline:
+  verified_at: 2026-11-05
+  result: green

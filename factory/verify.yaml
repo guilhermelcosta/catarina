@@ -1,5 +1,6 @@
 # How this project proves a change is correct.
-# Owned by factory-discover-verify. Changing it is a human gate.
+# Definition only. The last measured baseline lives in factory/verify-state.yaml.
+# Owned by factory-discover-verify. Changing this file is a human gate.
 version: 1
 stack: cmake-qt
 workdir: .
@@ -31,18 +32,6 @@ profiles:
 
 not_gates:
   - ./build/bin/bench_storage
-
-baseline:
-  verified_at: 2026-11-05
-  result: red
-  failing: tst_app::AppBehavior::test_unresolved_status_is_concise
-  detail: >
-    The test asserts lowercase "unresolved variables in the request"; Strings.js
-    returns "Unresolved variables in the request" for n != 1. Stale test after a
-    capitalization change. Plural also carries a leading space.
-  consequence: >
-    Until full is green, every gate below is untrustworthy. Fix the test or the
-    string as the first factory task, with human approval.
 
 notes:
   - configure and build are a precondition for every ctest profile

@@ -145,7 +145,6 @@ One task per worktree. The builder never works in the main checkout.
 
 ## Current status
 
-Baseline is **red**: `tst_app::AppBehavior::test_unresolved_status_is_concise`
-asserts a lowercase message that `qml/Strings.js` no longer produces. Until
-`full` is green, treat every other gate as suspect. Details in `verify.yaml` and
-`inbox.md`.
+Baseline is **green** as of 2026-11-05, after PR #10. The definition lives in
+`verify.yaml`; the measured result lives in `verify-state.yaml`, which agents can
+update. Only a human changes `verify.yaml`.
