@@ -1,7 +1,7 @@
 {
   "task": "001-fix-unresolved-assert",
   "spec": "000-baseline-green",
-  "state": "pr_open",
+  "state": "escalate",
   "attempt": 0,
   "risk": "low",
   "branch": "fix/align-unresolved-status-assert",
@@ -44,7 +44,15 @@
       "event": "pr_open",
       "pr": 10,
       "url": "https://github.com/guilhermelcosta/catarina/pull/10"
+    },
+    {
+      "at": "2026-11-05T09:23:37-03:00",
+      "role": "factory-reviewer",
+      "event": "escalate",
+      "verdict": "escalate",
+      "reason": "baseline_red and pr_lines_gt_400 in escalate_if",
+      "report": "factory/runs/001-fix-unresolved-assert/review.md"
     }
   ],
-  "updated_at": "2026-11-05T09:18:04-03:00"
+  "updated_at": "2026-11-05T09:23:37-03:00"
 }
