@@ -99,7 +99,7 @@ any repo. It contains capital, network and constraints; never version it.
 - [ ] Take one low-risk task
 - [ ] `factory-builder` in a worktree, `factory-qa`, `factory-validator`
 - [ ] `factory-pr`, `factory-review`
-- [ ] Merge by hand, even if policy allows auto. The first merge is a human one.
+- [ ] Merge by the policy. If `merge` resolves to human, merge by hand.
 
 ### Phase 3, reliability
 

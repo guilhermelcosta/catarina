@@ -2,7 +2,7 @@
 id: <nnn-slug>
 spec: <id>
 title: <one behaviour>
-state: pending         # pending | building | built | qa | validate | pr | review | merge | done | blocked
+state: pending         # pending | building | built | qa_pass | qa_fail | validate_pass | validate_fail | ui_pass | ui_block | pr_approved | pr_open | review_pass | review_block | merged | done | blocked
 attempt: 0
 risk: low
 type: fix              # feature | fix | chore | docs | test | refactor | perf | ci

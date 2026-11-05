@@ -6,6 +6,7 @@ verdict: pursue        # pursue | test | kill
 score: 0.0
 confidence: low        # low | medium | high
 promotes_to: brief     # brief | experiment | none
+outcome: ""            # filled later, used to calibrate the gate
 ---
 
 # <Idea in one sentence>

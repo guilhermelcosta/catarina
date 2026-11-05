@@ -6,6 +6,7 @@ status: draft          # draft | approved | rejected
 approved_by: ""
 approved_at: ""
 risk: low              # low | medium | high
+touches_ui: false      # true: user-facing UI changes in this slice
 ---
 
 # Spec: <name>
