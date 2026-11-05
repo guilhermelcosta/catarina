@@ -14,6 +14,23 @@ idea ─▶ G0 ─▶ brief ─▶ spec ─▶ design ─▶ tasks ─▶ build 
 
 `🔒` is a human gate. Everything else is automatic and recorded.
 
+## Gate schema
+
+Every gate in `policy.yaml` uses the same shape, so any gate can be `human`,
+`auto`, `human_if` or `auto_if`:
+
+```yaml
+spec:
+  applies_if: []        # gate runs only if all are true; empty means always
+  mode: human_if        # human | auto | human_if | auto_if
+  when: [risk_high]     # human_if: stop on match; auto_if: proceed on match
+  block_on: []          # gate failures that return to build, not to a human
+```
+
+Semantics: `human_if` stops when any `when` matches, otherwise automatic.
+`auto_if` proceeds when any `when` matches, otherwise stops. A gate missing from
+the file does not exist; the orchestrator stops and asks.
+
 ## Layout
 
 | path | owner | purpose |
