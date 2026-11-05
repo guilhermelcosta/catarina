@@ -46,6 +46,8 @@ gates:
   design:
     mode: human_if
     when: [new_dependency, schema, auth, payment, infra, secrets]
+  tasks:
+    mode: human
   qa:
     mode: auto
   validate:
