@@ -1,12 +1,12 @@
 {
   "task": "001-fix-unresolved-assert",
   "spec": "000-baseline-green",
-  "state": "validate_pass",
+  "state": "pr_open",
   "attempt": 0,
   "risk": "low",
   "branch": "fix/align-unresolved-status-assert",
   "worktree": ".worktrees/001-fix-unresolved-assert",
-  "pr": null,
+  "pr": 10,
   "artifacts": {
     "qa": "factory/runs/001-fix-unresolved-assert/qa-report.md",
     "evidence": "factory/runs/001-fix-unresolved-assert/evidence.md",
@@ -37,7 +37,14 @@
       "event": "branch_renamed",
       "from": "factory/000-baseline-green/001-fix-unresolved-assert",
       "to": "fix/align-unresolved-status-assert"
+    },
+    {
+      "at": "2026-11-05T09:18:04-03:00",
+      "role": "orchestrator",
+      "event": "pr_open",
+      "pr": 10,
+      "url": "https://github.com/guilhermelcosta/catarina/pull/10"
     }
   ],
-  "updated_at": "2026-11-05T09:16:50-03:00"
+  "updated_at": "2026-11-05T09:18:04-03:00"
 }

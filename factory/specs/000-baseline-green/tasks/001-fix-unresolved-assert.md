@@ -10,7 +10,7 @@ touches_ui: false
 screens: []
 depends_on: []
 branch: fix/align-unresolved-status-assert
-pr: null
+pr: 10
 files_hint: [tests/app/tst_app.qml]
 acceptance:
   - kind: profile
