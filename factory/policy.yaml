@@ -11,7 +11,7 @@ verify: factory/verify.yaml
 #   human     always stop for a human
 #   auto      never stop; the role decides
 #   human_if  stop when any `when` condition matches, otherwise auto
-#   auto_if   auto when any `when` condition matches, otherwise stop
+#   auto_if   auto only when all `when` conditions match, otherwise stop
 # when:       conditions for human_if / auto_if
 # block_on:   gate failures that return to build, not to the human
 #
@@ -26,6 +26,12 @@ conditions:
   revalidation: new evidence, price, competitor or constraint change
   risk_medium: the declared risk of the idea, feature or task is medium
   risk_high: the declared risk of the idea, feature or task is high
+  risk_low: the declared risk of the idea, feature or task is low
+  qa_pass: the QA verdict is pass
+  validate_pass: the functional verdict is pass
+  review_approve: the reviewer verdict is approve
+  scope_clean: the diff touches only files declared in the task
+  verify_yaml_unchanged: the PR does not edit factory/verify.yaml
   new_dependency: adds a library, package or system dependency
   schema: changes a persisted format or data model
   auth: touches authentication, authorization or secrets handling
@@ -85,11 +91,12 @@ gates:
     applies_if: [touches_ui]
     mode: auto
     block_on: [generic_pattern, missing_empty_state, missing_error_state, contrast_fail, no_direction]
+  pr:
+    mode: human_if
+    when: [risk_medium, risk_high, touches_ui, pr_lines_gt_400, verify_yaml_changed]
   merge:
-    mode: human
-    # After 5 clean merges, switch to:
-    # mode: auto_if
-    # when: [risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
+    mode: auto_if
+    when: [risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
   close:
     applies_if: [own_pr_only]
     mode: auto

@@ -28,8 +28,8 @@ spec:
 ```
 
 Semantics: `human_if` stops when any `when` matches, otherwise automatic.
-`auto_if` proceeds when any `when` matches, otherwise stops. A gate missing from
-the file does not exist; the orchestrator stops and asks.
+`auto_if` proceeds only when **all** `when` match, otherwise stops. A gate missing
+from the file does not exist; the orchestrator stops and asks.
 
 The only valid tokens for `applies_if` and `when` are listed under `conditions:`
 in `policy.yaml`, each with its meaning. An unknown token is a config error and
