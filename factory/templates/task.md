@@ -5,10 +5,11 @@ title: <one behaviour>
 state: pending         # pending | building | built | qa | validate | pr | review | merge | done | blocked
 attempt: 0
 risk: low
+type: fix              # feature | fix | chore | docs | test | refactor | perf | ci
 touches_ui: false
 screens: []
 depends_on: []
-branch: factory/<spec-id>/<task-id>
+branch: fix/<slug>
 pr: null
 files_hint: []
 acceptance:

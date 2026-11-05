@@ -122,7 +122,7 @@ any repo. It contains capital, network and constraints; never version it.
 ## Worktrees
 
 ```sh
-git worktree add .worktrees/<task> -b factory/<spec>/<task>
+git worktree add .worktrees/<task> -b <type>/<slug>
 git worktree remove .worktrees/<task>
 git worktree list
 ```

@@ -35,7 +35,7 @@ Hard rules:
   has no command there, it is `manual` and a human decides.
 - Never edit `factory/verify.yaml` outside `factory-discover-verify`. Changing
   what counts as green is a human gate.
-- One task = one branch `factory/<spec>/<task>` = one worktree under
+- One task = one branch `<type>/<slug>` = one worktree under
   `.worktrees/`. Never build in the main checkout.
 - The builder never reviews its own work. The reviewer never writes to the
   branch. The validator never fixes what it finds.

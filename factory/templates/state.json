@@ -4,7 +4,7 @@
   "state": "pending",
   "attempt": 0,
   "risk": "low",
-  "branch": "factory/<spec-id>/<task-id>",
+  "branch": "fix/001-slug",
   "worktree": ".worktrees/<task-id>",
   "pr": null,
   "artifacts": {
