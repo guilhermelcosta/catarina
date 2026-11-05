@@ -44,8 +44,8 @@ Hard rules:
 - Every gate quotes the command and its result line. No gate is "all good".
 - Retry limit is 2. Then the task is `blocked` and gets one row in
   `factory/inbox.md`.
-- Human gates come from `factory/policy.yaml`: `mode: human`, or `human_if` with
-  a matching `when`. Never hardcode a gate.
+- Human gates come from `factory/policy.yaml` over the global default: `mode: human`,
+  or `human_if` with a matching `when`. Never hardcode a gate.
 - Any task with `touches_ui: true` needs a declared direction and a UI review
   with screenshots before the PR. Follow `factory-ui-design`.
 - End factory work with a status line: 🟢 done, 🟡 pending a named step,

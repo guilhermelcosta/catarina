@@ -16,8 +16,9 @@ idea ─▶ G0 ─▶ brief ─▶ spec ─▶ design ─▶ tasks ─▶ build 
 
 ## Gate schema
 
-Every gate in `policy.yaml` uses the same shape, so any gate can be `human`,
-`auto`, `human_if` or `auto_if`:
+Every gate uses the same shape. The schema, the 11 gate names and the defaults
+live in `~/.config/opencode/factory/default-policy.yaml`; `factory/policy.yaml`
+only overrides values.
 
 ```yaml
 spec:
@@ -36,8 +37,8 @@ the reviewer from the diff: paths, files and lines. A declared/verified mismatch
 is a block.
 
 The only valid tokens for `applies_if` and `when` are listed under `conditions:`
-in `policy.yaml`, each with its meaning. An unknown token is a config error and
-the orchestrator stops instead of guessing. `risk_*` come from the `risk` field
+in the default policy, each with its meaning. An unknown token is a config error
+and the orchestrator stops instead of guessing. `risk_*` come from the `risk` field
 in the spec or task frontmatter (`low`, `medium`, `high`); `touches_ui` comes
 from the task frontmatter.
 

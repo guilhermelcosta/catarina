@@ -1,115 +1,12 @@
+# Catarina overrides.
+#
+# Schema, gate names, condition vocabulary, limits and defaults live at:
+#   ~/.config/opencode/factory/default-policy.yaml
+#
+# Only deviations belong here. A missing key inherits the default.
+# To change a gate for this repo, add `gates:` with just that gate.
+
 version: 1
 timezone: America/Sao_Paulo
 repo: catarina
 verify: factory/verify.yaml
-
-# ---- gate schema -------------------------------------------------------------
-# Every gate has the same shape. No gate is special.
-#
-# applies_if: all conditions must be true for the gate to run. Default: always.
-# mode:
-#   human     always stop for a human
-#   auto      never stop; the role decides
-#   human_if  stop when any `when` condition matches, otherwise auto
-#   auto_if   auto only when all `when` conditions match, otherwise stop
-# when:       conditions for human_if / auto_if
-# block_on:   gate failures that return to build, not to the human
-#
-# A gate that is not listed here does not exist. The orchestrator stops and
-# asks instead of guessing.
-# -----------------------------------------------------------------------------
-
-# The only valid tokens for `applies_if` and `when`. Anything else is a config
-# error: the orchestrator stops and asks instead of guessing.
-conditions:
-  new_product: the repo has no shipped product yet
-  revalidation: new evidence, price, competitor or constraint change
-  risk_medium: the declared risk of the idea, feature or task is medium
-  risk_high: the declared risk of the idea, feature or task is high
-  risk_low: the declared risk of the idea, feature or task is low
-  verified_risk_low: the reviewer re-derived the risk from the diff as low
-  verified_risk_medium: the reviewer re-derived the risk from the diff as medium
-  verified_risk_high: the reviewer re-derived the risk from the diff as high
-  qa_pass: the QA verdict is pass
-  validate_pass: the functional verdict is pass
-  review_approve: the reviewer verdict is approve
-  scope_clean: the diff touches only files declared in the task
-  verify_yaml_unchanged: the PR does not edit factory/verify.yaml
-  new_dependency: adds a library, package or system dependency
-  schema: changes a persisted format or data model
-  auth: touches authentication, authorization or secrets handling
-  payment: touches billing or money movement
-  infra: touches deployment, CI, packaging or install
-  secrets: reads, writes or logs credentials
-  packaging: changes how the app is built, shipped or installed
-  touches_ui: task.touches_ui is true
-  new_contract: changes a public function, endpoint, file format or signal
-  task_count_gt_1: the spec produces more than one task
-  pr_lines_gt_400: the diff exceeds limits.max_pr_lines
-  attempts_gt_2: task.attempt exceeds limits.max_attempts
-  qa_blocked: a criterion could not run
-  validate_partial: functional evidence is partial
-  reviewer_disagrees_with_validator: review and validation reach different verdicts
-  verify_yaml_changed: the PR edits factory/verify.yaml
-  baseline_red: factory/verify.yaml baseline is red
-  own_pr_only: the PR was opened by this run
-
-models:
-  judgment: deepseek/deepseek-flash#max
-  execution: deepseek/deepseek-flash#low
-
-limits:
-  max_attempts: 2
-  max_pr_lines: 400
-  max_pr_files: 10
-  max_open_prs: 3
-  build_timeout_s: 900
-  budget_per_task_usd: 5
-
-worktree:
-  root: .worktrees
-  branch: "factory/<spec-id>/<task-id>"
-
-gates:
-  g0:
-    applies_if: [new_product, risk_high, revalidation]
-    mode: human
-  brief:
-    mode: human
-  spec:
-    mode: human
-  design:
-    mode: human_if
-    when: [new_dependency, schema, auth, payment, infra, secrets]
-  tasks:
-    mode: human_if
-    when: [risk_medium, risk_high, touches_ui]
-  qa:
-    mode: auto
-  validate:
-    mode: auto
-    require_evidence: true
-    allow_partial_for_risk: [low]
-  ui_review:
-    applies_if: [touches_ui]
-    mode: auto
-    block_on: [generic_pattern, missing_empty_state, missing_error_state, contrast_fail, no_direction]
-  pr:
-    mode: human_if
-    when: [risk_medium, risk_high, touches_ui, pr_lines_gt_400, verify_yaml_changed]
-  merge:
-    mode: auto_if
-    when: [verified_risk_low, qa_pass, validate_pass, review_approve, scope_clean, verify_yaml_unchanged]
-  close:
-    applies_if: [own_pr_only]
-    mode: auto
-
-escalate_if:
-  - touches: [auth, payment, migrations, infra, secrets, packaging]
-  - pr_lines_gt: 400
-  - attempts_gt: 2
-  - qa_blocked: true
-  - validate_partial: true
-  - reviewer_disagrees_with_validator: true
-  - verify_yaml_changed: true
-  - baseline_red: true
