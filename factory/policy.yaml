@@ -19,6 +19,32 @@ verify: factory/verify.yaml
 # asks instead of guessing.
 # -----------------------------------------------------------------------------
 
+# The only valid tokens for `applies_if` and `when`. Anything else is a config
+# error: the orchestrator stops and asks instead of guessing.
+conditions:
+  new_product: the repo has no shipped product yet
+  revalidation: new evidence, price, competitor or constraint change
+  risk_medium: the declared risk of the idea, feature or task is medium
+  risk_high: the declared risk of the idea, feature or task is high
+  new_dependency: adds a library, package or system dependency
+  schema: changes a persisted format or data model
+  auth: touches authentication, authorization or secrets handling
+  payment: touches billing or money movement
+  infra: touches deployment, CI, packaging or install
+  secrets: reads, writes or logs credentials
+  packaging: changes how the app is built, shipped or installed
+  touches_ui: task.touches_ui is true
+  new_contract: changes a public function, endpoint, file format or signal
+  task_count_gt_1: the spec produces more than one task
+  pr_lines_gt_400: the diff exceeds limits.max_pr_lines
+  attempts_gt_2: task.attempt exceeds limits.max_attempts
+  qa_blocked: a criterion could not run
+  validate_partial: functional evidence is partial
+  reviewer_disagrees_with_validator: review and validation reach different verdicts
+  verify_yaml_changed: the PR edits factory/verify.yaml
+  baseline_red: factory/verify.yaml baseline is red
+  own_pr_only: the PR was opened by this run
+
 models:
   judgment: deepseek/deepseek-flash#max
   execution: deepseek/deepseek-flash#low
@@ -37,7 +63,7 @@ worktree:
 
 gates:
   g0:
-    applies_if: [new_product, feature_risk_high, revalidation]
+    applies_if: [new_product, risk_high, revalidation]
     mode: human
   brief:
     mode: human
@@ -47,7 +73,8 @@ gates:
     mode: human_if
     when: [new_dependency, schema, auth, payment, infra, secrets]
   tasks:
-    mode: human
+    mode: human_if
+    when: [risk_medium, risk_high, touches_ui]
   qa:
     mode: auto
   validate:

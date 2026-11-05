@@ -31,6 +31,12 @@ Semantics: `human_if` stops when any `when` matches, otherwise automatic.
 `auto_if` proceeds when any `when` matches, otherwise stops. A gate missing from
 the file does not exist; the orchestrator stops and asks.
 
+The only valid tokens for `applies_if` and `when` are listed under `conditions:`
+in `policy.yaml`, each with its meaning. An unknown token is a config error and
+the orchestrator stops instead of guessing. `risk_*` come from the `risk` field
+in the spec or task frontmatter (`low`, `medium`, `high`); `touches_ui` comes
+from the task frontmatter.
+
 ## Layout
 
 | path | owner | purpose |
