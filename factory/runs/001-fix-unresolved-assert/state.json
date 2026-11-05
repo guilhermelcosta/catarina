@@ -1,0 +1,36 @@
+{
+  "task": "001-fix-unresolved-assert",
+  "spec": "000-baseline-green",
+  "state": "validate_pass",
+  "attempt": 0,
+  "risk": "low",
+  "branch": "factory/000-baseline-green/001-fix-unresolved-assert",
+  "worktree": ".worktrees/001-fix-unresolved-assert",
+  "pr": null,
+  "artifacts": {
+    "qa": "factory/runs/001-fix-unresolved-assert/qa-report.md",
+    "evidence": "factory/runs/001-fix-unresolved-assert/evidence.md",
+    "review": "factory/runs/001-fix-unresolved-assert/review.md"
+  },
+  "history": [
+    {
+      "at": "2026-11-05T08:51:17-03:00",
+      "role": "factory-builder",
+      "event": "built",
+      "commit": "65ffe90"
+    },
+    {
+      "at": "2026-11-05T08:52:36-03:00",
+      "role": "factory-qa",
+      "event": "qa_pass",
+      "report": "factory/runs/001-fix-unresolved-assert/qa-report.md"
+    },
+    {
+      "at": "2026-11-05T08:54:26-03:00",
+      "role": "factory-validator",
+      "event": "validate_pass",
+      "evidence": "factory/runs/001-fix-unresolved-assert/evidence.md"
+    }
+  ],
+  "updated_at": "2026-11-05T08:54:26-03:00"
+}
