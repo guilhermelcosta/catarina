@@ -106,9 +106,14 @@ defect, the human restores the failing expectation and re-opens the baseline in
 
 ## Human gates
 
-- Design gate: policy lists `design: human_if` only for new dependency, schema,
-  auth, payment, infra or secrets. None apply, so no design gate is required.
-- Task list: `factory/README.md` Phase 1 requires a human to approve the task list
-  before build. This design and its one task stop there.
-- Merge: `policy.yaml` sets `merge: human`. The factory never merges this slice.
+- Design: global default `design` is `human_if` for new dependency, schema, auth,
+  payment, infra or secrets. None apply.
+- Tasks: global default `tasks` is `human_if` for risk medium/high or
+  `touches_ui`. This task is low risk and not UI, so auto.
+- PR: global default `pr` is `human_if` when `pr_lines_gt_400`. The factory
+  records push this PR over the line limit, so the human approved opening it.
+- Merge: global default `merge` is `auto_if` with `verified_risk_low`,
+  `qa_pass`, `validate_pass`, `review_approve`, `scope_clean`,
+  `verify_yaml_unchanged`. However, `baseline_red` is in `escalate_if`, so the
+  task stops for the human after review.
 - Closeout: spec M1, baseline metadata to green, is a human step after merge.

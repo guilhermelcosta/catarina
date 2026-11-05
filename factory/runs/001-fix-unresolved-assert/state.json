@@ -4,7 +4,7 @@
   "state": "validate_pass",
   "attempt": 0,
   "risk": "low",
-  "branch": "factory/000-baseline-green/001-fix-unresolved-assert",
+  "branch": "fix/align-unresolved-status-assert",
   "worktree": ".worktrees/001-fix-unresolved-assert",
   "pr": null,
   "artifacts": {
@@ -30,7 +30,14 @@
       "role": "factory-validator",
       "event": "validate_pass",
       "evidence": "factory/runs/001-fix-unresolved-assert/evidence.md"
+    },
+    {
+      "at": "2026-11-05T09:16:50-03:00",
+      "role": "orchestrator",
+      "event": "branch_renamed",
+      "from": "factory/000-baseline-green/001-fix-unresolved-assert",
+      "to": "fix/align-unresolved-status-assert"
     }
   ],
-  "updated_at": "2026-11-05T08:54:26-03:00"
+  "updated_at": "2026-11-05T09:16:50-03:00"
 }

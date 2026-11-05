@@ -5,10 +5,11 @@ title: Align unresolved-status assertion with the capitalized message
 state: pending
 attempt: 0
 risk: low
+type: fix
 touches_ui: false
 screens: []
 depends_on: []
-branch: factory/000-baseline-green/001-fix-unresolved-assert
+branch: fix/align-unresolved-status-assert
 pr: null
 files_hint: [tests/app/tst_app.qml]
 acceptance:
