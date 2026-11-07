@@ -35,10 +35,11 @@ sudo apt install cmake g++ extra-cmake-modules \
 Package names vary by release. If `find_package(Qt6Keychain)` fails, install the
 QtKeychain development package for your distro.
 
-## Quick install (user-local)
+## Quick install and uninstall (user-local)
 
 ```sh
-./scripts/install.sh
+./scripts/install.sh     # build and install to ~/.local
+./scripts/uninstall.sh   # remove the app files
 ```
 
 Installs to `~/.local` by default (`~/.local/bin/catarina`, desktop file, icon
@@ -46,9 +47,15 @@ and metainfo). Override the prefix with:
 
 ```sh
 PREFIX=/some/prefix ./scripts/install.sh
+PREFIX=/some/prefix ./scripts/uninstall.sh
 ```
 
-The script still builds; the build is incremental, so a second run is quick.
+The uninstall script removes only the files installed by the install script. It
+does not touch collections, settings, history or secrets. Close the installed app
+before uninstalling.
+
+The script still builds; the build is incremental, so a second run is quick. The
+`build-install/` directory is a build artifact and can be deleted manually.
 
 ## Build and run
 
