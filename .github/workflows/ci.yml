@@ -70,7 +70,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout full history
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Scan for secrets
@@ -93,7 +93,7 @@ jobs:
             kf6-kirigami-devel qtkeychain-qt6-devel \
             appstream desktop-file-utils
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -116,7 +116,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4
         with:
