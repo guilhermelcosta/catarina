@@ -96,8 +96,8 @@ ctest --test-dir build --output-on-failure
 ## Contributing
 
 Read `AGENTS.md` before opening a pull request. Branch from `develop`, use
-`feature/<slug>` (not `feat/`) or another `<type>/<slug>`, keep one behaviour per
-PR, run `ctest`, and never commit secrets. UI changes follow `docs/DESIGN.md`.
+`feature/<slug>` or another `<type>/<slug>`, keep one behaviour per PR, run
+`ctest`, and never commit secrets. UI changes follow `docs/DESIGN.md`.
 
 ## License
 
