@@ -23,7 +23,6 @@ Allowed types: `feature`, `fix`, `chore`, `docs`, `test`, `refactor`,
 `perf`, `ci`, `build`, `revert`.
 
 Slug: lowercase letters, digits, and hyphens. Example: `feature/request-timeout`.
-Use `feature/`, not `feat/`.
 
 Rules:
 

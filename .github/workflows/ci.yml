@@ -42,10 +42,6 @@ jobs:
           if [[ "$BRANCH" =~ ^dependabot/ ]]; then
             exit 0
           fi
-          if [[ "$BRANCH" =~ ^feat/ ]]; then
-            echo "::error::Use feature/<slug>; the feat/ prefix is not allowed."
-            exit 1
-          fi
           if [[ "$BRANCH" =~ ^(feature|fix|chore|docs|test|refactor|perf|ci|build|revert)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             exit 0
           fi
