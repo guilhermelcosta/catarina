@@ -19,10 +19,11 @@ stabilised, and merged into `master`.
 
 Work branches use `<type>/<slug>` and target `develop`.
 
-Allowed types: `feat`, `feature`, `fix`, `chore`, `docs`, `test`, `refactor`,
+Allowed types: `feature`, `fix`, `chore`, `docs`, `test`, `refactor`,
 `perf`, `ci`, `build`, `revert`.
 
-Slug: lowercase letters, digits, and hyphens. Example: `feat/request-timeout`.
+Slug: lowercase letters, digits, and hyphens. Example: `feature/request-timeout`.
+Use `feature/`, not `feat/`.
 
 Rules:
 
