@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QUrlQuery>
 
@@ -105,6 +106,10 @@ int main(int argc, char **argv)
         const QString rd = RequestLogic::substitute(QStringLiteral("{{$randomDecimal}}"), {});
         CHECK(rd.contains(QLatin1Char('.')) && rd.section(QLatin1Char('.'), 1).length() == 2);
         CHECK(RequestLogic::substitute(QStringLiteral("{{$randomName}}"), {}).contains(QLatin1Char(' ')));
+        const QString mail = RequestLogic::substitute(QStringLiteral("{{$randomEmail}}"), {});
+        CHECK(mail.contains(QLatin1Char('@')));
+        CHECK(mail.section(QLatin1Char('@'), 0, 0).length() > 0);                     // local part
+        CHECK(mail.section(QLatin1Char('@'), 1).contains(QLatin1Char('.')));          // domain has a dot
         // a user variable with the same name wins over the dynamic one
         CHECK(RequestLogic::substitute(QStringLiteral("{{$randomUuid}}"),
                                        {{QStringLiteral("$randomUuid"), QStringLiteral("fixed")}})
@@ -743,6 +748,13 @@ int main(int argc, char **argv)
     }
 
     // ---------------------------------------------------------------- storageDir
+    // the default follows the XDG Documents location (including localized names)
+    {
+        const QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        if (!documents.isEmpty())
+            CHECK(Settings::defaultStorageDir() == documents + QStringLiteral("/catarina"));
+    }
+
     // changing the collections directory persists and another instance sees it
     {
         const QString d2 = tmp.path() + QStringLiteral("/collections2");

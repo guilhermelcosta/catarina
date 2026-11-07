@@ -1,21 +1,26 @@
 ## What
 
-<!-- One behaviour. If the title needs "and", split the task. -->
+<!-- One behaviour. If the title needs "and", split the work. -->
 
 ## Why
 
-- Spec: `factory/specs/<id>/spec.md`
-- Task: `factory/specs/<id>/tasks/<task>.md`
-- Idea: `factory/ideas/<slug>/idea.md`
+<!-- The problem, the user impact, and any linked issue. -->
+
+## How
+
+<!-- The approach, the files that matter, and any trade-off. -->
 
 ## Evidence
 
-- QA: `factory/runs/<task>/qa-report.md` (verdict, criteria table)
-- Functional: `factory/runs/<task>/evidence.md` (artifact per criterion)
-- Commands run:
-  ```sh
-  ctest --test-dir build --output-on-failure
-  ```
+- [ ] `ctest --test-dir build --output-on-failure`
+- [ ] `appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.metainfo.xml`
+- [ ] `desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop`
+- [ ] Screenshots before/after for UI changes
+
+Commands and result lines:
+
+```sh
+```
 
 ## Risk
 
@@ -25,7 +30,7 @@
 
 ## Rollback
 
-<!-- How to undo this without a data loss. -->
+<!-- How to undo this without data loss. -->
 
 ## Out of scope
 

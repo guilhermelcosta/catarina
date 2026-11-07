@@ -182,11 +182,15 @@ add_test(NAME qml_smoke
 set_tests_properties(check_storage tst_components tst_app check_highlighter check_http qml_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# ---- installation: binary, icon and launcher ----
+# ---- installation: binary, icon, launcher and metainfo ----
 install(TARGETS catarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(FILES icons/catarina.svg DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps)
+install(FILES icons/catarina.svg
+        DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps
+        RENAME io.github.guilhermelcosta.Catarina.svg)
+install(FILES packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
+        DESTINATION ${KDE_INSTALL_DATADIR}/metainfo)
 
-configure_file(packaging/org.catarina.Catarina.desktop.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/org.catarina.Catarina.desktop @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.catarina.Catarina.desktop
+configure_file(packaging/io.github.guilhermelcosta.Catarina.desktop.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/io.github.guilhermelcosta.Catarina.desktop @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/io.github.guilhermelcosta.Catarina.desktop
         DESTINATION ${KDE_INSTALL_APPDIR})

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Guilherme Costa -->
+<component type="desktop-application">
+  <id>io.github.guilhermelcosta.Catarina</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Catarina</name>
+  <summary>Offline API client with file-based collections</summary>
+
+  <developer id="io.github.guilhermelcosta">
+    <name>Guilherme Costa</name>
+  </developer>
+
+  <description>
+    <p>
+      Catarina is an offline API client. Collections and requests are versionable
+      .json files on your disk, not records in a remote database.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>File-based collections you can version with git and share by folder</li>
+      <li>Secrets in the system keyring, never in the repository</li>
+      <li>Scoped variables resolved across global, collection and request</li>
+      <li>Auth, headers, querystring and JSON, text, form or multipart bodies</li>
+      <li>JSON tree, headers, cookies and a network timeline in the response</li>
+      <li>Import and export cURL, send history and a command palette</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.guilhermelcosta.Catarina.desktop</launchable>
+
+  <url type="homepage">https://github.com/guilhermelcosta/catarina</url>
+  <url type="bugtracker">https://github.com/guilhermelcosta/catarina/issues</url>
+  <url type="vcs-browser">https://github.com/guilhermelcosta/catarina</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Editing a request and inspecting the JSON response</caption>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.1.0/docs/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#1d99f3</color>
+    <color type="primary" scheme_preference="dark">#1d99f3</color>
+  </branding>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-10-13">
+      <description>
+        <p>First release.</p>
+      </description>
+    </release>
+  </releases>
+
+  <requires>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <display_length compare="ge">768</display_length>
+  </requires>
+</component>
