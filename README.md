@@ -5,8 +5,8 @@
 <h1 align="center">Catarina</h1>
 
 <p align="center">
-  A local-first API client for Linux. Collections are plain JSON files you can
-  version with Git.
+  <strong>A local-first API client for Linux.</strong><br />
+  No account, no cloud, no Electron. Your collections are plain JSON files on your disk.
 </p>
 
 <p align="center">
@@ -20,9 +20,23 @@
 
 ## Why Catarina
 
-- **Collections are files.** One `.json` per request. Diff, branch and review them like code.
+Cloud-first API clients usually keep your collections in a workspace and ask you
+to sign in. Catarina keeps them in a folder you own.
+
+- **Your data stays yours.** Collections live where you choose, as plain JSON files. No account, no sync, no lock-in.
+- **Git is the collaboration layer.** One `.json` per request. Review API changes in a diff, branch an experiment, share a folder.
 - **Secrets stay out of Git.** Tokens live in the system keyring; the request file stores only a `secretId`.
-- **Native and light.** Qt 6 and Kirigami. No Electron, no account, no cloud.
+- **Native and light.** Qt 6 and Kirigami, not Electron. Fast startup, low memory, one binary.
+- **Free and open source.** GPL-3.0-or-later. No paid tier, no telemetry, no account.
+
+| | Catarina | Cloud-first clients |
+|---|---|---|
+| Collections | Plain JSON files on disk | Workspace or cloud database |
+| Account | Not required | Often required |
+| Git workflow | Diff, branch and review directly | Export/import or a separate sync |
+| Secrets | System keyring | Often app or cloud storage |
+| Runtime | Qt 6 / Kirigami | Electron in many cases |
+| Price | GPL-3.0-or-later, no paid tier | Often a free tier plus paid plans |
 
 ## Features
 
