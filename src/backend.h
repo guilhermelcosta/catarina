@@ -19,7 +19,7 @@ class HttpClient;
 
 // Backend: QML facade. Sends requests (variables resolved by scope, params,
 // auth, multipart) and delegates persistence to the stores:
-//   - CollectionStorage  <storageDir> (.json versionable; default ~/Documents/catarina)
+//   - CollectionStorage  <storageDir> (.json versionable; default XDG Documents/catarina)
 //   - EnvironmentStore   <dir>/.catarina/environments.json
 //   - HistoryStore       ~/.local/share/catarina/history.json
 //   - SecretStore        OS keychain or ~/.local/share/catarina/secrets.json (0600)
@@ -151,7 +151,7 @@ private:
     QVariantList sanitizeSecrets(const QVariantList &vars);
 
     Settings m_settings;                       // same app config (storageDir/timeout/ignoreSsl)
-    QString m_dir;         // storageDir (default ~/Documents/catarina)
+    QString m_dir;         // storageDir (default XDG Documents/catarina)
     QString m_envFile;     // <dir>/.catarina/environments.json
     QString m_appData;     // ~/.local/share/catarina
     QString m_secretsFile; // <m_appData>/secrets.json

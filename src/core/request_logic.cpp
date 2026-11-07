@@ -32,10 +32,40 @@ QString dynamicName(const char *suffix)
     return QStringLiteral("$random") + s;
 }
 
-template <typename T, int N>
-const T &pickRandom(const T (&arr)[N])
+// ponytail: small built-in pools shared by $randomName/$randomEmail;
+// swap for a faker lib if realistic data matters
+const QVector<QString> &firstNames()
 {
-    return arr[QRandomGenerator::global()->bounded(N)];
+    static const QVector<QString> v = {
+        QStringLiteral("Alice"), QStringLiteral("Bruno"), QStringLiteral("Carla"), QStringLiteral("Diego"),
+        QStringLiteral("Emma"), QStringLiteral("Felipe"), QStringLiteral("Gina"), QStringLiteral("Hugo"),
+        QStringLiteral("Iris"), QStringLiteral("Jonas"), QStringLiteral("Karina"), QStringLiteral("Liam"),
+        QStringLiteral("Maya"), QStringLiteral("Nina"), QStringLiteral("Oscar"), QStringLiteral("Paula"),
+        QStringLiteral("Rita"), QStringLiteral("Sam"), QStringLiteral("Tina"), QStringLiteral("Vera")};
+    return v;
+}
+const QVector<QString> &lastNames()
+{
+    static const QVector<QString> v = {
+        QStringLiteral("Almeida"), QStringLiteral("Bianchi"), QStringLiteral("Costa"), QStringLiteral("Dias"),
+        QStringLiteral("Esteves"), QStringLiteral("Ferreira"), QStringLiteral("Gomes"), QStringLiteral("Herrera"),
+        QStringLiteral("Ibarra"), QStringLiteral("Jensen"), QStringLiteral("Klein"), QStringLiteral("Lima"),
+        QStringLiteral("Moraes"), QStringLiteral("Nakamura"), QStringLiteral("Oliveira"), QStringLiteral("Pereira"),
+        QStringLiteral("Rocha"), QStringLiteral("Silva"), QStringLiteral("Torres"), QStringLiteral("Vargas")};
+    return v;
+}
+const QVector<QString> &emailDomains()
+{
+    static const QVector<QString> v = {
+        QStringLiteral("example.com"), QStringLiteral("example.org"),
+        QStringLiteral("mail.test"), QStringLiteral("test.io")};
+    return v;
+}
+
+template <typename T>
+const T &pickRandom(const QVector<T> &v)
+{
+    return v.at(QRandomGenerator::global()->bounded(v.size()));
 }
 
 QString genUuid() { return QUuid::createUuid().toString(QUuid::WithoutBraces); }
@@ -46,17 +76,13 @@ QString genRandomInt() { return QString::number(QRandomGenerator::global()->boun
 QString genRandomBoolean() { return QRandomGenerator::global()->bounded(2) ? QStringLiteral("true")
                                                                             : QStringLiteral("false"); }
 QString genRandomDecimal() { return QString::number(QRandomGenerator::global()->generateDouble() * 1000.0, 'f', 2); }
-QString genRandomName()
+QString genRandomName() { return pickRandom(firstNames()) + QLatin1Char(' ') + pickRandom(lastNames()); }
+QString genRandomEmail()
 {
-    // ponytail: a small built-in pool; swap for a faker lib if realistic names matter
-    static const char *first[] = {"Alice", "Bruno", "Carla", "Diego", "Emma", "Felipe", "Gina",
-                                  "Hugo", "Iris", "Jonas", "Karina", "Liam", "Maya", "Nina",
-                                  "Oscar", "Paula", "Rita", "Sam", "Tina", "Vera"};
-    static const char *last[] = {"Almeida", "Bianchi", "Costa", "Dias", "Esteves", "Ferreira",
-                                 "Gomes", "Herrera", "Ibarra", "Jensen", "Klein", "Lima",
-                                 "Moraes", "Nakamura", "Oliveira", "Pereira", "Rocha", "Silva",
-                                 "Torres", "Vargas"};
-    return QString::fromLatin1(pickRandom(first)) + QLatin1Char(' ') + QString::fromLatin1(pickRandom(last));
+    const QString local = pickRandom(firstNames()).toLower() + QLatin1Char('.')
+                        + pickRandom(lastNames()).toLower()
+                        + QString::number(QRandomGenerator::global()->bounded(1000));
+    return local + QLatin1Char('@') + pickRandom(emailDomains());
 }
 
 struct DynamicVar {
@@ -73,6 +99,7 @@ const QVector<DynamicVar> &dynamicTable()
         {"Boolean", &genRandomBoolean},
         {"Decimal", &genRandomDecimal},
         {"Name", &genRandomName},
+        {"Email", &genRandomEmail},
     };
     return table;
 }

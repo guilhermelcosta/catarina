@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QKeySequence>
+#include <QStandardPaths>
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
@@ -11,7 +12,10 @@ Settings::Settings(QObject *parent)
 
 QString Settings::defaultStorageDir()
 {
-    return QDir::homePath() + QStringLiteral("/Documents/catarina");
+    QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (documents.isEmpty())
+        documents = QDir::homePath() + QStringLiteral("/Documents");
+    return documents + QStringLiteral("/catarina");
 }
 
 QString Settings::storageDir() const
