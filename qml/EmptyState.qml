@@ -11,6 +11,7 @@ ColumnLayout {
     id: root
     property string iconSource: ""
     property bool iconIsMask: false       // monochrome icon (follows the theme color)
+    property real iconOpacity: 0.35
     property string title: ""
     property string message: ""
     property string shortcut: ""          // e.g. "Ctrl+K"
@@ -32,7 +33,7 @@ ColumnLayout {
             implicitWidth: 72; implicitHeight: 72
             isMask: root.iconIsMask
             color: Kirigami.Theme.textColor
-            opacity: 0.35
+            opacity: root.iconOpacity
             visible: root.iconSource.length > 0
         }
     }

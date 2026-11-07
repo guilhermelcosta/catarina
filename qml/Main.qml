@@ -117,8 +117,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.smallSpacing
                 spacing: Kirigami.Units.smallSpacing
-                Kirigami.Icon { source: "qrc:/icons/catarina.svg"; implicitWidth: 22; implicitHeight: 22
-                                isMask: true; color: Kirigami.Theme.textColor }
+                Kirigami.Icon { source: "qrc:/icons/catarina-badge.svg"; implicitWidth: 22; implicitHeight: 22 }
                 Label { text: Strings.t.appName; font.bold: true }
                 Item { Layout.fillWidth: true }
                 // panel group: left (collections) and right (response)
@@ -283,7 +282,8 @@ Kirigami.ApplicationWindow {
                             EmptyState {
                                 anchors.centerIn: parent
                                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-                                iconSource: "qrc:/icons/catarina.svg"
+                                iconSource: "qrc:/icons/catarina-badge.svg"
+                                iconOpacity: 0.9
                                 title: Strings.t.noRequestOpen
                                 message: Strings.t.noRequestOpenHint
                                 actionText: Strings.t.newRequest
