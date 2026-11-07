@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Placeholder. Replace with the final icons/catarina.svg:
-     square (viewBox), transparent background, one file for all sizes. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect x="32" y="32" width="448" height="448" rx="112" fill="#1d99f3"/>
-  <path d="M338.3 158 A128 128 0 1 0 338.3 354" fill="none" stroke="#ffffff" stroke-width="64" stroke-linecap="round"/>
-</svg>

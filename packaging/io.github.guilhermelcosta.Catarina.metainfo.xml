@@ -38,18 +38,35 @@
   <screenshots>
     <screenshot type="default">
       <caption>Editing a request and inspecting the JSON response</caption>
-      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.0/docs/screenshot.png</image>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/request-response.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Managing scoped environment variables</caption>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/environments.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Opening the command palette</caption>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/command-palette.png</image>
     </screenshot>
   </screenshots>
 
   <branding>
-    <color type="primary" scheme_preference="light">#1d99f3</color>
-    <color type="primary" scheme_preference="dark">#1d99f3</color>
+    <color type="primary" scheme_preference="light">#C98A4B</color>
+    <color type="primary" scheme_preference="dark">#5A3A1E</color>
   </branding>
 
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.1" date="2026-11-07">
+      <description>
+        <ul>
+          <li>Final app icon and store screenshots.</li>
+          <li>User-local install and uninstall scripts.</li>
+          <li>Minimal README and reorganized documentation assets.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-07">
       <description>
         <ul>
