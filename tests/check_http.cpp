@@ -119,7 +119,7 @@ private slots:
         QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);   // doesn't route localhost
         // point storageDir at the temp dir BEFORE constructing Backend: its ctor
         // mkpaths the storage dir, otherwise it would create the default
-        // ~/Documents/catarina on the real home
+        // the real Documents folder
         {
             QSettings s(QSettings::IniFormat, QSettings::UserScope,
                         QStringLiteral("catarina"), QStringLiteral("catarina"));

@@ -1,0 +1,179 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - 'release/**'
+      - 'feat/**'
+      - 'feature/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'docs/**'
+      - 'test/**'
+      - 'refactor/**'
+      - 'perf/**'
+      - 'ci/**'
+      - 'build/**'
+      - 'revert/**'
+      - 'dependabot/**'
+  pull_request:
+    branches:
+      - develop
+      - master
+      - 'release/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  QT_QPA_PLATFORM: offscreen
+  QT_QUICK_BACKEND: software
+
+jobs:
+  branch-name:
+    name: branch-name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        env:
+          BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          echo "Branch: $BRANCH"
+          if [[ "$BRANCH" =~ ^(develop|master)$ ]]; then
+            exit 0
+          fi
+          if [[ "$BRANCH" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            exit 0
+          fi
+          if [[ "$BRANCH" =~ ^dependabot/ ]]; then
+            exit 0
+          fi
+          if [[ "$BRANCH" =~ ^(feat|feature|fix|chore|docs|test|refactor|perf|ci|build|revert)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            exit 0
+          fi
+          echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug> or release/<x.y.z>."
+          exit 1
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+
+  build-test:
+    name: build-test
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            cmake gcc-c++ git make \
+            extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtquickcontrols2-devel \
+            kf6-kirigami-devel qtkeychain-qt6-devel \
+            appstream desktop-file-utils
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+      - name: Install for AppStream validation
+        run: cmake --install build --prefix "$PWD/install"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Validate AppStream metadata
+        run: appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
+      - name: Validate desktop entry
+        run: desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop
+
+  dependency-review:
+    name: dependency-review
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  auto-pr:
+    name: auto-pr
+    needs:
+      - branch-name
+      - secret-scan
+      - build-test
+    if: ${{ github.event_name == 'push' && github.event.repository.fork == false }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Open a pull request after a green build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          case "$BRANCH" in
+            develop|master|dependabot/*)
+              echo "No automatic pull request for $BRANCH"
+              exit 0
+              ;;
+            release/*)
+              BASE=master
+              DRAFT=--draft
+              ;;
+            feat/*|feature/*|fix/*|chore/*|docs/*|test/*|refactor/*|perf/*|ci/*|build/*|revert/*)
+              BASE=develop
+              DRAFT=
+              ;;
+            *)
+              echo "No automatic pull request for $BRANCH"
+              exit 0
+              ;;
+          esac
+
+          AHEAD=$(gh api "repos/$GITHUB_REPOSITORY/compare/${BASE}...${BRANCH}" --jq '.ahead_by')
+          if [ "$AHEAD" -eq 0 ]; then
+            echo "$BRANCH has no commits ahead of $BASE"
+            exit 0
+          fi
+
+          if gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base "$BASE" \
+               --state open --json number --jq 'length' | grep -q '^[1-9]'; then
+            echo "A pull request already exists"
+            exit 0
+          fi
+
+          TYPE="${BRANCH%%/*}"
+          SLUG="${BRANCH#*/}"
+          TITLE="$TYPE: ${SLUG//-/ }"
+          BODY=$(printf '## Summary\n\nAutomated pull request for `%s`.\n\n## Checklist\n\n- [ ] CI is green\n- [ ] No secrets or credentials\n- [ ] Docs and tests updated when needed\n' "$BRANCH")
+          gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" \
+            --title "$TITLE" --body "$BODY" $DRAFT

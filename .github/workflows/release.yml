@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to tag, in x.y.z form
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: tag
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       startsWith(github.event.pull_request.head.ref, 'release/') &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Resolve and verify the version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="${HEAD_REF#release/}"
+          fi
+          echo "Version: $VERSION"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must use x.y.z"
+            exit 1
+          fi
+
+          PROJECT_VERSION=$(sed -n 's/^project(catarina VERSION \([0-9][0-9.]*\).*/\1/p' CMakeLists.txt | head -n1)
+          if [ "$PROJECT_VERSION" != "$VERSION" ]; then
+            echo "::error::CMake version ($PROJECT_VERSION) does not match $VERSION"
+            exit 1
+          fi
+
+          METAINFO=packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
+          if ! grep -q "<release version=\"$VERSION\"" "$METAINFO"; then
+            echo "::error::Missing release entry for $VERSION in $METAINFO"
+            exit 1
+          fi
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag v$VERSION already exists"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push the tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Catarina v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "v$VERSION" --title "Catarina v$VERSION" --generate-notes

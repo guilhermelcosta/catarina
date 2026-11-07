@@ -14,8 +14,9 @@ Kirigami**, with an English interface.
 ## Why another API client?
 
 - **File-based, versionable collections.** Each request is a `.json` in
-  `~/Documents/catarina` (configurable). Version it with `git`, review it in a diff, share it by folder —
-  no export/import.
+  the XDG Documents folder (usually `~/Documents/catarina`, localized names
+  respected), configurable. Version it with `git`, review it in a diff, share it
+  by folder, with no export/import.
 - **Secrets out of the repository.** Passwords and tokens live in the **system keyring**
   (Secret Service/KWallet via QtKeychain); the versioned file only stores a `secretId`.
   With no keyring available, it falls back to a `0600` file outside the collections folder.
@@ -33,15 +34,17 @@ Kirigami**, with an English interface.
 - **Variables** `{{variable}}` with autocomplete, hover showing the value, and undefined-variable
   warning — in the URL, headers, body, auth, and tables.
 - **Dynamic variables** `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomIsoTimestamp}}`,
-  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}` generated on each
-  send (all names carry the `$random` prefix).
+  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}`, `{{$randomEmail}}`
+  generated on each send (all names carry the `$random` prefix).
 - **Global environments**, scoped per collection or to "all".
 - **Response**: body, **JSON tree**, headers, cookies, and a **Network tab** (timeline).
 - **VS Code-style tabs**: transient preview, pin/unpin, reorder, reopen closed, and
   **restore session**.
 - **Import/export cURL**, send **history**, and a **command palette** (`Ctrl+K`).
 - **Remappable shortcuts** in settings.
-- **Example collection** (DummyJSON) created on first use.
+- **Example collection** (DummyJSON) created on first use — shows the GET/POST/PUT/DELETE flows,
+  parameters, inherited auth, and **dynamic variables** (`Add user` uses `{{$randomInt}}` and
+  `{{$randomEmail}}`).
 
 ## Installation
 
@@ -60,7 +63,7 @@ Kirigami**, with an English interface.
 sudo dnf install cmake gcc-c++ \
     extra-cmake-modules \
     qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtquickcontrols2-devel \
-    kf6-kirigami-devel qt6-qtkeychain-devel
+    kf6-kirigami-devel qtkeychain-qt6-devel
 ```
 
 **Arch**
@@ -87,10 +90,11 @@ cmake --build build -j
 
 ### Flatpak
 
-The manifest at `packaging/org.catarina.Catarina.yml` already includes QtKeychain:
+The manifest at `packaging/io.github.guilhermelcosta.Catarina.yml` already includes QtKeychain:
 
 ```sh
-flatpak-builder --user --install --force-clean build-flatpak packaging/org.catarina.Catarina.yml
+flatpak run --command=flathub-build org.flatpak.Builder --install \
+    packaging/io.github.guilhermelcosta.Catarina.yml
 ```
 
 ### Install to the system
@@ -139,7 +143,7 @@ docs/DESIGN.md    visual and component standards
 
 | What | Where |
 |---|---|
-| Collections/requests | `~/Documents/catarina` (configurable) |
+| Collections/requests | XDG Documents folder, `catarina/` (configurable) |
 | Preferences | `~/.config/catarina/catarina.ini` |
 | Secrets | OS keyring or `~/.local/share/catarina/secrets.json` (`0600`) |
 | History | `~/.local/share/catarina/history.json` |
@@ -156,8 +160,7 @@ docs/DESIGN.md    visual and component standards
 
 ## License
 
-Not **defined** yet — a `LICENSE` file still needs to be added. Until then, treat it as
-"all rights reserved". (If you'd like, we can open a PR adding MIT/GPL.)
+GPL-3.0-or-later. See [`LICENSE`](LICENSE).
 
 ## Credits
 

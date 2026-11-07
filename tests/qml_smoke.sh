@@ -12,7 +12,7 @@ tmp="$(mktemp -d)"
 trap 'rm -f "$log"; rm -rf "$tmp"' EXIT
 
 # hermetic: temp home/config/data so the smoke test never touches the user's
-# real settings/collections (and never creates the default ~/Documents/catarina)
+# real settings/collections (and never creates the default Documents folder)
 HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" \
     CATARINA_SECRETS_BACKEND=file timeout 6 "$bin" >"$log" 2>&1
 rc=$?

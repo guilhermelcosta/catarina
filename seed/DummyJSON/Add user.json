@@ -7,7 +7,7 @@
         "user": "",
         "value": ""
     },
-    "body": "{\n  \"firstName\": \"Muhammad\",\n  \"lastName\": \"Ovi\",\n  \"age\": 25\n}",
+    "body": "{\n  \"firstName\": \"Muhammad\",\n  \"lastName\": \"Ovi\",\n  \"age\": {{$randomInt}},\n  \"email\": \"{{$randomEmail}}\"\n}",
     "bodyType": "json",
     "fields": [
     ],
