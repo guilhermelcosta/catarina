@@ -28,12 +28,12 @@ the only object exposed to QML.
 
 ## Data
 
-| What | Where |
-|---|---|
-| Collections/requests | XDG Documents folder, `catarina/` (configurable) |
-| Preferences | `~/.config/catarina/catarina.ini` |
-| Secrets | OS keyring, or `~/.local/share/catarina/catarina/secrets.json` (`0600`) |
-| History | `~/.local/share/catarina/catarina/history.json` |
+| What                 | Where                                                                   |
+| -------------------- | ----------------------------------------------------------------------- |
+| Collections/requests | XDG Documents folder, `catarina/` (configurable)                        |
+| Preferences          | `~/.config/catarina/catarina.ini`                                       |
+| Secrets              | OS keyring, or `~/.local/share/catarina/catarina/secrets.json` (`0600`) |
+| History              | `~/.local/share/catarina/catarina/history.json`                         |
 
 Secrets are stored in the keyring through QtKeychain. The collection file only
 stores a `secretId`. With no keyring available, the fallback file is created with

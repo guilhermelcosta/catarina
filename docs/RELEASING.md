@@ -9,7 +9,7 @@ release tags.
 ```sh
 git switch develop
 git pull origin develop
-git switch -c release/0.2.0
+git switch -c release/0.2.1
 ```
 
 On the release branch:
@@ -18,7 +18,7 @@ On the release branch:
 2. Add the matching `<release version="..." date="...">` entry to
    `packaging/io.github.guilhermelcosta.Catarina.metainfo.xml`.
 3. Set `tag:` in `packaging/io.github.guilhermelcosta.Catarina.yml` to the new
-   tag (`v0.2.0`). Leave `commit:` out of the repository copy; Flathub reviewers
+   tag (`v0.2.1`). Leave `commit:` out of the repository copy; Flathub reviewers
    require it in the submission copy.
 4. Update `README.md` or `packaging/FLATHUB.md` only when their facts changed.
 5. Run:
@@ -35,8 +35,8 @@ Commit and push:
 
 ```sh
 git add CMakeLists.txt packaging README.md
-git commit -m "chore(release): 0.2.0"
-git push -u origin release/0.2.0
+git commit -m "chore(release): 0.2.1"
+git push -u origin release/0.2.1
 ```
 
 CI runs on the release branch and opens a draft pull request to `master`. Mark
@@ -56,7 +56,7 @@ release commits locally with `git commit -S`. A local unsigned merge into
 If the first release needs a manual start, run the workflow by hand:
 
 ```sh
-gh workflow run release.yml -f version=0.2.0
+gh workflow run release.yml -f version=0.2.1
 ```
 
 A tag is never reused and never force-pushed. If the source changes after a tag,
@@ -70,15 +70,15 @@ released code.
 For the Flathub submission manifest, add the tag commit:
 
 ```sh
-git rev-list -n 1 v0.2.0
+git rev-list -n 1 v0.2.1
 ```
 
 Copy `packaging/io.github.guilhermelcosta.Catarina.yml` to the top level of the
 `flathub/flathub` submission branch and add:
 
 ```yaml
-        tag: v0.2.0
-        commit: <output of git rev-list -n 1 v0.2.0>
+        tag: v0.2.1
+        commit: <output of git rev-list -n 1 v0.2.1>
 ```
 
 ## Hotfix
