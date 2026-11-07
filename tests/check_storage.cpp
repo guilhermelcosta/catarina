@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QUrlQuery>
 
@@ -747,6 +748,13 @@ int main(int argc, char **argv)
     }
 
     // ---------------------------------------------------------------- storageDir
+    // the default follows the XDG Documents location (including localized names)
+    {
+        const QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        if (!documents.isEmpty())
+            CHECK(Settings::defaultStorageDir() == documents + QStringLiteral("/catarina"));
+    }
+
     // changing the collections directory persists and another instance sees it
     {
         const QString d2 = tmp.path() + QStringLiteral("/collections2");
