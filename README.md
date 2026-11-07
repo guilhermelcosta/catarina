@@ -43,11 +43,21 @@ Flathub submission is pending.
 From source:
 
 ```sh
-./scripts/install.sh
+./scripts/install.sh     # build and install to ~/.local
+./scripts/uninstall.sh   # remove the app files, keep your data
 ```
 
-This builds and installs to `~/.local` (`~/.local/bin/catarina`). To build and
-run from the tree instead:
+Install to another prefix:
+
+```sh
+PREFIX=/opt/catarina ./scripts/install.sh
+PREFIX=/opt/catarina ./scripts/uninstall.sh
+```
+
+The uninstall script removes the binary, desktop file, icon and metainfo. It
+does not touch your collections, settings, history or secrets.
+
+To build and run from the tree instead:
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release
