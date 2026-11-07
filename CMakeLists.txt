@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(catarina VERSION 0.2.0 LANGUAGES CXX)
+project(catarina VERSION 0.2.1 LANGUAGES CXX)
 
 find_package(ECM 6.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})

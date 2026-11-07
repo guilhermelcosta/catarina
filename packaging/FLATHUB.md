@@ -25,8 +25,8 @@ account and are done in the browser.
 2. **Keep the icon consistent.** The production icon is
    `assets/icons/catarina-badge.svg`: square, transparent outside the rounded
    badge, optimized, and installed under the app ID. The original art is in
-   `assets/icons/source/`. Confirm that the artwork is original or that its
-   license allows redistribution under GPL-3.0-or-later, and keep the light/dark
+   `assets/icons/source/`. The artwork is original, made for Catarina by
+   Guilherme Costa, and licensed under GPL-3.0-or-later. Keep the light/dark
    brand colors in the metainfo in sync with the icon.
 3. **Keep the store screenshots current.** They live in `assets/screenshots/`:
    `request-response.png`, `environments.png` and `command-palette.png`. Capture
