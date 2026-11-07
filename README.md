@@ -106,5 +106,4 @@ GPL-3.0-or-later. See [LICENSE](LICENSE).
 ## Credits
 
 Built with [Qt](https://www.qt.io/) and [KDE Kirigami](https://invent.kde.org/frameworks/kirigami).
-The app icon is original artwork by Guilherme Costa, GPL-3.0-or-later.
 The example collection uses the public [DummyJSON](https://dummyjson.com/) API.
