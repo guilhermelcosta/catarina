@@ -256,7 +256,8 @@ In `qml/` (atomic and shell components):
   (`VarSupport` keeps the attached highlighters and rehighlights them; `AppController.missingVars`
   exposes the last set for tests). `{{name}}` with a value keeps the variable color (`#c678dd`).
 - **Dynamic variables**: `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomIsoTimestamp}}`,
-  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}`. Every name is
+  `{{$randomInt}}`, `{{$randomBoolean}}`, `{{$randomDecimal}}`, `{{$randomName}}`, `{{$randomEmail}}`.
+  Every name is
   built by `RequestLogic::dynamicName(suffix)` as `"$random" + suffix`, so the prefix can't be
   forgotten. The **single source of truth** is the `dynamicTable()` in
   `src/core/request_logic.cpp` — add one line there and it flows to generation (`dynamicValue`),
@@ -299,9 +300,10 @@ In `qml/` (atomic and shell components):
   query-suffix preview hides once the URL is scrolled.
 - **Example collection**: on first use (empty storage, `.catarina/.seeded` marker) the backend
   copies `seed/` (resources `:/seed`, embedded in the binary) — the demo **DummyJSON** collection
-  (GET/POST/PUT/DELETE, params, variables, and inherited auth) and a **Demo environment** with a
-  global variable (`locale`), so the example already shows the three variable types
-  (global/collection/request). It doesn't overwrite anyone who already has collections and
+  (GET/POST/PUT/DELETE, params, variables, and inherited auth; `Add user` also uses dynamic
+  variables `{{$randomInt}}`/`{{$randomEmail}}`) and a **Demo environment** with a global variable
+  (`locale`), so the example already shows the variable scopes (global/collection/request) and the
+  dynamic ones. It doesn't overwrite anyone who already has collections and
   doesn't recreate after the user deletes it. Only the app calls it (`main.cpp`), not the
   `Backend` constructor.
 - **Query preview in the URL bar**: the active params appear concatenated right after the typed

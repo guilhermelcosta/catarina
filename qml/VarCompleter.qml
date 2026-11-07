@@ -55,12 +55,14 @@ Item {
         var before = t.substring(0, tokenStart);
         var rest = t.substring(tokenStart + 2 + partial.length);
         if (rest.indexOf("}}") === 0) rest = rest.substring(2);
-        target.text = before + "{{" + name + "}}" + rest;
-        target.cursorPosition = before.length + name.length + 4;
-        // setting `text` programmatically does NOT emit textEdited; without this the
-        // KvTable model (onTextEdited) keeps the old value (the "{{" being typed)
-        if (target.textEdited !== undefined)
-            target.textEdited();
+        if (target.text !== before + "{{" + name + "}}" + rest) {
+            target.text = before + "{{" + name + "}}" + rest;
+            target.cursorPosition = before.length + name.length + 4;
+            // setting `text` programmatically does NOT emit textEdited; without this the
+            // KvTable model (onTextEdited) keeps the old value (the "{{" being typed)
+            if (target.textEdited !== undefined)
+                target.textEdited();
+        }
         pop.close();
     }
     // called by the target's Keys.onPressed; returns true if it consumed the key
