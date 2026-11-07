@@ -3,21 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - develop
-      - master
-      - 'release/**'
-      - 'feat/**'
-      - 'feature/**'
-      - 'fix/**'
-      - 'chore/**'
-      - 'docs/**'
-      - 'test/**'
-      - 'refactor/**'
-      - 'perf/**'
-      - 'ci/**'
-      - 'build/**'
-      - 'revert/**'
-      - 'dependabot/**'
+      - '**'
   pull_request:
     branches:
       - develop
@@ -56,7 +42,11 @@ jobs:
           if [[ "$BRANCH" =~ ^dependabot/ ]]; then
             exit 0
           fi
-          if [[ "$BRANCH" =~ ^(feat|feature|fix|chore|docs|test|refactor|perf|ci|build|revert)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+          if [[ "$BRANCH" =~ ^feat/ ]]; then
+            echo "::error::Use feature/<slug>; the feat/ prefix is not allowed."
+            exit 1
+          fi
+          if [[ "$BRANCH" =~ ^(feature|fix|chore|docs|test|refactor|perf|ci|build|revert)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             exit 0
           fi
           echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug> or release/<x.y.z>."
@@ -64,6 +54,7 @@ jobs:
 
   secret-scan:
     name: secret-scan
+    needs: branch-name
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -81,6 +72,7 @@ jobs:
 
   build-test:
     name: build-test
+    needs: branch-name
     runs-on: ubuntu-latest
     container: fedora:44
     steps:
@@ -109,6 +101,7 @@ jobs:
 
   dependency-review:
     name: dependency-review
+    needs: branch-name
     if: ${{ github.event_name == 'pull_request' && github.event.repository.private == false }}
     runs-on: ubuntu-latest
     permissions:
@@ -149,7 +142,7 @@ jobs:
               BASE=master
               DRAFT=--draft
               ;;
-            feat/*|feature/*|fix/*|chore/*|docs/*|test/*|refactor/*|perf/*|ci/*|build/*|revert/*)
+            feature/*|fix/*|chore/*|docs/*|test/*|refactor/*|perf/*|ci/*|build/*|revert/*)
               BASE=develop
               DRAFT=
               ;;
