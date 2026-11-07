@@ -1,6 +1,11 @@
 /build/
 /build-keychain/
+/repo/
+/builddir/
+/.flatpak-builder/
+
+# local agentic-factory workflow (not part of the published repository)
+factory/
 
 # factory worktrees
 .worktrees/
-factory/profile.md
