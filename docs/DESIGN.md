@@ -187,8 +187,9 @@ In `qml/` (atomic and shell components):
   `showDiscard`, `showRename`/`canRename` (rename pencil) and signals `save`/`discard`/`rename`.
 - **`EmptyState.qml`** — standardized empty state (placeholder): optional icon (fixed 72px area),
   title, message (`opacity 0.6`), shortcut, and optional action (`highlighted`). Transparent
-  background (inherits the panel). For your own monochrome icon (e.g. `catarina.svg`), pass
-  `iconIsMask: true` (it takes the theme color). **Every placeholder uses this component** — center
+  background (inherits the panel). For a monochrome icon, pass
+  `iconIsMask: true` (it takes the theme color). A full-color app icon such as
+  `catarina.svg` stays unmasked. **Every placeholder uses this component** — center
   it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — read-only table (response HTTP headers); selectable cells + "Copy all".
 - **`ResolvedVarsTable.qml`** — read-only table of effective variables (Source/Name/Value).

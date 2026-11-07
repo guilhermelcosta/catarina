@@ -351,7 +351,7 @@ Item {
                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                 visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
                 iconSource: "qrc:/icons/catarina.svg"
-                iconIsMask: true
+                iconIsMask: false
                 title: Strings.t.noResponseYet
                 message: Strings.t.noResponseHint
                 shortcut: "Ctrl+K"
