@@ -48,6 +48,11 @@ When the release pull request is merged, `.github/workflows/release.yml` verifie
 the version in `CMakeLists.txt` and the metainfo file, creates `vX.Y.Z` on
 `master`, and opens the GitHub release.
 
+`master` requires signed commits. Use the GitHub **squash** merge for the
+`release/x.y.z` pull request (GitHub signs the squash commit), or sign the
+release commits locally with `git commit -S`. A local unsigned merge into
+`master` is blocked by the ruleset.
+
 If the first release needs a manual start, run the workflow by hand:
 
 ```sh
