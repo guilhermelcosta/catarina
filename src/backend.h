@@ -21,8 +21,8 @@ class HttpClient;
 // auth, multipart) and delegates persistence to the stores:
 //   - CollectionStorage  <storageDir> (.json versionable; default XDG Documents/catarina)
 //   - EnvironmentStore   <dir>/.catarina/environments.json
-//   - HistoryStore       ~/.local/share/catarina/history.json
-//   - SecretStore        OS keychain or ~/.local/share/catarina/secrets.json (0600)
+//   - HistoryStore       ~/.local/share/catarina/catarina/history.json
+//   - SecretStore        OS keychain or ~/.local/share/catarina/catarina/secrets.json (0600)
 // Keeps the signals and the Q_INVOKABLE API the QML already uses.
 class Backend : public QObject
 {
