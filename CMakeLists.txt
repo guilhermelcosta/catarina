@@ -123,8 +123,8 @@ qt_add_resources(catarina "qml"
 
 qt_add_resources(catarina "appicon"
     PREFIX "/icons"
-    BASE icons
-    FILES icons/catarina-badge.svg
+    BASE assets/icons
+    FILES assets/icons/catarina-badge.svg
 )
 
 # Self-check of the Backend logic (no network), hermetic.
@@ -184,7 +184,7 @@ set_tests_properties(check_storage tst_components tst_app check_highlighter chec
 
 # ---- installation: binary, icon, launcher and metainfo ----
 install(TARGETS catarina ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(FILES icons/catarina-badge.svg
+install(FILES assets/icons/catarina-badge.svg
         DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps
         RENAME io.github.guilhermelcosta.Catarina.svg)
 install(FILES packaging/io.github.guilhermelcosta.Catarina.metainfo.xml

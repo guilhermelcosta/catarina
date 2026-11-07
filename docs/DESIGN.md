@@ -189,7 +189,7 @@ In `qml/` (atomic and shell components):
   `iconOpacity` defaults to `0.35`), title, message (`opacity 0.6`), shortcut, and optional
   action (`highlighted`). Transparent background (inherits the panel). For a monochrome icon,
   pass `iconIsMask: true` (it takes the theme color). A full-color app icon such as
-  `catarina-badge.svg` stays unmasked and uses a higher `iconOpacity` (the app uses `0.9`) so
+  `assets/icons/catarina-badge.svg` stays unmasked and uses a higher `iconOpacity` (the app uses `0.9`) so
   the badge does not wash out. **Every placeholder uses this component** — center
   it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
 - **`HeaderTable.qml`** — read-only table (response HTTP headers); selectable cells + "Copy all".

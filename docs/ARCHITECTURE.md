@@ -18,7 +18,8 @@ qml/
   dialogs/        modals and popups
   js/, Util.js, Strings.js  pure logic and texts
 tests/            check_*, tst_* (ctest)
-docs/             DESIGN.md, BUILD.md, ARCHITECTURE.md, RELEASING.md
+assets/           app icon, source artwork and store screenshots
+docs/             project documentation
 ```
 
 The `core/` layer has no I/O or network dependency. `storage/` and `net/` are

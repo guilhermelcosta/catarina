@@ -38,15 +38,15 @@
   <screenshots>
     <screenshot type="default">
       <caption>Editing a request and inspecting the JSON response</caption>
-      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/docs/screenshot.png</image>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/request-response.png</image>
     </screenshot>
     <screenshot>
       <caption>Managing scoped environment variables</caption>
-      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/docs/screenshot-environments.png</image>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/environments.png</image>
     </screenshot>
     <screenshot>
       <caption>Opening the command palette</caption>
-      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/docs/screenshot-palette.png</image>
+      <image>https://raw.githubusercontent.com/guilhermelcosta/catarina/v0.2.1/assets/screenshots/command-palette.png</image>
     </screenshot>
   </screenshots>
 

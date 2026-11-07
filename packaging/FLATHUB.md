@@ -22,15 +22,16 @@ account and are done in the browser.
    and the homepage/screenshot URLs must be reachable. While the repo is private,
    the linter reports `appid-url-not-reachable` (HTTP 404) and the Flatpak build
    fails at the source download step.
-2. **Keep the icon consistent.** The production icon is `icons/catarina-badge.svg`:
-   square, transparent outside the rounded badge, optimized, and installed under
-   the app ID. The original art is in `icons/source/`. Confirm that the artwork is
-   original or that its license allows redistribution under GPL-3.0-or-later, and
-   keep the light/dark brand colors in the metainfo in sync with the icon.
-3. **Take store-quality screenshots.** The current `docs/screenshot.png` shows a
-   debug state. Flathub wants the app window with its decoration, real content,
-   no empty state, 1000x700 or smaller, and a caption. Three to six screenshots is
-   a good range for this app.
+2. **Keep the icon consistent.** The production icon is
+   `assets/icons/catarina-badge.svg`: square, transparent outside the rounded
+   badge, optimized, and installed under the app ID. The original art is in
+   `assets/icons/source/`. Confirm that the artwork is original or that its
+   license allows redistribution under GPL-3.0-or-later, and keep the light/dark
+   brand colors in the metainfo in sync with the icon.
+3. **Keep the store screenshots current.** They live in `assets/screenshots/`:
+   `request-response.png`, `environments.png` and `command-palette.png`. Capture
+   at 1000x700 with the window decoration and shadow, and update the metainfo URLs
+   when they change.
 4. **Cut a release.** The release workflow creates `vX.Y.Z` on `master` after the
    `release/x.y.z` pull request is merged. The tag must exist on the public remote
    and must match the version in `CMakeLists.txt` and the metainfo file. See
