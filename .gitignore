@@ -1,5 +1,6 @@
 /build/
 /build-keychain/
+/build-install/
 /repo/
 /builddir/
 /.flatpak-builder/

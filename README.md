@@ -43,6 +43,13 @@ Flathub submission is pending.
 From source:
 
 ```sh
+./scripts/install.sh
+```
+
+This builds and installs to `~/.local` (`~/.local/bin/catarina`). To build and
+run from the tree instead:
+
+```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ./build/bin/catarina

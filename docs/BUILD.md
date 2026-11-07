@@ -35,6 +35,21 @@ sudo apt install cmake g++ extra-cmake-modules \
 Package names vary by release. If `find_package(Qt6Keychain)` fails, install the
 QtKeychain development package for your distro.
 
+## Quick install (user-local)
+
+```sh
+./scripts/install.sh
+```
+
+Installs to `~/.local` by default (`~/.local/bin/catarina`, desktop file, icon
+and metainfo). Override the prefix with:
+
+```sh
+PREFIX=/some/prefix ./scripts/install.sh
+```
+
+The script still builds; the build is incremental, so a second run is quick.
+
 ## Build and run
 
 ```sh
