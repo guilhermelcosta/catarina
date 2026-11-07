@@ -186,7 +186,7 @@ Item {
                     collection: table.collection
                     errorText: (table.uniqueNames && table.revision >= 0 && table.isDuplicateName(index))
                                ? Strings.t.duplicateNameHint : ""
-                    onTextEdited: { model.name = text; table.edited(); }
+                    onTextEdited: { if (model.name !== text) { model.name = text; table.edited(); } }
                 }
                 // file (fields mode only)
                 Button {
@@ -214,7 +214,7 @@ Item {
                     implicitHeight: Kirigami.Units.gridUnit * 1.7
                     topPadding: 3; bottomPadding: 3; leftPadding: 6
                     rightPadding: revealButton.width + Kirigami.Units.smallSpacing
-                    onTextEdited: { model.value = text; table.edited(); }
+                    onTextEdited: { if (model.value !== text) { model.value = text; table.edited(); } }
                     // Tab/Shift+Tab move to the adjacent cell (same navigation as VarField)
                     Keys.onPressed: function (e) {
                         if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
@@ -249,7 +249,7 @@ Item {
                     tabHandler: function (dir) { table.moveFocus(dir); }
                     resolved: table.resolved
                     collection: table.collection
-                    onTextEdited: { model.value = text; table.edited(); }
+                    onTextEdited: { if (model.value !== text) { model.value = text; table.edited(); } }
                 }
                 ComboBox {
                     property bool kvCell: table.allowFiles
