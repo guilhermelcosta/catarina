@@ -22,10 +22,11 @@ account and are done in the browser.
    and the homepage/screenshot URLs must be reachable. While the repo is private,
    the linter reports `appid-url-not-reachable` (HTTP 404) and the Flatpak build
    fails at the source download step.
-2. **Replace the placeholder icon.** `icons/catarina.svg` says so in a comment.
-   Flathub expects a distinct, own-identity icon, and the metainfo brand colour
-   (`#1d99f3`) is currently the KDE blue. Set it to the app's own colour, with a
-   distinct light and dark variant.
+2. **Keep the icon consistent.** The production icon is `icons/catarina.svg`: square,
+   transparent, optimized, and installed under the app ID. The original art is in
+   `icons/source/`. Confirm that the artwork is original or that its license allows
+   redistribution under GPL-3.0-or-later, and keep the light/dark brand colors in
+   the metainfo in sync with the icon.
 3. **Take store-quality screenshots.** The current `docs/screenshot.png` shows a
    debug state. Flathub wants the app window with its decoration, real content,
    no empty state, 1000x700 or smaller, and a caption. Three to six screenshots is
