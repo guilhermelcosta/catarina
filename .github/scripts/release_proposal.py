@@ -26,6 +26,9 @@ METAINFO = ROOT / "packaging" / "io.github.guilhermelcosta.Catarina.metainfo.xml
 FLATPAK = ROOT / "packaging" / "io.github.guilhermelcosta.Catarina.yml"
 MAX_NOTES = 20
 
+PR_IN_SUBJECT = re.compile(r"\(#(\d+)\)$|^Merge pull request #(\d+)")
+CLOSING = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.IGNORECASE)
+
 
 def run(*argv: str, check: bool = True) -> subprocess.CompletedProcess:
     proc = subprocess.run(argv, cwd=ROOT, text=True, capture_output=True)
@@ -67,8 +70,37 @@ def changes(since: str | None) -> list[str]:
     return [subject for subject in subjects if subject][:MAX_NOTES]
 
 
-def body(version: str, since: str | None, subjects: list[str]) -> str:
+def resolved_issues(since: str | None) -> list[int]:
+    """Issues closed by the pull requests merged since the last release.
+
+    They are listed in the proposal body, so GitHub closes them when the
+    proposal reaches master, never before.
+    """
+    revision = f"{since}..origin/develop" if since else "origin/develop"
+    subjects = out("git", "log", "--format=%s", revision).splitlines()
+    pulls = set()
+    for subject in subjects:
+        match = PR_IN_SUBJECT.search(subject)
+        if match:
+            pulls.add(int(match.group(1) or match.group(2)))
+    if not pulls:
+        return []
+
+    listing = json.loads(
+        out("gh", "pr", "list", "--state", "merged", "--limit", "200", "--json", "number,body")
+    )
+    issues = set()
+    for pull in listing:
+        if pull["number"] in pulls:
+            issues.update(int(number) for number in CLOSING.findall(pull["body"] or ""))
+    return sorted(issues)
+
+
+def body(version: str, since: str | None, subjects: list[str], issues: list[int]) -> str:
     lines = [f"Release {version}", ""]
+    if issues:
+        lines += [f"Closes #{number}" for number in issues]
+        lines.append("")
     if subjects:
         lines.append(f"Changes since {since}:" if since else "Changes:")
         lines += [f"- {subject}" for subject in subjects]
@@ -114,7 +146,7 @@ def open_proposal() -> dict | None:
     return None
 
 
-def refresh(pull: dict, subjects: list[str]) -> None:
+def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int]) -> None:
     branch = pull["headRefName"]
     version = branch.split("/", 1)[1]
     run("git", "fetch", "--quiet", "origin", branch, "develop")
@@ -129,12 +161,12 @@ def refresh(pull: dict, subjects: list[str]) -> None:
         run("git", "push", "--quiet", "origin", branch)
 
     notes = Path(tempfile.gettempdir()) / "proposal.md"
-    notes.write_text(body(version, latest_tag(), subjects))
+    notes.write_text(body(version, since, subjects, issues))
     run("gh", "pr", "edit", str(pull["number"]), "--body-file", str(notes))
     print(f"updated proposal #{pull['number']} ({branch})")
 
 
-def create(version: str, subjects: list[str], since: str | None) -> None:
+def create(version: str, since: str | None, subjects: list[str], issues: list[int]) -> None:
     branch = f"release/{version}"
     run("git", "fetch", "--quiet", "origin", "master", "develop")
     run("git", "switch", "--quiet", "-C", branch, "origin/master")
@@ -147,7 +179,7 @@ def create(version: str, subjects: list[str], since: str | None) -> None:
     run("git", "push", "--quiet", "-u", "origin", branch)
 
     notes = Path(tempfile.gettempdir()) / "proposal.md"
-    notes.write_text(body(version, since, subjects))
+    notes.write_text(body(version, since, subjects, issues))
     run(
         "gh", "pr", "create",
         "--base", "master", "--head", branch,
@@ -166,9 +198,10 @@ def main() -> None:
 
     since = latest_tag()
     subjects = changes(since)
+    issues = resolved_issues(since)
     pull = open_proposal()
     if pull:
-        refresh(pull, subjects)
+        refresh(pull, since, subjects, issues)
         return
 
     version = bump(current_version())
@@ -180,7 +213,7 @@ def main() -> None:
         if not tag_exists and not branch_exists:
             break
         version = bump(version)
-    create(version, subjects, since)
+    create(version, since, subjects, issues)
 
 
 if __name__ == "__main__":
