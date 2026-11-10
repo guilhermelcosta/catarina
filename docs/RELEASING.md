@@ -39,8 +39,15 @@ git commit -m "chore(release): 0.2.1"
 git push -u origin release/0.2.1
 ```
 
-CI runs on the release branch and opens a draft pull request to `master`. Mark
-it ready only after the release notes and the checks are final.
+CI runs on the release branch. Open the draft pull request yourself, because the
+repository does not create pull requests automatically:
+
+```sh
+gh pr create --base master --head release/0.2.1 --draft \
+  --title "chore(release): 0.2.1" --body-file .github/pull_request_template.md
+```
+
+Mark it ready only after the release notes and the checks are final.
 
 ## Tag and release
 

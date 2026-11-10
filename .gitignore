@@ -5,8 +5,16 @@
 /builddir/
 /.flatpak-builder/
 
-# local agentic-factory workflow (not part of the published repository)
-factory/
+# local agentic-factory workflow (not part of the published repository).
+# No trailing slash: the directory is ignored, and so is the symlink the
+# orchestrator creates inside a worktree.
+/factory
 
 # factory worktrees
-.worktrees/
+/.worktrees
+
+# local agent flow state
+/.flow
+
+# python bytecode
+__pycache__/

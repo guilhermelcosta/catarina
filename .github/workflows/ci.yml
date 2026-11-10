@@ -48,6 +48,38 @@ jobs:
           echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug> or release/<x.y.z>."
           exit 1
 
+  linked-issue:
+    name: linked-issue
+    needs: branch-name
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an issue reference
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          case "$PR_BRANCH" in
+            release/*|dependabot/*)
+              echo "Exempt branch: $PR_BRANCH"
+              exit 0
+              ;;
+          esac
+          case "$PR_AUTHOR" in
+            'dependabot[bot]'|'github-actions[bot]')
+              echo "Exempt author: $PR_AUTHOR"
+              exit 0
+              ;;
+          esac
+          if grep -qE '(Closes|Fixes|Refs) +#[0-9]+' <<< "$PR_BODY"; then
+            echo "Issue reference found"
+            exit 0
+          fi
+          echo '::error::The pull request body must reference an issue: Closes #N'
+          exit 1
+
   secret-scan:
     name: secret-scan
     needs: branch-name
@@ -110,59 +142,3 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
-
-  auto-pr:
-    name: auto-pr
-    needs:
-      - branch-name
-      - secret-scan
-      - build-test
-    if: ${{ github.event_name == 'push' && github.event.repository.fork == false }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Open a pull request after a green build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          case "$BRANCH" in
-            develop|master|dependabot/*)
-              echo "No automatic pull request for $BRANCH"
-              exit 0
-              ;;
-            release/*)
-              BASE=master
-              DRAFT=--draft
-              ;;
-            feature/*|fix/*|chore/*|docs/*|test/*|refactor/*|perf/*|ci/*|build/*|revert/*)
-              BASE=develop
-              DRAFT=
-              ;;
-            *)
-              echo "No automatic pull request for $BRANCH"
-              exit 0
-              ;;
-          esac
-
-          AHEAD=$(gh api "repos/$GITHUB_REPOSITORY/compare/${BASE}...${BRANCH}" --jq '.ahead_by')
-          if [ "$AHEAD" -eq 0 ]; then
-            echo "$BRANCH has no commits ahead of $BASE"
-            exit 0
-          fi
-
-          if gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base "$BASE" \
-               --state open --json number --jq 'length' | grep -q '^[1-9]'; then
-            echo "A pull request already exists"
-            exit 0
-          fi
-
-          TYPE="${BRANCH%%/*}"
-          SLUG="${BRANCH#*/}"
-          TITLE="$TYPE: ${SLUG//-/ }"
-          BODY=$(printf '## Summary\n\nAutomated pull request for `%s`.\n\n## Checklist\n\n- [ ] CI is green\n- [ ] No secrets or credentials\n- [ ] Docs and tests updated when needed\n' "$BRANCH")
-          gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" \
-            --title "$TITLE" --body "$BODY" $DRAFT

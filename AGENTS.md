@@ -39,9 +39,20 @@ Flow:
 3. The release pull request merge creates tag `vX.Y.Z` on `master`.
 4. Merge `master` back into `develop`.
 
+## Pull requests
+
+- Every pull request closes an issue. The body contains `Closes #N`; the
+  `linked-issue` check fails otherwise, and the merge is blocked.
+- Exempt by design: `dependabot/*` branches, `release/*` branches, and the
+  author `dependabot[bot]`. Nothing else is exempt.
+- Keep every section of `.github/pull_request_template.md`. An empty section is a
+  missing section.
+- Required checks: `branch-name`, `secret-scan`, `linked-issue`, `build-test`.
+
 ## New feature checklist
 
 - The branch starts from `develop` and is named `<type>/<slug>`.
+- The issue exists and states the problem and the expected behaviour.
 - The change has tests, or the pull request explains why a test is not possible.
 - `ctest --test-dir build --output-on-failure` passes locally.
 - UI changes follow `docs/DESIGN.md` and reuse the existing components.
