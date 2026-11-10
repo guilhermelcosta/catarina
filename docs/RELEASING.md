@@ -4,75 +4,76 @@ The branch model is `develop` -> `release/x.y.z` -> `master`. Feature branches
 target `develop`; `master` is the source of truth and the only branch that gets
 release tags.
 
-## Prepare the release branch
+## The proposal opens itself
+
+Every push to `develop` runs `.github/workflows/release-proposal.yml`, which
+keeps exactly one open pull request from `release/x.y.z` to `master`:
+
+- the branch is cut from `master`, with `develop` merged into it;
+- the patch version is bumped in `CMakeLists.txt`, in the metainfo and in the
+  Flatpak manifest;
+- the notes list the commits since the last tag.
+
+The version is bumped on top of the merge, never before it, so the version line
+never conflicts between `master` and `develop`.
+
+## One-time setup
+
+The workflow needs a token that can trigger other workflows. A pull request
+opened with `GITHUB_TOKEN` does not start CI, so its required checks would never
+run and the merge would stay blocked.
+
+1. Create a fine-grained token at
+   <https://github.com/settings/personal-access-tokens/new> for this repository
+   with `Contents: read and write` and `Pull requests: read and write`.
+2. Save it as the repository secret `RELEASE_TOKEN`.
+
+Without it the workflow fails immediately with a message instead of opening a
+pull request that cannot be merged.
+
+## Releasing
+
+Open the proposal, read the diff and the notes, merge it. That is the whole
+decision. `.github/workflows/release.yml` then verifies that the version agrees
+in the three files, creates `vX.Y.Z` on `master`, and opens the GitHub release.
+
+Close the proposal without merging to skip that release. The next push to
+`develop` opens a new one.
+
+The pull request is ready, not a draft: merging is the approval.
+
+### Minor or major
+
+Edit the branch before merging: rename it to `release/0.3.0`, set the same
+version in `CMakeLists.txt`, add the metainfo entry, and set the Flatpak tag.
+`release.yml` reads the version from the branch name, so both must agree.
+
+### If it conflicts
+
+The proposal merges `develop` into a branch cut from `master`. If the merge
+conflicts, the workflow stops and says so. Resolve it on the branch, push, and
+the next run continues from there.
+
+## Checks before merging
 
 ```sh
-git switch develop
-git pull origin develop
-git switch -c release/0.2.1
-```
-
-On the release branch:
-
-1. Bump `project(catarina VERSION ...)` in `CMakeLists.txt`.
-2. Add the matching `<release version="..." date="...">` entry to
-   `packaging/io.github.guilhermelcosta.Catarina.metainfo.xml`.
-3. Set `tag:` in `packaging/io.github.guilhermelcosta.Catarina.yml` to the new
-   tag (`v0.2.1`). Leave `commit:` out of the repository copy; Flathub reviewers
-   require it in the submission copy.
-4. Update `README.md` or `packaging/FLATHUB.md` only when their facts changed.
-5. Run:
-
-```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
 desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop
 ```
 
-Commit and push:
-
-```sh
-git add CMakeLists.txt packaging README.md
-git commit -m "chore(release): 0.2.1"
-git push -u origin release/0.2.1
-```
-
-CI runs on the release branch. Open the draft pull request yourself, because the
-repository does not create pull requests automatically:
-
-```sh
-gh pr create --base master --head release/0.2.1 --draft \
-  --title "chore(release): 0.2.1" --body-file .github/pull_request_template.md
-```
-
-Mark it ready only after the release notes and the checks are final.
-
-## Tag and release
-
-When the release pull request is merged, `.github/workflows/release.yml` verifies
-the version in `CMakeLists.txt` and the metainfo file, creates `vX.Y.Z` on
-`master`, and opens the GitHub release.
+CI runs the same commands on the pull request.
 
 `master` requires signed commits. Use the GitHub **squash** merge for the
-`release/x.y.z` pull request (GitHub signs the squash commit), or sign the
-release commits locally with `git commit -S`. A local unsigned merge into
-`master` is blocked by the ruleset.
-
-If the first release needs a manual start, run the workflow by hand:
-
-```sh
-gh workflow run release.yml -f version=0.2.1
-```
-
-A tag is never reused and never force-pushed. If the source changes after a tag,
-cut a new patch release.
+release pull request (GitHub signs the squash commit), or sign the release
+commits locally with `git commit -S`. An unsigned local merge into `master` is
+blocked by the ruleset.
 
 ## After the release
 
-Merge `master` back into `develop` so the next feature branch starts from the
-released code.
+Merging `master` back into `develop` is optional. It only brings the version
+bump and keeps `git describe` accurate on `develop`; the next proposal computes
+the next version from `master`, so nothing depends on it.
 
 For the Flathub submission manifest, add the tag commit:
 
@@ -93,3 +94,10 @@ Copy `packaging/io.github.guilhermelcosta.Catarina.yml` to the top level of the
 Cut `fix/<slug>` from `master`, open the pull request against `master`, merge it,
 then merge `master` back into `develop`. The next regular release carries the
 same history.
+
+## Manual fallback
+
+If the workflow is unavailable, do what it does by hand: branch from `master`,
+merge `develop`, bump the three files, push, and open the pull request. A tag is
+never reused and never force-pushed. If the source changes after a tag, cut a new
+patch release.
