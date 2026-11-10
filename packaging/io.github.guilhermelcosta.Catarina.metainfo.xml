@@ -58,6 +58,28 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.2" date="2026-11-10">
+      <description>
+        <ul>
+          <li>chore: allow a manual run of the release proposal</li>
+          <li>feat: propose the next patch release on every merge to develop</li>
+          <li>chore: open pull requests explicitly</li>
+          <li>chore: ignore the local agent workflow symlinks</li>
+          <li>feat: require an issue reference on every pull request</li>
+          <li>chore: remove redundant branch naming text (#41)</li>
+          <li>chore: require the feature branch prefix (#38)</li>
+          <li>docs: remove the icon attribution (#35)</li>
+          <li>docs: sharpen the README positioning (#32)</li>
+          <li>chore: separate docs from repository assets</li>
+          <li>docs: add the store screenshots</li>
+          <li>chore: add an uninstall script</li>
+          <li>chore: add a user-local install script</li>
+          <li>docs: simplify the README and move build details</li>
+          <li>feat: finalize the bordered app icon</li>
+          <li>feat: add the corgi app icon</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.1" date="2026-11-07">
       <description>
         <ul>
