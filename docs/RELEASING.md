@@ -12,7 +12,12 @@ keeps exactly one open pull request from `release/x.y.z` to `master`:
 - the branch is cut from `master`, with `develop` merged into it;
 - the patch version is bumped in `CMakeLists.txt`, in the metainfo and in the
   Flatpak manifest;
-- the notes list the commits since the last tag.
+- the notes list the commits since the last tag;
+- the body lists `Closes #N` for the issues resolved by the pull requests merged
+  into `develop` since the last tag.
+
+Nothing closes on `develop`. The issues close when the proposal merges into
+`master`, which is the default branch and the moment the code is released.
 
 The version is bumped on top of the merge, never before it, so the version line
 never conflicts between `master` and `develop`.
