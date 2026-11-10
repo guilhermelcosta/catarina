@@ -14,8 +14,9 @@ UI are in English.
 ## Branch model
 
 `master` is the source of truth and the only branch that receives release tags.
-`develop` is the integration branch. `release/<x.y.z>` is cut from `develop`,
-stabilised, and merged into `master`.
+`develop` is the integration branch. `release/<x.y.z>` is cut from `master` with
+`develop` merged in, stabilised, and merged into `master`. The release proposal
+workflow creates it on every push to `develop`; see `docs/RELEASING.md`.
 
 Work branches use `<type>/<slug>` and target `develop`.
 
@@ -34,10 +35,12 @@ Rules:
 
 Flow:
 
-1. `develop` -> `release/x.y.z` when the scope is frozen.
+1. `develop` -> `release/x.y.z` on every push to `develop`, opened by the
+   release proposal workflow.
 2. `release/x.y.z` -> `master` after stabilisation.
 3. The release pull request merge creates tag `vX.Y.Z` on `master`.
-4. Merge `master` back into `develop`.
+4. Merging `master` back into `develop` is optional: the next proposal computes
+   the version from `master`.
 
 ## Pull requests
 
