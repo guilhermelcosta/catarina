@@ -14,8 +14,9 @@ UI are in English.
 ## Branch model
 
 `master` is the source of truth and the only branch that receives release tags.
-`develop` is the integration branch. `release/<x.y.z>` is cut from `develop`,
-stabilised, and merged into `master`.
+`develop` is the integration branch. `release/<x.y.z>` is cut from `master` with
+`develop` merged in, stabilised, and merged into `master`. The release proposal
+workflow creates it on every push to `develop`; see `docs/RELEASING.md`.
 
 Work branches use `<type>/<slug>` and target `develop`.
 
@@ -34,14 +35,27 @@ Rules:
 
 Flow:
 
-1. `develop` -> `release/x.y.z` when the scope is frozen.
+1. `develop` -> `release/x.y.z` on every push to `develop`, opened by the
+   release proposal workflow.
 2. `release/x.y.z` -> `master` after stabilisation.
 3. The release pull request merge creates tag `vX.Y.Z` on `master`.
-4. Merge `master` back into `develop`.
+4. Merging `master` back into `develop` is optional: the next proposal computes
+   the version from `master`.
+
+## Pull requests
+
+- Every pull request closes an issue. The body contains `Closes #N`; the
+  `linked-issue` check fails otherwise, and the merge is blocked.
+- Exempt by design: `dependabot/*` branches, `release/*` branches, and the
+  author `dependabot[bot]`. Nothing else is exempt.
+- Keep every section of `.github/pull_request_template.md`. An empty section is a
+  missing section.
+- Required checks: `branch-name`, `secret-scan`, `linked-issue`, `build-test`.
 
 ## New feature checklist
 
 - The branch starts from `develop` and is named `<type>/<slug>`.
+- The issue exists and states the problem and the expected behaviour.
 - The change has tests, or the pull request explains why a test is not possible.
 - `ctest --test-dir build --output-on-failure` passes locally.
 - UI changes follow `docs/DESIGN.md` and reuse the existing components.

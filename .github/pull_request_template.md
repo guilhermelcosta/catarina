@@ -1,3 +1,9 @@
+## Issue
+
+Closes #
+
+<!-- Every pull request closes an issue. Exempt: dependabot, release/*. -->
+
 ## What
 
 <!-- One behaviour. If the title needs "and", split the work. -->
