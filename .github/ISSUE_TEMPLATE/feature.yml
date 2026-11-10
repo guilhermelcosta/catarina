@@ -1,0 +1,23 @@
+name: Feature
+description: A change in behaviour
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing, and who feels it.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should happen instead. One behaviour per issue.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of scope
+      description: What this issue deliberately does not cover.

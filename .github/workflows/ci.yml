@@ -48,6 +48,38 @@ jobs:
           echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug> or release/<x.y.z>."
           exit 1
 
+  linked-issue:
+    name: linked-issue
+    needs: branch-name
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an issue reference
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          case "$PR_BRANCH" in
+            release/*|dependabot/*)
+              echo "Exempt branch: $PR_BRANCH"
+              exit 0
+              ;;
+          esac
+          case "$PR_AUTHOR" in
+            'dependabot[bot]'|'github-actions[bot]')
+              echo "Exempt author: $PR_AUTHOR"
+              exit 0
+              ;;
+          esac
+          if grep -qE '(Closes|Fixes|Refs) +#[0-9]+' <<< "$PR_BODY"; then
+            echo "Issue reference found"
+            exit 0
+          fi
+          echo '::error::The pull request body must reference an issue: Closes #N'
+          exit 1
+
   secret-scan:
     name: secret-scan
     needs: branch-name
@@ -163,6 +195,12 @@ jobs:
           TYPE="${BRANCH%%/*}"
           SLUG="${BRANCH#*/}"
           TITLE="$TYPE: ${SLUG//-/ }"
-          BODY=$(printf '## Summary\n\nAutomated pull request for `%s`.\n\n## Checklist\n\n- [ ] CI is green\n- [ ] No secrets or credentials\n- [ ] Docs and tests updated when needed\n' "$BRANCH")
+          # The commit trailer is the only reference that survives an automated
+          # pull request. Without it the body says `Closes #` and the
+          # linked-issue check fails on purpose.
+          LINK=$(gh api "repos/$GITHUB_REPOSITORY/commits?sha=${BRANCH}&per_page=20" \
+                   --jq '.[].commit.message' \
+                 | grep -oE '(Closes|Fixes|Refs) #[0-9]+' | head -1 || true)
+          BODY=$(printf '## Issue\n\n%s\n\n## Summary\n\nAutomated pull request for `%s`.\n\n## Checklist\n\n- [ ] CI is green\n- [ ] No secrets or credentials\n- [ ] Docs and tests updated when needed\n' "${LINK:-Closes #}" "$BRANCH")
           gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" \
             --title "$TITLE" --body "$BODY" $DRAFT

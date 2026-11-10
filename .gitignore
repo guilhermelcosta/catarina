@@ -10,3 +10,9 @@ factory/
 
 # factory worktrees
 .worktrees/
+
+# repository flow state, local to the agent
+.flow/
+
+# python bytecode
+__pycache__/
