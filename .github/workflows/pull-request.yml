@@ -1,13 +1,15 @@
 name: Pull request
 
-# The only checks that need pull-request context: the issue reference lives in
-# the body, and the dependency diff only exists between two branches. The build
-# itself runs on push, in ci.yml, so a pull request never rebuilds the head
-# commit.
+# Everything that needs pull-request context: the issue reference lives in the
+# body, the dependency diff only exists between two branches, and a fork pull
+# request cannot trigger ci.yml because its push happens in the fork.
+#
+# An in-repo pull request does not rebuild: its push run in ci.yml already
+# reported the checks on the head commit, so the build jobs here are skipped.
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened, synchronize, ready_for_review]
     branches:
       - develop
       - master
@@ -20,10 +22,83 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  QT_QPA_PLATFORM: offscreen
+  QT_QUICK_BACKEND: software
+
 jobs:
+  branch-name:
+    name: branch-name
+    if: github.event.pull_request.head.repo.fork && github.event.action != 'edited'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          echo "Branch: $BRANCH"
+          if [[ "$BRANCH" =~ ^dependabot/ ]]; then
+            exit 0
+          fi
+          if [[ "$BRANCH" =~ ^(feature|fix|chore|docs|test|refactor|perf|ci|build|revert)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            exit 0
+          fi
+          echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug>."
+          exit 1
+
+  secret-scan:
+    name: secret-scan
+    if: github.event.pull_request.head.repo.fork && github.event.action != 'edited'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout history without blobs
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+
+  build-test:
+    name: build-test
+    if: github.event.pull_request.head.repo.fork && github.event.action != 'edited'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: fedora:44
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            cmake gcc-c++ git make \
+            extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtquickcontrols2-devel \
+            kf6-kirigami-devel qtkeychain-qt6-devel \
+            appstream desktop-file-utils
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+      - name: Install for AppStream validation
+        run: cmake --install build --prefix "$PWD/install"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Validate AppStream metadata
+        run: appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
+      - name: Validate desktop entry
+        run: desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop
+
   linked-issue:
     name: linked-issue
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Require an issue reference
         env:
@@ -55,13 +130,14 @@ jobs:
     name: dependency-review
     if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           fail-on-severity: high
