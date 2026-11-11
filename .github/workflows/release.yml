@@ -13,6 +13,10 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -25,9 +29,10 @@ jobs:
        startsWith(github.event.pull_request.head.ref, 'release/') &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout master
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: master
           fetch-depth: 0
@@ -37,6 +42,7 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.version }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          EXPECTED_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
           set -euo pipefail
           if [ -n "${INPUT_VERSION:-}" ]; then
@@ -48,6 +54,14 @@ jobs:
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Version must use x.y.z"
             exit 1
+          fi
+
+          if [ -n "${EXPECTED_SHA:-}" ]; then
+            HEAD_SHA=$(git rev-parse HEAD)
+            if [ "$HEAD_SHA" != "$EXPECTED_SHA" ]; then
+              echo "::error::master moved before the tag: HEAD is $HEAD_SHA, expected $EXPECTED_SHA"
+              exit 1
+            fi
           fi
 
           PROJECT_VERSION=$(sed -n 's/^project(catarina VERSION \([0-9][0-9.]*\).*/\1/p' CMakeLists.txt | head -n1)
@@ -82,4 +96,31 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "v$VERSION" --title "Catarina v$VERSION" --generate-notes
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/notes.md"
+          : > "$notes"
+          if [ -n "${PR_BODY:-}" ]; then
+            python3 - > "$notes" <<'PY'
+          import os
+          import re
+
+          drop = re.compile(r"^\s*(Closes|Fixes|Resolves)\s+#\d+", re.IGNORECASE)
+          boilerplate = (
+              "Merging this pull request creates tag",
+              "Edit this branch before merging",
+              "This branch is ",
+          )
+          lines = os.environ["PR_BODY"].splitlines()
+          kept = [line for line in lines if not drop.match(line) and not line.startswith(boilerplate)]
+          text = re.sub(r"\n{3,}", "\n\n", "\n".join(kept).strip())
+          print(text)
+          PY
+          fi
+
+          if grep -q '[^[:space:]]' "$notes"; then
+            gh release create "v$VERSION" --title "Catarina v$VERSION" --notes-file "$notes"
+          else
+            gh release create "v$VERSION" --title "Catarina v$VERSION" --generate-notes
+          fi

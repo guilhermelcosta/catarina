@@ -3,8 +3,13 @@
 
 Runs on every push to `develop` and keeps exactly one open pull request from
 `release/x.y.z` to `master`. The branch is cut from `master`, `develop` is
-merged into it, the patch version is bumped and the notes are filled in. Merging
-that pull request is the release decision; `release.yml` tags it.
+merged into it on every push, the patch version is bumped and the notes are
+filled in. Merging that pull request is the release decision; `release.yml` tags
+it.
+
+Every push to `develop` merges it into the open proposal, so the proposal always
+contains everything on `develop`: nothing slips into a later release by accident.
+The second build that push triggers is the release candidate, not a duplicate.
 
 The version bump happens on top of the merge, never before it, so the version
 line never conflicts between `master` and `develop`.
@@ -27,7 +32,9 @@ FLATPAK = ROOT / "packaging" / "io.github.guilhermelcosta.Catarina.yml"
 MAX_NOTES = 20
 
 PR_IN_SUBJECT = re.compile(r"\(#(\d+)\)$|^Merge pull request #(\d+)")
-CLOSING = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.IGNORECASE)
+CLOSING = re.compile(
+    r"^\s*(?:closes|fixes|resolves)\s+#(\d+)", re.IGNORECASE | re.MULTILINE
+)
 
 
 def run(*argv: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -64,19 +71,23 @@ def latest_tag() -> str | None:
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
-def changes(since: str | None) -> list[str]:
-    revision = f"{since}..origin/develop" if since else "origin/develop"
+def changes(since: str | None, branch: str = "origin/develop") -> list[str]:
+    revision = f"{since}..{branch}" if since else branch
     subjects = out("git", "log", "--no-merges", "--format=%s", revision).splitlines()
-    return [subject for subject in subjects if subject][:MAX_NOTES]
+    return [
+        subject
+        for subject in subjects
+        if subject and not subject.startswith("chore(release):")
+    ]
 
 
-def resolved_issues(since: str | None) -> list[int]:
+def resolved_issues(since: str | None, branch: str = "origin/develop") -> list[int]:
     """Issues closed by the pull requests merged since the last release.
 
     They are listed in the proposal body, so GitHub closes them when the
     proposal reaches master, never before.
     """
-    revision = f"{since}..origin/develop" if since else "origin/develop"
+    revision = f"{since}..{branch}" if since else branch
     subjects = out("git", "log", "--format=%s", revision).splitlines()
     pulls = set()
     for subject in subjects:
@@ -103,7 +114,10 @@ def body(version: str, since: str | None, subjects: list[str], issues: list[int]
         lines.append("")
     if subjects:
         lines.append(f"Changes since {since}:" if since else "Changes:")
-        lines += [f"- {subject}" for subject in subjects]
+        lines += [f"- {subject}" for subject in subjects[:MAX_NOTES]]
+        hidden = len(subjects) - MAX_NOTES
+        if hidden > 0:
+            lines.append(f"- and {hidden} more, see the commit log")
         lines.append("")
     lines += [
         f"Merging this pull request creates tag v{version} on `master`.",
@@ -146,7 +160,7 @@ def open_proposal() -> dict | None:
     return None
 
 
-def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int]) -> None:
+def refresh(pull: dict, since: str | None) -> None:
     branch = pull["headRefName"]
     version = branch.split("/", 1)[1]
     run("git", "fetch", "--quiet", "origin", branch, "develop")
@@ -159,7 +173,10 @@ def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int
         )
     if "Already up to date" not in merged.stdout:
         run("git", "push", "--quiet", "origin", branch)
+        run("git", "fetch", "--quiet", "origin", branch)
 
+    subjects = changes(since, f"origin/{branch}")
+    issues = resolved_issues(since, f"origin/{branch}")
     notes = Path(tempfile.gettempdir()) / "proposal.md"
     notes.write_text(body(version, since, subjects, issues))
     run("gh", "pr", "edit", str(pull["number"]), "--body-file", str(notes))
@@ -197,12 +214,13 @@ def main() -> None:
         return
 
     since = latest_tag()
-    subjects = changes(since)
-    issues = resolved_issues(since)
     pull = open_proposal()
     if pull:
-        refresh(pull, since, subjects, issues)
+        refresh(pull, since)
         return
+
+    subjects = changes(since)
+    issues = resolved_issues(since)
 
     version = bump(current_version())
     for _ in range(10):

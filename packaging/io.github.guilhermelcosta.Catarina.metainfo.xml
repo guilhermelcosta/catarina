@@ -58,6 +58,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.5" date="2026-11-11">
+      <description>
+        <ul>
+          <li>fix: keep the release proposal current with develop</li>
+          <li>fix: describe the release branch, not develop, in the proposal</li>
+          <li>docs: match the pipeline the workflows now run</li>
+          <li>ci: build once per push and close the review gaps</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.4" date="2026-11-11">
       <description>
         <ul>

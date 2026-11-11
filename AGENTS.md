@@ -75,12 +75,18 @@ Flow:
 
 ## CI and protection
 
-Required checks are `branch-name`, `secret-scan`, and `build-test`. Do not bypass
-a red check. Fix the cause or ask a human.
+Required checks are `branch-name`, `secret-scan`, `linked-issue` and `build-test`.
+Do not bypass a red check. Fix the cause or ask a human.
 
+- `ci.yml` runs on push, once per commit. A pull request from this repository
+  does not rebuild; the push run supplies the checks. Fork pull requests run the
+  same build jobs in `pull-request.yml`, gated on the head repository being a
+  fork.
+- `linked-issue` and `dependency-review` run in `pull-request.yml`, because they
+  need the pull request body and the branch diff.
 - Keep workflow permissions minimal.
 - Do not use `pull_request_target` to run untrusted code with a write token.
-- Pin third-party actions to a major version or, preferably, a commit SHA.
+- Pin third-party actions to a commit SHA with the version in a comment.
 
 ## Tests
 

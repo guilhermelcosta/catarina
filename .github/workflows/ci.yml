@@ -1,9 +1,11 @@
 name: CI
 
+# One run per push. A pull request from a branch in this repository does not
+# rebuild: the push run already reported the checks on the head commit. A fork
+# pull request cannot trigger a push here, so pull-request.yml runs the same
+# build jobs for forks.
+
 on:
-  # One run per push. A pull request must not trigger the build: the checks for
-  # the head commit already come from the push, and the only PR-scoped rule
-  # (the issue reference) lives in pull-request.yml.
   push:
     branches:
       - '**'
@@ -23,7 +25,11 @@ env:
 jobs:
   branch-name:
     name: branch-name
+    # develop and master are valid by definition, and the release pull request
+    # takes its checks from the release branch push.
+    if: github.ref_name != 'develop' && github.ref_name != 'master'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Validate branch name
         env:
@@ -31,9 +37,6 @@ jobs:
         run: |
           set -euo pipefail
           echo "Branch: $BRANCH"
-          if [[ "$BRANCH" =~ ^(develop|master)$ ]]; then
-            exit 0
-          fi
           if [[ "$BRANCH" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             exit 0
           fi
@@ -48,26 +51,24 @@ jobs:
 
   secret-scan:
     name: secret-scan
-    needs: branch-name
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    timeout-minutes: 10
     steps:
-      - name: Checkout full history
-        uses: actions/checkout@v6
+      - name: Checkout history without blobs
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+          filter: blob:none
       - name: Scan for secrets
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: 'false'
 
   build-test:
     name: build-test
-    needs: branch-name
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     container: fedora:44
     steps:
       - name: Install build dependencies
@@ -79,7 +80,7 @@ jobs:
             kf6-kirigami-devel qtkeychain-qt6-devel \
             appstream desktop-file-utils
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build

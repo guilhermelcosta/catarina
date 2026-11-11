@@ -22,6 +22,14 @@ Nothing closes on `develop`. The issues close when the proposal merges into
 The version is bumped on top of the merge, never before it, so the version line
 never conflicts between `master` and `develop`.
 
+A push to `develop` merges `develop` into the open proposal, so the proposal
+always contains everything on `develop`. That push also triggers a build of the
+release branch: it is the release candidate, and it validates the bumped version
+in the metainfo and the Flatpak manifest.
+
+There is never more than one proposal. Merge it to release everything it
+contains; the next push to `develop` opens the next one.
+
 ## One-time setup
 
 The workflow needs a token that can trigger other workflows. A pull request
@@ -30,8 +38,12 @@ run and the merge would stay blocked.
 
 1. Create a fine-grained token at
    <https://github.com/settings/personal-access-tokens/new> for this repository
-   with `Contents: read and write` and `Pull requests: read and write`.
+   with `Contents: read and write`, `Pull requests: read and write` and
+   `Workflows: read and write`.
 2. Save it as the repository secret `RELEASE_TOKEN`.
+
+`Workflows` is required because the release branch can carry changes under
+`.github/workflows`. Without it the push fails with a permission error.
 
 Without it the workflow fails immediately with a message instead of opening a
 pull request that cannot be merged.
@@ -40,7 +52,8 @@ pull request that cannot be merged.
 
 Open the proposal, read the diff and the notes, merge it. That is the whole
 decision. `.github/workflows/release.yml` then verifies that the version agrees
-in the three files, creates `vX.Y.Z` on `master`, and opens the GitHub release.
+in the three files, creates `vX.Y.Z` on `master`, and opens the GitHub release
+with the notes from the pull request body, minus the `Closes` lines.
 
 Close the proposal without merging to skip that release. The next push to
 `develop` opens a new one.
@@ -55,9 +68,9 @@ version in `CMakeLists.txt`, add the metainfo entry, and set the Flatpak tag.
 
 ### If it conflicts
 
-The proposal merges `develop` into a branch cut from `master`. If the merge
-conflicts, the workflow stops and says so. Resolve it on the branch, push, and
-the next run continues from there.
+The proposal merges `develop` into a branch cut from `master` on every push to
+`develop`. If the merge conflicts, the workflow stops and says so. Resolve it on
+the branch, push, and the next run continues from there.
 
 ## Checks before merging
 
@@ -67,12 +80,13 @@ appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.meta
 desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop
 ```
 
-CI runs the same commands on the pull request.
+CI runs the same commands on the branch push. A pull request from a branch in
+this repository does not rebuild; its checks come from that push. Fork pull
+requests run the same jobs in `pull-request.yml`, gated on the fork.
 
-`master` requires signed commits. Use the GitHub **squash** merge for the
-release pull request (GitHub signs the squash commit), or sign the release
-commits locally with `git commit -S`. An unsigned local merge into `master` is
-blocked by the ruleset.
+Any merge method is allowed and no signature is required. A squash merge keeps
+`master` linear; the tag always points at the merge commit, and `release.yml`
+refuses to tag if `master` moved in the meantime.
 
 ## After the release
 
