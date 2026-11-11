@@ -3,9 +3,14 @@ name: Release proposal
 # Keep one pull request from release/x.y.z to master open at all times. Merging
 # it is the release decision; release.yml tags the merge.
 #
+# Every push to develop merges into the open proposal, so it always contains
+# everything on develop. The build that follows is the release candidate: it
+# validates the bumped version in the metainfo and the Flatpak manifest.
+#
 # RELEASE_TOKEN is required. A pull request opened with GITHUB_TOKEN does not
 # trigger workflows, so its required checks would never run and the merge would
-# stay blocked.
+# stay blocked. The token also needs Workflows write, because the release branch
+# can carry changes under .github/workflows.
 
 on:
   push:
@@ -25,9 +30,10 @@ jobs:
   propose:
     name: release-proposal
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout develop
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: develop
           fetch-depth: 0
@@ -38,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "::error::RELEASE_TOKEN is missing. Create a fine-grained token with Contents and Pull requests write access and save it as a repository secret."
+            echo "::error::RELEASE_TOKEN is missing. Create a fine-grained token with Contents, Pull requests and Workflows write access and save it as a repository secret."
             exit 1
           fi
           user=$(gh api user --jq .login)
