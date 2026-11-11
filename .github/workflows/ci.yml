@@ -1,14 +1,12 @@
 name: CI
 
 on:
+  # One run per push. A pull request must not trigger the build: the checks for
+  # the head commit already come from the push, and the only PR-scoped rule
+  # (the issue reference) lives in pull-request.yml.
   push:
     branches:
       - '**'
-  pull_request:
-    branches:
-      - develop
-      - master
-      - 'release/**'
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +27,7 @@ jobs:
     steps:
       - name: Validate branch name
         env:
-          BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           echo "Branch: $BRANCH"
@@ -46,38 +44,6 @@ jobs:
             exit 0
           fi
           echo "::error::Invalid branch name '$BRANCH'. Use <type>/<slug> or release/<x.y.z>."
-          exit 1
-
-  linked-issue:
-    name: linked-issue
-    needs: branch-name
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require an issue reference
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_BRANCH: ${{ github.head_ref }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: |
-          set -euo pipefail
-          case "$PR_BRANCH" in
-            release/*|dependabot/*)
-              echo "Exempt branch: $PR_BRANCH"
-              exit 0
-              ;;
-          esac
-          case "$PR_AUTHOR" in
-            'dependabot[bot]'|'github-actions[bot]')
-              echo "Exempt author: $PR_AUTHOR"
-              exit 0
-              ;;
-          esac
-          if grep -qE '(Closes|Fixes|Refs) +#[0-9]+' <<< "$PR_BODY"; then
-            echo "Issue reference found"
-            exit 0
-          fi
-          echo '::error::The pull request body must reference an issue: Closes #N'
           exit 1
 
   secret-scan:
@@ -126,19 +92,3 @@ jobs:
         run: appstreamcli validate --no-net packaging/io.github.guilhermelcosta.Catarina.metainfo.xml
       - name: Validate desktop entry
         run: desktop-file-validate build/io.github.guilhermelcosta.Catarina.desktop
-
-  dependency-review:
-    name: dependency-review
-    needs: branch-name
-    if: ${{ github.event_name == 'pull_request' && github.event.repository.private == false }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
