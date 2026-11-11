@@ -71,19 +71,23 @@ def latest_tag() -> str | None:
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
-def changes(since: str | None) -> list[str]:
-    revision = f"{since}..origin/develop" if since else "origin/develop"
+def changes(since: str | None, branch: str = "origin/develop") -> list[str]:
+    revision = f"{since}..{branch}" if since else branch
     subjects = out("git", "log", "--no-merges", "--format=%s", revision).splitlines()
-    return [subject for subject in subjects if subject]
+    return [
+        subject
+        for subject in subjects
+        if subject and not subject.startswith("chore(release):")
+    ]
 
 
-def resolved_issues(since: str | None) -> list[int]:
+def resolved_issues(since: str | None, branch: str = "origin/develop") -> list[int]:
     """Issues closed by the pull requests merged since the last release.
 
     They are listed in the proposal body, so GitHub closes them when the
     proposal reaches master, never before.
     """
-    revision = f"{since}..origin/develop" if since else "origin/develop"
+    revision = f"{since}..{branch}" if since else branch
     subjects = out("git", "log", "--format=%s", revision).splitlines()
     pulls = set()
     for subject in subjects:
@@ -117,9 +121,10 @@ def body(version: str, since: str | None, subjects: list[str], issues: list[int]
         lines.append("")
     if behind:
         lines += [
-            f"This branch is {behind} commit(s) behind `develop`: merging it now "
-            "releases the tree as it is. Run the Release proposal workflow with "
-            "`refresh` enabled to merge `develop` in first.",
+            f"This branch is {behind} commit(s) behind `develop`. Merging it now "
+            "releases the tree as it is, and those commits ship in the next "
+            "release. Run the Release proposal workflow with `refresh` enabled "
+            "to include them now.",
             "",
         ]
     lines += [
@@ -163,7 +168,7 @@ def open_proposal() -> dict | None:
     return None
 
 
-def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int], force: bool) -> None:
+def refresh(pull: dict, since: str | None, force: bool) -> None:
     branch = pull["headRefName"]
     version = branch.split("/", 1)[1]
     run("git", "fetch", "--quiet", "origin", branch, "develop")
@@ -178,8 +183,11 @@ def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int
                 "then push. The proposal is unchanged."
             )
         run("git", "push", "--quiet", "origin", branch)
+        run("git", "fetch", "--quiet", "origin", branch)
         behind = 0
 
+    subjects = changes(since, f"origin/{branch}")
+    issues = resolved_issues(since, f"origin/{branch}")
     notes = Path(tempfile.gettempdir()) / "proposal.md"
     notes.write_text(body(version, since, subjects, issues, behind))
     run("gh", "pr", "edit", str(pull["number"]), "--body-file", str(notes))
@@ -218,12 +226,13 @@ def main() -> None:
 
     force = os.environ.get("REFRESH", "").strip().lower() in {"1", "true", "yes"}
     since = latest_tag()
-    subjects = changes(since)
-    issues = resolved_issues(since)
     pull = open_proposal()
     if pull:
-        refresh(pull, since, subjects, issues, force)
+        refresh(pull, since, force)
         return
+
+    subjects = changes(since)
+    issues = resolved_issues(since)
 
     version = bump(current_version())
     for _ in range(10):
