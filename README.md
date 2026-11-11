@@ -17,11 +17,7 @@
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="GPL-3.0-or-later" />
 </p>
 
-<p align="center">
-  <img src="assets/screenshots/request-response.png" width="32%" alt="Request and response view" />
-  <img src="assets/screenshots/environments.png" width="32%" alt="Environment editor" />
-  <img src="assets/screenshots/command-palette.png" width="32%" alt="Command palette" />
-</p>
+![Catarina](assets/screenshots/request-response.png)
 
 ## Why Catarina
 
