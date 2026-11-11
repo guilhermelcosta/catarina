@@ -5,60 +5,66 @@
 <h1 align="center">Catarina</h1>
 
 <p align="center">
-  <strong>A local-first API client for Linux.</strong><br />
-  No account, no cloud, no Electron. Your collections are plain JSON files on your disk.
+  <strong>Your API collections, as plain JSON files you own.</strong><br />
+  No account. No cloud. No Electron. Free and open source.
 </p>
 
 <p align="center">
+  <a href="https://github.com/guilhermelcosta/catarina/actions/workflows/ci.yml"><img src="https://github.com/guilhermelcosta/catarina/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Qt-6.5%2B-41CD52?logo=qt&logoColor=white" alt="Qt 6.5+" />
   <img src="https://img.shields.io/badge/KDE%20Kirigami-6-1D99F3?logo=kde&logoColor=white" alt="KDE Kirigami 6" />
   <img src="https://img.shields.io/badge/platform-Linux-informational" alt="Linux" />
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="GPL-3.0-or-later" />
 </p>
 
-![Catarina](assets/screenshots/request-response.png)
+<p align="center">
+  <img src="assets/screenshots/request-response.png" width="32%" alt="Request and response view" />
+  <img src="assets/screenshots/environments.png" width="32%" alt="Environment editor" />
+  <img src="assets/screenshots/command-palette.png" width="32%" alt="Command palette" />
+</p>
 
 ## Why Catarina
 
-Cloud-first API clients usually keep your collections in a workspace and ask you
-to sign in. Catarina keeps them in a folder you own.
+Most API clients want an account and keep your work in their cloud. Catarina is
+an ordinary folder of files.
 
-- **Your data stays yours.** Collections live where you choose, as plain JSON files. No account, no sync, no lock-in.
-- **Git is the collaboration layer.** One `.json` per request. Review API changes in a diff, branch an experiment, share a folder.
+- **Own your data.** One `.json` per request, in a directory you pick. No account, no sync, no export button, no lock-in.
+- **Git is the collaboration layer.** Diff an API change, branch an experiment, review a pull request, share a folder.
 - **Secrets stay out of Git.** Tokens live in the system keyring; the request file stores only a `secretId`.
-- **Native and light.** Qt 6 and Kirigami, not Electron. Fast startup, low memory, one binary.
-- **Free and open source.** GPL-3.0-or-later. No paid tier, no telemetry, no account.
+- **Native, not Electron.** Qt 6 and Kirigami. Fast startup, low memory, one binary.
+- **Free and open source.** GPL-3.0-or-later. No paid tier, no telemetry, no limits.
 
-| | Catarina | Cloud-first clients |
-|---|---|---|
-| Collections | Plain JSON files on disk | Workspace or cloud database |
-| Account | Not required | Often required |
-| Git workflow | Diff, branch and review directly | Export/import or a separate sync |
-| Secrets | System keyring | Often app or cloud storage |
-| Runtime | Qt 6 / Kirigami | Electron in many cases |
-| Price | GPL-3.0-or-later, no paid tier | Often a free tier plus paid plans |
+|               | Catarina                             | Cloud API clients            |
+| ------------- | ------------------------------------ | ---------------------------- |
+| Collections   | Plain JSON files in a folder you own | Workspace in their cloud     |
+| Account       | None                                 | Usually required             |
+| Collaboration | Git: diff, branch, review            | Export/import or in-app sync |
+| Secrets       | System keyring                       | App or cloud storage         |
+| Runtime       | Qt 6 / Kirigami                      | Electron in many cases       |
+| Cost          | Free, GPL-3.0-or-later               | Free tier plus paid plans    |
 
 ## Features
 
 - **Requests:** method, URL, params, headers, auth (Bearer, Basic, API key, inherited) and bodies (JSON, text, form, multipart).
-- **Collections:** nested folders, drag and drop, rename, duplicate and move.
 - **Variables:** `{{name}}` resolved from global to collection to request, with autocomplete, hover values and undefined-variable warnings.
 - **Dynamic values:** `{{$randomUuid}}`, `{{$randomTimestamp}}`, `{{$randomInt}}`, `{{$randomBoolean}}` and more, generated per send.
+- **Collections:** nested folders, drag and drop, rename, duplicate and move.
 - **Responses:** body, JSON tree, headers, cookies and a network timeline.
 - **Workflow:** cURL import/export, history, command palette and remappable shortcuts.
 - **Tabs:** preview, pin, reorder, reopen closed and restore the last session.
-- **Data:** collections in the XDG Documents folder, settings in `~/.config/catarina`, secrets in the keyring.
 
 ## Install
 
-The Flatpak manifest is in `packaging/io.github.guilhermelcosta.Catarina.yml`.
-Flathub submission is pending.
-
-From source:
+From source, one command:
 
 ```sh
-./scripts/install.sh     # build and install to ~/.local
-./scripts/uninstall.sh   # remove the app files, keep your data
+./scripts/install.sh     # builds and installs to ~/.local
+```
+
+Then remove it, keeping your data:
+
+```sh
+./scripts/uninstall.sh
 ```
 
 Install to another prefix:
@@ -70,6 +76,9 @@ PREFIX=/opt/catarina ./scripts/uninstall.sh
 
 The uninstall script removes the binary, desktop file, icon and metainfo. It
 does not touch your collections, settings, history or secrets.
+
+Flatpak manifest: `packaging/io.github.guilhermelcosta.Catarina.yml`. Flathub
+submission is pending.
 
 To build and run from the tree instead:
 
