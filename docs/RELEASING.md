@@ -28,6 +28,10 @@ a second time. The body says how far behind the branch is. To bring it up to
 date, run the workflow by hand with `refresh` enabled; merging without it
 releases the tree as it stands.
 
+There is never more than one proposal. Merge it, and the commits already on
+`develop` do not open a new one by themselves: the next push to `develop` does.
+Until then, those commits ship in the release after that.
+
 ## One-time setup
 
 The workflow needs a token that can trigger other workflows. A pull request
