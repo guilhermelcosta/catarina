@@ -1,11 +1,11 @@
 name: Release proposal
 
-# Keep one pull request from release/x.y.z to master open. Merging it is the
-# release decision; release.yml tags the merge.
+# Keep one pull request from release/x.y.z to master open at all times. Merging
+# it is the release decision; release.yml tags the merge.
 #
-# The branch is refreshed only when this workflow is run by hand with `refresh`.
-# Pushing develop into the release branch on every develop push would rebuild
-# the same tree a second time.
+# Every push to develop merges into the open proposal, so it always contains
+# everything on develop. The build that follows is the release candidate: it
+# validates the bumped version in the metainfo and the Flatpak manifest.
 #
 # RELEASE_TOKEN is required. A pull request opened with GITHUB_TOKEN does not
 # trigger workflows, so its required checks would never run and the merge would
@@ -17,11 +17,6 @@ on:
     branches:
       - develop
   workflow_dispatch:
-    inputs:
-      refresh:
-        description: Merge develop into the open release branch
-        type: boolean
-        default: false
 
 concurrency:
   group: release-proposal
@@ -59,5 +54,4 @@ jobs:
       - name: Propose the next patch release
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          REFRESH: ${{ inputs.refresh }}
         run: python3 .github/scripts/release_proposal.py

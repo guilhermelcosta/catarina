@@ -22,11 +22,13 @@ Nothing closes on `develop`. The issues close when the proposal merges into
 The version is bumped on top of the merge, never before it, so the version line
 never conflicts between `master` and `develop`.
 
-A push to `develop` only refreshes the notes in the body. It does not merge
-`develop` into the release branch, because that push would rebuild the same tree
-a second time. The body says how far behind the branch is. To bring it up to
-date, run the workflow by hand with `refresh` enabled; merging without it
-releases the tree as it stands.
+A push to `develop` merges `develop` into the open proposal, so the proposal
+always contains everything on `develop`. That push also triggers a build of the
+release branch: it is the release candidate, and it validates the bumped version
+in the metainfo and the Flatpak manifest.
+
+There is never more than one proposal. Merge it to release everything it
+contains; the next push to `develop` opens the next one.
 
 ## One-time setup
 
@@ -66,9 +68,9 @@ version in `CMakeLists.txt`, add the metainfo entry, and set the Flatpak tag.
 
 ### If it conflicts
 
-The proposal merges `develop` into a branch cut from `master` when you run the
-workflow with `refresh`. If the merge conflicts, the workflow stops and says so.
-Resolve it on the branch, push, and the next run continues from there.
+The proposal merges `develop` into a branch cut from `master` on every push to
+`develop`. If the merge conflicts, the workflow stops and says so. Resolve it on
+the branch, push, and the next run continues from there.
 
 ## Checks before merging
 
