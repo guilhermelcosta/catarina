@@ -6,6 +6,10 @@ Runs on every push to `develop` and keeps exactly one open pull request from
 merged into it, the patch version is bumped and the notes are filled in. Merging
 that pull request is the release decision; `release.yml` tags it.
 
+The branch is only moved by a manual run with `refresh` enabled. Pushing
+`develop` into the release branch on every develop push would rebuild the same
+tree a second time, so a normal run only refreshes the pull request body.
+
 The version bump happens on top of the merge, never before it, so the version
 line never conflicts between `master` and `develop`.
 """
@@ -13,6 +17,7 @@ line never conflicts between `master` and `develop`.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -27,7 +32,9 @@ FLATPAK = ROOT / "packaging" / "io.github.guilhermelcosta.Catarina.yml"
 MAX_NOTES = 20
 
 PR_IN_SUBJECT = re.compile(r"\(#(\d+)\)$|^Merge pull request #(\d+)")
-CLOSING = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.IGNORECASE)
+CLOSING = re.compile(
+    r"^\s*(?:closes|fixes|resolves)\s+#(\d+)", re.IGNORECASE | re.MULTILINE
+)
 
 
 def run(*argv: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -67,7 +74,7 @@ def latest_tag() -> str | None:
 def changes(since: str | None) -> list[str]:
     revision = f"{since}..origin/develop" if since else "origin/develop"
     subjects = out("git", "log", "--no-merges", "--format=%s", revision).splitlines()
-    return [subject for subject in subjects if subject][:MAX_NOTES]
+    return [subject for subject in subjects if subject]
 
 
 def resolved_issues(since: str | None) -> list[int]:
@@ -96,15 +103,25 @@ def resolved_issues(since: str | None) -> list[int]:
     return sorted(issues)
 
 
-def body(version: str, since: str | None, subjects: list[str], issues: list[int]) -> str:
+def body(version: str, since: str | None, subjects: list[str], issues: list[int], behind: int = 0) -> str:
     lines = [f"Release {version}", ""]
     if issues:
         lines += [f"Closes #{number}" for number in issues]
         lines.append("")
     if subjects:
         lines.append(f"Changes since {since}:" if since else "Changes:")
-        lines += [f"- {subject}" for subject in subjects]
+        lines += [f"- {subject}" for subject in subjects[:MAX_NOTES]]
+        hidden = len(subjects) - MAX_NOTES
+        if hidden > 0:
+            lines.append(f"- and {hidden} more, see the commit log")
         lines.append("")
+    if behind:
+        lines += [
+            f"This branch is {behind} commit(s) behind `develop`: merging it now "
+            "releases the tree as it is. Run the Release proposal workflow with "
+            "`refresh` enabled to merge `develop` in first.",
+            "",
+        ]
     lines += [
         f"Merging this pull request creates tag v{version} on `master`.",
         "",
@@ -146,24 +163,27 @@ def open_proposal() -> dict | None:
     return None
 
 
-def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int]) -> None:
+def refresh(pull: dict, since: str | None, subjects: list[str], issues: list[int], force: bool) -> None:
     branch = pull["headRefName"]
     version = branch.split("/", 1)[1]
     run("git", "fetch", "--quiet", "origin", branch, "develop")
-    run("git", "switch", "--quiet", "-C", branch, f"origin/{branch}")
-    merged = run("git", "merge", "--no-edit", "origin/develop", check=False)
-    if merged.returncode != 0:
-        raise SystemExit(
-            f"`{branch}` conflicts with `develop`. Merge `origin/develop` into it by hand, "
-            "then push. The proposal is unchanged."
-        )
-    if "Already up to date" not in merged.stdout:
+    behind = int(out("git", "rev-list", "--count", f"origin/{branch}..origin/develop"))
+
+    if force and behind:
+        run("git", "switch", "--quiet", "-C", branch, f"origin/{branch}")
+        merged = run("git", "merge", "--no-edit", "origin/develop", check=False)
+        if merged.returncode != 0:
+            raise SystemExit(
+                f"`{branch}` conflicts with `develop`. Merge `origin/develop` into it by hand, "
+                "then push. The proposal is unchanged."
+            )
         run("git", "push", "--quiet", "origin", branch)
+        behind = 0
 
     notes = Path(tempfile.gettempdir()) / "proposal.md"
-    notes.write_text(body(version, since, subjects, issues))
+    notes.write_text(body(version, since, subjects, issues, behind))
     run("gh", "pr", "edit", str(pull["number"]), "--body-file", str(notes))
-    print(f"updated proposal #{pull['number']} ({branch})")
+    print(f"updated proposal #{pull['number']} ({branch}, {behind} behind develop)")
 
 
 def create(version: str, since: str | None, subjects: list[str], issues: list[int]) -> None:
@@ -196,12 +216,13 @@ def main() -> None:
         print("develop has nothing that master lacks")
         return
 
+    force = os.environ.get("REFRESH", "").strip().lower() in {"1", "true", "yes"}
     since = latest_tag()
     subjects = changes(since)
     issues = resolved_issues(since)
     pull = open_proposal()
     if pull:
-        refresh(pull, since, subjects, issues)
+        refresh(pull, since, subjects, issues, force)
         return
 
     version = bump(current_version())
