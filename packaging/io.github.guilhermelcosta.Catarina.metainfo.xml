@@ -58,6 +58,14 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.3" date="2026-11-11">
+      <description>
+        <ul>
+          <li>ci: build once per push, not once per push and once per pr</li>
+          <li>docs: sharpen the readme positioning</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.2" date="2026-11-10">
       <description>
         <ul>
