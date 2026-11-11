@@ -3,12 +3,13 @@
 
 Runs on every push to `develop` and keeps exactly one open pull request from
 `release/x.y.z` to `master`. The branch is cut from `master`, `develop` is
-merged into it, the patch version is bumped and the notes are filled in. Merging
-that pull request is the release decision; `release.yml` tags it.
+merged into it on every push, the patch version is bumped and the notes are
+filled in. Merging that pull request is the release decision; `release.yml` tags
+it.
 
-The branch is only moved by a manual run with `refresh` enabled. Pushing
-`develop` into the release branch on every develop push would rebuild the same
-tree a second time, so a normal run only refreshes the pull request body.
+Every push to `develop` merges it into the open proposal, so the proposal always
+contains everything on `develop`: nothing slips into a later release by accident.
+The second build that push triggers is the release candidate, not a duplicate.
 
 The version bump happens on top of the merge, never before it, so the version
 line never conflicts between `master` and `develop`.
@@ -17,7 +18,6 @@ line never conflicts between `master` and `develop`.
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import sys
@@ -107,7 +107,7 @@ def resolved_issues(since: str | None, branch: str = "origin/develop") -> list[i
     return sorted(issues)
 
 
-def body(version: str, since: str | None, subjects: list[str], issues: list[int], behind: int = 0) -> str:
+def body(version: str, since: str | None, subjects: list[str], issues: list[int]) -> str:
     lines = [f"Release {version}", ""]
     if issues:
         lines += [f"Closes #{number}" for number in issues]
@@ -119,14 +119,6 @@ def body(version: str, since: str | None, subjects: list[str], issues: list[int]
         if hidden > 0:
             lines.append(f"- and {hidden} more, see the commit log")
         lines.append("")
-    if behind:
-        lines += [
-            f"This branch is {behind} commit(s) behind `develop`. Merging it now "
-            "releases the tree as it is, and those commits ship in the next "
-            "release. Run the Release proposal workflow with `refresh` enabled "
-            "to include them now.",
-            "",
-        ]
     lines += [
         f"Merging this pull request creates tag v{version} on `master`.",
         "",
@@ -168,30 +160,27 @@ def open_proposal() -> dict | None:
     return None
 
 
-def refresh(pull: dict, since: str | None, force: bool) -> None:
+def refresh(pull: dict, since: str | None) -> None:
     branch = pull["headRefName"]
     version = branch.split("/", 1)[1]
     run("git", "fetch", "--quiet", "origin", branch, "develop")
-    behind = int(out("git", "rev-list", "--count", f"origin/{branch}..origin/develop"))
-
-    if force and behind:
-        run("git", "switch", "--quiet", "-C", branch, f"origin/{branch}")
-        merged = run("git", "merge", "--no-edit", "origin/develop", check=False)
-        if merged.returncode != 0:
-            raise SystemExit(
-                f"`{branch}` conflicts with `develop`. Merge `origin/develop` into it by hand, "
-                "then push. The proposal is unchanged."
-            )
+    run("git", "switch", "--quiet", "-C", branch, f"origin/{branch}")
+    merged = run("git", "merge", "--no-edit", "origin/develop", check=False)
+    if merged.returncode != 0:
+        raise SystemExit(
+            f"`{branch}` conflicts with `develop`. Merge `origin/develop` into it by hand, "
+            "then push. The proposal is unchanged."
+        )
+    if "Already up to date" not in merged.stdout:
         run("git", "push", "--quiet", "origin", branch)
         run("git", "fetch", "--quiet", "origin", branch)
-        behind = 0
 
     subjects = changes(since, f"origin/{branch}")
     issues = resolved_issues(since, f"origin/{branch}")
     notes = Path(tempfile.gettempdir()) / "proposal.md"
-    notes.write_text(body(version, since, subjects, issues, behind))
+    notes.write_text(body(version, since, subjects, issues))
     run("gh", "pr", "edit", str(pull["number"]), "--body-file", str(notes))
-    print(f"updated proposal #{pull['number']} ({branch}, {behind} behind develop)")
+    print(f"updated proposal #{pull['number']} ({branch})")
 
 
 def create(version: str, since: str | None, subjects: list[str], issues: list[int]) -> None:
@@ -224,11 +213,10 @@ def main() -> None:
         print("develop has nothing that master lacks")
         return
 
-    force = os.environ.get("REFRESH", "").strip().lower() in {"1", "true", "yes"}
     since = latest_tag()
     pull = open_proposal()
     if pull:
-        refresh(pull, since, force)
+        refresh(pull, since)
         return
 
     subjects = changes(since)
