@@ -1,0 +1,67 @@
+name: Pull request
+
+# The only checks that need pull-request context: the issue reference lives in
+# the body, and the dependency diff only exists between two branches. The build
+# itself runs on push, in ci.yml, so a pull request never rebuilds the head
+# commit.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches:
+      - develop
+      - master
+      - 'release/**'
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  linked-issue:
+    name: linked-issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an issue reference
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          case "$PR_BRANCH" in
+            release/*|dependabot/*)
+              echo "Exempt branch: $PR_BRANCH"
+              exit 0
+              ;;
+          esac
+          case "$PR_AUTHOR" in
+            'dependabot[bot]'|'github-actions[bot]')
+              echo "Exempt author: $PR_AUTHOR"
+              exit 0
+              ;;
+          esac
+          if grep -qE '(Closes|Fixes|Refs) +#[0-9]+' <<< "$PR_BODY"; then
+            echo "Issue reference found"
+            exit 0
+          fi
+          echo '::error::The pull request body must reference an issue: Closes #N'
+          exit 1
+
+  dependency-review:
+    name: dependency-review
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
