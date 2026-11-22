@@ -58,6 +58,13 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.7" date="2026-11-22">
+      <description>
+        <ul>
+          <li>ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.6" date="2026-11-14">
       <description>
         <ul>
