@@ -351,6 +351,7 @@ Item {
             }
             // empty state (no response yet) — only on the "Body" tab
             EmptyState {
+                objectName: "noResponseEmpty"
                 anchors.centerIn: parent
                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                 visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
@@ -359,8 +360,6 @@ Item {
                 iconOpacity: 0.9
                 title: Strings.t.noResponseYet
                 message: Strings.t.noResponseHint
-                shortcut: "Ctrl+K"
-                shortcutLabel: Strings.t.openPaletteHint
             }
         }
 

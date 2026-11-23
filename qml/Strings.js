@@ -121,7 +121,6 @@ var t = {
     noCookies: "No cookies.",
     noResponseYet: "No response yet",
     noResponseHint: "Send the request (Ctrl+Enter) to see the response here.",
-    openPaletteHint: "opens the command palette",
     prevMatch: "Previous match",
     nextMatch: "Next match",
     bodyHint: "Response body",
