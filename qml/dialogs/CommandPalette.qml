@@ -108,6 +108,13 @@ Popup {
                 highlighted: index === paletteList.currentIndex
                 onClicked: { paletteList.currentIndex = index; cmdPalette.trigger(); }
             }
+            Label {
+                anchors.centerIn: parent
+                z: 1
+                visible: paletteList.count === 0
+                text: Strings.t.noCommandMatches
+                opacity: 0.75
+            }
         }
     }
 }
