@@ -13,8 +13,13 @@
 #include <QNetworkRequest>
 #include <QSslError>
 
+#include <memory>
+
 namespace {
 namespace RS = RequestSchema;
+// Largest body the client buffers as a QString. A hostile server must not be
+// able to grow the GUI process without bound through one response.
+constexpr qint64 kMaxResponseBytes = 16LL * 1024 * 1024;   // 16 MiB
 } // namespace
 
 HttpClient::HttpClient(QObject *parent)
@@ -75,6 +80,24 @@ void HttpClient::send(const BuiltRequest &request)
     m_currentReply = reply;
     emit started();
 
+    // Abort before the body is buffered: first on the declared length, then on
+    // the bytes actually received (chunked responses have no length).
+    const auto tooLarge = std::make_shared<bool>(false);
+    connect(reply, &QNetworkReply::metaDataChanged, reply, [reply, tooLarge]() {
+        const qint64 declared = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong();
+        if (declared > kMaxResponseBytes && !*tooLarge) {
+            *tooLarge = true;
+            reply->abort();
+        }
+    });
+    connect(reply, &QNetworkReply::downloadProgress, reply,
+            [reply, tooLarge](qint64 received, qint64) {
+        if (received > kMaxResponseBytes && !*tooLarge) {
+            *tooLarge = true;
+            reply->abort();
+        }
+    });
+
     const bool ignoreSsl = request.ignoreSsl;
     const QString method = request.method;
     const QUrl url = request.url;
@@ -86,10 +109,19 @@ void HttpClient::send(const BuiltRequest &request)
                 [reply](const QList<QSslError> &) { reply->ignoreSslErrors(); });
 
     connect(reply, &QNetworkReply::finished, this,
-            [this, reply, timer, method, url, sentHeaders, sentBody]() {
+            [this, reply, timer, method, url, sentHeaders, sentBody, tooLarge]() {
         if (reply == m_currentReply)
             m_currentReply = nullptr;
         reply->deleteLater();
+        // a declared length over the cap is caught even when the abort raced
+        // with the first data event; the body is still not read below
+        if (reply->header(QNetworkRequest::ContentLengthHeader).toLongLong() > kMaxResponseBytes)
+            *tooLarge = true;
+        if (*tooLarge) {
+            emit error(QStringLiteral("responseTooLarge"),
+                       {QString::number(kMaxResponseBytes / (1024 * 1024))});
+            return;
+        }
         if (reply->error() == QNetworkReply::OperationCanceledError) {
             emit canceled();
             return;

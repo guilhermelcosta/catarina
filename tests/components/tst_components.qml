@@ -246,11 +246,29 @@ TestCase {
     function test_jsontree_toggle() {
         tree.load('{"a":{"b":1}}');
         wait(50);
-        compare(tree.isOpenAt("$.a"), true);   // depth 0 is open by default
-        tree.toggle("$.a");
-        compare(tree.isOpenAt("$.a"), false);  // records explicit state
-        tree.toggle("$.a");
-        compare(tree.isOpenAt("$.a"), true);
+        compare(tree.rowCount, 2);            // a (open) and b
+        compare(tree.rowAt(0).open, true);    // depth 0 is open by default
+        tree.toggle("$.a", 0);
+        compare(tree.rowAt(0).open, false);   // records explicit state
+        compare(tree.rowCount, 1);            // b is gone
+        tree.toggle("$.a", 0);
+        compare(tree.rowAt(0).open, true);
+        compare(tree.rowCount, 2);
+    }
+
+    function test_jsontree_toggle_subtree() {
+        tree.load('{"a":{"b":{"c":1}},"d":2}');
+        wait(50);
+        compare(tree.rowCount, 4);            // a, b, c (closed at depth 2), d
+        tree.toggle("$.a.b", 1);              // collapse b: removes c only
+        compare(tree.rowCount, 3);
+        tree.toggle("$.a.b", 1);              // reopen b
+        compare(tree.rowCount, 4);
+        tree.toggle("$.a", 0);                // collapse a: removes b and c
+        compare(tree.rowCount, 2);
+        tree.toggle("$.a", 0);                // reopen a from the stored value
+        compare(tree.rowCount, 4);
+        compare(tree.rowAt(2).path, "$.a.b.c");
     }
 
     function test_jsontree_preview_is_plain_text() {
@@ -652,7 +670,8 @@ TestCase {
     function test_jsontree_deep() {
         tree.load('{"a":{"b":{"c":1}}}');
         wait(50);
-        compare(tree.isOpenAt("$.a"), true);
-        compare(tree.isOpenAt("$.a.b"), true);   // depth 1 still opens by default
+        compare(tree.rowAt(0).open, true);       // depth 0 opens by default
+        compare(tree.rowAt(1).open, true);       // depth 1 still opens by default
+        compare(tree.rowAt(2).open, false);      // depth 2 starts closed
     }
 }
