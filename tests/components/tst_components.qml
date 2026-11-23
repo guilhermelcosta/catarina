@@ -5,6 +5,7 @@ import QtTest
 import org.kde.kirigami as Kirigami
 import "../../qml"
 import "../../qml/Util.js" as Util
+import "../../qml/Strings.js" as Strings
 import "../../qml/js/VarTokens.js" as VarTokens
 
 // Tests for the reusable components and the pure JsonTree logic.
@@ -271,6 +272,16 @@ TestCase {
         compare(tree.rowAt(2).path, "$.a.b.c");
     }
 
+    function test_jsontree_preview_is_plain_text() {
+        tree.width = 400;
+        tree.height = 300;
+        tree.load('{"a":"<b>x</b>"}');
+        wait(50);
+        var label = findChild(tree, "jsonPreview");
+        verify(label !== null, "preview label is created");
+        compare(label.textFormat, Text.PlainText);
+    }
+
     function test_jsontree_invalid() {
         tree.load("not json");
         wait(50);
@@ -361,7 +372,30 @@ TestCase {
         kvModel.clear();
     }
 
+    function test_kvtable_duplicate_names() {
+        kvModel.clear();
+        kvModel.append({ name: "a", value: "1", enabled: true });
+        kvModel.append({ name: "a", value: "2", enabled: true });
+        kv.uniqueNames = true;
+        kv.revision++;
+        verify(kv.isDuplicateName(0), "first row is a duplicate");
+        verify(kv.isDuplicateName(1), "second row is a duplicate");
+        kvModel.setProperty(0, "name", "b");
+        kv.revision++;
+        verify(!kv.isDuplicateName(0), "renamed row is unique");
+        verify(!kv.isDuplicateName(1), "remaining row is unique");
+        kv.uniqueNames = false;
+        kvModel.clear();
+    }
+
     // ---- Util.js: pure domain ----
+    function test_save_feedback_copy() {
+        var saved = Strings.savedRequest("List users");
+        verify(saved.indexOf("List users") >= 0);
+        verify(saved.indexOf("/") < 0, "no absolute path in the toast");
+        verify(Strings.saveFailed("List users").indexOf("List users") >= 0);
+    }
+
     function test_util_fmtSize() {
         compare(Util.fmtSize(512), "512 B");
         compare(Util.fmtSize(2048), "2.0 KB");

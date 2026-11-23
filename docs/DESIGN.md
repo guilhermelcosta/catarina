@@ -9,6 +9,22 @@ Golden rule: if an element repeats (or could repeat) in more than one place, it 
 
 ---
 
+## 0. Direction
+
+- **Three adjectives**: dense, calm, keyboard-first. It must **not** be playful.
+- **References from shipped products**: Postman (request/response split, density, method
+  badges) and Insomnia (neutral surfaces, per-section save). Borrow density and hierarchy,
+  never branding.
+- **Platform convention**: Kirigami/Breeze. Native controls, `Kirigami.Units`, Breeze icon
+  names; no custom chrome where a control exists.
+- **Density and primary input**: compact, keyboard and mouse. Every primary action has a
+  shortcut and a visible affordance; tree, tabs, dialogs and palette work without a mouse.
+- **Innovation budget**: one interaction, the URL query preview in `RequestEditor`, which
+  shows the effective URL without editing the field. Novelty stays there; the rest remains
+  conventional.
+
+---
+
 ## 1. Spacing (breathing room)
 
 - **Padding of a panel/tab**: `Kirigami.Units.largeSpacing` on all edges.
@@ -76,11 +92,16 @@ model, the body/URL mark dirty) becomes stale. That's why `VarCompleter.choose` 
 
 | Element | Opacity |
 |---|---|
-| Empty-state message ("Nothing here yet.", "No response.", etc.) | `0.6` |
+| Empty-state message ("Nothing here yet.", "No response.", etc.) | `0.75` |
 | Table column header (`font.bold: true`) | `0.65` |
-| Secondary/help text ("globals appear in every view", descriptions) | `0.6` |
+| Secondary/help text ("globals appear in every view", descriptions) | `0.75` |
+| Decoration only (separator glyphs, colons) | `0.5` |
 | Disabled table row | `0.45` |
 | Disabled effective variable (list) | `0.4` |
+
+Muted text must keep at least 4.5:1 against its background (WCAG AA). On the
+light theme 0.6 sampled at about 3.9:1, so informational text starts at 0.75;
+0.5 is reserved for decoration and disabled states.
 
 ---
 

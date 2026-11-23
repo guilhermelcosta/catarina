@@ -163,6 +163,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: app.envList.length > 0
             spacing: Kirigami.Units.smallSpacing
 
             SaveBar {
@@ -188,7 +189,7 @@ Item {
                     model: [Strings.t.viewAllVariables].concat(app.collectionNames())
                     onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
                 }
-                Label { text: Strings.t.globalsEverywhere; opacity: 0.6 }
+                Label { text: Strings.t.globalsEverywhere; opacity: 0.75 }
             }
 
             KvTable {
@@ -232,6 +233,23 @@ Item {
                 onScopeRequested: function(i, gx, gy) { scopePopup.openFor(i, gx, gy); }
                 onAddRequested: envVarsModel.append({ name: "", value: "", enabled: true, secret: false, secretId: "", scope: "all", collections: "" })
                 onEdited: { envScreen.recomputeDirty(); envScreen.refreshResolved(); app.updateVarsWarnings(); }
+            }
+        }
+
+        // no environment at all: the table and SaveBar have nothing to act on
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: app.envList.length === 0
+            EmptyState {
+                objectName: "envEmptyState"
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                title: Strings.t.noEnvironments
+                message: Strings.t.noEnvironmentsHint
+                actionText: Strings.t.newEnvironment
+                actionIcon: "list-add"
+                onActionTriggered: createEnvDialog.open()
             }
         }
     }

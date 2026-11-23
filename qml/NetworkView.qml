@@ -31,11 +31,13 @@ Item {
                     spacing: Kirigami.Units.smallSpacing
                     Label {
                         text: net.meta.method !== undefined ? net.meta.method : ""
+                        textFormat: Text.PlainText
                         font.bold: true
                     }
                     Label {
                         Layout.fillWidth: true
                         text: net.meta.url !== undefined ? net.meta.url : ""
+                        textFormat: Text.PlainText
                         elide: Text.ElideMiddle
                         font.family: "monospace"
                         opacity: 0.85
@@ -56,7 +58,7 @@ Item {
                 rowSpacing: Kirigami.Units.smallSpacing
                 Layout.leftMargin: Kirigami.Units.smallSpacing
                 Label { text: Strings.t.host; opacity: 0.7 }
-                Label { text: net.meta.host !== undefined ? net.meta.host : "—"; font.family: "monospace" }
+                Label { text: net.meta.host !== undefined ? net.meta.host : "—"; textFormat: Text.PlainText; font.family: "monospace" }
                 Label { text: Strings.t.port; opacity: 0.7 }
                 Label { text: net.meta.port !== undefined ? String(net.meta.port) : "—"; font.family: "monospace" }
                 Label { text: Strings.t.protocol; opacity: 0.7 }
@@ -85,7 +87,7 @@ Item {
             }
             Label {
                 visible: !net.meta.requestHeaders || net.meta.requestHeaders.length === 0
-                text: Strings.t.noHeaders; opacity: 0.5; Layout.leftMargin: Kirigami.Units.smallSpacing
+                text: Strings.t.noHeaders; opacity: 0.75; Layout.leftMargin: Kirigami.Units.smallSpacing
             }
 
             // ---- request body ----
@@ -101,6 +103,7 @@ Item {
                 Layout.rightMargin: Kirigami.Units.smallSpacing
                 Layout.preferredHeight: Math.min(200, contentHeight + 10)
                 readOnly: true
+                textFormat: TextEdit.PlainText
                 text: net.meta.requestBody !== undefined ? net.meta.requestBody : ""
                 font.family: "monospace"
                 wrapMode: TextEdit.Wrap

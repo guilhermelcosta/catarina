@@ -98,7 +98,7 @@ Popup {
                     text: section
                     font.bold: true
                     font.pixelSize: 11
-                    opacity: 0.55
+                    opacity: 0.75
                 }
             }
             onCurrentIndexChanged: { if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
@@ -107,6 +107,13 @@ Popup {
                 text: modelData.label
                 highlighted: index === paletteList.currentIndex
                 onClicked: { paletteList.currentIndex = index; cmdPalette.trigger(); }
+            }
+            Label {
+                anchors.centerIn: parent
+                z: 1
+                visible: paletteList.count === 0
+                text: Strings.t.noCommandMatches
+                opacity: 0.75
             }
         }
     }

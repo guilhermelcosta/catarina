@@ -14,6 +14,23 @@
 namespace {
 namespace RS = RequestSchema;
 
+// An entry path is always relative to the storage root: no leading separator,
+// no backslash and no empty, "." or ".." component. Without this a folder name
+// typed as ../../x reaches outside the collections directory (deleteEntry calls
+// removeRecursively()).
+bool validEntryPath(const QString &relPath)
+{
+    if (relPath.isEmpty() || relPath.startsWith(QLatin1Char('/'))
+        || relPath.contains(QLatin1Char('\\')))
+        return false;
+    const QStringList parts = relPath.split(QLatin1Char('/'));
+    for (const QString &part : parts) {
+        if (part.isEmpty() || part == QLatin1String(".") || part == QLatin1String(".."))
+            return false;
+    }
+    return true;
+}
+
 bool copyDirRecursive(const QString &src, const QString &dst)
 {
     QDir srcDir(src);
@@ -77,15 +94,18 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
                                {QStringLiteral("depth"), depth}});
         walk(childRel, depth + 1, out);
     }
-    for (const QString &file : dir.entryList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
+    const QFileInfoList files = dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name);
+    for (const QFileInfo &info : files) {
+        const QString file = info.fileName();
         if (file.startsWith(QLatin1Char('.')))
             continue;
         QString base = file;
         base.chop(5);
         const QString childRel = rel.isEmpty() ? base : rel + QLatin1Char('/') + base;
         // method with cache (mtime): avoids reopening/parsing each request on every reload
-        const QString absFile = m_root + QLatin1Char('/') + childRel + QStringLiteral(".json");
-        const qint64 mt = QFileInfo(absFile).lastModified().toMSecsSinceEpoch();
+        // the listing above already statted the entry: no second QFileInfo call
+        const QString absFile = info.absoluteFilePath();
+        const qint64 mt = info.lastModified().toMSecsSinceEpoch();
         QString method;
         auto it = m_methodCache.constFind(childRel);
         if (it != m_methodCache.constEnd() && it->first == mt) {
@@ -149,6 +169,8 @@ bool CollectionStorage::saveRequest(const QString &relPath, const QVariantMap &d
     QSaveFile f(path);
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    // can hold auth tokens and Authorization headers: owner-only from creation
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
     f.write(QJsonDocument(QJsonObject::fromVariantMap(data)).toJson(QJsonDocument::Indented));
     if (!f.commit())
         return false;
@@ -158,6 +180,8 @@ bool CollectionStorage::saveRequest(const QString &relPath, const QVariantMap &d
 
 bool CollectionStorage::deleteEntry(const QString &relPath)
 {
+    if (!validEntryPath(relPath))
+        return false;
     const QString abs = m_root + QLatin1Char('/') + relPath;
     QFileInfo info(abs);
     bool ok = false;
@@ -172,6 +196,8 @@ bool CollectionStorage::deleteEntry(const QString &relPath)
 
 bool CollectionStorage::createFolder(const QString &relPath)
 {
+    if (!validEntryPath(relPath))
+        return false;
     const bool ok = QDir().mkpath(m_root + QLatin1Char('/') + relPath);
     if (ok)
         emit changed();
@@ -180,6 +206,8 @@ bool CollectionStorage::createFolder(const QString &relPath)
 
 bool CollectionStorage::renameEntry(const QString &relPath, const QString &newName)
 {
+    if (!validEntryPath(relPath) || !validEntryPath(newName))
+        return false;
     if (relPath.isEmpty() || newName.isEmpty())
         return false;
     if (newName.contains(QLatin1Char('/')) || newName.contains(QLatin1Char('\\')))
@@ -210,7 +238,7 @@ bool CollectionStorage::renameEntry(const QString &relPath, const QString &newNa
 
 bool CollectionStorage::duplicateEntry(const QString &relPath)
 {
-    if (relPath.isEmpty())
+    if (!validEntryPath(relPath))
         return false;
     const QString parent = relPath.section(QLatin1Char('/'), 0, -2);
     const QString base = relPath.section(QLatin1Char('/'), -1);
@@ -233,7 +261,9 @@ bool CollectionStorage::duplicateEntry(const QString &relPath)
 
 bool CollectionStorage::moveEntry(const QString &from, const QString &toFolder)
 {
-    if (from.isEmpty())
+    if (!validEntryPath(from))
+        return false;
+    if (!toFolder.isEmpty() && !validEntryPath(toFolder))
         return false;
     if (toFolder == from || toFolder.startsWith(from + QLatin1Char('/')))
         return false;   // can't move into itself
@@ -295,6 +325,7 @@ bool CollectionStorage::saveVariables(const QString &collection, const QVariantL
     QSaveFile f(dir + QStringLiteral("/.variables.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // variables can be sensitive
     const QJsonObject obj{{RS::kVars, QJsonArray::fromVariantList(vars)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
@@ -322,6 +353,7 @@ bool CollectionStorage::saveHeaders(const QString &collection, const QVariantLis
     QSaveFile f(dir + QStringLiteral("/.headers.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // may carry Authorization
     const QJsonObject obj{{RS::kHeaders, QJsonArray::fromVariantList(headers)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
@@ -349,6 +381,7 @@ bool CollectionStorage::saveAuth(const QString &collection, const QVariantMap &a
     QSaveFile f(dir + QStringLiteral("/.auth.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // tokens and passwords
     const QJsonObject obj{{RS::kAuth, QJsonObject::fromVariantMap(auth)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
