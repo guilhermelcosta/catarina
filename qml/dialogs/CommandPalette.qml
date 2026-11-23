@@ -82,6 +82,7 @@ Popup {
         }
         ListView {
             id: paletteList
+            objectName: "paletteList"
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -107,6 +108,14 @@ Popup {
                 width: ListView.view.width
                 text: modelData.label
                 highlighted: index === paletteList.currentIndex
+                // the keyboard-current row is a tinted surface, not the Breeze
+                // solid highlight: keep the normal text role readable
+                contentItem: Label {
+                    text: paletteRow.text
+                    color: Kirigami.Theme.textColor
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
                 background: Rectangle {
                     color: paletteRow.highlighted ? app.theme.selectionTint
                          : paletteRow.hovered ? app.theme.hoverTint

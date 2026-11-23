@@ -229,6 +229,37 @@ TestCase {
         verify(empty.visible, "visible when there is no environment");
     }
 
+    // a selected row is a tinted surface, not the Breeze solid highlight, so its
+    // label must keep the normal text role or it disappears into the tint
+    function test_selected_rows_keep_normal_text_colour() {
+        win.appController.openEnvTab("");
+        win.appController.envList = [{ name: "tint-a" }, { name: "tint-b" }];
+        wait(50);
+        win.appController.envScreen.editing = "tint-b";
+        wait(50);
+
+        var envList = findChild(win, "envList");
+        verify(envList !== null, "environment list exists");
+        var envRow = envList.itemAtIndex(1);
+        verify(envRow !== null, "selected environment row is realised");
+        compare(envRow.highlighted, true, "the edited environment is the selected row");
+        verify(Qt.colorEqual(envRow.contentItem.color, Kirigami.Theme.textColor),
+               "selected environment label keeps the normal text colour");
+
+        var palette = findChild(win, "commandPalette");
+        verify(palette !== null, "command palette exists");
+        palette.openPalette();
+        wait(50);
+        var paletteList = findChild(palette, "paletteList");
+        verify(paletteList !== null, "palette list exists");
+        var paletteRow = paletteList.itemAtIndex(0);
+        verify(paletteRow !== null, "keyboard-current palette row is realised");
+        compare(paletteRow.highlighted, true, "index 0 is the keyboard-current row");
+        verify(Qt.colorEqual(paletteRow.contentItem.color, Kirigami.Theme.textColor),
+               "keyboard-current palette row keeps the normal text colour");
+        palette.close();
+    }
+
     function test_sidebar_empty_state() {
         win.appController.treeModel.clear();
         wait(50);

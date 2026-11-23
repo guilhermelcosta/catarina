@@ -125,6 +125,7 @@ Item {
             spacing: Kirigami.Units.smallSpacing
             Label { text: Strings.t.environments; font.bold: true }
             ListView {
+                objectName: "envList"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -134,6 +135,14 @@ Item {
                     width: ListView.view.width
                     text: modelData.name
                     highlighted: modelData.name === envScreen.editing
+                    // selection is a tinted surface, not the Breeze solid highlight:
+                    // keep the normal text role or the label vanishes into the tint
+                    contentItem: Label {
+                        text: envRow.text
+                        color: Kirigami.Theme.textColor
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
                     background: Rectangle {
                         color: envRow.highlighted ? app.theme.selectionTint
                              : envRow.hovered ? app.theme.hoverTint

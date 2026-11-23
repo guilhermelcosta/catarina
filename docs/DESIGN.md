@@ -123,6 +123,11 @@ selection/hover surface paints its own background from `app.theme`
   surfaces.
 - An explicit `background` replaces the Breeze full-saturation highlight and its
   pressed/focus ring; keep the replacement minimal (transparent / hover / selection).
+- The tinted surface is **not** a solid highlight, so a selected row's label keeps
+  `Kirigami.Theme.textColor`. Breeze's `ItemDelegate` content item switches to
+  `highlightedTextColor` while `highlighted`, which makes the name vanish into the
+  pale tint in the light theme; give the delegate an explicit `contentItem` with
+  the normal text role instead of darkening the tint.
 
 ### Tokens
 

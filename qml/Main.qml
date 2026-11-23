@@ -414,6 +414,7 @@ Kirigami.ApplicationWindow {
 
     CommandPalette {
         id: cmdPalette
+        objectName: "commandPalette"
         app: controller
         newReqDialog: newReqDialog
         curlImportDialog: curlImportDialog
