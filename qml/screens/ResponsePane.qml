@@ -27,7 +27,16 @@ Item {
         findField.forceActiveFocus();
         findField.selectAll();
     }
-    function closeFind() { findVisible = false; findMatchIndex = 0; findMatchTotal = 0; }
+    function closeFind() { findVisible = false; findMatchIndex = 0; findMatchTotal = 0; findDebounce.stop(); }
+    // typing a query must not rescan the whole body on every key
+    Timer {
+        id: findDebounce
+        interval: 150
+        onTriggered: {
+            if (findField.text.length > 0) findNext(false);
+            else updateFindCounter();
+        }
+    }
     function countMatches(q) {
         if (q.length === 0) return [];
         var body = responseBody.text, out = [], i = body.indexOf(q);
@@ -280,7 +289,7 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: Strings.t.searchResponse
                 onAccepted: findNext(false)
-                onTextChanged: { if (text.length > 0) findNext(false); else updateFindCounter(); }
+                onTextChanged: findDebounce.restart()
                 Keys.onEscapePressed: closeFind()
             }
             Label {
