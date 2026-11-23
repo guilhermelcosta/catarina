@@ -179,6 +179,12 @@ TestCase {
         compare(vars[0].name, "token");
     }
 
+    function test_response_empty_state_has_one_shortcut() {
+        var empty = findChild(win, "noResponseEmpty");
+        verify(empty !== null, "response empty state exists");
+        compare(empty.shortcut, "");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
