@@ -106,6 +106,26 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+    function test_request_save_is_labelled_and_dirty_is_visible() {
+        backend.saveRequest("t/dirty", baseReq());
+        win.appController.openRequest("t/dirty");
+        var save = findChild(win, "requestSaveButton");
+        verify(save !== null, "save button");
+        verify(save.text.length > 0, "save has a label");
+        compare(save.display, AbstractButton.TextBesideIcon);
+        var revert = findChild(win, "requestRevertButton");
+        verify(revert !== null, "revert button");
+        verify(revert.text.length > 0, "revert has a label");
+
+        win.appController.currentDirty = true;
+        wait(20);
+        verify(win.appController.currentDirty, "dirty flag set");
+        var dirty = findChild(win, "requestDirtyLabel");
+        verify(dirty !== null, "dirty marker");
+        verify(dirty.visible, "dirty marker visible while changed");
+        verify(dirty.text.length > 0, "dirty marker has copy");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");

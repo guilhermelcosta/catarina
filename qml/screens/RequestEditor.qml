@@ -109,14 +109,26 @@ ColumnLayout {
             highlighted: !app.sending
             onClicked: app.sending ? backend.cancel() : app.doSend()
         }
+        Label {
+            objectName: "requestDirtyLabel"
+            text: app.currentDirty ? Strings.t.unsavedMarker : ""
+            opacity: 0.75
+            visible: text.length > 0
+        }
         ToolButton {
+            objectName: "requestRevertButton"
             icon.name: "edit-undo"
+            text: Strings.t.discard
+            display: AbstractButton.TextBesideIcon
             enabled: app.currentDirty
             onClicked: app.revertCurrent()
             ToolTip.text: Strings.t.discardTooltip; ToolTip.visible: hovered
         }
         ToolButton {
+            objectName: "requestSaveButton"
             icon.name: "document-save"
+            text: Strings.t.save
+            display: AbstractButton.TextBesideIcon
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
             ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
