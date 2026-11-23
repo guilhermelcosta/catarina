@@ -45,7 +45,6 @@ Item {
         target: table.model
         function onCountChanged() { table.revision++; }
         Component.onCompleted: table.computeDuplicates()
-        onTargetChanged: table.computeDuplicates()
     }
     function computeDuplicates() {
         var seen = {}, dup = {};
