@@ -37,19 +37,32 @@ Item {
     // bump on every edit: forces re-evaluation of the repeated-name highlight
     property int revision: 0
     onEdited: revision++
-
+    // trimmed name -> true, computed once per revision instead of scanning the
+    // model inside every delegate
+    property var duplicateNames: ({})
+    onRevisionChanged: computeDuplicates()
+    Connections {
+        target: table.model
+        function onCountChanged() { table.revision++; }
+        Component.onCompleted: table.computeDuplicates()
+        onTargetChanged: table.computeDuplicates()
+    }
+    function computeDuplicates() {
+        var seen = {}, dup = {};
+        for (var i = 0; i < table.model.count; i++) {
+            var r = table.model.get(i);
+            var n = r && r.name !== undefined ? String(r.name).trim() : "";
+            if (n.length === 0) continue;
+            if (seen[n]) dup[n] = true;
+            else seen[n] = true;
+        }
+        duplicateNames = dup;
+    }
     // row name collides (trimmed) with that of another row in the same table
     function isDuplicateName(index) {
         var r = table.model.get(index);
         var n = r && r.name !== undefined ? String(r.name).trim() : "";
-        if (n.length === 0) return false;
-        for (var i = 0; i < table.model.count; i++) {
-            if (i === index) continue;
-            var m = table.model.get(i);
-            var o = m && m.name !== undefined ? String(m.name).trim() : "";
-            if (o === n) return true;
-        }
-        return false;
+        return n.length > 0 && duplicateNames[n] === true;
     }
 
     // row removal with confirmation, following the global config (settings.confirmDelete)

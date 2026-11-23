@@ -372,6 +372,22 @@ TestCase {
         kvModel.clear();
     }
 
+    function test_kvtable_duplicate_names() {
+        kvModel.clear();
+        kvModel.append({ name: "a", value: "1", enabled: true });
+        kvModel.append({ name: "a", value: "2", enabled: true });
+        kv.uniqueNames = true;
+        kv.revision++;
+        verify(kv.isDuplicateName(0), "first row is a duplicate");
+        verify(kv.isDuplicateName(1), "second row is a duplicate");
+        kvModel.setProperty(0, "name", "b");
+        kv.revision++;
+        verify(!kv.isDuplicateName(0), "renamed row is unique");
+        verify(!kv.isDuplicateName(1), "remaining row is unique");
+        kv.uniqueNames = false;
+        kvModel.clear();
+    }
+
     // ---- Util.js: pure domain ----
     function test_save_feedback_copy() {
         var saved = Strings.savedRequest("List users");
