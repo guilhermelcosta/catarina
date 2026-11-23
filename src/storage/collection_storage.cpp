@@ -166,6 +166,8 @@ bool CollectionStorage::saveRequest(const QString &relPath, const QVariantMap &d
     QSaveFile f(path);
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    // can hold auth tokens and Authorization headers: owner-only from creation
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
     f.write(QJsonDocument(QJsonObject::fromVariantMap(data)).toJson(QJsonDocument::Indented));
     if (!f.commit())
         return false;
@@ -320,6 +322,7 @@ bool CollectionStorage::saveVariables(const QString &collection, const QVariantL
     QSaveFile f(dir + QStringLiteral("/.variables.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // variables can be sensitive
     const QJsonObject obj{{RS::kVars, QJsonArray::fromVariantList(vars)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
@@ -347,6 +350,7 @@ bool CollectionStorage::saveHeaders(const QString &collection, const QVariantLis
     QSaveFile f(dir + QStringLiteral("/.headers.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // may carry Authorization
     const QJsonObject obj{{RS::kHeaders, QJsonArray::fromVariantList(headers)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();
@@ -374,6 +378,7 @@ bool CollectionStorage::saveAuth(const QString &collection, const QVariantMap &a
     QSaveFile f(dir + QStringLiteral("/.auth.json"));
     if (!f.open(QIODevice::WriteOnly))
         return false;
+    f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);   // tokens and passwords
     const QJsonObject obj{{RS::kAuth, QJsonObject::fromVariantMap(auth)}};
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     const bool ok = f.commit();

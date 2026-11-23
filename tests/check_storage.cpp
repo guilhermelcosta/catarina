@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
@@ -59,6 +60,16 @@ int main(int argc, char **argv)
     qputenv("CATARINA_SECRETS_BACKEND", "file");   // hermetic: doesn't touch the OS keychain
 
     QCoreApplication app(argc, argv);
+
+    // permissions() encodes owner bits differently across Qt versions; assert
+    // owner rw is present and group/other have nothing.
+    auto ownerOnly = [](const QString &path) {
+        const QFile::Permissions p = QFileInfo(path).permissions();
+        const QFile::Permissions owner = QFile::ReadOwner | QFile::WriteOwner;
+        const QFile::Permissions groupOther = QFile::ReadGroup | QFile::WriteGroup | QFile::ExeGroup
+                                            | QFile::ReadOther | QFile::WriteOther | QFile::ExeOther;
+        return (p & owner) == owner && (p & groupOther) == 0;
+    };
 
     // point collections at temp and persist via the same QSettings as the app
     QSettings s(QSettings::IniFormat, QSettings::UserScope,
@@ -507,6 +518,10 @@ int main(int argc, char **argv)
 
     // secrets: persistence across instances (cache + file)
     {
+        const QString sp = tmp.path() + QStringLiteral("/perm-secrets.json");
+        auto store = SecretStore::create(sp);
+        CHECK(store->save(QStringLiteral("__perm__"), QStringLiteral("v")));
+        CHECK(ownerOnly(sp));
         b.saveSecret(QStringLiteral("__sid__"), QStringLiteral("sv"));
         Backend b3;
         CHECK(b3.secretValue(QStringLiteral("__sid__")) == QStringLiteral("sv"));
@@ -609,6 +624,7 @@ int main(int argc, char **argv)
     CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
                                {{QStringLiteral("type"), QStringLiteral("bearer")},
                                 {QStringLiteral("token"), QStringLiteral("t1")}}));
+    CHECK(ownerOnly(b.storageDir() + QStringLiteral("/__col__/.auth.json")));
     CHECK(b.collectionAuth(QStringLiteral("__col__")).value(QStringLiteral("token"))
           == QStringLiteral("t1"));
     CHECK(b.saveCollectionAuth(QStringLiteral("__col__"),
@@ -650,6 +666,8 @@ int main(int argc, char **argv)
     b.deleteEntry(QStringLiteral("__check__"));
     CHECK(b.saveRequest(rel, {{QStringLiteral("method"), QStringLiteral("POST")},
                               {QStringLiteral("url"), QStringLiteral("http://x/y")}}));
+    // a request file can carry auth and headers: owner-only from creation
+    CHECK(ownerOnly(b.storageDir() + QStringLiteral("/__check__/req.json")));
     CHECK(b.loadRequest(rel).value(QStringLiteral("method")).toString() == QStringLiteral("POST"));
     CHECK(b.deleteEntry(QStringLiteral("__check__")));
     CHECK(b.loadRequest(rel).isEmpty());
