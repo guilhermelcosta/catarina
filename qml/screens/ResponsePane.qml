@@ -232,6 +232,7 @@ Item {
                 Label {
                     id: statusLabel
                     objectName: "statusLabel"
+                    textFormat: Text.PlainText
                     x: 7; y: 3
                     width: parent.width - 14
                     wrapMode: Text.WordWrap
@@ -315,7 +316,9 @@ Item {
                     padding: Kirigami.Units.smallSpacing
                     TextArea {
                         id: responseBody
+                        objectName: "responseBodyArea"
                         readOnly: true
+                        textFormat: TextEdit.PlainText
                         font.family: "monospace"
                         font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                         wrapMode: TextEdit.Wrap
@@ -338,7 +341,7 @@ Item {
                 ScrollView {
                     Layout.fillWidth: true; Layout.fillHeight: true
                     padding: Kirigami.Units.smallSpacing
-                    TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
+                    TextArea { id: responseCookiesArea; objectName: "responseCookiesArea"; readOnly: true; textFormat: TextEdit.PlainText; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
                 }
                 NetworkView {
                     Layout.fillWidth: true; Layout.fillHeight: true

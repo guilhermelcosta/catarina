@@ -69,6 +69,16 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
+    // response views must never interpret server data as rich text
+    function test_response_views_render_plain_text() {
+        var body = findChild(win, "responseBodyArea");
+        verify(body !== null, "response body text area");
+        compare(body.textFormat, TextEdit.PlainText);
+        var cookies = findChild(win, "responseCookiesArea");
+        verify(cookies !== null, "cookies text area");
+        compare(cookies.textFormat, TextEdit.PlainText);
+    }
+
     function test_apply_and_collect_roundtrip() {
         var r = baseReq("PUT");
         r.url = "https://h/p";
