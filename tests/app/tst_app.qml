@@ -179,6 +179,19 @@ TestCase {
         compare(vars[0].name, "token");
     }
 
+    function test_dirty_clears_when_the_edit_is_undone() {
+        backend.saveRequest("t/undo", baseReq());
+        win.appController.openRequest("t/undo");
+        win.appController.requestEditor.url = "http://changed";
+        win.appController.markDirty();
+        wait(200);
+        compare(win.appController.tabsModel.get(0).dirty, true);
+        win.appController.requestEditor.url = "http://example/x";
+        win.appController.markDirty();
+        wait(200);
+        compare(win.appController.tabsModel.get(0).dirty, false);
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");

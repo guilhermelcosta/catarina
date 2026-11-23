@@ -374,6 +374,10 @@ property Timer resolvedDebounce: Timer {
     interval: 180
     onTriggered: controller.refreshResolved()
 }
+property Timer dirtyDebounce: Timer {
+    interval: 180
+    onTriggered: controller.applyDirty()
+}
 
 // ================= tabs =================
 function snapshotCurrent() {
@@ -415,13 +419,26 @@ function markDirty() {
     if (currentTab < 0 || currentTab >= tabsModel.count) return;
     var t = tabsModel.get(currentTab);
     if (t.isCollection || t.isEnvironment || t.isSettings) return;
-    // dirty = current state != saved state; manual undo makes it clean again
+    // optimistic: an edit is dirty until the exact comparison says otherwise.
+    // This avoids rebuilding + canonicalizing the whole request per keystroke.
+    if (t.dirty !== true) {
+        tabsModel.setProperty(currentTab, "dirty", true);
+        tabsModel.setProperty(currentTab, "preview", false);   // editing takes the tab out of preview (becomes permanent), like VS Code
+        currentDirty = true;
+    }
+    resolvedDebounce.restart();   // debounce: does not re-resolve on every key
+    dirtyDebounce.restart();      // exact compare after typing settles (undo clears the dot)
+}
+// dirty = current state != saved state; manual undo makes it clean again
+function applyDirty() {
+    if (currentTab < 0 || currentTab >= tabsModel.count) return;
+    var t = tabsModel.get(currentTab);
+    if (t.isCollection || t.isEnvironment || t.isSettings) return;
     var changed = requestSnapshot() !== t.savedJson;
     tabsModel.setProperty(currentTab, "dirty", changed);
     if (changed)
-        tabsModel.setProperty(currentTab, "preview", false);   // editing takes the tab out of preview (becomes permanent), like VS Code
+        tabsModel.setProperty(currentTab, "preview", false);
     currentDirty = changed;
-    resolvedDebounce.restart();   // debounce: does not re-resolve on every key
 }
 // expands the folders above relPath and selects it in the tree
 function revealPath(relPath) {
