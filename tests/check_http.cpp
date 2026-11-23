@@ -34,6 +34,7 @@ public:
     QByteArray requestHeaders;
     QByteArray requestBody;
     QByteArray statusLine = QByteArrayLiteral("HTTP/1.1 200 OK\r\n");
+    qint64 declaredLength = -1;     // overrides Content-Length when >= 0
     QList<QByteArray> extraHeaders;
     QByteArray body;
     bool holdOpen = false;          // doesn't respond (to test cancellation)
@@ -70,7 +71,7 @@ private:
         QByteArray resp = statusLine;
         for (const QByteArray &h : extraHeaders)
             resp += h + "\r\n";
-        resp += "Content-Length: " + QByteArray::number(body.size()) + "\r\n";
+        resp += "Content-Length: " + QByteArray::number(declaredLength >= 0 ? declaredLength : body.size()) + "\r\n";
         resp += "Content-Type: application/json\r\n";
         resp += "Connection: close\r\n\r\n";
         resp += body;
@@ -267,6 +268,34 @@ private slots:
         m_backend->send(baseRequest(srv.url()), QString());
         QVERIFY2(err.wait(3000), "no error");
         QCOMPARE(err.takeFirst().at(0).toString(), QStringLiteral("network"));
+    }
+
+    void large_json_body_is_not_reformatted()
+    {
+        Loopback srv;
+        const QByteArray big = QByteArrayLiteral("{\"a\":\"")
+                             + QByteArray(1024 * 1024, 'x') + QByteArrayLiteral("\"}");
+        srv.body = big;
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        m_backend->send(baseRequest(srv.url()), QString());
+        QVERIFY2(ready.wait(5000), "no responseReady");
+        const QVariantList a = ready.takeFirst();
+        QCOMPARE(a.at(3).toString().toUtf8(), big);   // delivered raw, no indent pass
+    }
+
+    void response_over_the_cap_is_rejected()
+    {
+        Loopback srv;
+        srv.declaredLength = 16LL * 1024 * 1024 + 1;
+        srv.body = QByteArrayLiteral("x");
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        QSignalSpy err(m_backend, &Backend::error);
+        m_backend->send(baseRequest(srv.url()), QString());
+        QVERIFY2(err.wait(3000), "no error");
+        const QVariantList a = err.takeFirst();
+        QCOMPARE(a.at(0).toString(), QStringLiteral("responseTooLarge"));
+        QCOMPARE(a.at(1).toList().value(0).toString(), QStringLiteral("16"));
+        QCOMPARE(ready.count(), 0);
     }
 
     void cancellation()

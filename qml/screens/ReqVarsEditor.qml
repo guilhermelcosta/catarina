@@ -52,7 +52,7 @@ SplitView {
             Label {
                 visible: requestResolvedTable.count === 0
                 text: Strings.t.noVariablesDefined
-                opacity: 0.6
+                opacity: 0.75
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
             }

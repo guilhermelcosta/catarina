@@ -27,7 +27,16 @@ Item {
         findField.forceActiveFocus();
         findField.selectAll();
     }
-    function closeFind() { findVisible = false; findMatchIndex = 0; findMatchTotal = 0; }
+    function closeFind() { findVisible = false; findMatchIndex = 0; findMatchTotal = 0; findDebounce.stop(); }
+    // typing a query must not rescan the whole body on every key
+    Timer {
+        id: findDebounce
+        interval: 150
+        onTriggered: {
+            if (findField.text.length > 0) findNext(false);
+            else updateFindCounter();
+        }
+    }
     function countMatches(q) {
         if (q.length === 0) return [];
         var body = responseBody.text, out = [], i = body.indexOf(q);
@@ -172,11 +181,12 @@ Item {
         }
     }
 
-    property real expandedWidth: 330
+    // wide enough for the five tab labels at the default window size
+    property real expandedWidth: 430
     // current width of the split item. Applied imperatively (not via a binding)
     // because dragging the handle makes SplitView overwrite preferredWidth, which
     // would destroy a binding and break the animation.
-    property real splitWidth: 330
+    property real splitWidth: 430
     SplitView.preferredWidth: splitWidth
     onSplitWidthChanged: SplitView.preferredWidth = splitWidth
     visible: app.responseVisible || splitWidth > 0.5
@@ -232,6 +242,7 @@ Item {
                 Label {
                     id: statusLabel
                     objectName: "statusLabel"
+                    textFormat: Text.PlainText
                     x: 7; y: 3
                     width: parent.width - 14
                     wrapMode: Text.WordWrap
@@ -280,7 +291,7 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: Strings.t.searchResponse
                 onAccepted: findNext(false)
-                onTextChanged: { if (text.length > 0) findNext(false); else updateFindCounter(); }
+                onTextChanged: findDebounce.restart()
                 Keys.onEscapePressed: closeFind()
             }
             Label {
@@ -315,7 +326,9 @@ Item {
                     padding: Kirigami.Units.smallSpacing
                     TextArea {
                         id: responseBody
+                        objectName: "responseBodyArea"
                         readOnly: true
+                        textFormat: TextEdit.PlainText
                         font.family: "monospace"
                         font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
                         wrapMode: TextEdit.Wrap
@@ -338,7 +351,7 @@ Item {
                 ScrollView {
                     Layout.fillWidth: true; Layout.fillHeight: true
                     padding: Kirigami.Units.smallSpacing
-                    TextArea { id: responseCookiesArea; readOnly: true; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
+                    TextArea { id: responseCookiesArea; objectName: "responseCookiesArea"; readOnly: true; textFormat: TextEdit.PlainText; font.family: "monospace"; wrapMode: TextEdit.Wrap; text: responseCookies; placeholderText: Strings.t.noCookies }
                 }
                 NetworkView {
                     Layout.fillWidth: true; Layout.fillHeight: true
@@ -347,6 +360,7 @@ Item {
             }
             // empty state (no response yet) — only on the "Body" tab
             EmptyState {
+                objectName: "noResponseEmpty"
                 anchors.centerIn: parent
                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
                 visible: responseBody.text.length === 0 && !app.sending && respTabBar.currentIndex === 0
@@ -355,8 +369,6 @@ Item {
                 iconOpacity: 0.9
                 title: Strings.t.noResponseYet
                 message: Strings.t.noResponseHint
-                shortcut: "Ctrl+K"
-                shortcutLabel: Strings.t.openPaletteHint
             }
         }
 

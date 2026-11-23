@@ -121,7 +121,6 @@ var t = {
     noCookies: "No cookies.",
     noResponseYet: "No response yet",
     noResponseHint: "Send the request (Ctrl+Enter) to see the response here.",
-    openPaletteHint: "opens the command palette",
     prevMatch: "Previous match",
     nextMatch: "Next match",
     bodyHint: "Response body",
@@ -202,9 +201,12 @@ var t = {
     globalTab: "Global",
     collectionsTab: "Collections",
     noCollectionsYet: "You don't have collections yet.",
+    noEnvironments: "No environments yet.",
+    noEnvironmentsHint: "Create one to reuse variables across requests.",
     chooseFileTitle: "Choose file",
     commandPalette: "Command palette",
     commandPlaceholder: "Type a command…",
+    noCommandMatches: "No command matches.",
     deleteTitle: "Delete",
     cannotBeUndone: "This action can't be undone.",
 
@@ -246,6 +248,7 @@ var t = {
     defaultZero: "0 = default",
     collectionsFolder: "Folder where collections are saved:",
     storageDirHint: "When applied, catarina uses this folder. Current collections are not moved — to bring them, copy the files there.",
+    storageDirInvalid: "Choose a folder that exists and is writable.",
     network: "Network",
     timeoutSeconds: "Timeout (seconds):",
     noLimit: "0 = no limit",
@@ -307,7 +310,9 @@ function duplicateInCollection(name) { return "Repeated variable name in collect
 function duplicateInRequest(name) { return "Repeated variable name in request: " + name; }
 function duplicateInEnvironment(name) { return "Repeated variable name in environment: " + name; }
 function collectionsNow(dir) { return "Collections now at " + dir; }
-function savedTo(dir, path) { return "Saved to " + dir + "/" + path + ".json"; }
+function savedRequest(name) { return name + " saved"; }
+function saveFailed(name) { return "Couldn't save " + name + ". Check the folder permissions."; }
+function storageUnreadable(dir) { return "Can't read " + dir + ". Check the folder permissions."; }
 function curlNoUrl() { return "Couldn't find a URL in the command."; }
 function willBeCreatedIn(folder) { return "Will be created in: " + folder; }
 function rootFolder() { return "root"; }
@@ -338,5 +343,6 @@ function backendError(code, args) {
     if (code === "invalidUrl") return "Invalid URL";
     if (code === "fileOpen") return "Couldn't open the file: " + args[0];
     if (code === "network") return args[0];
+    if (code === "responseTooLarge") return "The response is larger than " + args[0] + " MB and was not downloaded.";
     return code;
 }

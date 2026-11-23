@@ -40,10 +40,10 @@ protected:
         QSaveFile f(m_path);
         if (!f.open(QIODevice::WriteOnly))
             return false;
+        // owner-only from creation, including the temp file QSaveFile writes
+        f.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
         f.write(json.toUtf8());
-        const bool ok = f.commit();
-        QFile::setPermissions(m_path, QFile::ReadOwner | QFile::WriteOwner);   // 0600
-        return ok;
+        return f.commit();
     }
 private:
     QString m_path;

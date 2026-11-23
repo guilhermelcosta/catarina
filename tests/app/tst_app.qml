@@ -14,6 +14,12 @@ TestCase {
 
     Component { id: appComponent; Main {} }
     property var win: null
+    property int treeResets: 0
+    // a full rebuild clears the ListModel: count drops to 0 before refilling
+    Connections {
+        target: root.win ? root.win.appController.treeModel : null
+        function onCountChanged() { if (target.count === 0) root.treeResets++; }
+    }
 
     function init() {
         if (win) { win.destroy(); win = null; }
@@ -69,6 +75,71 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
+    // ---- keyboard navigation in the collections tree ----
+    function test_sidebar_keyboard_navigation() {
+        backend.saveRequest("kb/a", baseReq("GET"));
+        backend.saveRequest("kb/b", baseReq("POST"));
+        win.appController.reloadTree();
+        wait(100);
+
+        var model = win.appController.treeModel;
+        var idx = -1;
+        for (var i = 0; i < model.count; i++)
+            if (model.get(i).relPath === "kb") { idx = i; break; }
+        verify(idx >= 0, "folder in the tree");
+
+        var view = win.appController.sidebar.view;
+        win.appController.toggleCollapse("kb");   // start collapsed
+        win.appController.selectedPath = "kb";
+        win.appController.selectedIsFolder = true;
+        view.currentIndex = idx;
+        view.forceActiveFocus();
+        verify(view.activeFocus, "tree has focus");
+
+        keyClick(Qt.Key_Right);   // expand
+        verify(!win.appController.collapsedFolders["kb"], "Right expands the folder");
+        keyClick(Qt.Key_Down);    // first child
+        compare(win.appController.selectedPath, "kb/a");
+        keyClick(Qt.Key_Return);  // open
+        compare(win.appController.tabsModel.count, 1);
+        compare(win.appController.tabsModel.get(0).relPath, "kb/a");
+        keyClick(Qt.Key_Up);      // back to the folder
+        compare(win.appController.selectedPath, "kb");
+        keyClick(Qt.Key_Left);    // collapse
+        compare(win.appController.collapsedFolders["kb"], true);
+    }
+
+    // navigation must not reset the tree model (no full rebuild)
+    function test_navigation_does_not_rebuild_the_tree() {
+        backend.saveRequest("t/nav-a", baseReq());
+        backend.saveRequest("t/nav-b", baseReq());
+        win.appController.openRequest("t/nav-a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("t/nav-b");
+        win.appController.reloadTree();
+        wait(100);
+
+        var before = root.treeResets;
+        verify(before > 0, "the tree was rebuilt at least once before navigating");
+        win.appController.switchTab(0);
+        wait(100);
+        compare(root.treeResets, before, "switching tabs must not rebuild the tree");
+
+        win.appController.closeTab(0);
+        wait(100);
+        compare(root.treeResets, before, "closing a tab must not rebuild the tree");
+    }
+
+    // response views must never interpret server data as rich text
+    function test_response_views_render_plain_text() {
+        var body = findChild(win, "responseBodyArea");
+        verify(body !== null, "response body text area");
+        compare(body.textFormat, TextEdit.PlainText);
+        var cookies = findChild(win, "responseCookiesArea");
+        verify(cookies !== null, "cookies text area");
+        compare(cookies.textFormat, TextEdit.PlainText);
+    }
+
     function test_apply_and_collect_roundtrip() {
         var r = baseReq("PUT");
         r.url = "https://h/p";
@@ -104,6 +175,72 @@ TestCase {
         win.appController.openEnvTab("");
         compare(win.appController.tabsModel.count, n);   // doesn't duplicate
         compare(win.appController.showingEnv, true);
+    }
+
+    // creating an environment whose name exists must not overwrite its variables
+    function test_create_environment_refuses_an_existing_name() {
+        compare(win.appController.createEnvironment("qa-guard"), true);
+        compare(win.appController.environmentExists("qa-guard"), true);
+        backend.saveEnvironment("qa-guard", [{ name: "token", value: "abc", enabled: true }]);
+        win.appController.reloadEnvs();
+        compare(win.appController.createEnvironment("qa-guard"), false);
+        var vars = backend.environmentVariables("qa-guard");
+        compare(vars.length, 1);
+        compare(vars[0].name, "token");
+    }
+
+    function test_environment_empty_state() {
+        win.appController.openEnvTab("");
+        win.appController.envList = [];
+        wait(50);
+        var empty = findChild(win, "envEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when there is no environment");
+    }
+
+    function test_sidebar_empty_state() {
+        win.appController.treeModel.clear();
+        wait(50);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when the tree has no rows");
+    }
+
+    function test_response_pane_default_fits_tabs() {
+        verify(win.appController.responsePane.expandedWidth >= 420,
+               "default width must fit the five tab labels");
+    }
+
+    function test_request_save_is_labelled_and_dirty_is_visible() {
+        backend.saveRequest("t/dirty", baseReq());
+        win.appController.openRequest("t/dirty");
+        var save = findChild(win, "requestSaveButton");
+        verify(save !== null, "save button");
+        verify(save.text.length > 0, "save has a label");
+        compare(save.display, AbstractButton.TextBesideIcon);
+        var revert = findChild(win, "requestRevertButton");
+        verify(revert !== null, "revert button");
+        verify(revert.text.length > 0, "revert has a label");
+
+        win.appController.currentDirty = true;
+        wait(20);
+        verify(win.appController.currentDirty, "dirty flag set");
+        var dirty = findChild(win, "requestDirtyLabel");
+        verify(dirty !== null, "dirty marker");
+        verify(dirty.visible, "dirty marker visible while changed");
+        verify(dirty.text.length > 0, "dirty marker has copy");
+    }
+
+    function test_sidebar_error_state() {
+        win.appController.storageError = "Can't read /x. Check the folder permissions.";
+        win.appController.treeModel.clear();
+        wait(20);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null && empty.visible, "empty state visible");
+        verify(empty.message.indexOf("/x") >= 0, "message names the unreadable path");
+        compare(empty.actionText, "", "no create action when the folder cannot be read");
+        win.appController.storageError = "";
+        win.appController.reloadTree();
     }
 
     function test_collection_tab() {

@@ -93,6 +93,7 @@ property string requestVarsWarning: ""
 property string collectionVarsWarning: ""
 property string envVarsWarning: ""
 property bool currentDirty: false
+property string storageError: ""   // unreadable collections root, shown by the sidebar
 property int paramsRevision: 0   // bump on params table edits (URL preview)
 // JSON token colors (dark/light theme) used by the editors (body and response)
 readonly property bool darkTheme: Kirigami.Theme.backgroundColor.hsvValue < 0.5
@@ -129,6 +130,7 @@ function reloadTree() {   // coalesce: several requests in the same tick become 
 }
 function rebuildTree() {
     treeModel.clear();
+    storageError = backend.storageReadable() ? "" : Strings.storageUnreadable(backend.storageDir);
     var a = backend.collectionTree();
     var collapsed = Object.keys(controller.collapsedFolders);
     for (var i = 0; i < a.length; i++) {
@@ -200,6 +202,23 @@ function activateEnv(name) {
         return;
     controller.activeEnv = name;                 // optimistic: the label updates immediately
     backend.setActiveEnvironment(name);    // emits environmentsChanged → reloadEnvs + refreshResolved
+}
+function environmentExists(name) {
+    var list = backend.environments();
+    for (var i = 0; i < list.length; i++)
+        if (list[i].name === name) return true;
+    return false;
+}
+// creates, activates and opens the environment tab. Refuses an existing name:
+// saving by name would silently replace its variables.
+function createEnvironment(name) {
+    var n = (name || "").trim();
+    if (n.length === 0 || environmentExists(n)) return false;
+    if (!backend.saveEnvironment(n, [])) return false;
+    reloadEnvs();
+    activateEnv(n);
+    openEnvTab(n);
+    return true;
 }
 function targetFolder() {
     if (selectedPath.length === 0) return "";
@@ -357,6 +376,10 @@ property Timer resolvedDebounce: Timer {
     interval: 180
     onTriggered: controller.refreshResolved()
 }
+property Timer dirtyDebounce: Timer {
+    interval: 180
+    onTriggered: controller.applyDirty()
+}
 
 // ================= tabs =================
 function snapshotCurrent() {
@@ -398,13 +421,26 @@ function markDirty() {
     if (currentTab < 0 || currentTab >= tabsModel.count) return;
     var t = tabsModel.get(currentTab);
     if (t.isCollection || t.isEnvironment || t.isSettings) return;
-    // dirty = current state != saved state; manual undo makes it clean again
+    // optimistic: an edit is dirty until the exact comparison says otherwise.
+    // This avoids rebuilding + canonicalizing the whole request per keystroke.
+    if (t.dirty !== true) {
+        tabsModel.setProperty(currentTab, "dirty", true);
+        tabsModel.setProperty(currentTab, "preview", false);   // editing takes the tab out of preview (becomes permanent), like VS Code
+        currentDirty = true;
+    }
+    resolvedDebounce.restart();   // debounce: does not re-resolve on every key
+    dirtyDebounce.restart();      // exact compare after typing settles (undo clears the dot)
+}
+// dirty = current state != saved state; manual undo makes it clean again
+function applyDirty() {
+    if (currentTab < 0 || currentTab >= tabsModel.count) return;
+    var t = tabsModel.get(currentTab);
+    if (t.isCollection || t.isEnvironment || t.isSettings) return;
     var changed = requestSnapshot() !== t.savedJson;
     tabsModel.setProperty(currentTab, "dirty", changed);
     if (changed)
-        tabsModel.setProperty(currentTab, "preview", false);   // editing takes the tab out of preview (becomes permanent), like VS Code
+        tabsModel.setProperty(currentTab, "preview", false);
     currentDirty = changed;
-    resolvedDebounce.restart();   // debounce: does not re-resolve on every key
 }
 // expands the folders above relPath and selects it in the tree
 function revealPath(relPath) {
@@ -417,7 +453,7 @@ function revealPath(relPath) {
     controller.collapsedFolders = c;
     controller.selectedPath = relPath;
     controller.selectedIsFolder = false;
-    reloadTree();
+    applyCollapse();               // model already holds every row; no need to rescan the disk
 }
 function openRequest(relPath) {
     revealPath(relPath);           // selects in the tree and expands the folders above
@@ -619,6 +655,7 @@ function closeTab(i) {
 function doCloseTab(i, saveFirst) {
     var t = tabsModel.get(i);
     var relPath = t.relPath;
+    var savedRequest = false;
     if (saveFirst) {
         if (t.isEnvironment) {
             envScreen.save();
@@ -628,7 +665,7 @@ function doCloseTab(i, saveFirst) {
             saveCollectionAuth();
         } else if (!t.isSettings) {
             var dataJson = (i === currentTab) ? JSON.stringify(collectRequest()) : t.dataJson;
-            backend.saveRequest(relPath, JSON.parse(dataJson));
+            savedRequest = backend.saveRequest(relPath, JSON.parse(dataJson));
         }
     }
     if (!t.isCollection && !t.isEnvironment && !t.isSettings) {
@@ -636,11 +673,18 @@ function doCloseTab(i, saveFirst) {
         delete responses[relPath];   // releases the stored response of the closed tab
     }
     tabsModel.remove(i);
-    if (tabsModel.count === 0) { currentTab = -1; clearEditor(); showingCollection = false; showingEnv = false; reloadTree(); return; }
+    if (tabsModel.count === 0) {
+        currentTab = -1;
+        clearEditor();
+        showingCollection = false;
+        showingEnv = false;
+        if (savedRequest) reloadTree();
+        return;
+    }
     if (i < currentTab) currentTab--;
     else if (i === currentTab) currentTab = Math.min(i, tabsModel.count - 1);
     activateCurrent();
-    reloadTree();
+    if (savedRequest) reloadTree();   // the save may have changed the method badge
 }
 function reopenClosed() {
     if (closedTabs.length === 0) return;
@@ -674,7 +718,7 @@ function revealCollection(relPath) {
     controller.collapsedFolders = c;
     controller.selectedPath = relPath;
     controller.selectedIsFolder = true;
-    reloadTree();
+    applyCollapse();
 }
 // recomputes the collection's "Effective variables" (reopen the tab and return to the overview)
 function refreshCollectionResolved() {
@@ -796,7 +840,10 @@ function saveCurrent() {
         currentDirty = false;
         refreshResolved();
         reloadTree();
-        notify(Strings.savedTo(backend.storageDir, t.relPath));
+        notify(Strings.savedRequest(t.name));
+    } else {
+        // keep the tab dirty and the edits in place: the write did not happen
+        notify(Strings.saveFailed(t.name));
     }
 }
 function revertCurrent() {
@@ -823,6 +870,7 @@ function moveEntry(from, to) {
 }
 function notify(msg) { window.showPassiveNotification(msg); }
 function applyStorageDir(dir) {
+    if (!backend.canUseStorageDir(dir)) { notify(Strings.t.storageDirInvalid); return; }
     backend.setStorageDir(dir);
     tabsModel.clear();
     currentTab = -1;

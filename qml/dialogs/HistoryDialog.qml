@@ -21,7 +21,7 @@ Dialog {
     }
     contentItem: ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
-        Label { text: Strings.t.historyHint; opacity: 0.6; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+        Label { text: Strings.t.historyHint; opacity: 0.75; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         ListView {
             Layout.fillWidth: true; Layout.fillHeight: true; clip: true
             model: historyModel
@@ -38,8 +38,15 @@ Dialog {
                     Label { text: model.status; opacity: 0.7 }
                 }
             }
+            EmptyState {
+                objectName: "historyEmpty"
+                anchors.centerIn: parent
+                z: 1
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                message: Strings.t.historyEmpty
+                visible: historyModel.count === 0
+            }
         }
-        Label { visible: historyModel.count === 0; text: Strings.t.historyEmpty; opacity: 0.5 }
         DialogActions {
             Button { id: historyClear; text: Strings.t.clear; KeyNavigation.right: historyClose; onClicked: app.confirmDelete(Strings.clearHistoryConfirm(), function () { backend.clearHistory(); historyDialog.openAndLoad(); }) }
             Button { id: historyClose; text: Strings.t.close; KeyNavigation.left: historyClear; onClicked: historyDialog.close() }

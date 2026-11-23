@@ -42,6 +42,8 @@ public:
 
     QString storageDir() const;
     Q_INVOKABLE void setStorageDir(const QString &dir);
+    Q_INVOKABLE bool storageReadable() const;                      // root exists and can be listed
+    Q_INVOKABLE bool canUseStorageDir(const QString &dir) const;   // creatable and writable
     QString activeEnvironment() const;
     // copies the built-in example collection (:/seed) on first use; only when
     // storage is still empty and just once (marks .catarina/.seeded)

@@ -13,8 +13,16 @@
 #include <QNetworkRequest>
 #include <QSslError>
 
+#include <memory>
+
 namespace {
 namespace RS = RequestSchema;
+// Largest body the client buffers as a QString. A hostile server must not be
+// able to grow the GUI process without bound through one response.
+constexpr qint64 kMaxResponseBytes = 16LL * 1024 * 1024;   // 16 MiB
+// Above this, skip the JSON parse and the re-indent pass: both copy the whole
+// body and only serve the pretty view.
+constexpr qint64 kPrettyPrintLimit = 1LL * 1024 * 1024;    // 1 MiB
 } // namespace
 
 HttpClient::HttpClient(QObject *parent)
@@ -75,6 +83,24 @@ void HttpClient::send(const BuiltRequest &request)
     m_currentReply = reply;
     emit started();
 
+    // Abort before the body is buffered: first on the declared length, then on
+    // the bytes actually received (chunked responses have no length).
+    const auto tooLarge = std::make_shared<bool>(false);
+    connect(reply, &QNetworkReply::metaDataChanged, reply, [reply, tooLarge]() {
+        const qint64 declared = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong();
+        if (declared > kMaxResponseBytes && !*tooLarge) {
+            *tooLarge = true;
+            reply->abort();
+        }
+    });
+    connect(reply, &QNetworkReply::downloadProgress, reply,
+            [reply, tooLarge](qint64 received, qint64) {
+        if (received > kMaxResponseBytes && !*tooLarge) {
+            *tooLarge = true;
+            reply->abort();
+        }
+    });
+
     const bool ignoreSsl = request.ignoreSsl;
     const QString method = request.method;
     const QUrl url = request.url;
@@ -86,10 +112,19 @@ void HttpClient::send(const BuiltRequest &request)
                 [reply](const QList<QSslError> &) { reply->ignoreSslErrors(); });
 
     connect(reply, &QNetworkReply::finished, this,
-            [this, reply, timer, method, url, sentHeaders, sentBody]() {
+            [this, reply, timer, method, url, sentHeaders, sentBody, tooLarge]() {
         if (reply == m_currentReply)
             m_currentReply = nullptr;
         reply->deleteLater();
+        // a declared length over the cap is caught even when the abort raced
+        // with the first data event; the body is still not read below
+        if (reply->header(QNetworkRequest::ContentLengthHeader).toLongLong() > kMaxResponseBytes)
+            *tooLarge = true;
+        if (*tooLarge) {
+            emit error(QStringLiteral("responseTooLarge"),
+                       {QString::number(kMaxResponseBytes / (1024 * 1024))});
+            return;
+        }
         if (reply->error() == QNetworkReply::OperationCanceledError) {
             emit canceled();
             return;
@@ -105,9 +140,14 @@ void HttpClient::send(const BuiltRequest &request)
             respHeaders.append(QVariantMap{{QStringLiteral("name"), QString::fromUtf8(pair.first)},
                                            {QStringLiteral("value"), QString::fromUtf8(pair.second)}});
         const QByteArray bytes = reply->readAll();
-        const QJsonDocument doc = QJsonDocument::fromJson(bytes);
-        const QString text = doc.isNull() ? QString::fromUtf8(bytes)
-                                          : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+        QString text;
+        if (bytes.size() > kPrettyPrintLimit) {
+            text = QString::fromUtf8(bytes);   // large body: keep the raw text
+        } else {
+            const QJsonDocument doc = QJsonDocument::fromJson(bytes);
+            text = doc.isNull() ? QString::fromUtf8(bytes)
+                                : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+        }
         emit responseReady(status, statusText, respHeaders, text, int(timer.elapsed()), bytes.size());
 
         // network metadata for the corresponding tab

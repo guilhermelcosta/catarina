@@ -5,6 +5,7 @@ import QtTest
 import org.kde.kirigami as Kirigami
 import "../../qml"
 import "../../qml/Util.js" as Util
+import "../../qml/Strings.js" as Strings
 import "../../qml/js/VarTokens.js" as VarTokens
 
 // Tests for the reusable components and the pure JsonTree logic.
@@ -246,11 +247,39 @@ TestCase {
     function test_jsontree_toggle() {
         tree.load('{"a":{"b":1}}');
         wait(50);
-        compare(tree.isOpenAt("$.a"), true);   // depth 0 is open by default
-        tree.toggle("$.a");
-        compare(tree.isOpenAt("$.a"), false);  // records explicit state
-        tree.toggle("$.a");
-        compare(tree.isOpenAt("$.a"), true);
+        compare(tree.rowCount, 2);            // a (open) and b
+        compare(tree.rowAt(0).open, true);    // depth 0 is open by default
+        tree.toggle("$.a", 0);
+        compare(tree.rowAt(0).open, false);   // records explicit state
+        compare(tree.rowCount, 1);            // b is gone
+        tree.toggle("$.a", 0);
+        compare(tree.rowAt(0).open, true);
+        compare(tree.rowCount, 2);
+    }
+
+    function test_jsontree_toggle_subtree() {
+        tree.load('{"a":{"b":{"c":1}},"d":2}');
+        wait(50);
+        compare(tree.rowCount, 4);            // a, b, c (closed at depth 2), d
+        tree.toggle("$.a.b", 1);              // collapse b: removes c only
+        compare(tree.rowCount, 3);
+        tree.toggle("$.a.b", 1);              // reopen b
+        compare(tree.rowCount, 4);
+        tree.toggle("$.a", 0);                // collapse a: removes b and c
+        compare(tree.rowCount, 2);
+        tree.toggle("$.a", 0);                // reopen a from the stored value
+        compare(tree.rowCount, 4);
+        compare(tree.rowAt(2).path, "$.a.b.c");
+    }
+
+    function test_jsontree_preview_is_plain_text() {
+        tree.width = 400;
+        tree.height = 300;
+        tree.load('{"a":"<b>x</b>"}');
+        wait(50);
+        var label = findChild(tree, "jsonPreview");
+        verify(label !== null, "preview label is created");
+        compare(label.textFormat, Text.PlainText);
     }
 
     function test_jsontree_invalid() {
@@ -343,7 +372,30 @@ TestCase {
         kvModel.clear();
     }
 
+    function test_kvtable_duplicate_names() {
+        kvModel.clear();
+        kvModel.append({ name: "a", value: "1", enabled: true });
+        kvModel.append({ name: "a", value: "2", enabled: true });
+        kv.uniqueNames = true;
+        kv.revision++;
+        verify(kv.isDuplicateName(0), "first row is a duplicate");
+        verify(kv.isDuplicateName(1), "second row is a duplicate");
+        kvModel.setProperty(0, "name", "b");
+        kv.revision++;
+        verify(!kv.isDuplicateName(0), "renamed row is unique");
+        verify(!kv.isDuplicateName(1), "remaining row is unique");
+        kv.uniqueNames = false;
+        kvModel.clear();
+    }
+
     // ---- Util.js: pure domain ----
+    function test_save_feedback_copy() {
+        var saved = Strings.savedRequest("List users");
+        verify(saved.indexOf("List users") >= 0);
+        verify(saved.indexOf("/") < 0, "no absolute path in the toast");
+        verify(Strings.saveFailed("List users").indexOf("List users") >= 0);
+    }
+
     function test_util_fmtSize() {
         compare(Util.fmtSize(512), "512 B");
         compare(Util.fmtSize(2048), "2.0 KB");
@@ -642,7 +694,8 @@ TestCase {
     function test_jsontree_deep() {
         tree.load('{"a":{"b":{"c":1}}}');
         wait(50);
-        compare(tree.isOpenAt("$.a"), true);
-        compare(tree.isOpenAt("$.a.b"), true);   // depth 1 still opens by default
+        compare(tree.rowAt(0).open, true);       // depth 0 opens by default
+        compare(tree.rowAt(1).open, true);       // depth 1 still opens by default
+        compare(tree.rowAt(2).open, false);      // depth 2 starts closed
     }
 }
