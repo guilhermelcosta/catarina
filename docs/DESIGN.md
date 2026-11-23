@@ -149,6 +149,10 @@ see below); secondary = `ToolButton` with icon only + tooltip.
 - **Form label above the field**: non-bold + `Layout.bottomMargin: smallSpacing`
   (a `2×smallSpacing` gap to the field) — the `ColumnLayout` `spacing` alone leaves the text
   "glued".
+- **Multiline editor inside a dialog**: consume Tab with `Keys.onTabPressed` (focus the first
+  action) and `Keys.onBacktabPressed` (focus the previous field). Without it, Tab inserts a
+  literal tab into the content (an imported cURL command, a body). `KeyNavigation.tab` alone
+  does not stop QML `TextArea` from inserting the tab; `TextArea` has no `tabChangesFocus`.
 - **Small contextual editor**: prefer an **anchored, non-modal popover** (applies live) over a
   modal dialog; the cell that opens it can be a **chip** (icon + text, `alternateBackgroundColor`,
   `disabledTextColor` border, `radius: 4`). E.g. variable scope.

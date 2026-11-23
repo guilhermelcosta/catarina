@@ -369,6 +369,47 @@ TestCase {
         compare(backend.loadRequest("Named import").url, "https://example/named");
     }
 
+    // the name describes the result, so it reads above the command it names
+    function test_curl_import_name_is_above_the_command() {
+        win.appController.curlImportDialog.openFresh();
+        wait(50);
+        var name = findChild(win, "curlNameField");
+        var command = findChild(win, "curlCommandArea");
+        var nameError = findChild(win, "curlNameError");
+        verify(name !== null && command !== null && nameError !== null, "fields exist");
+        verify(name.mapToItem(null, 0, 0).y < command.mapToItem(null, 0, 0).y,
+               "name field sits above the command area");
+        // make the error visible to check where it lands
+        name.text = "bad/name";
+        wait(20);
+        verify(nameError.visible, "slash error is shown");
+        verify(nameError.mapToItem(null, 0, 0).y > name.mapToItem(null, 0, 0).y,
+               "name error sits below the name field");
+        verify(nameError.mapToItem(null, 0, 0).y < command.mapToItem(null, 0, 0).y,
+               "name error sits above the command area");
+        name.text = "";
+        verify(!nameError.visible, "error clears with an empty name");
+        verify(command.activeFocus, "focus starts in the command area for Ctrl+V");
+        keyClick(Qt.Key_Backtab);
+        compare(name.activeFocus, true, "Shift+Tab reaches the name field");
+        command.forceActiveFocus();
+
+        // an empty command keeps Import disabled; typing clears the old hint
+        var importBtn = findChild(win, "curlImportButton");
+        verify(importBtn !== null, "import button exists");
+        verify(!importBtn.enabled, "Import is disabled with an empty command");
+        win.appController.curlImportDialog.hint = "Provide a URL";
+        command.text = "curl https://example/x";
+        compare(win.appController.curlImportDialog.hint, "", "typing clears the old hint");
+        verify(importBtn.enabled, "Import enables with a command and a valid name");
+        var cancel = findChild(win, "curlCancelButton");
+        command.forceActiveFocus();
+        keyClick(Qt.Key_Tab);
+        compare(command.text, "curl https://example/x", "Tab must not insert a tab into the command");
+        verify(cancel.activeFocus, "Tab reaches the dialog actions");
+        win.appController.curlImportDialog.close();
+    }
+
     // indent guides: one line per ancestor level (depth = number of guides)
     function test_indent_guides_by_depth() {
         backend.saveRequest("col/sub/r", baseReq());
