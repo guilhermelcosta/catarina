@@ -177,6 +177,7 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+<<<<<<< HEAD
     // creating an environment whose name exists must not overwrite its variables
     function test_create_environment_refuses_an_existing_name() {
         compare(win.appController.createEnvironment("qa-guard"), true);
@@ -196,6 +197,14 @@ TestCase {
         var empty = findChild(win, "envEmptyState");
         verify(empty !== null, "empty state exists");
         verify(empty.visible, "visible when there is no environment");
+    }
+
+    function test_sidebar_empty_state() {
+        win.appController.treeModel.clear();
+        wait(50);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when the tree has no rows");
     }
 
     function test_collection_tab() {
