@@ -972,17 +972,32 @@ function uniqueRequestPath(folder, base) {
         path = prefix + base + "-" + (++n);
     return path;
 }
-function importCurl(text) {
+function importCurl(text, name) {
     var r = Util.parseCurl(text);
-    if (r.url.length === 0) { curlImportDialog.hint = Strings.curlNoUrl(); return; }
-    var path = uniqueRequestPath(targetFolder(), "curl-import");
+    if (r.url.length === 0) { curlImportDialog.hint = Strings.curlNoUrl(); return false; }
+    var folder = targetFolder();
+    var n = (name || "").trim();
+    var path;
+    if (n.length > 0) {
+        if (n.indexOf("/") >= 0) { curlImportDialog.nameHint = Strings.t.nameCannotContainSlash; return false; }
+        var rel = (folder.length > 0 ? folder + "/" : "") + n;
+        if (backend.isCollection(rel) || backend.loadRequest(rel).method !== undefined) {
+            curlImportDialog.nameHint = Strings.t.itemExists;
+            return false;
+        }
+        path = rel;
+    } else {
+        path = uniqueRequestPath(folder, "curl-import");   // keeps today's default and suffixing
+    }
     var data = { method: r.method, url: r.url, params: [], headers: r.headers, fields: [],
                  body: r.body, bodyType: r.bodyType, auth: r.auth, vars: [] };
     if (backend.saveRequest(path, data)) {
         reloadTree();
         openRequest(path);
         curlImportDialog.close();
+        return true;
     }
+    return false;
 }
 // ponytail: base64/formatting/cURL parsing live in Util.js (pure domain);
 // the effective parts (auth + Content-Type) come from Backend::requestParts.
