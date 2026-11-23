@@ -205,6 +205,7 @@ var t = {
     chooseFileTitle: "Choose file",
     commandPalette: "Command palette",
     commandPlaceholder: "Type a command…",
+    noCommandMatches: "No command matches.",
     deleteTitle: "Delete",
     cannotBeUndone: "This action can't be undone.",
 
