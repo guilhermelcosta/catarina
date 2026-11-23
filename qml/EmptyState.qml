@@ -49,7 +49,7 @@ ColumnLayout {
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap
-        opacity: 0.6
+        opacity: 0.75
         text: root.message
         visible: root.message.length > 0
     }
@@ -67,7 +67,7 @@ ColumnLayout {
             border.color: Kirigami.Theme.disabledTextColor
             Label { id: keyLabel; anchors.centerIn: parent; text: root.shortcut; font.bold: true; font.pixelSize: 11 }
         }
-        Label { text: root.shortcutLabel; opacity: 0.6 }
+        Label { text: root.shortcutLabel; opacity: 0.75 }
     }
     Button {
         Layout.alignment: Qt.AlignHCenter

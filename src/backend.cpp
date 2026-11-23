@@ -105,6 +105,27 @@ void Backend::setStorageDir(const QString &dir)
     emit environmentsChanged();
 }
 
+bool Backend::storageReadable() const
+{
+    const QFileInfo info(m_dir);
+    return info.isDir() && info.isReadable();
+}
+
+bool Backend::canUseStorageDir(const QString &dir) const
+{
+    if (dir.isEmpty())
+        return false;
+    const QFileInfo info(dir);
+    if (info.exists())
+        return info.isDir() && info.isWritable();
+    // not created yet: the nearest existing ancestor decides, without creating
+    // anything (this runs from a live validation binding)
+    QDir parent(dir);
+    while (!parent.exists() && parent.cdUp()) {}
+    const QFileInfo ancestor(parent.absolutePath());
+    return ancestor.isDir() && ancestor.isWritable();
+}
+
 QString Backend::activeEnvironment() const { return m_envs->active(); }
 
 void Backend::seedDefaultCollection()

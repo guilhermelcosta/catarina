@@ -82,7 +82,7 @@ Popup {
                 anchors.centerIn: parent
                 visible: scopeCollectionsModel.count === 0
                 text: Strings.t.noCollectionsYet
-                opacity: 0.6
+                opacity: 0.75
             }
         }
     }

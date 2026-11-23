@@ -75,27 +75,6 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
-    // navigation must not reset the tree model (no full rebuild)
-    function test_navigation_does_not_rebuild_the_tree() {
-        backend.saveRequest("t/nav-a", baseReq());
-        backend.saveRequest("t/nav-b", baseReq());
-        win.appController.openRequest("t/nav-a");
-        win.appController.pinTab(0);
-        win.appController.openRequest("t/nav-b");
-        win.appController.reloadTree();
-        wait(100);
-
-        var before = root.treeResets;
-        verify(before > 0, "the tree was rebuilt at least once before navigating");
-        win.appController.switchTab(0);
-        wait(100);
-        compare(root.treeResets, before, "switching tabs must not rebuild the tree");
-
-        win.appController.closeTab(0);
-        wait(100);
-        compare(root.treeResets, before, "closing a tab must not rebuild the tree");
-    }
-
     // ---- keyboard navigation in the collections tree ----
     function test_sidebar_keyboard_navigation() {
         backend.saveRequest("kb/a", baseReq("GET"));
@@ -128,6 +107,37 @@ TestCase {
         compare(win.appController.selectedPath, "kb");
         keyClick(Qt.Key_Left);    // collapse
         compare(win.appController.collapsedFolders["kb"], true);
+    }
+
+    // navigation must not reset the tree model (no full rebuild)
+    function test_navigation_does_not_rebuild_the_tree() {
+        backend.saveRequest("t/nav-a", baseReq());
+        backend.saveRequest("t/nav-b", baseReq());
+        win.appController.openRequest("t/nav-a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("t/nav-b");
+        win.appController.reloadTree();
+        wait(100);
+
+        var before = root.treeResets;
+        verify(before > 0, "the tree was rebuilt at least once before navigating");
+        win.appController.switchTab(0);
+        wait(100);
+        compare(root.treeResets, before, "switching tabs must not rebuild the tree");
+
+        win.appController.closeTab(0);
+        wait(100);
+        compare(root.treeResets, before, "closing a tab must not rebuild the tree");
+    }
+
+    // response views must never interpret server data as rich text
+    function test_response_views_render_plain_text() {
+        var body = findChild(win, "responseBodyArea");
+        verify(body !== null, "response body text area");
+        compare(body.textFormat, TextEdit.PlainText);
+        var cookies = findChild(win, "responseCookiesArea");
+        verify(cookies !== null, "cookies text area");
+        compare(cookies.textFormat, TextEdit.PlainText);
     }
 
     function test_apply_and_collect_roundtrip() {
@@ -177,6 +187,60 @@ TestCase {
         var vars = backend.environmentVariables("qa-guard");
         compare(vars.length, 1);
         compare(vars[0].name, "token");
+    }
+
+    function test_environment_empty_state() {
+        win.appController.openEnvTab("");
+        win.appController.envList = [];
+        wait(50);
+        var empty = findChild(win, "envEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when there is no environment");
+    }
+
+    function test_sidebar_empty_state() {
+        win.appController.treeModel.clear();
+        wait(50);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when the tree has no rows");
+    }
+
+    function test_response_pane_default_fits_tabs() {
+        verify(win.appController.responsePane.expandedWidth >= 420,
+               "default width must fit the five tab labels");
+    }
+
+    function test_request_save_is_labelled_and_dirty_is_visible() {
+        backend.saveRequest("t/dirty", baseReq());
+        win.appController.openRequest("t/dirty");
+        var save = findChild(win, "requestSaveButton");
+        verify(save !== null, "save button");
+        verify(save.text.length > 0, "save has a label");
+        compare(save.display, AbstractButton.TextBesideIcon);
+        var revert = findChild(win, "requestRevertButton");
+        verify(revert !== null, "revert button");
+        verify(revert.text.length > 0, "revert has a label");
+
+        win.appController.currentDirty = true;
+        wait(20);
+        verify(win.appController.currentDirty, "dirty flag set");
+        var dirty = findChild(win, "requestDirtyLabel");
+        verify(dirty !== null, "dirty marker");
+        verify(dirty.visible, "dirty marker visible while changed");
+        verify(dirty.text.length > 0, "dirty marker has copy");
+    }
+
+    function test_sidebar_error_state() {
+        win.appController.storageError = "Can't read /x. Check the folder permissions.";
+        win.appController.treeModel.clear();
+        wait(20);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null && empty.visible, "empty state visible");
+        verify(empty.message.indexOf("/x") >= 0, "message names the unreadable path");
+        compare(empty.actionText, "", "no create action when the folder cannot be read");
+        win.appController.storageError = "";
+        win.appController.reloadTree();
     }
 
     function test_collection_tab() {
