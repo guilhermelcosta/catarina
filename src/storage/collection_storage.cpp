@@ -14,6 +14,23 @@
 namespace {
 namespace RS = RequestSchema;
 
+// An entry path is always relative to the storage root: no leading separator,
+// no backslash and no empty, "." or ".." component. Without this a folder name
+// typed as ../../x reaches outside the collections directory (deleteEntry calls
+// removeRecursively()).
+bool validEntryPath(const QString &relPath)
+{
+    if (relPath.isEmpty() || relPath.startsWith(QLatin1Char('/'))
+        || relPath.contains(QLatin1Char('\\')))
+        return false;
+    const QStringList parts = relPath.split(QLatin1Char('/'));
+    for (const QString &part : parts) {
+        if (part.isEmpty() || part == QLatin1String(".") || part == QLatin1String(".."))
+            return false;
+    }
+    return true;
+}
+
 bool copyDirRecursive(const QString &src, const QString &dst)
 {
     QDir srcDir(src);
@@ -158,6 +175,8 @@ bool CollectionStorage::saveRequest(const QString &relPath, const QVariantMap &d
 
 bool CollectionStorage::deleteEntry(const QString &relPath)
 {
+    if (!validEntryPath(relPath))
+        return false;
     const QString abs = m_root + QLatin1Char('/') + relPath;
     QFileInfo info(abs);
     bool ok = false;
@@ -172,6 +191,8 @@ bool CollectionStorage::deleteEntry(const QString &relPath)
 
 bool CollectionStorage::createFolder(const QString &relPath)
 {
+    if (!validEntryPath(relPath))
+        return false;
     const bool ok = QDir().mkpath(m_root + QLatin1Char('/') + relPath);
     if (ok)
         emit changed();
@@ -180,6 +201,8 @@ bool CollectionStorage::createFolder(const QString &relPath)
 
 bool CollectionStorage::renameEntry(const QString &relPath, const QString &newName)
 {
+    if (!validEntryPath(relPath) || !validEntryPath(newName))
+        return false;
     if (relPath.isEmpty() || newName.isEmpty())
         return false;
     if (newName.contains(QLatin1Char('/')) || newName.contains(QLatin1Char('\\')))
@@ -210,7 +233,7 @@ bool CollectionStorage::renameEntry(const QString &relPath, const QString &newNa
 
 bool CollectionStorage::duplicateEntry(const QString &relPath)
 {
-    if (relPath.isEmpty())
+    if (!validEntryPath(relPath))
         return false;
     const QString parent = relPath.section(QLatin1Char('/'), 0, -2);
     const QString base = relPath.section(QLatin1Char('/'), -1);
@@ -233,7 +256,9 @@ bool CollectionStorage::duplicateEntry(const QString &relPath)
 
 bool CollectionStorage::moveEntry(const QString &from, const QString &toFolder)
 {
-    if (from.isEmpty())
+    if (!validEntryPath(from))
+        return false;
+    if (!toFolder.isEmpty() && !validEntryPath(toFolder))
         return false;
     if (toFolder == from || toFolder.startsWith(from + QLatin1Char('/')))
         return false;   // can't move into itself
