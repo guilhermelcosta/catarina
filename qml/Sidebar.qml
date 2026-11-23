@@ -124,7 +124,7 @@ Item {
             Kirigami.Icon { source: "folder-documents"; implicitWidth: 16; implicitHeight: 16 }
             Label { text: Strings.t.collections; font.bold: true }
             Item { Layout.fillWidth: true }
-            ToolButton { icon.name: "list-add"; onClicked: addMenu.open(); ToolTip.text: Strings.t.add; ToolTip.visible: hovered }
+            ToolButton { id: addButton; icon.name: "list-add"; onClicked: addMenu.popup(addButton); ToolTip.text: Strings.t.add; ToolTip.visible: hovered }
             ToolButton {
                 icon.name: "edit-delete"
                 enabled: app.selectedPath.length > 0
