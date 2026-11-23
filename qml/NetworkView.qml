@@ -85,7 +85,7 @@ Item {
             }
             Label {
                 visible: !net.meta.requestHeaders || net.meta.requestHeaders.length === 0
-                text: Strings.t.noHeaders; opacity: 0.5; Layout.leftMargin: Kirigami.Units.smallSpacing
+                text: Strings.t.noHeaders; opacity: 0.75; Layout.leftMargin: Kirigami.Units.smallSpacing
             }
 
             // ---- request body ----

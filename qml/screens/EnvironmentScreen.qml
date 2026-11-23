@@ -188,7 +188,7 @@ Item {
                     model: [Strings.t.viewAllVariables].concat(app.collectionNames())
                     onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
                 }
-                Label { text: Strings.t.globalsEverywhere; opacity: 0.6 }
+                Label { text: Strings.t.globalsEverywhere; opacity: 0.75 }
             }
 
             KvTable {

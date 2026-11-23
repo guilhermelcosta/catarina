@@ -54,7 +54,7 @@ Dialog {
             text: newReqDialog.errorText(); color: Kirigami.Theme.negativeTextColor
             visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
         }
-        Label { text: Strings.willBeCreatedIn(newReqDialog.target.length > 0 ? newReqDialog.target : Strings.rootFolder()); opacity: 0.6 }
+        Label { text: Strings.willBeCreatedIn(newReqDialog.target.length > 0 ? newReqDialog.target : Strings.rootFolder()); opacity: 0.75 }
         DialogActions {
             Button { id: nrCancel; text: Strings.t.cancel; KeyNavigation.right: nrCreate; KeyNavigation.up: nrUrl; onClicked: newReqDialog.close() }
             Button { id: nrCreate; text: Strings.t.create; Accessible.defaultButton: true; enabled: newReqDialog.errorText().length === 0; KeyNavigation.left: nrCancel; KeyNavigation.up: nrUrl; onClicked: newReqDialog.create() }

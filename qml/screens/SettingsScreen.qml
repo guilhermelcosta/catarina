@@ -29,7 +29,7 @@ Item {
                     spacing: Kirigami.Units.smallSpacing
                     Label { text: Strings.t.editorFont; Layout.preferredWidth: 170 }
                     SpinBox { from: 0; to: 28; value: settings.fontSize; onValueModified: settings.fontSize = value }
-                    Label { text: Strings.t.defaultZero; opacity: 0.6 }
+                    Label { text: Strings.t.defaultZero; opacity: 0.75 }
                 }
 
                 Kirigami.Separator { Layout.fillWidth: true }
@@ -47,7 +47,7 @@ Item {
                 }
                 Label {
                     text: Strings.t.storageDirHint
-                    opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                    opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true
                 }
 
                 Kirigami.Separator { Layout.fillWidth: true }
@@ -56,7 +56,7 @@ Item {
                     spacing: Kirigami.Units.smallSpacing
                     Label { text: Strings.t.timeoutSeconds; Layout.preferredWidth: 170 }
                     SpinBox { from: 0; to: 600; value: settings.timeoutSec; onValueModified: settings.timeoutSec = value }
-                    Label { text: Strings.t.noLimit; opacity: 0.6 }
+                    Label { text: Strings.t.noLimit; opacity: 0.75 }
                 }
                 CheckBox { text: Strings.t.ignoreSsl; checked: settings.ignoreSsl; onToggled: settings.ignoreSsl = checked }
 
@@ -67,7 +67,7 @@ Item {
 
                 Kirigami.Separator { Layout.fillWidth: true }
                 Label { text: Strings.t.shortcuts; font.bold: true }
-                Label { text: Strings.t.shortcutsHint; opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                Label { text: Strings.t.shortcutsHint; opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                 Repeater {
                     model: app.shortcutDefs
                     delegate: RowLayout {
@@ -92,6 +92,6 @@ Item {
                 }
             }
         }
-        Label { text: Strings.t.optionsApplyInstantly; opacity: 0.6; Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
+        Label { text: Strings.t.optionsApplyInstantly; opacity: 0.75; Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
     }
 }

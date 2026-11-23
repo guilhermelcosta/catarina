@@ -76,11 +76,16 @@ model, the body/URL mark dirty) becomes stale. That's why `VarCompleter.choose` 
 
 | Element | Opacity |
 |---|---|
-| Empty-state message ("Nothing here yet.", "No response.", etc.) | `0.6` |
+| Empty-state message ("Nothing here yet.", "No response.", etc.) | `0.75` |
 | Table column header (`font.bold: true`) | `0.65` |
-| Secondary/help text ("globals appear in every view", descriptions) | `0.6` |
+| Secondary/help text ("globals appear in every view", descriptions) | `0.75` |
+| Decoration only (separator glyphs, colons) | `0.5` |
 | Disabled table row | `0.45` |
 | Disabled effective variable (list) | `0.4` |
+
+Muted text must keep at least 4.5:1 against its background (WCAG AA). On the
+light theme 0.6 sampled at about 3.9:1, so informational text starts at 0.75;
+0.5 is reserved for decoration and disabled states.
 
 ---
 

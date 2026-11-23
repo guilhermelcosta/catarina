@@ -22,7 +22,7 @@ ColumnLayout {
         ColumnLayout {
             spacing: 0
             Label { text: app.collectionPath.split("/").pop(); font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 6 }
-            Label { text: app.collectionIsSubfolder ? Strings.t.folder : Strings.t.collection; opacity: 0.6 }
+            Label { text: app.collectionIsSubfolder ? Strings.t.folder : Strings.t.collection; opacity: 0.75 }
         }
         Item { Layout.fillWidth: true }
         Button { icon.name: "document-new"; text: Strings.t.newRequest; onClicked: newReqDialog.openIn(app.collectionPath) }
@@ -65,7 +65,7 @@ ColumnLayout {
             Label {
                 visible: app.collectionIsSubfolder
                 text: Strings.t.folderHint
-                opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             Label {
                 visible: !app.collectionIsSubfolder
@@ -83,7 +83,7 @@ ColumnLayout {
             Label {
                 visible: !app.collectionIsSubfolder && collectionResolvedTable.count === 0
                 text: Strings.t.noCollectionVariables
-                opacity: 0.6
+                opacity: 0.75
             }
             Kirigami.Separator { Layout.fillWidth: true }
             Label { text: app.collectionIsSubfolder ? Strings.t.requestsInFolder : Strings.t.requestsInCollection; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
@@ -102,7 +102,7 @@ ColumnLayout {
                     }
                 }
             }
-            Label { visible: app.collectionRequests.length === 0; text: app.collectionIsSubfolder ? Strings.t.noRequestsInFolder : Strings.t.noRequestsInCollection; opacity: 0.6 }
+            Label { visible: app.collectionRequests.length === 0; text: app.collectionIsSubfolder ? Strings.t.noRequestsInFolder : Strings.t.noRequestsInCollection; opacity: 0.75 }
         }
     }
 
@@ -122,7 +122,7 @@ ColumnLayout {
             }
             Label {
                 text: Strings.t.collectionHeadersHint
-                opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             KvTable {
                 Layout.fillWidth: true
@@ -154,7 +154,7 @@ ColumnLayout {
             }
             Label {
                 text: Strings.t.collectionVariablesHint
-                opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             KvTable {
                 Layout.fillWidth: true
@@ -187,7 +187,7 @@ ColumnLayout {
             }
             Label {
                 text: Strings.t.collectionAuthHint
-                opacity: 0.6; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true
             }
             AuthEditor {
                 id: collectionAuthEditor
