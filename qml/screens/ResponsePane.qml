@@ -172,11 +172,12 @@ Item {
         }
     }
 
-    property real expandedWidth: 330
+    // wide enough for the five tab labels at the default window size
+    property real expandedWidth: 430
     // current width of the split item. Applied imperatively (not via a binding)
     // because dragging the handle makes SplitView overwrite preferredWidth, which
     // would destroy a binding and break the animation.
-    property real splitWidth: 330
+    property real splitWidth: 430
     SplitView.preferredWidth: splitWidth
     onSplitWidthChanged: SplitView.preferredWidth = splitWidth
     visible: app.responseVisible || splitWidth > 0.5

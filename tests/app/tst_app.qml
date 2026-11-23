@@ -106,6 +106,11 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+    function test_response_pane_default_fits_tabs() {
+        verify(win.appController.responsePane.expandedWidth >= 420,
+               "default width must fit the five tab labels");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
