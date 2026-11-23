@@ -106,6 +106,14 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+    function test_sidebar_empty_state() {
+        win.appController.treeModel.clear();
+        wait(50);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when the tree has no rows");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");

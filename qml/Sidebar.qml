@@ -70,6 +70,7 @@ Item {
             Layout.fillHeight: true
             clip: true
             model: treeModel
+            visible: treeView.count > 0
             delegate: ItemDelegate {
                 id: treeItem
                 width: ListView.view.width
@@ -228,6 +229,21 @@ Item {
                     }
                     ToolTip.text: Strings.t.moreActions; ToolTip.visible: hovered
                 }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: treeView.count === 0
+            EmptyState {
+                objectName: "sidebarEmptyState"
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                message: Strings.t.noCollectionsYet
+                actionText: Strings.t.newCollection
+                actionIcon: "folder-new"
+                onActionTriggered: app.openNewCollection()
             }
         }
     }
