@@ -103,6 +103,44 @@ Muted text must keep at least 4.5:1 against its background (WCAG AA). On the
 light theme 0.6 sampled at about 3.9:1, so informational text starts at 0.75;
 0.5 is reserved for decoration and disabled states.
 
+### Selection and hover
+
+List selection has exactly one state, `ItemDelegate.highlighted`. A
+selection/hover surface paints its own background from `app.theme`
+(`qml/Theme.qml`, exposed through `AppController.theme`):
+
+| Row state | Background |
+|---|---|
+| selected (`highlighted`) | `app.theme.selectionTint` |
+| hovered, not selected | `app.theme.hoverTint` |
+| hovered **and** selected | `app.theme.selectionTint` |
+| neither | `"transparent"` |
+
+- Selection alpha stays in **0.12–0.20**, hover in **0.04–0.08**, and hover is
+  strictly quieter: hovering a selected row must not brighten it.
+- Drag/drop-target borders, the collapse-icon hover accent and text selection
+  keep the Kirigami `highlightColor`; they are affordances, not selection
+  surfaces.
+- An explicit `background` replaces the Breeze full-saturation highlight and its
+  pressed/focus ring; keep the replacement minimal (transparent / hover / selection).
+
+### Tokens
+
+`qml/Theme.qml` is the single source for the selection/hover tints, the radius
+scale and the text opacity tiers. Views read them as `app.theme.<token>`; a
+literal that duplicates a token is a bug.
+
+| Token | Value |
+|---|---|
+| `selectionTint` | `Kirigami.Theme.highlightColor` at alpha 0.16 |
+| `hoverTint` | `Kirigami.Theme.highlightColor` at alpha 0.06 |
+| `radiusChip` / `radiusControl` / `radiusPanel` | 4 / 6 / 8 px |
+| `textInformational` / `textTableHeader` / `textDecoration` | 0.75 / 0.65 / 0.5 |
+| `textDisabledRow` / `textDisabledVariable` | 0.45 / 0.4 |
+
+Both tints derive from the live `Kirigami.Theme`, so a desktop theme change
+retints the app without a restart.
+
 ---
 
 ## 3. Buttons and actions
@@ -381,4 +419,5 @@ In `qml/` (atomic and shell components):
 5. Icon exists in the theme and follows the convention — section 4.
 6. If it's a table: use `KvTable`; if you need a new column/option, **extend the `KvTable`**.
 7. A new screen/delegate talks to the app via `app` (AppController) — do **not** access window ids.
-8. If a new pattern emerged → **document it here**.
+8. Selection/hover backgrounds come from `app.theme` (`selectionTint` / `hoverTint`), never a literal — section 2.
+9. If a new pattern emerged → **document it here**.

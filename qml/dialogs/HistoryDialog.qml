@@ -21,13 +21,18 @@ Dialog {
     }
     contentItem: ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
-        Label { text: Strings.t.historyHint; opacity: 0.75; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+        Label { text: Strings.t.historyHint; opacity: app.theme.textInformational; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         ListView {
             Layout.fillWidth: true; Layout.fillHeight: true; clip: true
             model: historyModel
             delegate: ItemDelegate {
+                id: historyRow
                 width: ListView.view.width
                 onClicked: { historyDialog.close(); newReqDialog.openPrefilled(app.targetFolder(), model.method, model.url); }
+                // history rows have no selection state: hover affordance only
+                background: Rectangle {
+                    color: historyRow.hovered ? app.theme.hoverTint : "transparent"
+                }
                 contentItem: RowLayout {
                     spacing: 6
                     MethodBadge {
@@ -35,7 +40,7 @@ Dialog {
                         color: app.methodColor(model.method)
                     }
                     Label { Layout.fillWidth: true; text: model.url; elide: Text.ElideMiddle }
-                    Label { text: model.status; opacity: 0.7 }
+                    Label { text: model.status; opacity: app.theme.textInformational }
                 }
             }
             EmptyState {

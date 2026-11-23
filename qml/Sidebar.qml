@@ -167,6 +167,13 @@ Item {
                 Behavior on height { NumberAnimation { duration: 140; easing.type: Easing.InOutQuad } }
                 highlighted: model.relPath === app.selectedPath
                 property int itemDepth: model.depth || 0
+                // selection/hover come from the theme tokens; one selection state
+                // (`highlighted`), hover never brightens past it
+                background: Rectangle {
+                    color: treeItem.highlighted ? app.theme.selectionTint
+                         : treeItem.hovered ? app.theme.hoverTint
+                         : "transparent"
+                }
 
                 // indent guides (VS Code style): one vertical line per ancestor level,
                 // aligned to the center of that level's triangle (indent = 12px)

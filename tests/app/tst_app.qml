@@ -75,6 +75,37 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
+    // selection paint comes from app.theme (Theme.qml), not a literal or the
+    // Breeze full-saturation highlight
+    function test_sidebar_selection_uses_theme_tokens() {
+        backend.saveRequest("tint/a", baseReq());
+        backend.saveRequest("tint/b", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var theme = win.appController.theme;
+        verify(theme, "theme is wired into the controller");
+
+        var tree = win.appController.treeModel;
+        var selIdx = -1, otherIdx = -1;
+        for (var i = 0; i < tree.count; i++) {
+            if (tree.get(i).relPath === "tint/a") selIdx = i;
+            else if (tree.get(i).relPath === "tint/b") otherIdx = i;
+        }
+        verify(selIdx >= 0 && otherIdx >= 0, "both rows are in the tree");
+
+        win.appController.selectedPath = "tint/a";
+        wait(50);
+        var selected = win.appController.sidebar.view.itemAtIndex(selIdx);
+        verify(selected, "selected delegate is visible");
+        verify(Qt.colorEqual(selected.background.color, theme.selectionTint),
+               "selected row paints the theme selection tint");
+
+        var plain = win.appController.sidebar.view.itemAtIndex(otherIdx);
+        verify(plain, "unselected delegate is visible");
+        compare(plain.background.color.a, 0, "unselected, unhovered row is transparent");
+    }
+
     // ---- keyboard navigation in the collections tree ----
     function test_sidebar_keyboard_navigation() {
         backend.saveRequest("kb/a", baseReq("GET"));

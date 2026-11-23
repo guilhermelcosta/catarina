@@ -130,9 +130,15 @@ Item {
                 clip: true
                 model: app.envList
                 delegate: ItemDelegate {
+                    id: envRow
                     width: ListView.view.width
                     text: modelData.name
                     highlighted: modelData.name === envScreen.editing
+                    background: Rectangle {
+                        color: envRow.highlighted ? app.theme.selectionTint
+                             : envRow.hovered ? app.theme.hoverTint
+                             : "transparent"
+                    }
                     onClicked: { envScreen.selectEnv(modelData.name); }
                 }
             }
@@ -189,7 +195,7 @@ Item {
                     model: [Strings.t.viewAllVariables].concat(app.collectionNames())
                     onActivated: envScreen.viewCollection = currentIndex === 0 ? "" : currentText
                 }
-                Label { text: Strings.t.globalsEverywhere; opacity: 0.75 }
+                Label { text: Strings.t.globalsEverywhere; opacity: app.theme.textInformational }
             }
 
             KvTable {
