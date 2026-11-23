@@ -417,7 +417,7 @@ function revealPath(relPath) {
     controller.collapsedFolders = c;
     controller.selectedPath = relPath;
     controller.selectedIsFolder = false;
-    reloadTree();
+    applyCollapse();               // model already holds every row; no need to rescan the disk
 }
 function openRequest(relPath) {
     revealPath(relPath);           // selects in the tree and expands the folders above
@@ -619,6 +619,7 @@ function closeTab(i) {
 function doCloseTab(i, saveFirst) {
     var t = tabsModel.get(i);
     var relPath = t.relPath;
+    var savedRequest = false;
     if (saveFirst) {
         if (t.isEnvironment) {
             envScreen.save();
@@ -628,7 +629,7 @@ function doCloseTab(i, saveFirst) {
             saveCollectionAuth();
         } else if (!t.isSettings) {
             var dataJson = (i === currentTab) ? JSON.stringify(collectRequest()) : t.dataJson;
-            backend.saveRequest(relPath, JSON.parse(dataJson));
+            savedRequest = backend.saveRequest(relPath, JSON.parse(dataJson));
         }
     }
     if (!t.isCollection && !t.isEnvironment && !t.isSettings) {
@@ -636,11 +637,18 @@ function doCloseTab(i, saveFirst) {
         delete responses[relPath];   // releases the stored response of the closed tab
     }
     tabsModel.remove(i);
-    if (tabsModel.count === 0) { currentTab = -1; clearEditor(); showingCollection = false; showingEnv = false; reloadTree(); return; }
+    if (tabsModel.count === 0) {
+        currentTab = -1;
+        clearEditor();
+        showingCollection = false;
+        showingEnv = false;
+        if (savedRequest) reloadTree();
+        return;
+    }
     if (i < currentTab) currentTab--;
     else if (i === currentTab) currentTab = Math.min(i, tabsModel.count - 1);
     activateCurrent();
-    reloadTree();
+    if (savedRequest) reloadTree();   // the save may have changed the method badge
 }
 function reopenClosed() {
     if (closedTabs.length === 0) return;
@@ -674,7 +682,7 @@ function revealCollection(relPath) {
     controller.collapsedFolders = c;
     controller.selectedPath = relPath;
     controller.selectedIsFolder = true;
-    reloadTree();
+    applyCollapse();
 }
 // recomputes the collection's "Effective variables" (reopen the tab and return to the overview)
 function refreshCollectionResolved() {
