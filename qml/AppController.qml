@@ -821,7 +821,10 @@ function saveCurrent() {
         currentDirty = false;
         refreshResolved();
         reloadTree();
-        notify(Strings.savedTo(backend.storageDir, t.relPath));
+        notify(Strings.savedRequest(t.name));
+    } else {
+        // keep the tab dirty and the edits in place: the write did not happen
+        notify(Strings.saveFailed(t.name));
     }
 }
 function revertCurrent() {

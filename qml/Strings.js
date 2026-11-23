@@ -310,7 +310,8 @@ function duplicateInCollection(name) { return "Repeated variable name in collect
 function duplicateInRequest(name) { return "Repeated variable name in request: " + name; }
 function duplicateInEnvironment(name) { return "Repeated variable name in environment: " + name; }
 function collectionsNow(dir) { return "Collections now at " + dir; }
-function savedTo(dir, path) { return "Saved to " + dir + "/" + path + ".json"; }
+function savedRequest(name) { return name + " saved"; }
+function saveFailed(name) { return "Couldn't save " + name + ". Check the folder permissions."; }
 function curlNoUrl() { return "Couldn't find a URL in the command."; }
 function willBeCreatedIn(folder) { return "Will be created in: " + folder; }
 function rootFolder() { return "root"; }
