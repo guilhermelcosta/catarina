@@ -43,8 +43,15 @@ Item {
                     Button {
                         text: Strings.t.apply; highlighted: true
                         enabled: storageDirField.text.length > 0 && storageDirField.text !== backend.storageDir
+                                 && backend.canUseStorageDir(storageDirField.text)
                         onClicked: app.applyStorageDir(storageDirField.text)
                     }
+                }
+                Label {
+                    visible: storageDirField.text.length > 0 && !backend.canUseStorageDir(storageDirField.text)
+                    text: Strings.t.storageDirInvalid
+                    color: Kirigami.Theme.negativeTextColor
+                    wrapMode: Text.WordWrap; Layout.fillWidth: true
                 }
                 Label {
                     text: Strings.t.storageDirHint

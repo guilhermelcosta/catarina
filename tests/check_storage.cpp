@@ -541,6 +541,20 @@ int main(int argc, char **argv)
         CHECK(!b.moveEntry(QStringLiteral("../escape"), QString()));
     }
 
+    // storage root readability and destination validation (no side effects)
+    {
+        CHECK(b.storageReadable());
+        const QString fresh = tmp.path() + QStringLiteral("/fresh-dir");
+        CHECK(b.canUseStorageDir(fresh));
+        CHECK(!QFileInfo(fresh).exists());   // validation must not create the folder
+        const QString blocked = tmp.path() + QStringLiteral("/blocked-file");
+        {
+            QFile f(blocked);
+            CHECK(f.open(QIODevice::WriteOnly));
+        }
+        CHECK(!b.canUseStorageDir(blocked + QStringLiteral("/x")));
+    }
+
     // collectionTree: hasChildren computed in O(n)
     {
         b.deleteEntry(QStringLiteral("__tree__"));

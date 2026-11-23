@@ -93,6 +93,7 @@ property string requestVarsWarning: ""
 property string collectionVarsWarning: ""
 property string envVarsWarning: ""
 property bool currentDirty: false
+property string storageError: ""   // unreadable collections root, shown by the sidebar
 property int paramsRevision: 0   // bump on params table edits (URL preview)
 // JSON token colors (dark/light theme) used by the editors (body and response)
 readonly property bool darkTheme: Kirigami.Theme.backgroundColor.hsvValue < 0.5
@@ -129,6 +130,7 @@ function reloadTree() {   // coalesce: several requests in the same tick become 
 }
 function rebuildTree() {
     treeModel.clear();
+    storageError = backend.storageReadable() ? "" : Strings.storageUnreadable(backend.storageDir);
     var a = backend.collectionTree();
     var collapsed = Object.keys(controller.collapsedFolders);
     for (var i = 0; i < a.length; i++) {
@@ -868,6 +870,7 @@ function moveEntry(from, to) {
 }
 function notify(msg) { window.showPassiveNotification(msg); }
 function applyStorageDir(dir) {
+    if (!backend.canUseStorageDir(dir)) { notify(Strings.t.storageDirInvalid); return; }
     backend.setStorageDir(dir);
     tabsModel.clear();
     currentTab = -1;

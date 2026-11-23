@@ -231,6 +231,18 @@ TestCase {
         verify(dirty.text.length > 0, "dirty marker has copy");
     }
 
+    function test_sidebar_error_state() {
+        win.appController.storageError = "Can't read /x. Check the folder permissions.";
+        win.appController.treeModel.clear();
+        wait(20);
+        var empty = findChild(win, "sidebarEmptyState");
+        verify(empty !== null && empty.visible, "empty state visible");
+        verify(empty.message.indexOf("/x") >= 0, "message names the unreadable path");
+        compare(empty.actionText, "", "no create action when the folder cannot be read");
+        win.appController.storageError = "";
+        win.appController.reloadTree();
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");

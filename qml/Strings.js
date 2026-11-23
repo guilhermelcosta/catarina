@@ -248,6 +248,7 @@ var t = {
     defaultZero: "0 = default",
     collectionsFolder: "Folder where collections are saved:",
     storageDirHint: "When applied, catarina uses this folder. Current collections are not moved — to bring them, copy the files there.",
+    storageDirInvalid: "Choose a folder that exists and is writable.",
     network: "Network",
     timeoutSeconds: "Timeout (seconds):",
     noLimit: "0 = no limit",
@@ -311,6 +312,7 @@ function duplicateInEnvironment(name) { return "Repeated variable name in enviro
 function collectionsNow(dir) { return "Collections now at " + dir; }
 function savedRequest(name) { return name + " saved"; }
 function saveFailed(name) { return "Couldn't save " + name + ". Check the folder permissions."; }
+function storageUnreadable(dir) { return "Can't read " + dir + ". Check the folder permissions."; }
 function curlNoUrl() { return "Couldn't find a URL in the command."; }
 function willBeCreatedIn(folder) { return "Will be created in: " + folder; }
 function rootFolder() { return "root"; }

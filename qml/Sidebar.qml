@@ -337,8 +337,8 @@ Item {
                 objectName: "sidebarEmptyState"
                 anchors.centerIn: parent
                 width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
-                message: Strings.t.noCollectionsYet
-                actionText: Strings.t.newCollection
+                message: app.storageError.length > 0 ? app.storageError : Strings.t.noCollectionsYet
+                actionText: app.storageError.length > 0 ? "" : Strings.t.newCollection
                 actionIcon: "folder-new"
                 onActionTriggered: app.openNewCollection()
             }

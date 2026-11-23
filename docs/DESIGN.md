@@ -9,6 +9,22 @@ Golden rule: if an element repeats (or could repeat) in more than one place, it 
 
 ---
 
+## 0. Direction
+
+- **Three adjectives**: dense, calm, keyboard-first. It must **not** be playful.
+- **References from shipped products**: Postman (request/response split, density, method
+  badges) and Insomnia (neutral surfaces, per-section save). Borrow density and hierarchy,
+  never branding.
+- **Platform convention**: Kirigami/Breeze. Native controls, `Kirigami.Units`, Breeze icon
+  names; no custom chrome where a control exists.
+- **Density and primary input**: compact, keyboard and mouse. Every primary action has a
+  shortcut and a visible affordance; tree, tabs, dialogs and palette work without a mouse.
+- **Innovation budget**: one interaction, the URL query preview in `RequestEditor`, which
+  shows the effective URL without editing the field. Novelty stays there; the rest remains
+  conventional.
+
+---
+
 ## 1. Spacing (breathing room)
 
 - **Padding of a panel/tab**: `Kirigami.Units.largeSpacing` on all edges.
