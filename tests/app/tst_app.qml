@@ -177,7 +177,6 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
-<<<<<<< HEAD
     // creating an environment whose name exists must not overwrite its variables
     function test_create_environment_refuses_an_existing_name() {
         compare(win.appController.createEnvironment("qa-guard"), true);
@@ -205,6 +204,11 @@ TestCase {
         var empty = findChild(win, "sidebarEmptyState");
         verify(empty !== null, "empty state exists");
         verify(empty.visible, "visible when the tree has no rows");
+    }
+
+    function test_response_pane_default_fits_tabs() {
+        verify(win.appController.responsePane.expandedWidth >= 420,
+               "default width must fit the five tab labels");
     }
 
     function test_collection_tab() {
