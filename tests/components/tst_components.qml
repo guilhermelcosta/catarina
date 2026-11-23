@@ -271,6 +271,16 @@ TestCase {
         compare(tree.rowAt(2).path, "$.a.b.c");
     }
 
+    function test_jsontree_preview_is_plain_text() {
+        tree.width = 400;
+        tree.height = 300;
+        tree.load('{"a":"<b>x</b>"}');
+        wait(50);
+        var label = findChild(tree, "jsonPreview");
+        verify(label !== null, "preview label is created");
+        compare(label.textFormat, Text.PlainText);
+    }
+
     function test_jsontree_invalid() {
         tree.load("not json");
         wait(50);

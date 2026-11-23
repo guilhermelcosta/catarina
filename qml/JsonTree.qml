@@ -158,14 +158,18 @@ Item {
                     id: keyLabel
                     y: 2
                     text: model.key
+                    textFormat: Text.PlainText
                     font.bold: true
                     color: Kirigami.Theme.textColor
                 }
                 Label { y: 2; text: ":"; opacity: 0.5 }
                 Label {
+                    id: previewLabel
+                    objectName: "jsonPreview"
                     y: 2
                     width: Math.max(50, view.width - (model.depth * 14 + 70))
                     text: model.preview
+                    textFormat: Text.PlainText
                     color: treeRoot.colorOf(model.vtype)
                     elide: Text.ElideRight
                     font.family: "monospace"
