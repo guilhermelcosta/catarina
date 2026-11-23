@@ -287,15 +287,7 @@ Item {
                     visible: app.dropTarget === model.relPath
                 }
 
-                // keyboard focus ring on the selected row
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.color: Kirigami.Theme.highlightColor
-                    border.width: 1
-                    visible: treeView.activeFocus && model.relPath === app.selectedPath
-                }
-
+                // selection uses ItemDelegate.highlighted only: one state, one highlight
                 // collapse triangle (visual only; the click is handled in the MouseArea)
                 Kirigami.Icon {
                     visible: model.isFolder && model.hasChildren
