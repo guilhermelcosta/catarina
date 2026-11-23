@@ -106,6 +106,15 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+    function test_environment_empty_state() {
+        win.appController.openEnvTab("");
+        win.appController.envList = [];
+        wait(50);
+        var empty = findChild(win, "envEmptyState");
+        verify(empty !== null, "empty state exists");
+        verify(empty.visible, "visible when there is no environment");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");

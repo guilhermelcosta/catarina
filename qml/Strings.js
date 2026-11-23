@@ -202,6 +202,8 @@ var t = {
     globalTab: "Global",
     collectionsTab: "Collections",
     noCollectionsYet: "You don't have collections yet.",
+    noEnvironments: "No environments yet.",
+    noEnvironmentsHint: "Create one to reuse variables across requests.",
     chooseFileTitle: "Choose file",
     commandPalette: "Command palette",
     commandPlaceholder: "Type a command…",
