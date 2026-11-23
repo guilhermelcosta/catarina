@@ -338,5 +338,6 @@ function backendError(code, args) {
     if (code === "invalidUrl") return "Invalid URL";
     if (code === "fileOpen") return "Couldn't open the file: " + args[0];
     if (code === "network") return args[0];
+    if (code === "responseTooLarge") return "The response is larger than " + args[0] + " MB and was not downloaded.";
     return code;
 }
