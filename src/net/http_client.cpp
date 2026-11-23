@@ -20,6 +20,9 @@ namespace RS = RequestSchema;
 // Largest body the client buffers as a QString. A hostile server must not be
 // able to grow the GUI process without bound through one response.
 constexpr qint64 kMaxResponseBytes = 16LL * 1024 * 1024;   // 16 MiB
+// Above this, skip the JSON parse and the re-indent pass: both copy the whole
+// body and only serve the pretty view.
+constexpr qint64 kPrettyPrintLimit = 1LL * 1024 * 1024;    // 1 MiB
 } // namespace
 
 HttpClient::HttpClient(QObject *parent)
@@ -137,9 +140,14 @@ void HttpClient::send(const BuiltRequest &request)
             respHeaders.append(QVariantMap{{QStringLiteral("name"), QString::fromUtf8(pair.first)},
                                            {QStringLiteral("value"), QString::fromUtf8(pair.second)}});
         const QByteArray bytes = reply->readAll();
-        const QJsonDocument doc = QJsonDocument::fromJson(bytes);
-        const QString text = doc.isNull() ? QString::fromUtf8(bytes)
-                                          : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+        QString text;
+        if (bytes.size() > kPrettyPrintLimit) {
+            text = QString::fromUtf8(bytes);   // large body: keep the raw text
+        } else {
+            const QJsonDocument doc = QJsonDocument::fromJson(bytes);
+            text = doc.isNull() ? QString::fromUtf8(bytes)
+                                : QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+        }
         emit responseReady(status, statusText, respHeaders, text, int(timer.elapsed()), bytes.size());
 
         // network metadata for the corresponding tab

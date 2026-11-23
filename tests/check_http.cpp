@@ -270,6 +270,19 @@ private slots:
         QCOMPARE(err.takeFirst().at(0).toString(), QStringLiteral("network"));
     }
 
+    void large_json_body_is_not_reformatted()
+    {
+        Loopback srv;
+        const QByteArray big = QByteArrayLiteral("{\"a\":\"")
+                             + QByteArray(1024 * 1024, 'x') + QByteArrayLiteral("\"}");
+        srv.body = big;
+        QSignalSpy ready(m_backend, &Backend::responseReady);
+        m_backend->send(baseRequest(srv.url()), QString());
+        QVERIFY2(ready.wait(5000), "no responseReady");
+        const QVariantList a = ready.takeFirst();
+        QCOMPARE(a.at(3).toString().toUtf8(), big);   // delivered raw, no indent pass
+    }
+
     void response_over_the_cap_is_rejected()
     {
         Loopback srv;
