@@ -42,6 +42,75 @@ Item {
             splitAnim.start();
         }
     }
+    // ---- keyboard navigation ----
+    function rowIndexAt(relPath) {
+        for (var i = 0; i < treeModel.count; i++)
+            if (treeModel.get(i).relPath === relPath) return i;
+        return -1;
+    }
+    function entryAt(i) {
+        return (i >= 0 && i < treeModel.count) ? treeModel.get(i) : null;
+    }
+    // first visible row from `from` in `step` direction (from may be -1)
+    function nextVisible(from, step) {
+        for (var i = from; i >= 0 && i < treeModel.count; i += step)
+            if (!treeModel.get(i).hidden) return i;
+        return -1;
+    }
+    function selectRow(i) {
+        var e = entryAt(i);
+        if (e === null) return;
+        app.selectedPath = e.relPath;
+        app.selectedIsFolder = e.isFolder;
+        treeView.currentIndex = i;
+        treeView.positionViewAtIndex(i, ListView.Contain);
+    }
+    function moveSelection(step) {
+        var cur = rowIndexAt(app.selectedPath);
+        // no selection yet: both directions start at the first visible row
+        if (cur < 0) { selectRow(nextVisible(0, 1)); return; }
+        var next = nextVisible(cur + step, step);
+        if (next >= 0) selectRow(next);
+    }
+    function openSelected() {
+        var e = entryAt(rowIndexAt(app.selectedPath));
+        if (e === null) return;
+        if (e.isFolder) app.openCollection(e.relPath);
+        else app.openRequest(e.relPath);
+    }
+    function expandSelected() {
+        var i = rowIndexAt(app.selectedPath);
+        var e = entryAt(i);
+        if (e === null) return;
+        if (e.isFolder && e.hasChildren && e.collapsed) { app.toggleCollapse(e.relPath); return; }
+        if (e.isFolder && e.hasChildren) {
+            var child = nextVisible(i + 1, 1);
+            if (child >= 0 && entryAt(child).depth > e.depth) selectRow(child);
+            return;
+        }
+        openSelected();
+    }
+    function collapseSelected() {
+        var i = rowIndexAt(app.selectedPath);
+        var e = entryAt(i);
+        if (e === null) return;
+        if (e.isFolder && e.hasChildren && !e.collapsed) { app.toggleCollapse(e.relPath); return; }
+        for (var p = i - 1; p >= 0; p--) {
+            var parent = entryAt(p);
+            if (!parent.hidden && parent.depth < e.depth) { selectRow(p); return; }
+        }
+    }
+
+    // keep the view on the selection when another screen (a tab) changes it
+    Connections {
+        target: app
+        function onSelectedPathChanged() {
+            var i = rowIndexAt(app.selectedPath);
+            if (i < 0) return;
+            treeView.currentIndex = i;
+            treeView.positionViewAtIndex(i, ListView.Contain);
+        }
+    }
     // keep the content at full width and clip it: collapsing slides it out
     // instead of squeezing the labels/badges to zero
     clip: true
@@ -66,10 +135,27 @@ Item {
         Kirigami.Separator { Layout.fillWidth: true }
         ListView {
             id: treeView
+            objectName: "treeView"
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             model: treeModel
+            activeFocusOnTab: true
+            Keys.onPressed: function (event) {
+                switch (event.key) {
+                case Qt.Key_Down: sidebar.moveSelection(1); event.accepted = true; break;
+                case Qt.Key_Up: sidebar.moveSelection(-1); event.accepted = true; break;
+                case Qt.Key_Right: sidebar.expandSelected(); event.accepted = true; break;
+                case Qt.Key_Left: sidebar.collapseSelected(); event.accepted = true; break;
+                case Qt.Key_Return:
+                case Qt.Key_Enter: sidebar.openSelected(); event.accepted = true; break;
+                case Qt.Key_Space:
+                    var e = sidebar.entryAt(sidebar.rowIndexAt(app.selectedPath));
+                    if (e !== null && e.isFolder && e.hasChildren) app.toggleCollapse(e.relPath);
+                    event.accepted = true;
+                    break;
+                }
+            }
             delegate: ItemDelegate {
                 id: treeItem
                 width: ListView.view.width
@@ -170,6 +256,8 @@ Item {
                     onCanceled: { app.dragging = false; app.dropTarget = ""; app.dropRoot = false; }
                     onClicked: function (m) {
                         if (app.justDragged) { app.justDragged = false; return; }
+                        treeView.currentIndex = index;
+                        treeView.forceActiveFocus();
                         // click on the triangle = collapse/expand
                         var triX = (model.depth || 0) * 12 + 3;
                         if (m.button === Qt.LeftButton && model.isFolder && model.hasChildren
@@ -196,6 +284,15 @@ Item {
                     border.color: Kirigami.Theme.highlightColor
                     border.width: 2
                     visible: app.dropTarget === model.relPath
+                }
+
+                // keyboard focus ring on the selected row
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: Kirigami.Theme.highlightColor
+                    border.width: 1
+                    visible: treeView.activeFocus && model.relPath === app.selectedPath
                 }
 
                 // collapse triangle (visual only; the click is handled in the MouseArea)
