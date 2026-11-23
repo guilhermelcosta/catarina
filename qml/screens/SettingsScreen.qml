@@ -21,7 +21,8 @@ Item {
             Layout.fillHeight: true
             clip: true
             ColumnLayout {
-                width: settingsScroll.availableWidth
+                objectName: "settingsForm"
+                width: Math.min(settingsScroll.availableWidth, 720)
                 spacing: Kirigami.Units.smallSpacing
 
                 Label { text: Strings.t.appearance; font.bold: true }
