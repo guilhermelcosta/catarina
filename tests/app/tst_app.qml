@@ -179,6 +179,22 @@ TestCase {
         compare(vars[0].name, "token");
     }
 
+    function test_name_dialog_validation() {
+        var d = win.appController.nameDialog;
+        var f = findChild(win, "nameField");
+        verify(d !== null && f !== null, "dialog and field exist");
+        backend.createFolder("taken-col");
+        d.base = "";
+        d.asCollection = true;
+        f.text = "taken-col";
+        verify(d.errorText().length > 0, "existing name is invalid");
+        f.text = "bad/name";
+        verify(d.errorText().length > 0, "slash is invalid");
+        f.text = "fresh-col";
+        compare(d.errorText(), "");
+        backend.deleteEntry("taken-col");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
