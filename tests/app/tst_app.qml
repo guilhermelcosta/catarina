@@ -179,6 +179,16 @@ TestCase {
         compare(vars[0].name, "token");
     }
 
+    function test_history_empty_state_is_centered() {
+        backend.clearHistory();
+        win.appController.historyDialog.openAndLoad();
+        wait(50);
+        var empty = findChild(win, "historyEmpty");
+        verify(empty !== null, "history empty state exists");
+        verify(empty.visible, "visible with no entries");
+        win.appController.historyDialog.close();
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
