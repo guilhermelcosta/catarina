@@ -106,6 +106,18 @@ TestCase {
         compare(win.appController.showingEnv, true);
     }
 
+    // creating an environment whose name exists must not overwrite its variables
+    function test_create_environment_refuses_an_existing_name() {
+        compare(win.appController.createEnvironment("qa-guard"), true);
+        compare(win.appController.environmentExists("qa-guard"), true);
+        backend.saveEnvironment("qa-guard", [{ name: "token", value: "abc", enabled: true }]);
+        win.appController.reloadEnvs();
+        compare(win.appController.createEnvironment("qa-guard"), false);
+        var vars = backend.environmentVariables("qa-guard");
+        compare(vars.length, 1);
+        compare(vars[0].name, "token");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
