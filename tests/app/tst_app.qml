@@ -69,6 +69,40 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
+    // ---- keyboard navigation in the collections tree ----
+    function test_sidebar_keyboard_navigation() {
+        backend.saveRequest("kb/a", baseReq("GET"));
+        backend.saveRequest("kb/b", baseReq("POST"));
+        win.appController.reloadTree();
+        wait(100);
+
+        var model = win.appController.treeModel;
+        var idx = -1;
+        for (var i = 0; i < model.count; i++)
+            if (model.get(i).relPath === "kb") { idx = i; break; }
+        verify(idx >= 0, "folder in the tree");
+
+        var view = win.appController.sidebar.view;
+        win.appController.toggleCollapse("kb");   // start collapsed
+        win.appController.selectedPath = "kb";
+        win.appController.selectedIsFolder = true;
+        view.currentIndex = idx;
+        view.forceActiveFocus();
+        verify(view.activeFocus, "tree has focus");
+
+        keyClick(Qt.Key_Right);   // expand
+        verify(!win.appController.collapsedFolders["kb"], "Right expands the folder");
+        keyClick(Qt.Key_Down);    // first child
+        compare(win.appController.selectedPath, "kb/a");
+        keyClick(Qt.Key_Return);  // open
+        compare(win.appController.tabsModel.count, 1);
+        compare(win.appController.tabsModel.get(0).relPath, "kb/a");
+        keyClick(Qt.Key_Up);      // back to the folder
+        compare(win.appController.selectedPath, "kb");
+        keyClick(Qt.Key_Left);    // collapse
+        compare(win.appController.collapsedFolders["kb"], true);
+    }
+
     function test_apply_and_collect_roundtrip() {
         var r = baseReq("PUT");
         r.url = "https://h/p";
@@ -104,6 +138,18 @@ TestCase {
         win.appController.openEnvTab("");
         compare(win.appController.tabsModel.count, n);   // doesn't duplicate
         compare(win.appController.showingEnv, true);
+    }
+
+    // creating an environment whose name exists must not overwrite its variables
+    function test_create_environment_refuses_an_existing_name() {
+        compare(win.appController.createEnvironment("qa-guard"), true);
+        compare(win.appController.environmentExists("qa-guard"), true);
+        backend.saveEnvironment("qa-guard", [{ name: "token", value: "abc", enabled: true }]);
+        win.appController.reloadEnvs();
+        compare(win.appController.createEnvironment("qa-guard"), false);
+        var vars = backend.environmentVariables("qa-guard");
+        compare(vars.length, 1);
+        compare(vars[0].name, "token");
     }
 
     function test_collection_tab() {
