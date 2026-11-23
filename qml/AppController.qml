@@ -201,6 +201,23 @@ function activateEnv(name) {
     controller.activeEnv = name;                 // optimistic: the label updates immediately
     backend.setActiveEnvironment(name);    // emits environmentsChanged → reloadEnvs + refreshResolved
 }
+function environmentExists(name) {
+    var list = backend.environments();
+    for (var i = 0; i < list.length; i++)
+        if (list[i].name === name) return true;
+    return false;
+}
+// creates, activates and opens the environment tab. Refuses an existing name:
+// saving by name would silently replace its variables.
+function createEnvironment(name) {
+    var n = (name || "").trim();
+    if (n.length === 0 || environmentExists(n)) return false;
+    if (!backend.saveEnvironment(n, [])) return false;
+    reloadEnvs();
+    activateEnv(n);
+    openEnvTab(n);
+    return true;
+}
 function targetFolder() {
     if (selectedPath.length === 0) return "";
     return selectedIsFolder ? selectedPath : parentOf(selectedPath);
