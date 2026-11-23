@@ -359,6 +359,16 @@ TestCase {
         verify(win.appController.collectRequest().headers.length >= 1);
     }
 
+    function test_import_curl_with_name() {
+        compare(win.appController.importCurl("curl https://example/named", "Named import"), true);
+        compare(backend.loadRequest("Named import").url, "https://example/named");
+        compare(win.appController.tabsModel.get(0).relPath, "Named import");
+        // an existing name and a slash are refused, and do not overwrite or create
+        compare(win.appController.importCurl("curl https://example/other", "Named import"), false);
+        compare(win.appController.importCurl("curl https://example/other", "bad/name"), false);
+        compare(backend.loadRequest("Named import").url, "https://example/named");
+    }
+
     // indent guides: one line per ancestor level (depth = number of guides)
     function test_indent_guides_by_depth() {
         backend.saveRequest("col/sub/r", baseReq());
