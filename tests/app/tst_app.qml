@@ -14,6 +14,12 @@ TestCase {
 
     Component { id: appComponent; Main {} }
     property var win: null
+    property int treeResets: 0
+    // a full rebuild clears the ListModel: count drops to 0 before refilling
+    Connections {
+        target: root.win ? root.win.appController.treeModel : null
+        function onCountChanged() { if (target.count === 0) root.treeResets++; }
+    }
 
     function init() {
         if (win) { win.destroy(); win = null; }
@@ -101,6 +107,27 @@ TestCase {
         compare(win.appController.selectedPath, "kb");
         keyClick(Qt.Key_Left);    // collapse
         compare(win.appController.collapsedFolders["kb"], true);
+    }
+
+    // navigation must not reset the tree model (no full rebuild)
+    function test_navigation_does_not_rebuild_the_tree() {
+        backend.saveRequest("t/nav-a", baseReq());
+        backend.saveRequest("t/nav-b", baseReq());
+        win.appController.openRequest("t/nav-a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("t/nav-b");
+        win.appController.reloadTree();
+        wait(100);
+
+        var before = root.treeResets;
+        verify(before > 0, "the tree was rebuilt at least once before navigating");
+        win.appController.switchTab(0);
+        wait(100);
+        compare(root.treeResets, before, "switching tabs must not rebuild the tree");
+
+        win.appController.closeTab(0);
+        wait(100);
+        compare(root.treeResets, before, "closing a tab must not rebuild the tree");
     }
 
     function test_apply_and_collect_roundtrip() {
