@@ -179,6 +179,14 @@ TestCase {
         compare(vars[0].name, "token");
     }
 
+    function test_settings_form_has_a_measure() {
+        win.appController.openSettingsTab();
+        wait(50);
+        var form = findChild(win, "settingsForm");
+        verify(form !== null, "settings form exists");
+        verify(form.width > 0 && form.width <= 720, "form is capped at 720px");
+    }
+
     function test_collection_tab() {
         backend.createFolder("colA");
         win.appController.openCollection("colA");
