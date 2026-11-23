@@ -58,6 +58,13 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.8" date="2026-11-23">
+      <description>
+        <ul>
+          <li>feat: name the request when importing a cURL command</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.7" date="2026-11-22">
       <description>
         <ul>
