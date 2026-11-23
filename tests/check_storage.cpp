@@ -514,6 +514,18 @@ int main(int argc, char **argv)
         CHECK(b3.secretValue(QStringLiteral("__sid__")).isEmpty());
     }
 
+    // an entry path cannot escape the storage root
+    {
+        const QString escape = QFileInfo(b.storageDir()).absolutePath() + QStringLiteral("/escape");
+        CHECK(!b.createFolder(QStringLiteral("../escape")));
+        CHECK(!QFileInfo::exists(escape));
+        CHECK(!b.deleteEntry(QStringLiteral("../escape")));
+        CHECK(!b.renameEntry(QStringLiteral("../escape"), QStringLiteral("x")));
+        CHECK(!b.renameEntry(QStringLiteral("any"), QStringLiteral("..")));
+        CHECK(!b.duplicateEntry(QStringLiteral("../escape")));
+        CHECK(!b.moveEntry(QStringLiteral("../escape"), QString()));
+    }
+
     // collectionTree: hasChildren computed in O(n)
     {
         b.deleteEntry(QStringLiteral("__tree__"));
