@@ -182,6 +182,7 @@ var t = {
     importCurlTitle: "Import cURL",
     importCurlLabel: "Paste a cURL command:",
     importCurlPlaceholder: "curl 'https://…' -H '…' -d '…'",
+    importCurlNamePlaceholder: "curl-import",
     import: "Import",
     exportTitle: "Export code",
     chooseCollectionsFolder: "Choose collections folder",
