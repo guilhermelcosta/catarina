@@ -98,7 +98,7 @@ Popup {
                     text: section
                     font.bold: true
                     font.pixelSize: 11
-                    opacity: 0.55
+                    opacity: 0.75
                 }
             }
             onCurrentIndexChanged: { if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
