@@ -77,15 +77,18 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
                                {QStringLiteral("depth"), depth}});
         walk(childRel, depth + 1, out);
     }
-    for (const QString &file : dir.entryList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
+    const QFileInfoList files = dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name);
+    for (const QFileInfo &info : files) {
+        const QString file = info.fileName();
         if (file.startsWith(QLatin1Char('.')))
             continue;
         QString base = file;
         base.chop(5);
         const QString childRel = rel.isEmpty() ? base : rel + QLatin1Char('/') + base;
         // method with cache (mtime): avoids reopening/parsing each request on every reload
-        const QString absFile = m_root + QLatin1Char('/') + childRel + QStringLiteral(".json");
-        const qint64 mt = QFileInfo(absFile).lastModified().toMSecsSinceEpoch();
+        // the listing above already statted the entry: no second QFileInfo call
+        const QString absFile = info.absoluteFilePath();
+        const qint64 mt = info.lastModified().toMSecsSinceEpoch();
         QString method;
         auto it = m_methodCache.constFind(childRel);
         if (it != m_methodCache.constEnd() && it->first == mt) {
