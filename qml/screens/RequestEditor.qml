@@ -161,7 +161,12 @@ ColumnLayout {
                     highlighted: !app.sending
                     Layout.preferredWidth: 24
                     Layout.minimumWidth: 24
-                    Layout.fillHeight: true
+                    // inset inside the container so the highlighted chrome does
+                    // not double the container's border (ui-review round 1)
+                    Layout.preferredHeight: Kirigami.Units.gridUnit * 2 - 6
+                    Layout.fillHeight: false
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: 3
                     onClicked: app.sending ? backend.cancel() : app.doSend()
                     ToolTip.text: Strings.t.sendTooltip; ToolTip.visible: hovered
                 }

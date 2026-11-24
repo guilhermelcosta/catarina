@@ -398,6 +398,13 @@ TestCase {
         compare(save.width, saveWidth, "save keeps its fixed width");
         compare(revert.width, revertWidth, "discard keeps its fixed width");
 
+        var savePos = save.mapToItem(editor, 0, 0);
+        var revertPos = revert.mapToItem(editor, 0, 0);
+        verify(savePos.x + save.width <= editor.width + 0.5,
+               "save stays inside the editor at its minimum: " + (savePos.x + save.width));
+        verify(revertPos.x + revert.width <= editor.width + 0.5,
+               "discard stays inside the editor at its minimum: " + (revertPos.x + revert.width));
+
         win.width = restoredWidth;
         wait(100);
     }
