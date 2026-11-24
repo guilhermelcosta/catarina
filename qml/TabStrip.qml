@@ -55,6 +55,21 @@ Rectangle {
 
     function hideTabTip() { tabTip.close(); }
 
+    // right-click context menu: anchored under the tab
+    function openTabContext(i, item) {
+        if (i < 0 || i >= tabsModel.count) return;
+        tabCtxMenu.tabIndex = i;
+        var p = item.mapToItem(tabStripRoot, item.width / 2, item.height);
+        tabCtxMenu.x = Math.max(0, Math.min(tabStripRoot.width - tabCtxMenu.implicitWidth, p.x));
+        tabCtxMenu.y = p.y;
+        tabCtxMenu.open();
+    }
+    function isUtilityTab(i) {
+        if (i < 0 || i >= tabsModel.count) return false;
+        var t = tabsModel.get(i);
+        return t.isCollection === true || t.isEnvironment === true || t.isSettings === true;
+    }
+
     ToolTip {
         id: tabTip
         objectName: "tabTip"
@@ -216,7 +231,7 @@ Rectangle {
                     MouseArea {
                         id: tabMouse
                         anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         preventStealing: true
                         property real pressX: 0
                         property real pressY: 0
@@ -253,6 +268,7 @@ Rectangle {
                         onClicked: function (mouse) {
                             if (app.justDragged) { app.justDragged = false; return; }
                             if (mouse.button === Qt.MiddleButton) app.closeTab(index);
+                            else if (mouse.button === Qt.RightButton) tabStripRoot.openTabContext(index, tabItem);
                             else app.switchTab(index);
                         }
                     }
@@ -303,6 +319,41 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    // Context menu (right-click on a tab). Hidden tab types (settings,
+    // environment, collection) only get Close.
+    Menu {
+        id: tabCtxMenu
+        objectName: "tabCtxMenu"
+        property int tabIndex: -1
+        readonly property bool utility: tabStripRoot.isUtilityTab(tabIndex)
+        MenuItem {
+            objectName: "tabCtxPin"
+            visible: !tabCtxMenu.utility
+            text: (tabCtxMenu.tabIndex >= 0 && tabCtxMenu.tabIndex < tabsModel.count
+                   && tabsModel.get(tabCtxMenu.tabIndex).pinned === true)
+                  ? Strings.t.unpinTab : Strings.t.pinTab
+            onTriggered: app.pinTab(tabCtxMenu.tabIndex)
+        }
+        MenuItem {
+            objectName: "tabCtxClose"
+            text: Strings.t.closeTab
+            onTriggered: app.closeTab(tabCtxMenu.tabIndex)
+        }
+        MenuSeparator { visible: !tabCtxMenu.utility }
+        MenuItem {
+            objectName: "tabCtxCloseOthers"
+            visible: !tabCtxMenu.utility
+            text: Strings.t.closeOthers
+            onTriggered: app.closeOtherTabs(tabCtxMenu.tabIndex)
+        }
+        MenuItem {
+            objectName: "tabCtxCloseAll"
+            visible: !tabCtxMenu.utility
+            text: Strings.t.closeAll
+            onTriggered: app.closeAllTabs()
         }
     }
 }

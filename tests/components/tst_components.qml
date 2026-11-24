@@ -158,6 +158,36 @@ TestCase {
     }
 
 
+    // Util.tabSearchMatches: tab search over the open request
+    function test_util_tabSearchMatches() {
+        compare(Util.tabSearchMatches(null, "x").length, 0, "no request, no matches");
+        var req = { url: "http://example/Needle", params: [],
+                    headers: [], fields: [], vars: [], body: "" };
+        compare(Util.tabSearchMatches(req, "").length, 0, "empty query matches nothing");
+        compare(Util.tabSearchMatches(req, "needle").length, 1, "URL matches case-insensitively");
+        compare(Util.tabSearchMatches(req, "needle")[0].surface, "url");
+
+        req.params = [{ name: "q", value: "needle", enabled: true }];
+        req.headers = [{ name: "Needle", value: "v", enabled: true }, { name: "h", value: "v", enabled: true }];
+        req.fields = [{ name: "f", value: "needle", enabled: true }];
+        req.vars = [{ name: "v", value: "needle", enabled: true }];
+        req.body = "one needle, two needle";
+        var m = Util.tabSearchMatches(req, "needle");
+        compare(m.length, 7, "URL, params, headers, fields, vars and both body hits");
+        compare(m[0].surface, "url");
+        compare(m[1].surface, "params");
+        compare(m[2].surface, "headers");
+        compare(m[3].surface, "fields");
+        compare(m[4].surface, "vars");
+        compare(m[5].surface, "body");
+        compare(m[5].start, req.body.indexOf("needle"), "the body offset is absolute");
+        compare(m[5].end - m[5].start, 6);
+        compare(m[6].start, req.body.lastIndexOf("needle"), "every body occurrence is listed");
+        verify(m[5].snippet.toLowerCase().indexOf("needle") >= 0, "the snippet carries the hit");
+        compare(m[2].label, "Needle", "table hits use the row name");
+        compare(Util.tabSearchMatches(req, "zzz").length, 0);
+    }
+
     function test_varcompleter_choose_emits_edit() {
         root.probeCount = 0;
         emitProbe.text = "{{";
@@ -222,6 +252,11 @@ TestCase {
         ListElement { name: "dup"; value: "2"; enabled: true; secret: false; type: "text"; fileName: "" }
     }
     KvTable { id: kvDup; model: dupModel; uniqueNames: true; width: 800; height: 300 }
+    ListModel {
+        id: revealModel
+        ListElement { name: "r"; value: "1"; enabled: true }
+    }
+    KvTable { id: kvReveal; model: revealModel; width: 800; height: 200 }
     VarField { id: vf; resolved: vfVars }
     property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
@@ -824,6 +859,18 @@ TestCase {
         compare(row.shown, false, "filtered row");
         compare(row.height, 0, "zero height when filtered");
         filterModel.clear();
+    }
+
+    // tab-search activation: revealRow scrolls/tints; filtered or out-of-range is a no-op
+    function test_kvtable_reveal_row() {
+        wait(50);
+        compare(kvReveal.revealRow(0), true, "an existing row is revealed");
+        compare(kvReveal.revealedRow, 0);
+        compare(kvReveal.revealRow(99), false, "out-of-range is a no-op");
+        compare(kvFilter.revealRow(0), false, "a filtered-out row is a no-op");
+        compare(kvFilter.revealedRow, -1);
+        wait(1300);
+        compare(kvReveal.revealedRow, -1, "the tint clears itself");
     }
 
     // scope chip uses the color from the scopeColor callback

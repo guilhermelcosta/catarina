@@ -24,6 +24,9 @@ class Settings : public QObject
     Q_PROPERTY(bool editorWrap READ editorWrap WRITE setEditorWrap NOTIFY settingsChanged)
     Q_PROPERTY(int editorIndent READ editorIndent WRITE setEditorIndent NOTIFY settingsChanged)
     Q_PROPERTY(bool editorBrackets READ editorBrackets WRITE setEditorBrackets NOTIFY settingsChanged)
+    // pane layout: 0 means "not set" (internal marker, never shown)
+    Q_PROPERTY(qreal sidebarWidth READ sidebarWidth WRITE setSidebarWidth NOTIFY settingsChanged)
+    Q_PROPERTY(qreal splitPosition READ splitPosition WRITE setSplitPosition NOTIFY settingsChanged)
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setScheme NOTIFY colorSchemeChanged)
     Q_PROPERTY(bool confirmDelete READ confirmDelete WRITE setConfirmDelete NOTIFY settingsChanged)
     Q_PROPERTY(bool autoSaveOnSend READ autoSaveOnSend WRITE setAutoSaveOnSend NOTIFY settingsChanged)
@@ -60,6 +63,10 @@ public:
     void setEditorIndent(int v);
     bool editorBrackets() const;
     void setEditorBrackets(bool v);
+    qreal sidebarWidth() const;
+    void setSidebarWidth(qreal v);
+    qreal splitPosition() const;
+    void setSplitPosition(qreal v);
     // "system" (default) | "light" | "dark": hidden key, written by the status-bar toggle
     QString colorScheme() const;
     void setScheme(const QString &scheme);

@@ -122,6 +122,7 @@ qt_add_resources(catarina "qml"
         qml/screens/EnvironmentScreen.qml
         qml/screens/CollectionScreen.qml
         qml/screens/RequestEditor.qml
+        qml/screens/TabSearch.qml
         qml/screens/BodyEditor.qml
         qml/screens/ReqVarsEditor.qml
         qml/screens/ResponsePane.qml

@@ -158,6 +158,32 @@ void Settings::setEditorBrackets(bool v)
     m_s.setValue(QStringLiteral("editorBrackets"), v);
     emit settingsChanged();
 }
+qreal Settings::sidebarWidth() const
+{
+    return qMax<qreal>(0, m_s.value(QStringLiteral("sidebarWidth"), 0).toReal());
+}
+void Settings::setSidebarWidth(qreal v)
+{
+    if (v < 0) v = 0;
+    if (qFuzzyCompare(v, sidebarWidth()))
+        return;
+    m_s.setValue(QStringLiteral("sidebarWidth"), v);
+    emit settingsChanged();
+}
+
+qreal Settings::splitPosition() const
+{
+    return qMax<qreal>(0, m_s.value(QStringLiteral("splitPosition"), 0).toReal());
+}
+void Settings::setSplitPosition(qreal v)
+{
+    if (v < 0) v = 0;
+    if (qFuzzyCompare(v, splitPosition()))
+        return;
+    m_s.setValue(QStringLiteral("splitPosition"), v);
+    emit settingsChanged();
+}
+
 QString Settings::colorScheme() const
 {
     const QString s = m_s.value(QStringLiteral("colorScheme"), QStringLiteral("system")).toString();

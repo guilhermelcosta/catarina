@@ -13,6 +13,15 @@ ColumnLayout {
     property alias body: bodyArea.text
     readonly property string bodyType: bodyTypeBox.currentValue
     function setBodyType(v) { var i = bodyTypeBox.indexOfValue(v); bodyTypeBox.currentIndex = i >= 0 ? i : 0; }
+    // tab-search activation: select a body range or reveal a form-field row
+    function revealRange(start, end) {
+        bodyArea.forceActiveFocus();
+        bodyArea.select(Math.max(0, start), Math.min(end, bodyArea.length));
+    }
+    function revealFieldRow(index) {
+        if (!fieldsTable.visible) return false;
+        return fieldsTable.revealRow(index);
+    }
     // StackLayout constrains the current child by the maximum height it
     // computes (newSize.expandedTo(min).boundedTo(max)) and, in a
     // ColumnLayout nested with a ScrollView, that maximum comes out
@@ -55,6 +64,7 @@ ColumnLayout {
         Layout.leftMargin: Kirigami.Units.smallSpacing
     }
     KvTable {
+        id: fieldsTable
         Layout.fillWidth: true
         Layout.fillHeight: true
         visible: bodyTypeBox.currentValue === "multipart" || bodyTypeBox.currentValue === "urlencoded"

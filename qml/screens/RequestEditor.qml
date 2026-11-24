@@ -23,6 +23,32 @@ ColumnLayout {
     property alias body: bodyEditor.body
     function setMethod(m) { var i = methodBox.find(m); methodBox.currentIndex = i >= 0 ? i : 0; }
     function setBodyType(v) { bodyEditor.setBodyType(v); }
+    // ---- tab search (Ctrl+Shift+A) ----
+    function currentTabIsRequest() {
+        if (!app || app.showingSettings || app.showingEnv || app.showingCollection) return false;
+        if (app.currentTab < 0 || app.currentTab >= app.tabsModel.count) return false;
+        var t = app.tabsModel.get(app.currentTab);
+        return !t.isCollection && !t.isEnvironment && !t.isSettings;
+    }
+    function openTabSearch() {
+        if (!currentTabIsRequest()) return;   // no-op outside a request tab
+        tabSearch.open();
+    }
+    function revealUrlMatch() {
+        reqTabBar.currentIndex = 0;
+        urlField.forceActiveFocus();
+        urlField.selectAll();
+    }
+    function revealBodyRange(start, end) {
+        reqTabBar.currentIndex = 2;
+        bodyEditor.revealRange(start, end);
+    }
+    function revealTableRow(surface, index) {
+        if (surface === "params") { reqTabBar.currentIndex = 0; paramsTable.revealRow(index); }
+        else if (surface === "headers") { reqTabBar.currentIndex = 1; headersTable.revealRow(index); }
+        else if (surface === "fields") { reqTabBar.currentIndex = 2; bodyEditor.revealFieldRow(index); }
+        else if (surface === "vars") { reqTabBar.currentIndex = 4; reqVars.revealRow(index); }
+    }
     SplitView.fillWidth: true
     SplitView.minimumWidth: 380
     spacing: Kirigami.Units.smallSpacing
@@ -234,8 +260,8 @@ ColumnLayout {
         Layout.fillHeight: true
         currentIndex: reqTabBar.currentIndex
 
-        KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
-        KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
+        KvTable { id: paramsTable; model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
+        KvTable { id: headersTable; model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
 
         // NB: qualify with `editor.` — `fieldsModel`/`fileDialog` are properties
         // of this component; without the prefix QML would resolve to the property
@@ -253,5 +279,11 @@ ColumnLayout {
         // editable variables (top) + effective ones (bottom), with a draggable
         // divider — at most half the tab height.
         ReqVarsEditor { id: reqVars; objectName: "reqVarsEditor"; app: editor.app; requestVarsModel: editor.requestVarsModel }
+    }
+
+    TabSearch {
+        id: tabSearch
+        app: editor.app
+        editor: editor
     }
 }

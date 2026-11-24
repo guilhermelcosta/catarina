@@ -63,6 +63,20 @@ drawn line. A `1px` handle is nearly impossible to grab. The app's pattern:
 a centered `1px` line (visual), `cursorShape` according to orientation, and hover/drag
 highlighting. Every new `SplitView` uses `handle: SplitGrip {}`.
 
+### Pane layout (rule)
+- The sidebar width (`sidebarWidth`) and the request/response fraction
+  (`splitPosition`, 0.20–0.80) persist in settings. `AppController.restorePanes()`
+  restores them one frame after the first layout and clamps to the live window
+  and the minimums: sidebar 190, response 230, editor 380. `persistPanes()`
+  writes the live widths on close.
+- At window width **≤ 1000 px** the inner `SplitView` stacks vertically (request
+  above, response below at ~40 % height); above it the horizontal split returns
+  with the remembered widths. The width guard must ignore the first layout
+  (`width > 0`), otherwise the split starts vertical and overrides the saved
+  widths.
+- Widths are what is stored: while stacked the saved fraction is untouched and
+  reapplied when the window widens.
+
 ### ⚠️ `ListModel`: declare roles in `append`, not via `setProperty`
 A role created by `setProperty` **after** the delegate already exists **does not reach the
 delegate**: `model.<role>` stays `undefined` forever (`get(i)` even sees the value, but the UI
@@ -477,6 +491,17 @@ The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
 - **Scroll into view:** switching tabs (click, shortcut, new tab, session
   restore) scrolls the active tab into view one frame later, so a freshly
   appended delegate has its geometry.
+- **Context menu (`tabCtxMenu`):** right-clicking a tab offers Pin/Unpin,
+  Close, Close others and Close all. Utility tabs (settings, environment,
+  collection) only get Close. Close others/all use one count-based
+  confirmation when dirty tabs are affected, and Close all reaches the empty
+  state.
+- **Tab search (`Ctrl+Shift+A`, remappable):** `TabSearch.qml` opens a popup
+  over the request editor (`tabSearchField`); matching is the pure
+  `Util.tabSearchMatches` over URL, params/headers/fields/vars (name + value)
+  and body. Enter activates: URL focuses the URL field, body selects the range,
+  a table row switches to its section and calls `KvTable.revealRow(index)`.
+  The popup never opens outside a request tab.
 
 ### Responsive tables (rule)
 - Flexible columns: `Layout.fillWidth: true` + **explicit `Layout.preferredWidth` and

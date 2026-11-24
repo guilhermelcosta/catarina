@@ -108,6 +108,8 @@ Kirigami.ApplicationWindow {
         discardEnvDialog: discardEnvDialog
         scopePopup: scopePopup
         fileDialog: fileDialog
+        mainSplit: mainSplitView
+        innerSplit: innerSplitView
     }
 
     title: Strings.t.appName + (controller.currentTab >= 0 && controller.currentTab < tabsModel.count
@@ -155,6 +157,8 @@ Kirigami.ApplicationWindow {
         }
         // no saved tabs: we stay on the "No request open" placeholder
         // (we don't open the tree's first collection automatically)
+        // one frame after the first layout: restoring earlier clamps against 0
+        Qt.callLater(function () { controller.restorePanes(); });
     }
 
 
@@ -165,11 +169,13 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("newRequest"); onActivated: newReqDialog.openIn(controller.targetFolder()) }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("palette"); onActivated: cmdPalette.openPalette() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: root.routeFind() }
+    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("tabSearch"); onActivated: requestEditor.openTabSearch() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("prevTab"); onActivated: controller.prevTab() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("nextTab"); onActivated: controller.nextTab() }
     // Ctrl+/ is a hint shortcut, not part of the remappable map (spec non-goal).
     Shortcut { enabled: !controller.recordingShortcut; sequence: "Ctrl+/"; onActivated: root.openShortcuts() }
     onClosing: function (close) {
+        controller.persistPanes();
         controller.persistSession();
         if (!controller.forceQuit && controller.hasDirtyTabs()) { close.accepted = false; quitDialog.open(); }
     }
@@ -190,6 +196,7 @@ Kirigami.ApplicationWindow {
             }
 
             SplitView {
+                id: mainSplitView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 orientation: Qt.Horizontal
@@ -227,7 +234,11 @@ Kirigami.ApplicationWindow {
 
                         // ---- 0: editor + response ----
                         SplitView {
-                            orientation: Qt.Horizontal
+                            id: innerSplitView
+                            // recorded decision: stack at the window floor (<= 1000 px).
+                            // The width > 0 guard keeps the first layout (width 0) horizontal.
+                            orientation: mainPage.width > 0 && mainPage.width <= 1000
+                                         ? Qt.Vertical : Qt.Horizontal
                             handle: SplitGrip {}
 
                             RequestEditor {
@@ -243,6 +254,9 @@ Kirigami.ApplicationWindow {
                             ResponsePane {
                                 id: responsePane
                                 app: controller
+                                // stacked: response below, ~40 % of the inner height
+                                SplitView.preferredHeight: innerSplitView.orientation === Qt.Vertical
+                                                           ? innerSplitView.height * 0.4 : 0
                             }
                         }
 
@@ -402,6 +416,18 @@ Kirigami.ApplicationWindow {
     RenameEnvDialog { id: renameEnvDialog; app: controller; envScreen: envScreen }
     ScopePopup { id: scopePopup; app: controller; envVarsModel: envScreen.varsModel; envScreen: envScreen }
     FilePickDialog { id: fileDialog; fieldsModel: fieldsModel }
+
+    // Orientation swap: keep the horizontal widths while stacked and reapply
+    // them (clamped) when the window widens again.
+    Connections {
+        target: innerSplitView
+        function onOrientationChanged() {
+            if (innerSplitView.orientation === Qt.Vertical)
+                controller.capturePanes();
+            else
+                Qt.callLater(function () { controller.restorePanes(); });
+        }
+    }
 
     Connections {
         target: backend

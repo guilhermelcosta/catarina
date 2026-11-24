@@ -232,6 +232,60 @@ function cookieCount(cookies) {
     return n;
 }
 
+// Tab search over the open request: case-insensitive substring hits over the
+// URL, the table rows (name + value) and the body. Returns
+// [{ surface, index, label, snippet, start, end }]: `index` is the row index
+// for table surfaces (-1 otherwise), `start`/`end` are offsets in the source
+// text (used to select a body range) and `snippet` is the text shown in the
+// result list. An empty query matches nothing.
+function tabSearchMatches(request, query) {
+    var out = [];
+    var q = String(query === undefined || query === null ? "" : query).toLowerCase();
+    if (!request || q.length === 0) return out;
+
+    function snippetAround(text, at, len) {
+        var pad = 28;
+        var from = Math.max(0, at - pad);
+        var to = Math.min(text.length, at + len + pad);
+        return (from > 0 ? "…" : "") + text.substring(from, to) + (to < text.length ? "…" : "");
+    }
+    function addHit(surface, index, label, text, at) {
+        out.push({ surface: surface, index: index, label: String(label || ""),
+                   snippet: snippetAround(text, at, q.length), start: at, end: at + q.length });
+    }
+    function scanRow(surface, index, row) {
+        var name = String(row && row.name !== undefined ? row.name : "");
+        var value = String(row && row.value !== undefined ? row.value : "");
+        var text = name.length > 0 ? name + ": " + value : value;
+        var at = text.toLowerCase().indexOf(q);
+        if (at >= 0) addHit(surface, index, name.length > 0 ? name : value, text, at);
+    }
+
+    var url = String(request.url !== undefined && request.url !== null ? request.url : "");
+    var urlAt = url.toLowerCase().indexOf(q);
+    if (urlAt >= 0) addHit("url", -1, "URL", url, urlAt);
+
+    var surfaces = [
+        { id: "params", rows: request.params },
+        { id: "headers", rows: request.headers },
+        { id: "fields", rows: request.fields },
+        { id: "vars", rows: request.vars }
+    ];
+    for (var s = 0; s < surfaces.length; s++) {
+        var rows = surfaces[s].rows || [];
+        for (var i = 0; i < rows.length; i++) scanRow(surfaces[s].id, i, rows[i]);
+    }
+
+    var body = String(request.body !== undefined && request.body !== null ? request.body : "");
+    var lower = body.toLowerCase(), from = 0, at = lower.indexOf(q, from);
+    while (at >= 0) {
+        addHit("body", -1, "Body", body, at);
+        from = at + q.length;
+        at = lower.indexOf(q, from);
+    }
+    return out;
+}
+
 // Relative luminance (WCAG) of a colour: "#rrggbb" string or a Qt color
 // object ({r,g,b} in 0..1). Returns 0..1; invalid input returns 0.
 function luminance(c) {

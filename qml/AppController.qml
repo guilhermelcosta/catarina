@@ -38,6 +38,12 @@ QtObject {
     property var discardEnvDialog
     property var scopePopup
     property var fileDialog
+    // split views injected by Main (wiring only); pane restore/save lives here
+    property var mainSplit
+    property var innerSplit
+    // horizontal widths remembered while the panes are stacked vertically
+    property real paneSidebarWidth: 0
+    property real paneSplitPosition: 0
 
 property string selectedPath: ""
 property bool selectedIsFolder: false
@@ -748,6 +754,42 @@ function reopenClosed() {
     if (closedTabs.length === 0) return;
     openRequest(closedTabs.pop());
 }
+// unsaved state of a tab at index i (mirrors closeTab's per-type rule)
+function tabIsDirty(i) {
+    if (i < 0 || i >= tabsModel.count) return false;
+    var t = tabsModel.get(i);
+    if (t.isSettings) return false;
+    if (t.isEnvironment) return i === currentTab && envScreen.envVarsDirty;
+    if (t.isCollection) return i === currentTab && (collectionVarsDirty || collectionHeadersDirty || collectionAuthDirty);
+    return t.dirty === true;
+}
+// closes the given indices (descending, so removals don't shift what is left)
+function closeIndices(indices) {
+    var sorted = indices.slice().sort(function (a, b) { return b - a; });
+    for (var i = 0; i < sorted.length; i++) doCloseTab(sorted[i], false);
+}
+// Close others / Close all: clean tabs close at once; when dirty tabs are
+// affected, one confirmation carries their count (reuses the delete flow).
+function closeTabsWithConfirm(indices) {
+    if (indices.length === 0) return;
+    var dirty = 0;
+    for (var i = 0; i < indices.length; i++)
+        if (tabIsDirty(indices[i])) dirty++;
+    if (dirty === 0) { closeIndices(indices); return; }
+    controller.confirmDelete(Strings.closeAllConfirm(dirty), function () { closeIndices(indices); });
+}
+function closeOtherTabs(i) {
+    if (i < 0 || i >= tabsModel.count) return;
+    var indices = [];
+    for (var k = 0; k < tabsModel.count; k++)
+        if (k !== i) indices.push(k);
+    closeTabsWithConfirm(indices);
+}
+function closeAllTabs() {
+    var indices = [];
+    for (var k = 0; k < tabsModel.count; k++) indices.push(k);
+    closeTabsWithConfirm(indices);
+}
 
 // opens the new item dialog: folder (inside the selection) or collection (root)
 function openNewFolder() { nameDialog.base = controller.targetFolder(); nameDialog.asCollection = false; nameDialog.open(); }
@@ -979,6 +1021,52 @@ function doSend() {
     responsePane.clearResponse();
     backend.send(collectRequest(), collectionOf(t.relPath));
 }
+// ================= pane layout =================
+// Restores the saved sidebar width and response-pane fraction, clamped to the
+// live window and the SplitView minimums (sidebar 190, response 230, editor
+// 380). Called one frame after the first layout (Main.Component.onCompleted).
+function restorePanes() {
+    if (mainSplit && sidebar) {
+        var sw = paneSidebarWidth > 0 ? paneSidebarWidth : settings.sidebarWidth;
+        if (sw > 0) {
+            var maxSidebar = Math.min(500, mainSplit.width - 388);   // editor minimum + handle
+            if (maxSidebar < 190) maxSidebar = 190;
+            sw = Math.max(190, Math.min(sw, maxSidebar));
+            sidebar.expandedWidth = sw;
+            sidebar.splitWidth = sw;
+            paneSidebarWidth = sw;
+        }
+    }
+    if (innerSplit && responsePane && innerSplit.orientation === Qt.Horizontal
+            && innerSplit.width > 0) {
+        var f = paneSplitPosition > 0 ? paneSplitPosition : settings.splitPosition;
+        if (f > 0) {
+            f = Math.max(0.2, Math.min(f, 0.8));
+            var maxResponse = innerSplit.width - 388;                 // editor minimum + handle
+            var rw = Math.max(230, Math.min(innerSplit.width * f, maxResponse));
+            responsePane.expandedWidth = rw;
+            responsePane.splitWidth = rw;
+            paneSplitPosition = rw / innerSplit.width;
+        }
+    }
+}
+// remembers the live horizontal widths before the panes stack vertically
+function capturePanes() {
+    if (sidebar && sidebarVisible && sidebar.width > 0)
+        paneSidebarWidth = sidebar.width;
+    if (innerSplit && responsePane && innerSplit.width > 0 && responsePane.width > 0)
+        paneSplitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
+}
+// Saves the current widths on close. The stored split is width-based, so it is
+// left untouched while the panes are stacked vertically.
+function persistPanes() {
+    if (sidebar && sidebarVisible && sidebar.width > 0)
+        settings.sidebarWidth = Math.round(sidebar.width);
+    if (innerSplit && responsePane && responseVisible && innerSplit.orientation === Qt.Horizontal
+            && innerSplit.width > 0 && responsePane.width > 0)
+        settings.splitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
+}
+
 function persistSession() {
     // only pinned tabs come back in the next session (preview/unpinned are transient)
     var arr = [];
@@ -1070,7 +1158,8 @@ property var shortcutDefs: [
     { id: "nextTab", label: Strings.t.shortcutNextTab, def: "Alt+Right" },
     { id: "reopenTab", label: Strings.t.shortcutReopenTab, def: "Ctrl+Shift+T" },
     { id: "palette", label: Strings.t.shortcutPalette, def: "Ctrl+K" },
-    { id: "findInResponse", label: Strings.t.shortcutFind, def: "Ctrl+F" }
+    { id: "findInResponse", label: Strings.t.shortcutFind, def: "Ctrl+F" },
+    { id: "tabSearch", label: Strings.t.shortcutTabSearch, def: "Ctrl+Shift+A" }
 ]
 function shortcutSeq(id) {
     var def = "";
