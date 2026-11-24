@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(catarina VERSION 0.2.8 LANGUAGES CXX)
+project(catarina VERSION 0.2.9 LANGUAGES CXX)
 
 find_package(ECM 6.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
@@ -92,6 +92,7 @@ qt_add_resources(catarina "qml"
         qml/MethodBadge.qml
         qml/SourceChip.qml
         qml/SplitGrip.qml
+        qml/Theme.qml
         qml/AppController.qml
         qml/Sidebar.qml
         qml/TabStrip.qml

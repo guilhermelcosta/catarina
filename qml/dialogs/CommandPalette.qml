@@ -82,6 +82,7 @@ Popup {
         }
         ListView {
             id: paletteList
+            objectName: "paletteList"
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -98,14 +99,28 @@ Popup {
                     text: section
                     font.bold: true
                     font.pixelSize: 11
-                    opacity: 0.75
+                    opacity: app.theme.textInformational
                 }
             }
             onCurrentIndexChanged: { if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
             delegate: ItemDelegate {
+                id: paletteRow
                 width: ListView.view.width
                 text: modelData.label
                 highlighted: index === paletteList.currentIndex
+                // the keyboard-current row is a tinted surface, not the Breeze
+                // solid highlight: keep the normal text role readable
+                contentItem: Label {
+                    text: paletteRow.text
+                    color: Kirigami.Theme.textColor
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    color: paletteRow.highlighted ? app.theme.selectionTint
+                         : paletteRow.hovered ? app.theme.hoverTint
+                         : "transparent"
+                }
                 onClicked: { paletteList.currentIndex = index; cmdPalette.trigger(); }
             }
             Label {
@@ -113,7 +128,7 @@ Popup {
                 z: 1
                 visible: paletteList.count === 0
                 text: Strings.t.noCommandMatches
-                opacity: 0.75
+                opacity: app.theme.textInformational
             }
         }
     }
