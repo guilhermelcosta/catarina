@@ -97,6 +97,8 @@ var t = {
     unsavedMarker: "unsaved changes",
     discardTooltip: "Discard unsaved changes",
     saveTooltip: "Save (Ctrl+S)",
+    sendTooltip: "Send (Ctrl+Return)",
+    methodTooltip: "HTTP method",
     renameTooltip: "Rename",
 
     // auth types

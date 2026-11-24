@@ -163,7 +163,7 @@ see below); secondary = `ToolButton` with icon only + tooltip.
 | Remove row | `ToolButton` | `list-remove` | last column |
 | Delete (destructive) | `Button`/`ToolButton` | `edit-delete` | toolbar (tree) / footer (environment list) |
 | Duplicate | `MenuItem` | `edit-duplicate` | menus |
-| Send request | `Button { highlighted }` | `document-send` | request toolbar |
+| Send request | `Button { highlighted }`, icon only | `document-send` | inside the request bar, right edge |
 
 - **Dialogs (pattern)** — use the shared pieces, all with the same distances:
   1. `header: DialogHeader { dialogTitle: <id>.title }` (bold title; the auxiliary text is not).
@@ -332,6 +332,29 @@ The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
   in `KvTable`).
 - **Header and rows use the same `preferred`/`minimum`** → they stay aligned.
 - **Never** derive a column width from the table's own `width` (creates a layout polish loop).
+
+### Request bar (rule)
+The request editor's top row (`qml/screens/RequestEditor.qml`) is one object,
+not six peers: `alternateBackgroundColor` surface, 1 px `disabledTextColor`
+border, `radius: app.theme.radiusControl`, `Kirigami.Units.gridUnit * 2` tall.
+
+- **Method, URL and Send share one border.** The method is a native `ComboBox`
+  with `background: null`, coloured by `app.methodColor`, preferred 88 px,
+  minimum 56; below 72 px the chevron hides before the name elides. The URL is
+  the shared `VarField` with `background: null` at the call site only. Send is
+  a `highlighted` icon-only `Button` — the row's only primary.
+- **Fixed budget (160 px)**: container padding 8, method 56, inner spacing
+  2×`smallSpacing`, Send/Save/Discard 24 each, outer spacing
+  2×`smallSpacing`. Any new control in this row enters that table. The URL
+  floor is 220 px, guarded by `test_request_bar_url_width`; when space runs out
+  the icons clip, never the URL.
+- **Persistence stays quiet**: Discard then Save as 24×24 icon-only
+  `ToolButton`s after the container, keeping their `enabled` rules. There is no
+  "unsaved" label — the tab dot carries the dirty state.
+- **Focus is container-owned**: the borderless children lose Breeze's focus
+  ring, so the container draws a 1 px `highlightColor` overlay when the method,
+  the URL or Send has `activeFocus`. Overlay only — never change
+  `border.width` or the padding, or the URL budget moves.
 
 ---
 
