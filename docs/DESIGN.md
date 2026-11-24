@@ -163,7 +163,7 @@ see below); secondary = `ToolButton` with icon only + tooltip.
 | Remove row | `ToolButton` | `list-remove` | last column |
 | Delete (destructive) | `Button`/`ToolButton` | `edit-delete` | toolbar (tree) / footer (environment list) |
 | Duplicate | `MenuItem` | `edit-duplicate` | menus |
-| Send request | `Button { highlighted }` | `document-send` | request toolbar |
+| Send request | `Button { highlighted }`, icon only | `document-send` | inside the request bar, right edge |
 
 - **Dialogs (pattern)** — use the shared pieces, all with the same distances:
   1. `header: DialogHeader { dialogTitle: <id>.title }` (bold title; the auxiliary text is not).
@@ -332,6 +332,19 @@ The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
   in `KvTable`).
 - **Header and rows use the same `preferred`/`minimum`** → they stay aligned.
 - **Never** derive a column width from the table's own `width` (creates a layout polish loop).
+
+### Request bar (rule)
+The request editor's top row is one object: `alternateBackgroundColor`, 1 px
+`disabledTextColor`, `radiusControl`, `gridUnit * 2`.
+- Method (`ComboBox`, `background: null`, `app.methodColor`, 88 px preferred,
+  56 minimum), URL (the shared `VarField`, `background: null` at the call site)
+  and Send (highlighted icon-only `Button`) share one border; Send is the only
+  primary.
+- Fixed 160 px budget; URL floor 220 px; when space runs out the icons clip.
+- Discard then Save are 24×24 icon-only `ToolButton`s after the container; the
+  tab dot carries the dirty state, so there is no "unsaved" label.
+- The container draws the 1 px `highlightColor` focus overlay; never change
+  `border.width` or the padding.
 
 ---
 

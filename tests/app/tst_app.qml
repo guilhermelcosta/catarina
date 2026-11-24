@@ -277,24 +277,147 @@ TestCase {
                "default width must fit the five tab labels");
     }
 
-    function test_request_save_is_labelled_and_dirty_is_visible() {
+    // Request bar (spec 004-request-bar): Save and Discard moved to icon-only
+    // buttons outside the container, and the dirty label is gone — the tab dot
+    // carries that state now.
+    function test_request_save_is_icon_only_and_dirty_label_is_gone() {
         backend.saveRequest("t/dirty", baseReq());
         win.appController.openRequest("t/dirty");
+        wait(50);
+
         var save = findChild(win, "requestSaveButton");
         verify(save !== null, "save button");
-        verify(save.text.length > 0, "save has a label");
-        compare(save.display, AbstractButton.TextBesideIcon);
+        compare(save.display, AbstractButton.IconOnly, "save renders icon-only");
         var revert = findChild(win, "requestRevertButton");
         verify(revert !== null, "revert button");
-        verify(revert.text.length > 0, "revert has a label");
+        compare(revert.display, AbstractButton.IconOnly, "revert renders icon-only");
+        compare(findChild(win, "requestDirtyLabel"), null, "the dirty label is removed");
+
+        win.appController.currentDirty = false;
+        wait(20);
+        compare(save.enabled, false, "clean request: save disabled");
+        compare(revert.enabled, false, "clean request: discard disabled");
 
         win.appController.currentDirty = true;
         wait(20);
-        verify(win.appController.currentDirty, "dirty flag set");
-        var dirty = findChild(win, "requestDirtyLabel");
-        verify(dirty !== null, "dirty marker");
-        verify(dirty.visible, "dirty marker visible while changed");
-        verify(dirty.text.length > 0, "dirty marker has copy");
+        compare(save.enabled, true, "dirty request: save enabled");
+        compare(revert.enabled, true, "dirty request: discard enabled");
+
+        win.appController.requestVarsWarning = "duplicate variable";
+        wait(20);
+        compare(save.enabled, false, "variable warning blocks save");
+        compare(revert.enabled, true, "variable warning leaves discard enabled");
+
+        win.appController.requestVarsWarning = "";
+        win.appController.currentDirty = false;
+    }
+
+    // Criterion 5 / ui.md C3: exactly one primary action at rest, and it is Send.
+    function test_request_row_one_primary_action() {
+        backend.saveRequest("t/primary", baseReq());
+        win.appController.openRequest("t/primary");
+        wait(50);
+
+        var bar = findChild(win, "requestBar");
+        verify(bar !== null, "request bar exists");
+        var send = findChild(win, "requestSendButton");
+        verify(send !== null, "send button exists");
+        compare(send.highlighted, true, "send is highlighted at rest");
+
+        var names = ["requestRevertButton", "requestSaveButton"];
+        for (var i = 0; i < names.length; i++) {
+            var button = findChild(win, names[i]);
+            verify(button !== null, names[i] + " exists");
+            compare(button.highlighted, false, names[i] + " is never highlighted");
+        }
+
+        // no other action inside the bar paints a highlight; an action is a
+        // button that carries text (the style's internal panels have none)
+        var highlighted = [];
+        var pending = [bar];
+        while (pending.length > 0) {
+            var item = pending.pop();
+            if (item.highlighted === true && typeof item.text === "string")
+                highlighted.push(item.objectName);
+            for (var c = 0; c < item.children.length; c++) pending.push(item.children[c]);
+        }
+        compare(highlighted.length, 1, "exactly one highlighted action inside the request bar");
+        compare(highlighted[0], "requestSendButton", "and it is Send");
+    }
+
+    // UI review row 1: the chevron belongs to the label. The style's own
+    // indicator slot is not laid out once the background is stripped, so the
+    // segment must carry no indicator and the chevron must sit inside it.
+    function test_request_method_chevron_belongs_to_the_label() {
+        backend.saveRequest("t/method", baseReq());
+        win.appController.openRequest("t/method");
+        wait(50);
+
+        var box = findChild(win, "requestMethodBox");
+        verify(box !== null, "method segment exists");
+        compare(box.indicator, null, "no detached indicator");
+
+        var chevron = findChild(win, "requestMethodChevron");
+        verify(chevron !== null, "chevron exists");
+        compare(chevron.visible, box.width >= 72, "the chevron gives way below 72 px");
+
+        var topLeft = chevron.mapToItem(box, 0, 0);
+        verify(topLeft.x >= 0, "chevron starts inside the segment: " + topLeft.x);
+        verify(topLeft.x + chevron.width <= box.width,
+               "chevron ends inside the segment: " + (topLeft.x + chevron.width));
+        var centreY = topLeft.y + chevron.height / 2;
+        verify(Math.abs(centreY - box.height / 2) <= box.height / 4,
+               "chevron is vertically centred, not in a corner: " + centreY);
+    }
+
+    // Criterion 4: the URL keeps its floor while the row is squeezed; the icon
+    // buttons keep their fixed width (design §2.2 space budget).
+    function test_request_bar_url_width() {
+        backend.saveRequest("t/width", baseReq());
+        win.appController.openRequest("t/width");
+        wait(50);
+
+        var editor = win.appController.requestEditor;
+        verify(editor !== null, "request editor");
+        var send = findChild(win, "requestSendButton");
+        var save = findChild(win, "requestSaveButton");
+        var revert = findChild(win, "requestRevertButton");
+        verify(send !== null && save !== null && revert !== null, "request row controls exist");
+
+        verify(editor.urlInput.width >= 240,
+               "URL is at least 240 px at the default window: " + editor.urlInput.width);
+        var sendWidth = send.width, saveWidth = save.width, revertWidth = revert.width;
+
+        var restoredWidth = win.width;
+        win.width = win.minimumWidth;
+        wait(100);
+        compare(editor.width, editor.SplitView.minimumWidth, "editor squeezed to its minimum");
+        verify(editor.urlInput.width >= 220,
+               "URL keeps its 220 px floor at the editor minimum: " + editor.urlInput.width);
+        compare(send.width, sendWidth, "send keeps its fixed width");
+        compare(save.width, saveWidth, "save keeps its fixed width");
+        compare(revert.width, revertWidth, "discard keeps its fixed width");
+
+        var savePos = save.mapToItem(editor, 0, 0);
+        var revertPos = revert.mapToItem(editor, 0, 0);
+        verify(savePos.x + save.width <= editor.width + 0.5,
+               "save stays inside the editor at its minimum: " + (savePos.x + save.width));
+        verify(revertPos.x + revert.width <= editor.width + 0.5,
+               "discard stays inside the editor at its minimum: " + (revertPos.x + revert.width));
+
+        var bar = findChild(win, "requestBar");
+        var method = findChild(win, "requestMethodBox");
+        var barPos = bar.mapToItem(editor, 0, 0);
+        var sendPos = send.mapToItem(editor, 0, 0);
+        verify(sendPos.x + send.width <= barPos.x + bar.width + 0.5,
+               "send stays inside the request bar: " + (sendPos.x + send.width));
+        verify(revertPos.x >= barPos.x + bar.width,
+               "discard starts after the bar: " + revertPos.x);
+        verify(method.width >= 56,
+               "the method keeps its 56 px floor: " + method.width);
+
+        win.width = restoredWidth;
+        wait(100);
     }
 
     function test_sidebar_error_state() {
