@@ -396,6 +396,149 @@ TestCase {
         compare(win.appController.tabsModel.get(1).relPath, "t/1");
     }
 
+    // tab delegates in model order (the Repeater's non-delegate children skipped)
+    function tabDelegates() {
+        var out = [];
+        var kids = win.appController.tabStrip.row.children;
+        for (var i = 0; i < kids.length; i++)
+            if (kids[i].isTabDelegate) out.push(kids[i]);
+        return out;
+    }
+
+    function test_tab_close_visibility() {
+        backend.saveRequest("close/a", baseReq());
+        backend.saveRequest("close/b", baseReq());
+        backend.saveRequest("close/c", baseReq());
+        win.appController.openRequest("close/a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("close/b");
+        win.appController.pinTab(1);
+        win.appController.openRequest("close/c");
+        compare(win.appController.currentTab, 2);
+        wait(100);
+
+        var tabs = tabDelegates();
+        compare(tabs.length, 3);
+        verify(findChild(tabs[2], "tabClose").visible, "active tab shows the close control");
+        verify(!findChild(tabs[0], "tabClose").visible, "inactive tab hides the close control");
+        verify(!findChild(tabs[1], "tabClose").visible, "inactive tab hides the close control");
+
+        win.appController.pinTab(2);
+        wait(50);
+        tabs = tabDelegates();
+        verify(!findChild(tabs[2], "tabClose").visible, "a pinned tab never shows close");
+        verify(findChild(tabs[2], "tabPin").visible, "the pinned tab shows the pin");
+    }
+
+    // M2: an inactive, unpinned tab hides close. The older test pinned both
+    // inactive tabs, so an implementation that shows × on every unpinned tab
+    // would still pass.
+    function test_tab_close_hidden_on_inactive_unpinned() {
+        backend.saveRequest("idle/a", baseReq());
+        backend.saveRequest("idle/b", baseReq());
+        backend.saveRequest("idle/c", baseReq());
+        win.appController.openRequest("idle/a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("idle/b");
+        win.appController.tabsModel.setProperty(1, "preview", false);
+        win.appController.openRequest("idle/c");
+        compare(win.appController.currentTab, 2);
+        wait(100);
+
+        var tabs = tabDelegates();
+        compare(tabs.length, 3);
+        verify(findChild(tabs[2], "tabClose").visible,
+               "the active tab shows the close control");
+        verify(!findChild(tabs[1], "tabClose").visible,
+               "an inactive unpinned tab hides the close control");
+    }
+
+    function test_tab_width_bounds() {
+        var longName = "long" + "o".repeat(160);
+        backend.saveRequest(longName, baseReq());
+        backend.saveRequest("w", baseReq());
+        win.appController.openRequest(longName);
+        win.appController.pinTab(0);
+        win.appController.openRequest("w");
+        wait(150);
+
+        var tabs = tabDelegates();
+        compare(tabs.length, 2);
+        verify(tabs[0].width <= 200, "long name clamps at tabMaxWidth");
+        verify(tabs[1].width >= 90, "short name floors at tabMinWidth");
+        verify(tabs[0].labelTruncated, "the clamped label is elided");
+        verify(!tabs[1].labelTruncated, "a short label is not elided");
+    }
+
+    function test_tab_tooltip_full_name() {
+        var longName = "tip" + "p".repeat(160);
+        backend.saveRequest(longName, baseReq());
+        backend.saveRequest("s", baseReq());
+        win.appController.openRequest(longName);
+        win.appController.pinTab(0);
+        win.appController.openRequest("s");
+        wait(150);
+
+        var strip = win.appController.tabStrip;
+        var tip = findChild(strip, "tabTip");
+        verify(tip !== null, "the strip owns one shared tooltip");
+        var tabs = tabDelegates();
+        strip.showTabTip(tabs[0]);
+        verify(tip.visible, "a truncated tab opens the tooltip");
+        compare(tip.text, longName, "the tooltip shows the full, unelided name");
+        verify(tip.y >= tabs[0].height, "the tooltip sits below the tab band");
+
+        strip.hideTabTip();
+        verify(!tip.visible, "unhover closes the tooltip");
+        strip.showTabTip(tabs[1]);
+        verify(!tip.visible, "a short tab has no tooltip");
+    }
+
+    function test_tab_scroll_into_view() {
+        for (var i = 0; i < 16; i++) {
+            backend.saveRequest("scroll/n" + i, baseReq());
+            win.appController.openRequest("scroll/n" + i);
+            win.appController.pinTab(win.appController.tabsModel.count - 1);
+        }
+        wait(200);
+        var strip = win.appController.tabStrip;
+        var flick = strip.flickable;
+        verify(flick.contentWidth > flick.width, "tabs overflow the strip");
+
+        win.appController.switchTab(15);
+        wait(100);
+        var tabs = tabDelegates();
+        verify(tabs[15].x >= flick.contentX, "active tab left edge is in view");
+        verify(tabs[15].x + tabs[15].width <= flick.contentX + flick.width + 1,
+               "active tab right edge is in view");
+
+        win.appController.switchTab(0);
+        wait(100);
+        compare(flick.contentX, 0, "switching back to the first tab scrolls to the start");
+    }
+
+    function test_tab_active_surface_uses_theme() {
+        backend.saveRequest("surface/a", baseReq());
+        backend.saveRequest("surface/b", baseReq());
+        win.appController.openRequest("surface/a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("surface/b");
+        wait(100);
+
+        var theme = win.appController.theme;
+        var tabs = tabDelegates();
+        var active = findChild(tabs[1], "tabSurface");
+        var inactive = findChild(tabs[0], "tabSurface");
+        verify(Qt.colorEqual(active.color, win.Kirigami.Theme.backgroundColor),
+               "the active tab paints the raised surface");
+        compare(active.radius, theme.radiusControl);
+        var underline = findChild(active, "tabUnderline");
+        compare(underline.height, 2);
+        verify(underline.visible, "the active tab has the accent underline");
+        compare(inactive.color.a, 0, "an inactive tab is transparent");
+        verify(!findChild(inactive, "tabUnderline").visible, "an inactive tab has no underline");
+    }
+
     function test_tab_index_at_insertion() {
         backend.saveRequest("t/idx", baseReq());
         win.appController.openRequest("t/idx");
