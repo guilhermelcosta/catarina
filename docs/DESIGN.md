@@ -302,6 +302,28 @@ In `qml/` (atomic and shell components):
   `variableNoteFor`, `error` signal), and QML translates via `Strings.variableNote` /
   `Strings.backendError`.
 
+### Tab strip (rule)
+The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
+`app.theme` for surfaces and radii.
+
+- **Bounded width:** `tabMinWidth: 90`, `tabMaxWidth: 200`. A long name clamps
+  at 200 px and elides right (`Text.ElideRight`); a short one floors at 90 px and
+  the label absorbs the slack. Never reintroduce a per-label width cap.
+- **Surfaces:** active tab paints `Kirigami.Theme.backgroundColor` (raised over
+  the strip's `alternateBackgroundColor`) with `radius: app.theme.radiusControl`;
+  hovered-not-active is `app.theme.hoverTint`; neither is transparent; hovering
+  an active tab never brightens it. The active tab keeps the 2 px
+  `highlightColor` underline (an affordance, not a selection surface).
+- **Controls appear on hover, not dimmed:** close `×` only on the active or
+  hovered tab, pin only on a hovered or pinned tab, both fully opaque when
+  visible, hit area at least 24×24. Pinned tabs never show `×`.
+- **Tooltip without the steal trap:** the strip owns one `ToolTip`, opens it only
+  when the label is actually elided and positions it **below** the tab band.
+  Never attach `ToolTip.visible: hovered` to the tab, pin or `×` (section 1).
+- **Scroll into view:** switching tabs (click, shortcut, new tab, session
+  restore) scrolls the active tab into view one frame later, so a freshly
+  appended delegate has its geometry.
+
 ### Responsive tables (rule)
 - Flexible columns: `Layout.fillWidth: true` + **explicit `Layout.preferredWidth` and
   `Layout.minimumWidth`** (never rely on the implicit size of `Label` vs `TextField` — that's what
@@ -426,3 +448,5 @@ In `qml/` (atomic and shell components):
 7. A new screen/delegate talks to the app via `app` (AppController) — do **not** access window ids.
 8. Selection/hover backgrounds come from `app.theme` (`selectionTint` / `hoverTint`), never a literal — section 2.
 9. If a new pattern emerged → **document it here**.
+10. Tab strip: bounded width, hover-only controls, tooltip below the band —
+    section 5 (Tab strip).

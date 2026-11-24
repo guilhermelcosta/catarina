@@ -12,10 +12,71 @@ Rectangle {
     property var app
     property var tabsModel
     readonly property alias row: tabRow
+    readonly property alias flickable: tabStrip
+    // Bounded tab width (docs/DESIGN.md §5) and the control gutter: left margin
+    // plus room for the pin/close controls, kept at today's effective value.
+    readonly property int tabMinWidth: 90
+    readonly property int tabMaxWidth: 200
+    readonly property int tabGutter: 74
     Layout.fillWidth: true
     implicitHeight: Kirigami.Units.gridUnit * 2
     color: Kirigami.Theme.alternateBackgroundColor
     visible: tabsModel.count > 0
+
+    // Scroll the tab at delegate index `i` into view (mouse click, shortcut or
+    // newly opened tab all funnel through app.currentTab).
+    function ensureVisible(i) {
+        if (i < 0) return;
+        var n = 0;
+        for (var c = 0; c < tabRow.children.length; c++) {
+            var it = tabRow.children[c];
+            if (!it.isTabDelegate) continue;
+            if (n === i) {
+                if (it.x < tabStrip.contentX) tabStrip.contentX = it.x;
+                else if (it.x + it.width > tabStrip.contentX + tabStrip.width)
+                    tabStrip.contentX = it.x + it.width - tabStrip.width;
+                return;
+            }
+            ++n;
+        }
+    }
+
+    // Shared tooltip, owned by the strip and placed below the clickable band so
+    // it can never swallow a tab/pin/close click (docs/DESIGN.md §1).
+    function showTabTip(it) {
+        if (!it || !it.labelTruncated) { tabTip.close(); return; }
+        tabTip.text = it.tabName;
+        var tw = tabTip.implicitWidth;
+        var visX = it.x - tabStrip.contentX;
+        tabTip.x = Math.max(0, Math.min(tabStripRoot.width - tw, visX + (it.width - tw) / 2));
+        tabTip.y = it.height + 2;
+        tabTip.open();
+    }
+
+    function hideTabTip() { tabTip.close(); }
+
+    ToolTip {
+        id: tabTip
+        objectName: "tabTip"
+        timeout: 0
+        delay: 0
+    }
+
+    Connections {
+        target: app
+        function onCurrentTabChanged() {
+            if (app && !app.dragging) scrollTimer.restart();
+        }
+    }
+
+    // one frame later: a tab appended by the change is laid out by then, and
+    // Qt.callLater is not enough (it runs before the Repeater's delegate exists)
+    Timer {
+        id: scrollTimer
+        interval: 16
+        onTriggered: tabStripRoot.ensureVisible(app ? app.currentTab : -1)
+    }
+
     Flickable {
         id: tabStrip
         anchors.fill: parent
@@ -32,14 +93,45 @@ Rectangle {
                 delegate: Item {
                     id: tabItem
                     height: tabRow.height
-                    width: tabContent.implicitWidth + 74
+                    width: Math.max(tabMinWidth, Math.min(tabMaxWidth, tabContent.implicitWidth + tabGutter))
                     property bool isTabDelegate: true
+                    property bool labelTruncated: tabLabel.truncated
+                    property string tabName: model.name
                     opacity: (app.dragging && app.tabDragIndex === index) ? 0.4 : 1
-                    HoverHandler { id: tabHover }
+                    HoverHandler {
+                        id: tabHover
+                        onHoveredChanged: {
+                            if (hovered) {
+                                tipTimer.start();
+                            } else {
+                                tipTimer.stop();
+                                tabStripRoot.hideTabTip();
+                            }
+                        }
+                    }
+                    Timer {
+                        id: tipTimer
+                        interval: 700
+                        onTriggered: tabStripRoot.showTabTip(tabItem)
+                    }
                     Rectangle {
+                        id: tabSurface
+                        objectName: "tabSurface"
                         anchors.fill: parent
-                        color: index === app.currentTab ? Kirigami.Theme.backgroundColor : "transparent"
-                        Rectangle { anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right; height: 2; visible: index === app.currentTab; color: Kirigami.Theme.highlightColor }
+                        radius: app.theme.radiusControl
+                        color: index === app.currentTab ? Kirigami.Theme.backgroundColor
+                             : tabHover.hovered ? app.theme.hoverTint
+                             : "transparent"
+                        Rectangle {
+                            id: tabUnderline
+                            objectName: "tabUnderline"
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 2
+                            visible: index === app.currentTab
+                            color: Kirigami.Theme.highlightColor
+                        }
                     }
                     // insertion point (to the left of this tab)
                     Rectangle {
@@ -58,7 +150,10 @@ Rectangle {
                         id: tabContent
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
+                        anchors.right: parent.right
                         anchors.leftMargin: 10
+                        // clears the pin (unpinned) and close hit areas
+                        anchors.rightMargin: 50
                         spacing: 6
                         MethodBadge {
                             visible: !model.isCollection && !model.isEnvironment && !model.isSettings
@@ -77,7 +172,15 @@ Rectangle {
                             color: Kirigami.Theme.textColor
                             Layout.alignment: Qt.AlignVCenter
                         }
-                        Label { text: model.name; font.bold: index === app.currentTab; font.italic: model.preview === true; elide: Text.ElideRight; Layout.maximumWidth: 180 }
+                        Label {
+                            id: tabLabel
+                            objectName: "tabLabel"
+                            text: model.name
+                            font.bold: index === app.currentTab
+                            font.italic: model.preview === true
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
                         Kirigami.Icon {
                             visible: !!(model.dirty === true
                                      || (model.isCollection === true && index === app.currentTab && (app.collectionVarsDirty || app.collectionHeadersDirty || app.collectionAuthDirty))
@@ -131,37 +234,48 @@ Rectangle {
                             else app.switchTab(index);
                         }
                     }
-                    Kirigami.Icon {
+                    Item {
                         id: pinBtn
+                        objectName: "tabPin"
                         anchors.right: parent.right
                         anchors.rightMargin: model.pinned === true ? 6 : 26
                         anchors.verticalCenter: parent.verticalCenter
-                        implicitWidth: 20
-                        implicitHeight: 20
-                        source: "pin"
-                        // blue on hover (like the × turns red); pinned already appears blue
-                        color: (pinHover.hovered || model.pinned === true) ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-                        opacity: (pinHover.hovered || model.pinned === true) ? 1.0 : 0.6
+                        width: 24
+                        height: 24
                         visible: !model.isCollection && !model.isEnvironment && !model.isSettings
                                  && (tabHover.hovered || model.pinned === true)
+                        Kirigami.Icon {
+                            anchors.centerIn: parent
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            source: "pin"
+                            // blue on hover (like the × turns red); pinned already appears blue
+                            color: (pinHover.hovered || model.pinned === true) ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                        }
                         HoverHandler { id: pinHover }
                         TapHandler { onTapped: app.pinTab(index) }
                         // ponytail: do NOT use ToolTip.visible:hovered here — the tooltip
                         // popup steals the click (pin and × stop responding)
                     }
-                    Label {
+                    // 24x24 hit area; the × glyph is the visible part
+                    Item {
                         id: closeBtn
+                        objectName: "tabClose"
                         visible: model.pinned !== true
+                                 && (tabHover.hovered || index === app.currentTab)
                         anchors.right: parent.right
                         anchors.rightMargin: 6
                         anchors.verticalCenter: parent.verticalCenter
-                        padding: 3
-                        text: "×"
-                        font.pixelSize: 16
-                        color: closeHover.hovered ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
-                        opacity: closeHover.hovered ? 1.0 : 0.6
+                        width: 24
+                        height: 24
                         HoverHandler { id: closeHover }
                         TapHandler { onTapped: app.closeTab(index) }
+                        Label {
+                            anchors.centerIn: parent
+                            text: "×"
+                            font.pixelSize: 16
+                            color: closeHover.hovered ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
+                        }
                         // same as pin: tooltip here steals the × click
                     }
                 }
