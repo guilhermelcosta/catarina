@@ -341,6 +341,7 @@ function deleteItemConfirm(name) {
 }
 function deleteEnvConfirm(name) { return "Delete environment \"" + name + "\"?"; }
 function nCollections(n) { return n + (n === 1 ? " collection" : " collections"); }
+function lineRef(line, col) { return "Ln " + line + ", Col " + col; }
 function restrictedTo(list) { return "restricted to: " + list; }
 // "The request 'x' has unsaved changes." (kind: collection|environment|request)
 function unsavedItem(name, kind) {

@@ -260,24 +260,26 @@ Item {
                 id: statusLabel
                 objectName: "statusLabel"
                 textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
+                Layout.preferredWidth: implicitWidth
+                Layout.fillWidth: isNaN(parseInt(text))
+                Layout.minimumWidth: isNaN(parseInt(text)) ? 0 : Math.min(implicitWidth, 80)
                 elide: Text.ElideRight
                 wrapMode: Text.WordWrap
-                font.bold: true
-                color: statusColor(text)
+                font.bold: false
+                color: isNaN(parseInt(text)) ? statusColor(text) : Kirigami.Theme.textColor
             }
             Label {
                 id: metaLabel
                 objectName: "responseMetaLabel"
                 visible: text.length > 0
+                Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: Math.min(implicitWidth, 220)
                 // keeps room for the status, format and overflow; the meta elides first
                 Layout.maximumWidth: Math.min(220, Math.max(0, responsePane.width - 210))
                 elide: Text.ElideRight
                 text: metaLabelText()
-                font.family: "monospace"   // tabular figures for time/size
+                font.features: ({ "tnum": 1 })
                 opacity: 0.75
             }
             ComboBox {
@@ -297,14 +299,16 @@ Item {
                 icon.name: "text-wrap"
                 checkable: true
                 checked: true
-                visible: bodySource.length > 0 && responsePane.width >= 300
+                visible: responsePane.width >= 300
+                enabled: bodySource.length > 0
                 onClicked: hint(Strings.t.responseWrap)
                 ToolTip.text: Strings.t.responseWrap
                 ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             ToolButton {
                 objectName: "responseCopyButton"
-                visible: bodySource.length > 0 && responsePane.width >= 330
+                visible: responsePane.width >= 330
+                enabled: bodySource.length > 0
                 icon.name: "edit-copy"; text: Strings.t.copy
                 display: AbstractButton.IconOnly
                 onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); app.notify(Strings.t.responseCopied); }
@@ -312,7 +316,8 @@ Item {
             }
             ToolButton {
                 objectName: "responseFindButton"
-                visible: bodySource.length > 0 && responsePane.width >= 360
+                visible: responsePane.width >= 360
+                enabled: bodySource.length > 0
                 icon.name: "edit-find"
                 onClicked: openFind()
                 onHoveredChanged: hint(hovered ? Strings.t.findTooltip : "")
@@ -394,7 +399,7 @@ Item {
                 visible: findMatchTotal > 0
                 text: findMatchIndex + "/" + findMatchTotal
                 opacity: 0.75
-                font.family: "monospace"
+                font.features: ({ "tnum": 1 })
             }
             ToolButton {
                 icon.name: "go-up"; onClicked: findNext(true)
@@ -495,9 +500,9 @@ Item {
                 visible: respTabBar.currentIndex === 0 && bodySource.length > 0
                 text: {
                     var p = Util.lnCol(responseBody.cursorPosition, responseBody.text);
-                    return p.line + ", " + p.col;
+                    return Strings.lineRef(p.line, p.col);
                 }
-                font.family: "monospace"
+                font.features: ({ "tnum": 1 })
                 font.pixelSize: Kirigami.Theme.smallFont.pointSize
                 opacity: 0.75
             }

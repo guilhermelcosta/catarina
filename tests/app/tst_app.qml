@@ -1206,7 +1206,7 @@ TestCase {
         verify(lineRef.visible, "visible on the Body tab with a body");
         body.cursorPosition = 5;
         wait(20);
-        compare(lineRef.text, "2, 2");
+        compare(lineRef.text, "Ln 2, Col 2");
 
         win.appController.responsePane.openFind();
         wait(20);

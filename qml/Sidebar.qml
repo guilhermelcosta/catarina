@@ -103,6 +103,7 @@ Item {
     }
     // Ctrl+F route 1/3: focus the filter and select its text
     function focusFilter() {
+        if (!app.sidebarVisible || width <= 0) return;
         if (!filterField.visible) return;
         filterField.forceActiveFocus();
         filterField.selectAll();
@@ -153,7 +154,7 @@ Item {
                 icon.name: "overflow-menu"
                 enabled: app.selectedPath.length > 0
                 onClicked: overflowMenu.popup(sidebarOverflowButton)
-                ToolTip.text: Strings.t.moreActions; ToolTip.visible: hovered
+                ToolTip.text: Strings.t.moreActions; ToolTip.delay: Kirigami.Units.toolTipDelay
             }
         }
         Kirigami.Separator { Layout.fillWidth: true }
