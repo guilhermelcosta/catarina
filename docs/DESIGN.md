@@ -68,7 +68,8 @@ highlighting. Every new `SplitView` uses `handle: SplitGrip {}`.
   (`splitPosition`, 0.20–0.80) persist in settings. `AppController.restorePanes()`
   restores them one frame after the first layout and clamps to the live window
   and the minimums: sidebar 190, response 230, editor 380. `persistPanes()`
-  writes the live widths on close.
+  writes the widths chosen by the user when a splitter is released, not the
+  layout-squeezed widths of a narrow window.
 - At window width **≤ 1000 px** the inner `SplitView` stacks vertically (request
   above, response below at ~40 % height); above it the horizontal split returns
   with the remembered widths. The width guard must ignore the first layout

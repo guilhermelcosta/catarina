@@ -407,6 +407,11 @@ function closeAllConfirm(n) {
 }
 function nCollections(n) { return n + (n === 1 ? " collection" : " collections"); }
 function lineRef(line, col) { return "Ln " + line + ", Col " + col; }
+function tabSurface(surface) {
+    var names = { url: "URL", params: "Params", headers: "Headers",
+                  fields: "Fields", vars: "Vars", body: "Body" };
+    return names[surface] || "";
+}
 function timeoutLabel(sec) { return t.timeoutLabelText + " " + (sec > 0 ? sec + " s" : t.noTimeout); }
 function restrictedTo(list) { return "restricted to: " + list; }
 // "The request 'x' has unsaved changes." (kind: collection|environment|request)

@@ -29,10 +29,10 @@ Popup {
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: margin
 
-    function surfaceName(surface) {
-        var names = { url: "URL", params: "Params", headers: "Headers",
-                      fields: "Fields", vars: "Vars", body: "Body" };
-        return names[surface] || "";
+    function surfaceName(surface) { return Strings.tabSurface(surface); }
+    Connections {
+        target: app
+        function onCurrentTabChanged() { if (tabSearch.visible) tabSearch.close(); }
     }
     function refresh() {
         matches = editor && app ? Util.tabSearchMatches(app.collectRequest(), searchField.text) : [];

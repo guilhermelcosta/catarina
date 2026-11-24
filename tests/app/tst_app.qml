@@ -1957,5 +1957,37 @@ TestCase {
         compare(c.currentTab, -1);
     }
 
+    // criterion 11: dirty bulk close uses one count-based confirmation
+    function test_tab_bulk_close_dirty_confirmation() {
+        backend.saveRequest("dirty/a", baseReq());
+        backend.saveRequest("dirty/b", baseReq());
+        backend.saveRequest("dirty/c", baseReq());
+        var c = win.appController;
+        c.openRequest("dirty/a");
+        c.pinTab(c.currentTab);
+        c.openRequest("dirty/b");
+        c.pinTab(c.currentTab);
+        c.openRequest("dirty/c");
+        c.pinTab(c.currentTab);
+        wait(120);
+        c.markDirty();
+        wait(30);
+
+        var previous = settings.confirmDelete;
+        settings.confirmDelete = true;
+        c.closeAllTabs();
+        wait(120);
+        var dialog = findChild(win, "deleteDialog");
+        verify(dialog !== null && dialog.visible, "dirty bulk close asks once");
+        compare(dialog.message, Strings.closeAllConfirm(1), "the message carries the dirty count");
+        var confirm = findChild(dialog, "deleteConfirm");
+        verify(confirm !== null, "the confirmation button exists");
+        confirm.clicked();
+        wait(120);
+        compare(c.tabsModel.count, 0, "confirming closes every tab");
+        compare(c.currentTab, -1);
+        settings.confirmDelete = previous;
+    }
+
     // criterion 5: a custom accent retints the selection roles
 }
