@@ -168,7 +168,10 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: 3
                     onClicked: app.sending ? backend.cancel() : app.doSend()
-                    ToolTip.text: Strings.t.sendTooltip; ToolTip.visible: hovered
+                    // delayed native tooltip; no immediate hover popup, which
+                    // would overlap the click target (DESIGN.md §1)
+                    ToolTip.text: Strings.t.sendTooltip
+                    ToolTip.delay: 700
                 }
             }
             // The borderless field and segment lose Breeze's focus ring, so the
