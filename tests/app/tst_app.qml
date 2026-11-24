@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtTest
 import org.kde.kirigami as Kirigami
 import "../../qml"
+import "../../qml/Strings.js" as Strings
 
 // Screen behavior: instantiates the real Main (with backend/settings injected
 // by tst_app.cpp) and exercises AppController — tabs, preview/pin, session,
@@ -936,5 +937,260 @@ TestCase {
         verify(label, "status label present");
         verify(label.text.indexOf("open the file") >= 0, "error shown");
         verify(label.lineCount > 1, "long error wraps to multiple lines");
+    }
+
+    // ---- P0 closeout: sidebar filter and response header ----
+    function seedResponse(rec) {
+        var c = win.appController;
+        backend.saveRequest("p0/req", baseReq());
+        c.openRequest("p0/req");
+        c.responses["p0/req"] = rec;
+        c.responsePane.restoreResponse("p0/req");
+    }
+
+    function test_sidebar_filter_field_and_filtering() {
+        backend.saveRequest("flt/alpha", baseReq("GET"));
+        backend.saveRequest("flt/beta", baseReq("POST"));
+        win.appController.reloadTree();
+        wait(100);
+
+        var field = findChild(win, "sidebarFilterField");
+        verify(field !== null, "filter field exists");
+        verify(field.visible, "visible when the tree has rows");
+
+        field.forceActiveFocus();
+        field.text = "alpha";
+        wait(50);
+        compare(win.appController.treeFilter, "alpha");
+
+        var tree = win.appController.treeModel, alpha = -1, beta = -1;
+        for (var i = 0; i < tree.count; i++) {
+            if (tree.get(i).relPath === "flt/alpha") alpha = i;
+            else if (tree.get(i).relPath === "flt/beta") beta = i;
+        }
+        verify(alpha >= 0 && beta >= 0, "both requests are in the model");
+        compare(tree.get(alpha).hidden, false, "the match stays visible");
+        compare(tree.get(beta).hidden, true, "the non-match hides");
+    }
+
+    function test_sidebar_filter_empty_state_and_escape() {
+        backend.saveRequest("flt/a2", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var field = findChild(win, "sidebarFilterField");
+        var empty = findChild(win, "sidebarFilterEmpty");
+        verify(field && empty, "filter field and no-match placeholder exist");
+
+        field.text = "zzz-no-such-request";
+        wait(50);
+        verify(empty.visible, "No matches is shown when nothing matches");
+
+        field.forceActiveFocus();
+        keyClick(Qt.Key_Escape);
+        wait(50);
+        compare(field.text, "", "Escape clears the field");
+        compare(win.appController.treeFilter, "", "Escape clears the filter");
+        verify(!empty.visible, "the placeholder leaves with the filter");
+        verify(win.appController.sidebar.view.activeFocus, "focus returns to the tree");
+    }
+
+    function test_sidebar_filter_selection_survives() {
+        backend.saveRequest("flt/keep", baseReq());
+        backend.saveRequest("flt/hide", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var c = win.appController;
+        c.selectedPath = "flt/keep";
+        var view = c.sidebar.view;
+        var idx = -1;
+        for (var i = 0; i < c.treeModel.count; i++)
+            if (c.treeModel.get(i).relPath === "flt/keep") idx = i;
+        view.currentIndex = idx;
+
+        var field = findChild(win, "sidebarFilterField");
+        field.text = "hide";
+        wait(80);
+        compare(c.selectedPath, "flt/keep", "the selection itself is kept");
+        compare(view.currentIndex, -1, "no highlighted row while filtered out");
+
+        field.text = "";
+        wait(80);
+        compare(view.currentIndex, idx, "the row is highlighted again on clear");
+    }
+
+    function test_ctrl_f_routes_by_focus() {
+        backend.saveRequest("flt/focus", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var c = win.appController;
+        var field = findChild(win, "sidebarFilterField");
+        c.sidebar.view.forceActiveFocus();
+        wait(20);
+        keyClick(Qt.Key_F, Qt.ControlModifier);
+        wait(20);
+        verify(field.activeFocus, "Ctrl+F in the sidebar focuses the filter");
+
+        c.responsePane.clearResponse();
+        c.responses["p0/req"] = { status: 200, statusText: "OK", time: "1 ms", size: "1 B",
+                                  headers: [], cookies: "", body: "hello" };
+        c.responsePane.restoreResponse("p0/req");
+        var body = findChild(win, "responseBodyArea");
+        body.forceActiveFocus();
+        wait(20);
+        keyClick(Qt.Key_F, Qt.ControlModifier);
+        wait(20);
+        verify(c.responsePane.findVisible, "Ctrl+F with a displayed body opens the body find");
+        c.responsePane.closeFind();
+    }
+
+    function test_sidebar_header_has_add_and_overflow_only() {
+        backend.saveRequest("flt/hdr", baseReq());
+        win.appController.reloadTree();
+        win.appController.selectedPath = "flt/hdr";
+        wait(50);
+
+        var add = findChild(win, "sidebarAddButton");
+        var overflow = findChild(win, "sidebarOverflowButton");
+        verify(add !== null, "primary add button");
+        verify(overflow !== null, "overflow button");
+        compare(overflow.enabled, true, "overflow enabled with a selection");
+
+        var header = add.parent;
+        var buttons = [], trashes = 0;
+        for (var i = 0; i < header.children.length; i++) {
+            var ch = header.children[i];
+            if (ch.icon === undefined || !ch.visible) continue;
+            buttons.push(ch);
+            if (ch.icon.name === "edit-delete") trashes++;
+        }
+        compare(buttons.length, 2, "exactly two actions in the header");
+        compare(trashes, 0, "the permanent trash icon is gone");
+
+        var menu = win.appController.sidebar.overflowMenu;
+        verify(menu, "overflow menu injected");
+        var actions = 0;
+        for (var m = 0; m < menu.count; m++) {
+            var it = menu.itemAt(m);
+            if (it && it.text !== undefined && it.text.length > 0) actions++;
+        }
+        compare(actions, 4, "delete, rename, collapse all, reveal");
+        compare(menu.itemAt(3).text, Strings.t.collapseAll);
+    }
+
+    function test_tree_rows_use_plain_method_text() {
+        backend.saveRequest("flt/method", baseReq("PUT"));
+        win.appController.reloadTree();
+        wait(100);
+
+        var c = win.appController, idx = -1;
+        for (var i = 0; i < c.treeModel.count; i++)
+            if (c.treeModel.get(i).relPath === "flt/method") idx = i;
+        verify(idx >= 0, "request row in the tree");
+        var del = c.sidebar.view.itemAtIndex(idx);
+        verify(del, "delegate visible");
+
+        var label = findChild(del, "treeMethodLabel");
+        verify(label !== null, "plain method label replaces the badge");
+        compare(label.text, "PUT");
+        compare(label.font.pixelSize, 10);
+        compare(label.color, c.methodColor("PUT"));
+    }
+
+    function test_response_header_one_row() {
+        seedResponse({ status: 200, statusText: "OK", time: "12 ms", size: "3 B",
+                       headers: [{ name: "A", value: "1" }], cookies: "", body: '{"a":1}' });
+        wait(50);
+
+        var status = findChild(win, "statusLabel");
+        var meta = findChild(win, "responseMetaLabel");
+        var dot = findChild(win, "responseStatusDot");
+        verify(status && meta && dot, "status, meta and dot exist");
+        compare(status.text, "200 OK");
+        compare(meta.text, "· 12 ms · 3 B");
+        verify(dot.visible, "dot visible for a status code");
+
+        verify(findChild(win, "responseFormatSelector") !== null, "format selector");
+        verify(findChild(win, "responseWrapToggle") !== null, "wrap toggle");
+        verify(findChild(win, "responseCopyButton") !== null, "copy action");
+        verify(findChild(win, "responseFindButton") !== null, "find action");
+        verify(findChild(win, "responseOverflowButton") !== null, "overflow action");
+
+        var row = findChild(win, "responseHeaderRow");
+        verify(row !== null, "header row");
+        verify(row.height <= Kirigami.Units.gridUnit * 3,
+               "the header stays one row at the default size, got " + row.height);
+    }
+
+    function test_response_format_and_wrap_do_not_mutate() {
+        var stored = '{"a":1}';
+        seedResponse({ status: 200, statusText: "OK", time: "1 ms", size: "7 B",
+                       headers: [], cookies: "", body: stored });
+        wait(50);
+
+        var c = win.appController;
+        var body = findChild(win, "responseBodyArea");
+        var selector = findChild(win, "responseFormatSelector");
+        var wrap = findChild(win, "responseWrapToggle");
+
+        compare(body.text, '{\n  "a": 1\n}', "JSON pretty-prints");
+        compare(c.responses["p0/req"].body, stored, "the stored body is untouched");
+
+        selector.currentIndex = 3;   // Raw
+        wait(20);
+        compare(body.text, stored, "Raw shows the untouched body");
+        compare(c.responses["p0/req"].body, stored, "switching format never mutates the record");
+
+        wrap.checked = false;
+        wait(20);
+        compare(body.wrapMode, TextEdit.NoWrap, "wrap off disables wrapping");
+        wrap.checked = true;
+        wait(20);
+        compare(body.wrapMode, TextEdit.Wrap, "wrap on restores wrapping");
+    }
+
+    function test_response_tab_counts() {
+        seedResponse({ status: 200, statusText: "OK", time: "1 ms", size: "1 B",
+                       headers: [{ name: "A", value: "1" }, { name: "B", value: "2" }],
+                       cookies: "a=1\nb=2", body: "x" });
+        wait(50);
+
+        var tabs = findChild(win, "responseTabBar");
+        verify(tabs, "response tab bar");
+        compare(tabs.itemAt(2).text, "Headers 2");
+        compare(tabs.itemAt(3).text, "Cookies 2");
+
+        win.appController.responsePane.clearResponse();
+        wait(50);
+        compare(tabs.itemAt(2).text, "Headers", "plain label without a response");
+        compare(tabs.itemAt(3).text, "Cookies", "plain label without a response");
+    }
+
+    function test_response_line_reference_and_find_counter() {
+        seedResponse({ status: 200, statusText: "OK", time: "1 ms", size: "9 B",
+                       headers: [], cookies: "", body: "abc\ndef" });
+        wait(50);
+
+        var body = findChild(win, "responseBodyArea");
+        var lineRef = findChild(win, "responseLineRef");
+        verify(lineRef !== null, "Ln, Col indicator");
+        verify(lineRef.visible, "visible on the Body tab with a body");
+        body.cursorPosition = 5;
+        wait(20);
+        compare(lineRef.text, "2, 2");
+
+        win.appController.responsePane.openFind();
+        wait(20);
+        var findField = findChild(win, "responseFindField");
+        verify(findField !== null, "find field");
+        findField.text = "def";
+        wait(300);
+        var counter = findChild(win, "responseFindCounter");
+        verify(counter !== null, "find counter");
+        verify(counter.visible, "counter shows with a match");
+        compare(counter.text, "1/1");
+        win.appController.responsePane.closeFind();
     }
 }

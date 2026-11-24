@@ -73,6 +73,21 @@ Kirigami.ApplicationWindow {
 
 
     // ================= lifecycle =================
+    // Ctrl+F routes by focus: sidebar filter inside the sidebar; body find while
+    // a response is displayed elsewhere; otherwise the sidebar filter.
+    function focusIsInSidebar() {
+        var item = root.activeFocusItem;
+        while (item) {
+            if (item === sidebar) return true;
+            item = item.parent;
+        }
+        return false;
+    }
+    function routeFind() {
+        if (root.focusIsInSidebar()) { sidebar.focusFilter(); return; }
+        if (responsePane.hasBody()) { responsePane.openFind(); return; }
+        if (controller.sidebarVisible) sidebar.focusFilter();
+    }
     Component.onCompleted: {
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
@@ -99,7 +114,7 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("reopenTab"); onActivated: controller.reopenClosed() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("newRequest"); onActivated: newReqDialog.openIn(controller.targetFolder()) }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("palette"); onActivated: cmdPalette.openPalette() }
-    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: responsePane.openFind() }
+    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: root.routeFind() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("prevTab"); onActivated: controller.prevTab() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("nextTab"); onActivated: controller.nextTab() }
     onClosing: function (close) {
@@ -229,6 +244,7 @@ Kirigami.ApplicationWindow {
                     treeModel: treeModel
                     addMenu: addMenu
                     ctxMenu: ctxMenu
+                    overflowMenu: sidebarOverflowMenu
                 }
 
                 // ================= MAIN AREA =================
@@ -361,6 +377,29 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.newRequest; icon.name: "document-new"; onTriggered: newReqDialog.openIn(controller.selectedIsFolder ? controller.selectedPath : "") }
         MenuSeparator {}
         MenuItem { text: Strings.t.importCurl; icon.name: "document-import"; onTriggered: curlImportDialog.openFresh() }
+    }
+    Menu {
+        id: sidebarOverflowMenu
+        MenuItem {
+            text: Strings.t.delete; icon.name: "edit-delete"
+            enabled: controller.selectedPath.length > 0
+            onTriggered: controller.askDelete()
+        }
+        MenuItem {
+            text: Strings.t.rename; icon.name: "edit-rename"
+            enabled: controller.selectedPath.length > 0
+            onTriggered: renameDialog.openFor(controller.selectedPath)
+        }
+        MenuSeparator {}
+        MenuItem {
+            text: Strings.t.collapseAll; icon.name: "collapse-all"
+            onTriggered: controller.collapseAll()
+        }
+        MenuItem {
+            text: Strings.t.reveal; icon.name: "folder-open"
+            enabled: controller.selectedPath.length > 0
+            onTriggered: controller.revealPath(controller.selectedPath)
+        }
     }
     Menu {
         id: ctxMenu

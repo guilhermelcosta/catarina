@@ -12,7 +12,6 @@ var t = {
     // ---- top bar / panels ----
     history: "History",
     settings: "Settings",
-    deleteSelected: "Delete selected",
     moreActions: "More actions",
     hideCollections: "Hide collections panel",
     showCollections: "Show collections panel",
@@ -60,6 +59,13 @@ var t = {
     noRequestOpen: "No request open",
     noRequestOpenHint: "Select a request in the sidebar or create a new one.",
     newRequest: "New request",
+    sidebarFilter: "Filter by name or path",
+    sidebarFilterHint: "Filter by name or path, Esc clears",
+    noFilterMatches: "No matches",
+    noFilterMatchesMessage: "No request or folder matches this filter.",
+    clearsFilter: "clears the filter",
+    collapseAll: "Collapse all",
+    reveal: "Reveal",
 
     // ---- request ----
     parameters: "Parameters",
@@ -132,6 +138,15 @@ var t = {
     networkHint: "Connection details and the sent request",
     clearFind: "Clear search",
     findTooltip: "Find in response (Ctrl+F)",
+    findResponse: "Find",
+    copyResponseShort: "Copy response",
+    responseFormat: "Format",
+    responseFormatJson: "JSON",
+    responseFormatHtml: "HTML",
+    responseFormatXml: "XML",
+    responseFormatRaw: "Raw",
+    responseWrap: "Wrap lines",
+    responseOverflow: "More response actions",
 
     // ---- network ----
     connection: "Connection",
