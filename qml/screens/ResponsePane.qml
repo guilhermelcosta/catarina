@@ -430,8 +430,8 @@ Item {
                         objectName: "responseBodyArea"
                         readOnly: true
                         textFormat: TextEdit.PlainText
-                        font.family: "monospace"
-                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                        font.family: settings.editorFontResolved
+                        font.pointSize: settings.editorFontSizeResolved
                         text: Util.formatBody(responseFormat, bodySource)
                         wrapMode: wrapToggle.checked ? TextEdit.Wrap : TextEdit.NoWrap
                         selectionColor: Kirigami.Theme.highlightColor

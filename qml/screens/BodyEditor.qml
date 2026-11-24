@@ -65,20 +65,27 @@ ColumnLayout {
         onEdited: app.markDirty()
         onPickFile: function (index) { fileDialog.targetIndex = index; fileDialog.open(); }
     }
-    ScrollView {
+    Item {
+        id: bodyContainer
         Layout.fillWidth: true
         Layout.fillHeight: true
         visible: bodyTypeBox.currentValue !== "none" && bodyTypeBox.currentValue !== "multipart" && bodyTypeBox.currentValue !== "urlencoded"
         Layout.leftMargin: Kirigami.Units.smallSpacing
         Layout.rightMargin: Kirigami.Units.smallSpacing
         Layout.bottomMargin: Kirigami.Units.smallSpacing
+
+      ScrollView {
+        id: bodyScroll
+        anchors.fill: parent
+        clip: true
         TextArea {
             id: bodyArea
             objectName: "bodyEditorArea"
             placeholderText: Strings.t.jsonExample
-            font.family: "monospace"
-            font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
-            wrapMode: TextEdit.Wrap
+            font.family: settings.editorFontResolved
+            font.pointSize: settings.editorFontSizeResolved
+            leftPadding: settings.editorLineNumbers ? 40 : 6
+            wrapMode: settings.editorWrap ? TextEdit.Wrap : TextEdit.NoWrap
             onTextEdited: app.markDirty()
             Component.onCompleted:
                 varSupport.attach(bodyArea.textDocument, "#c678dd", true, true,
@@ -95,8 +102,8 @@ ColumnLayout {
             Keys.onPressed: function (event) {
                 if (bodyCompleter.handleKey(event)) { event.accepted = true; return; }
                 var pos = bodyArea.cursorPosition;
-                var unit = "  ";
-                if (event.key === Qt.Key_BraceLeft) {
+                var unit = " ".repeat(settings.editorIndent);
+                if (event.key === Qt.Key_BraceLeft && settings.editorBrackets) {
                     event.accepted = true;
                     bodyArea.insert(pos, "{}");
                     bodyArea.cursorPosition = pos + 1;
@@ -104,12 +111,12 @@ ColumnLayout {
                     // programmatic insert() doesn't emit textEdited; without
                     // this the {{var}} popup only opens when typing the 1st character
                     bodyCompleter.updateCompleter();
-                } else if (event.key === Qt.Key_BracketLeft) {
+                } else if (event.key === Qt.Key_BracketLeft && settings.editorBrackets) {
                     event.accepted = true;
                     bodyArea.insert(pos, "[]");
                     bodyArea.cursorPosition = pos + 1;
                     app.markDirty();
-                } else if (event.key === Qt.Key_QuoteDbl) {
+                } else if (event.key === Qt.Key_QuoteDbl && settings.editorBrackets) {
                     event.accepted = true;
                     if (bodyArea.selectedText.length > 0) {
                         bodyArea.insert(pos, "\"" + bodyArea.selectedText + "\"");
@@ -136,7 +143,7 @@ ColumnLayout {
                         bodyArea.cursorPosition = pos + 1 + indent.length;
                     }
                     app.markDirty();
-                } else if (event.key === Qt.Key_BraceRight) {
+                } else if (event.key === Qt.Key_BraceRight && settings.editorBrackets) {
                     var t2 = bodyArea.text;
                     var ls2 = t2.lastIndexOf("\n", pos - 1) + 1;
                     var prefix = t2.substring(ls2, pos);
@@ -151,6 +158,77 @@ ColumnLayout {
                 }
             }
         }
+      }
+      // line-number gutter: fixed 34 px column over the scrolled text, drawn
+      // viewport-only (positionToRectangle over the visible lines)
+      Rectangle {
+        id: lineGutter
+        objectName: "bodyLineGutter"
+        visible: settings.editorLineNumbers
+        width: 34
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        color: Kirigami.Theme.alternateBackgroundColor
+        property var lines: []
+
+        function refresh() {
+            if (!visible || !bodyArea)
+                return;
+            var flick = bodyScroll.contentItem;
+            var top = flick.contentY;
+            var bottom = top + bodyScroll.height;
+            var text = bodyArea.text;
+            var pos = bodyArea.positionAt(0, Math.max(0, top));
+            if (pos < 0) pos = 0;
+            var lineStart = text.lastIndexOf("\n", Math.max(0, pos - 1)) + 1;
+            var number = 1;
+            for (var i = 0; i < lineStart; i++)
+                if (text.charAt(i) === "\n") number++;
+            var out = [];
+            while (lineStart <= text.length && out.length < 500) {
+                var r = bodyArea.positionToRectangle(lineStart);
+                if (r.y > bottom) break;
+                if (r.y + r.height >= top) out.push({ y: r.y - top, n: number });
+                var nl = text.indexOf("\n", lineStart);
+                if (nl < 0) break;
+                lineStart = nl + 1; number++;
+            }
+            lines = out;
+        }
+
+        Component.onCompleted: refresh()
+        onVisibleChanged: refresh()
+        onHeightChanged: refresh()
+        Connections {
+            target: bodyArea
+            function onTextChanged() { lineGutter.refresh(); }
+            function onWidthChanged() { lineGutter.refresh(); }
+        }
+        Connections {
+            target: bodyScroll.contentItem
+            function onContentYChanged() { lineGutter.refresh(); }
+        }
+        Connections {
+            target: settings
+            function onSettingsChanged() { lineGutter.refresh(); }
+        }
+
+        Repeater {
+            model: lineGutter.lines
+            delegate: Text {
+                x: 0
+                y: modelData.y
+                width: lineGutter.width - 6
+                horizontalAlignment: Text.AlignRight
+                text: modelData.n
+                color: Kirigami.Theme.textColor
+                opacity: 0.5
+                font.pixelSize: app.theme.fontSizeMeta
+                font.features: ({ "tnum": 1 })
+            }
+        }
+      }
     }
     // with maximumHeight lifted, the ColumnLayout takes the full
     // height of the StackLayout; with no child to fill it, Qt

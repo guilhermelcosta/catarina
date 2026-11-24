@@ -8,6 +8,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QStandardPaths>
@@ -200,6 +201,32 @@ bool Backend::canToggleTheme() const
 #else
     return false;
 #endif
+}
+
+QString Backend::appVersion() const
+{
+#ifdef CATARINA_VERSION
+    return QStringLiteral(CATARINA_VERSION);
+#else
+    return QString();
+#endif
+}
+
+QString Backend::qtVersion() const
+{
+    return QString::fromLatin1(qVersion());
+}
+
+QStringList Backend::monospaceFamilies() const
+{
+    if (m_monoFamilies.isEmpty()) {
+        const QStringList all = QFontDatabase::families();
+        for (const QString &family : all) {
+            if (QFontDatabase::isFixedPitch(family))
+                m_monoFamilies.append(family);
+        }
+    }
+    return m_monoFamilies;
 }
 
 void Backend::applyColorScheme(const QString &scheme)

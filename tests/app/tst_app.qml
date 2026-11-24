@@ -1340,17 +1340,17 @@ TestCase {
         var zoomValue = findChild(win, "statusBarZoomValue");
         var zoomIn = findChild(win, "statusBarZoomIn");
         verify(zoomOut && zoomValue && zoomIn, "zoom controls exist");
-        settings.fontSize = 0;
+        settings.editorFontSize = 0;
         wait(20);
-        compare(zoomValue.text, String(bar.effectiveFontSize), "shows the effective size");
-        var before = bar.effectiveFontSize;
+        compare(zoomValue.text, String(settings.editorFontSizeResolved), "shows the resolved editor size");
+        var before = settings.editorFontSizeResolved;
         zoomIn.clicked();
         wait(20);
-        compare(settings.fontSize, before + 1, "zoom in steps the editor font by one");
+        compare(settings.editorFontSize, before + 1, "zoom in steps the editor font by one");
         compare(zoomValue.text, String(before + 1));
         zoomValue.clicked();
         wait(20);
-        compare(settings.fontSize, 0, "clicking the value resets to the default");
+        compare(settings.editorFontSize, 0, "clicking the value resets to the unset default");
 
         var themeToggle = findChild(win, "statusBarThemeToggle");
         verify(themeToggle !== null, "theme toggle exists");
@@ -1450,6 +1450,8 @@ TestCase {
 
     // criterion 7: every visible literal lives on the type scale
     function test_type_scale_walk() {
+        settings.uiScale = 1.0;
+        settings.density = "comfortable";
         var theme = win.appController.theme;
         compare(theme.fontSizeMeta, 11);
         compare(theme.fontSizeSecondary, 12);
@@ -1498,5 +1500,167 @@ TestCase {
         compare(bar.itemAt(0).text, Strings.t.parameters + " 1");
         compare(bar.itemAt(1).text, Strings.t.headers + " 1");
         compare(bar.itemAt(4).text, Strings.t.variables + " 1");
+    }
+
+    // ---- criteria 3, 4, 14: settings shell, cards and search ----
+    function test_settings_two_panes_cards_and_no_apply() {
+        win.appController.openSettingsTab();
+        wait(80);
+
+        var nav = findChild(win, "settingsNav");
+        verify(nav !== null, "settingsNav exists");
+        compare(nav.width, 190, "category nav is 190 px");
+        compare(nav.count, 7, "seven categories");
+        compare(nav.itemAtIndex(0).text, Strings.t.appearance, "Appearance first");
+        compare(nav.itemAtIndex(1).text, Strings.t.editor);
+        compare(nav.itemAtIndex(6).text, Strings.t.about);
+
+        verify(findChild(win, "settingsForm") !== null, "settingsForm preserved");
+        verify(findChild(win, "settingsCard.appearance") !== null, "Appearance card exists");
+        verify(findChild(win, "settingsRow.theme") !== null, "theme row exists");
+        compare(findChild(win, "settingsCard.appearance").visible, true,
+                "Appearance is active on open");
+
+        var texts = collectTexts(win, []);
+        verify(texts.indexOf("Apply") < 0, "no Apply-labelled control anywhere");
+        compare(Strings.t.apply, undefined, "Strings.t.apply is gone");
+
+        nav.itemAtIndex(1).clicked();
+        wait(30);
+        compare(findChild(win, "settingsCard.editor").visible, true, "nav switches category");
+        compare(findChild(win, "settingsCard.appearance").visible, false);
+    }
+
+    function test_settings_search_filters_and_routes_ctrl_f() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        var search = findChild(win, "settingsSearch");
+        verify(search !== null, "settingsSearch exists");
+        nav.itemAtIndex(0).clicked();
+        wait(30);
+
+        search.text = "accent";
+        wait(30);
+        compare(findChild(win, "settingsRow.accent").visible, true, "matching row stays");
+        compare(findChild(win, "settingsRow.theme").visible, false, "non-matching row hides");
+        compare(findChild(win, "settingsEmptyState").visible, false);
+
+        search.text = "zzzz-no-setting";
+        wait(30);
+        compare(findChild(win, "settingsRow.accent").visible, false);
+        compare(findChild(win, "settingsEmptyState").visible, true, "no match shows the empty state");
+
+        search.text = "";
+        wait(30);
+        compare(findChild(win, "settingsEmptyState").visible, false);
+        compare(findChild(win, "settingsRow.theme").visible, true, "clearing restores the card");
+
+        nav.itemAtIndex(2).clicked();   // move focus away from the search
+        wait(20);
+        keyClick(Qt.Key_F, Qt.ControlModifier);
+        wait(30);
+        verify(search.activeFocus, "Ctrl+F in settings focuses the settings search");
+        search.text = "";
+    }
+
+    // ---- criteria 5, 6, 7: appearance + editor rows wired ----
+    function test_settings_appearance_and_editor_rows() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        nav.itemAtIndex(0).clicked();
+        wait(30);
+
+        var theme = win.appController.theme;
+        var scale = findChild(win, "settingsUiScale");
+        verify(scale !== null, "UI scale control exists");
+        compare(scale.value, 100, "scale starts at 1.00");
+        settings.uiScale = 1.2;
+        wait(30);
+        compare(theme.fontSizeBase, Math.round(13 * 1.2), "type scale follows uiScale");
+        compare(theme.controlToolbar, Math.round(28 * 1.2), "control size follows uiScale");
+        settings.uiScale = 1.0;
+        wait(20);
+
+        settings.density = "compact";
+        wait(30);
+        compare(theme.densityFactor, 0.85);
+        compare(theme.controlToolbar, Math.round(28 * 0.85), "compact shrink the controls");
+        compare(theme.settingsRowHeight, 44, "compact settings rows");
+        settings.density = "comfortable";
+        wait(20);
+        compare(theme.settingsRowHeight, 48);
+
+        nav.itemAtIndex(1).clicked();
+        wait(30);
+        var size = findChild(win, "settingsEditorFontSize");
+        verify(size !== null, "editor size control exists");
+        settings.editorFontSize = 18;
+        wait(30);
+        compare(size.value, 18, "the size control writes editorFontSize");
+        var preview = findChild(win, "editorFontPreview");
+        verify(preview !== null, "live preview exists");
+        compare(preview.font.pointSize, 18, "preview uses the resolved editor size");
+
+        var family = findChild(win, "settingsEditorFontFamily");
+        verify(family !== null, "font family control exists");
+        compare(family.model[0], Strings.t.editorFontDefault, "default monospace is the first entry");
+        settings.editorFontSize = 0;
+    }
+
+    function test_editor_content_surfaces_use_resolved_font() {
+        settings.editorFontSize = 17;
+        settings.editorFontFamily = "";
+        settings.editorLineNumbers = true;
+        settings.editorWrap = false;
+        var req = baseReq();
+        req.bodyType = "json";
+        req.body = "{\n  \"a\": 1\n}";
+        backend.saveRequest("font/r", req);
+        win.appController.openRequest("font/r");
+        wait(120);
+
+        var url = findChild(win, "requestUrlField");
+        var body = findChild(win, "bodyEditorArea");
+        var resp = findChild(win, "responseBodyArea");
+        verify(url && body && resp, "content surfaces exist");
+        compare(url.font.pointSize, 17);
+        compare(body.font.pointSize, 17);
+        compare(resp.font.pointSize, 17);
+        compare(url.font.family, settings.editorFontResolved);
+        compare(body.font.family, settings.editorFontResolved);
+        compare(resp.font.family, settings.editorFontResolved);
+        compare(body.wrapMode, TextEdit.NoWrap, "wrap follows settings.editorWrap");
+
+        var gutter = findChild(win, "bodyLineGutter");
+        verify(gutter !== null, "line-number gutter exists");
+        var sectionBar = findChild(win, "requestTabBar");
+        verify(sectionBar !== null, "request section bar exists");
+        sectionBar.currentIndex = 2;   // Body tab: the gutter lives under it
+        wait(60);
+        compare(settings.editorLineNumbers, true, "line-number setting is on before the check");
+        compare(gutter.visible, true, "gutter follows settings.editorLineNumbers");
+        settings.editorLineNumbers = false;
+        wait(30);
+        compare(gutter.visible, false, "gutter hides when the setting is off");
+
+        settings.editorWrap = true;
+        settings.editorLineNumbers = false;
+        settings.editorFontSize = 0;
+    }
+
+    // criterion 5: a custom accent retints the selection roles
+    function test_accent_applies_to_the_theme() {
+        settings.uiScale = 1.0;
+        settings.density = "comfortable";
+        settings.accentColor = "#ff0000";
+        wait(40);
+        var live = win.contentItem.Kirigami.Theme;
+        verify(Qt.colorEqual(live.highlightColor, "#ff0000"), "accent overrides the highlight");
+        verify(Qt.colorEqual(live.focusColor, "#ff0000"), "accent overrides the focus colour");
+        compare(live.highlightedTextColor.a > 0, true, "highlighted text stays opaque");
+        settings.accentColor = "";
+        wait(30);
     }
 }

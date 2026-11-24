@@ -16,13 +16,11 @@ Item {
     implicitHeight: app.theme.controlToolbar
     Layout.fillWidth: true
 
-    readonly property int effectiveFontSize: settings.fontSize > 0
-        ? settings.fontSize
-        : Math.max(1, Kirigami.Theme.defaultFont.pointSize)
+    readonly property int effectiveFontSize: settings.editorFontSizeResolved
 
     function stepZoom(delta) {
         var cur = effectiveFontSize;
-        settings.fontSize = Math.max(6, Math.min(28, cur + delta));
+        settings.editorFontSize = Math.max(6, Math.min(28, cur + delta));
     }
 
     RowLayout {
@@ -63,7 +61,7 @@ Item {
             icon.name: "zoom-out"
             implicitWidth: app.theme.hitTarget
             implicitHeight: app.theme.controlToolbar
-            enabled: settings.fontSize !== 6
+            enabled: settings.editorFontSizeResolved !== 6
             onClicked: statusBar.stepZoom(-1)
             ToolTip.text: Strings.t.zoomOutTooltip
             ToolTip.delay: Kirigami.Units.toolTipDelay
@@ -73,7 +71,7 @@ Item {
             text: String(statusBar.effectiveFontSize)
             implicitHeight: app.theme.controlToolbar
             font.features: ({ "tnum": 1 })
-            onClicked: settings.fontSize = 0
+            onClicked: settings.editorFontSize = 0
             ToolTip.text: Strings.t.zoomReset
             ToolTip.delay: Kirigami.Units.toolTipDelay
         }
@@ -82,7 +80,7 @@ Item {
             icon.name: "zoom-in"
             implicitWidth: app.theme.hitTarget
             implicitHeight: app.theme.controlToolbar
-            enabled: settings.fontSize !== 28
+            enabled: settings.editorFontSizeResolved !== 28
             onClicked: statusBar.stepZoom(1)
             ToolTip.text: Strings.t.zoomInTooltip
             ToolTip.delay: Kirigami.Units.toolTipDelay

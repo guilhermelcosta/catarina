@@ -101,6 +101,41 @@ TestCase {
         compare(themeTokens.focusRingWidth, 2);
     }
 
+    // UI scale multiplies the chrome tokens; density re-derives the controls
+    function test_theme_ui_scale_and_density_derivation() {
+        themeTokens.uiScale = 1.2;
+        themeTokens.density = "comfortable";
+        compare(themeTokens.fontSizeMeta, Math.round(11 * 1.2));
+        compare(themeTokens.fontSizeBase, Math.round(13 * 1.2));
+        compare(themeTokens.fontSizeCollectionTitle, Math.round(20 * 1.2));
+        compare(themeTokens.controlToolbar, Math.round(28 * 1.2));
+        compare(themeTokens.controlField, Math.round(32 * 1.2));
+        compare(themeTokens.controlDialogButton, Math.round(36 * 1.2));
+        compare(themeTokens.settingsRowHeight, Math.round(48 * 1.2));
+
+        themeTokens.uiScale = 1.0;
+        themeTokens.density = "compact";
+        compare(themeTokens.densityFactor, 0.85);
+        compare(themeTokens.controlToolbar, Math.round(28 * 0.85));
+        compare(themeTokens.hitTarget, Math.max(24, Math.round(28 * 0.85)),
+                "compact keeps the 24 px hit-target floor");
+        compare(themeTokens.settingsRowHeight, 44);
+        compare(themeTokens.fontSizeBase, 13, "density never touches the type scale");
+
+        themeTokens.uiScale = 1.0;
+        themeTokens.density = "comfortable";
+    }
+
+    // Util.luminance: the accent's highlighted-text derivation
+    function test_util_luminance() {
+        verify(Util.luminance("#ffffff") > 0.99, "white is the maximum");
+        verify(Util.luminance("#000000") < 0.01, "black is the minimum");
+        verify(Util.luminance("#ff0000") < 0.5, "saturated red reads as dark text");
+        verify(Util.luminance("#ffff00") > 0.5, "yellow reads as light");
+        verify(Util.luminance("not-a-colour") === 0, "invalid input falls back to 0");
+        verify(Util.luminance("#ff0000") < Util.luminance("#ff8080"), "lighter red is brighter");
+    }
+
     // ---- Util.js: fuzzy palette matching ----
     function test_util_fuzzyMatch() {
         var empty = Util.fuzzyMatch("", "Send request");
