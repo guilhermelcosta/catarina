@@ -334,21 +334,17 @@ The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
 - **Never** derive a column width from the table's own `width` (creates a layout polish loop).
 
 ### Request bar (rule)
-The request editor's top row (`qml/screens/RequestEditor.qml`) is one object:
-`alternateBackgroundColor`, 1 px `disabledTextColor` border,
-`radius: app.theme.radiusControl`, `gridUnit * 2` tall.
-
-- Method (native `ComboBox`, `background: null`, `app.methodColor`, preferred
-  88 px, minimum 56), URL (the shared `VarField`, `background: null` at the call
-  site) and Send (highlighted icon-only `Button`) share one border. Send is the
-  row's only primary; the chevron hides below 72 px before the name elides.
-- Fixed 160 px budget: container padding 8, method 56, Send/Save/Discard 24
-  each, two `smallSpacing` gaps. The URL floor is 220 px; when space runs out
-  the icons clip, never the URL.
-- Discard then Save are 24×24 icon-only `ToolButton`s after the container, with
-  their `enabled` rules. No "unsaved" label: the tab dot carries the dirty state.
-- The borderless children lose Breeze's focus ring, so the container draws the
-  1 px `highlightColor` overlay; never change `border.width` or the padding.
+The request editor's top row is one object: `alternateBackgroundColor`, 1 px
+`disabledTextColor`, `radiusControl`, `gridUnit * 2`.
+- Method (`ComboBox`, `background: null`, `app.methodColor`, 88 px preferred,
+  56 minimum), URL (the shared `VarField`, `background: null` at the call site)
+  and Send (highlighted icon-only `Button`) share one border; Send is the only
+  primary.
+- Fixed 160 px budget; URL floor 220 px; when space runs out the icons clip.
+- Discard then Save are 24×24 icon-only `ToolButton`s after the container; the
+  tab dot carries the dirty state, so there is no "unsaved" label.
+- The container draws the 1 px `highlightColor` focus overlay; never change
+  `border.width` or the padding.
 
 ---
 
