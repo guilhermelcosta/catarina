@@ -68,13 +68,13 @@ Kirigami.ApplicationWindow {
     // a forced light/dark scheme is also pushed into the live Kirigami theme
     Connections {
         target: backend
-        function onColorSchemeChanged() { theme.applyScheme(root, backend.colorScheme, settings.accentColor); }
+        function onColorSchemeChanged() { theme.applyScheme(root, "system", ""); }
     }
     // accent/scale/density ride the generic settings signal; applyScheme is
     // idempotent and cheap, so it can re-run on any settings change
     Connections {
         target: settings
-        function onSettingsChanged() { theme.applyScheme(root, backend.colorScheme, settings.accentColor); }
+        function onSettingsChanged() { theme.applyScheme(root, "system", ""); }
     }
 
     AppController {
@@ -138,7 +138,7 @@ Kirigami.ApplicationWindow {
         settingsPage.focusShortcuts();
     }
     Component.onCompleted: {
-        theme.applyScheme(root, backend.colorScheme, settings.accentColor);   // saved scheme, before the first frame
+        theme.applyScheme(root, "system", "");   // saved scheme, before the first frame
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
         // Kirigami registers Alt+Left/Right (StandardKey Back/Forward) on the pageStack,

@@ -86,10 +86,10 @@ Item {
             ToolTip.delay: Kirigami.Units.toolTipDelay
         }
 
-        // ---- theme toggle: hidden (not disabled) when the runtime API is absent ----
+        // ---- forced theme is deferred to the native-control skin phase ----
         ToolButton {
             objectName: "statusBarThemeToggle"
-            visible: backend.canToggleTheme
+            visible: false
             icon.name: "contrast"
             implicitWidth: app.theme.hitTarget
             implicitHeight: app.theme.controlToolbar

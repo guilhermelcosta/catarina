@@ -1353,54 +1353,8 @@ TestCase {
         compare(settings.editorFontSize, 0, "clicking the value resets to the unset default");
 
         var themeToggle = findChild(win, "statusBarThemeToggle");
-        verify(themeToggle !== null, "theme toggle exists");
-        compare(themeToggle.visible, backend.canToggleTheme, "hidden when the API is absent");
-        if (backend.canToggleTheme) {
-            var schemeBefore = backend.colorScheme;
-            var wasDark = win.appController.darkTheme;
-            themeToggle.clicked();
-            wait(50);
-            compare(win.appController.darkTheme, !wasDark,
-                    "the toggle flips the live theme, not only the stored value");
-            // the forced scheme owns the content theme, so it also lands under a
-            // platform theme that ignores the application palette (KDE/Plasma)
-            compare(win.contentItem.Kirigami.Theme.inherit, false,
-                    "a forced scheme overrides the content theme");
-            compare(win.contentItem.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
-                    "the content tree is painted in the forced scheme");
-            // style-painted surfaces read the window palette, which the platform
-            // theme supplies on its own; the forced scheme must reach it too
-            var pill = findChild(win, "envPill");
-            compare(win.palette.window.hsvValue < 0.5, !wasDark,
-                    "the window palette follows the forced scheme");
-            compare(win.palette.windowText.hsvValue > 0.5, !wasDark,
-                    "control text follows the forced scheme");
-            compare(pill.palette.windowText.hsvValue > 0.5, !wasDark,
-                    "the environment pill stays readable in the forced scheme");
-            var pillLabel = findChild(win, "envPillLabel");
-            verify(pillLabel !== null, "the pill label exists");
-            verify(Qt.colorEqual(pillLabel.color, win.contentItem.Kirigami.Theme.textColor),
-                   "the pill label uses the overridden text role");
-            compare(win.contentItem.palette.window.hsvValue < 0.5, !wasDark,
-                    "the controls' content palette follows the forced scheme");
-            var searchField = findChild(win, "settingsSearch");
-            verify(searchField !== null, "the settings search field exists");
-            compare(searchField.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
-                    "a control's Kirigami theme follows the forced scheme");
-            compare(searchField.palette.base.hsvValue < 0.5, !wasDark,
-                    "a control's palette follows the forced scheme");
-            compare(searchField.color.hsvValue > 0.5, !wasDark,
-                    "field text stays readable in the forced scheme");
-            compare(win.contentItem.Kirigami.Theme.highlightColor.hsvSaturation > 0.2, true,
-                    "the accent stays chromatic so checked controls cannot vanish");
-            backend.colorScheme = schemeBefore;
-            wait(50);
-            compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
-            compare(win.palette.window.hsvValue < 0.5, wasDark,
-                    "the window palette goes back to the desktop scheme");
-            compare(win.contentItem.Kirigami.Theme.inherit, schemeBefore === "light" || schemeBefore === "dark" ? false : true,
-                    "system restores the desktop theme");
-        }
+        verify(themeToggle === null || !themeToggle.visible,
+               "the forced-theme toggle is absent while the app follows the system");
 
         var hint = findChild(win, "statusBarShortcutsHint");
         verify(hint !== null, "Ctrl+/ hint exists");
@@ -1531,7 +1485,7 @@ TestCase {
 
         verify(findChild(win, "settingsForm") !== null, "settingsForm preserved");
         verify(findChild(win, "settingsCard.appearance") !== null, "Appearance card exists");
-        verify(findChild(win, "settingsRow.theme") !== null, "theme row exists");
+        verify(findChild(win, "settingsRow.density") !== null, "density row exists");
         compare(findChild(win, "settingsCard.appearance").visible, true,
                 "Appearance is active on open");
 
@@ -1573,10 +1527,10 @@ TestCase {
         nav.itemAtIndex(0).clicked();
         wait(30);
 
-        search.text = "accent";
+        search.text = "density";
         wait(30);
-        compare(findChild(win, "settingsRow.accent").visible, true, "matching row stays");
-        compare(findChild(win, "settingsRow.theme").visible, false, "non-matching row hides");
+        compare(findChild(win, "settingsRow.density").visible, true, "matching row stays");
+        compare(findChild(win, "settingsRow.uiScale").visible, false, "non-matching row hides");
         compare(findChild(win, "settingsEmptyState").visible, false);
 
         // a category with matches does not take the pane while another is
@@ -1594,13 +1548,13 @@ TestCase {
 
         search.text = "zzzz-no-setting";
         wait(30);
-        compare(findChild(win, "settingsRow.accent").visible, false);
+        compare(findChild(win, "settingsRow.density").visible, false);
         compare(findChild(win, "settingsEmptyState").visible, true, "no match shows the empty state");
 
         search.text = "";
         wait(30);
         compare(findChild(win, "settingsEmptyState").visible, false);
-        compare(findChild(win, "settingsRow.theme").visible, true, "clearing restores the card");
+        compare(findChild(win, "settingsRow.density").visible, true, "clearing restores the card");
 
         nav.itemAtIndex(2).clicked();   // move focus away from the search
         wait(20);
@@ -1619,10 +1573,6 @@ TestCase {
         wait(30);
 
         var theme = win.appController.theme;
-        var themeCombo = findChild(win, "settingsTheme");
-        verify(themeCombo !== null, "theme control exists");
-        compare(themeCombo.enabled, backend.canToggleTheme,
-                "the theme control is disabled where the platform owns the palette");
         var scale = findChild(win, "settingsUiScale");
         verify(scale !== null, "UI scale control exists");
         compare(scale.value, 100, "scale starts at 1.00");
@@ -1677,7 +1627,7 @@ TestCase {
 
         nav.itemAtIndex(0).clicked();
         wait(40);
-        var standard = findChild(win, "settingsRow.theme");
+        var standard = findChild(win, "settingsRow.density");
         compare(standard.wideControl, false);
         compare(standard.resolvedControlWidth, 200, "standard rows keep the 200 px column");
     }
@@ -1724,16 +1674,4 @@ TestCase {
     }
 
     // criterion 5: a custom accent retints the selection roles
-    function test_accent_applies_to_the_theme() {
-        settings.uiScale = 1.0;
-        settings.density = "comfortable";
-        settings.accentColor = "#ff0000";
-        wait(40);
-        var live = win.contentItem.Kirigami.Theme;
-        verify(Qt.colorEqual(live.highlightColor, "#ff0000"), "accent overrides the highlight");
-        verify(Qt.colorEqual(live.focusColor, "#ff0000"), "accent overrides the focus colour");
-        compare(live.highlightedTextColor.a > 0, true, "highlighted text stays opaque");
-        settings.accentColor = "";
-        wait(30);
-    }
 }

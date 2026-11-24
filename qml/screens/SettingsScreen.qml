@@ -72,7 +72,7 @@ Item {
     }
 
     Component.onCompleted: cardRows = [
-        [themeRow, accentRow, densityRow, scaleRow],
+        [densityRow, scaleRow],
         [fontFamilyRow, fontSizeRow, lineNumbersRow, wrapRow, indentRow, bracketsRow],
         [timeoutRow, ignoreSslRow],
         [confirmDeleteRow, autoSaveRow],
@@ -182,67 +182,6 @@ Item {
                             title: Strings.t.appearance
                             Layout.fillWidth: true
                             visible: settingsPage.cardShown(0)
-                            SettingsRow {
-                                id: themeRow
-                                objectName: "settingsRow.theme"
-                                tokens: settingsPage.tokens
-                                label: Strings.t.themeLabel
-                                description: backend.canToggleTheme
-                                             ? Strings.t.themeDescription
-                                             : Strings.t.themeRestartDescription
-                                visible: settingsPage.rowMatches(themeRow)
-                                ComboBox {
-                                    id: themeCombo
-                                    objectName: "settingsTheme"
-                                    Layout.fillWidth: true
-                                    // The scheme is forced through the application
-                                    // palette, so it applies at runtime on every
-                                    // desktop instead of only following the
-                                    // platform theme.
-                                    enabled: backend.canToggleTheme
-                                    model: [Strings.t.themeSystem, Strings.t.themeLight, Strings.t.themeDark]
-                                    Component.onCompleted: currentIndex = settingsPage.schemeIndex(backend.colorScheme)
-                                    onActivated: backend.colorScheme = index === 1 ? "light"
-                                                                   : (index === 2 ? "dark" : "system")
-                                    Connections {
-                                        target: backend
-                                        function onColorSchemeChanged() {
-                                            themeCombo.currentIndex = settingsPage.schemeIndex(backend.colorScheme);
-                                        }
-                                    }
-                                }
-                            }
-                            SettingsRow {
-                                id: accentRow
-                                objectName: "settingsRow.accent"
-                                tokens: settingsPage.tokens
-                                label: Strings.t.accentLabel
-                                description: Strings.t.accentDescription
-                                visible: settingsPage.rowMatches(accentRow)
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: Kirigami.Units.smallSpacing
-                                    ComboBox {
-                                        id: accentCombo
-                                        Layout.fillWidth: true
-                                        model: [Strings.t.accentFollowSystem, Strings.t.accentCustom]
-                                        Component.onCompleted: currentIndex = settings.accentColor.length > 0 ? 1 : 0
-                                        onActivated: {
-                                            if (index === 1) accentDialog.open();
-                                            else settings.accentColor = "";
-                                        }
-                                    }
-                                    Rectangle {
-                                        visible: settings.accentColor.length > 0
-                                        implicitWidth: 18
-                                        implicitHeight: 18
-                                        radius: 4
-                                        color: settings.accentColor
-                                        border.width: 1
-                                        border.color: settingsPage.tokens.chromeBorder
-                                    }
-                                }
-                            }
                             SettingsRow {
                                 id: densityRow
                                 objectName: "settingsRow.density"
