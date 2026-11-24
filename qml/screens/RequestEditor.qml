@@ -201,7 +201,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty
             onClicked: app.revertCurrent()
-            ToolTip.text: Strings.t.discardTooltip; ToolTip.visible: hovered
+            ToolTip.text: Strings.t.discardTooltip; ToolTip.delay: 700
         }
         ToolButton {
             objectName: "requestSaveButton"
@@ -213,7 +213,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
-            ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
+            ToolTip.text: Strings.t.saveTooltip; ToolTip.delay: 700
         }
     }
 
