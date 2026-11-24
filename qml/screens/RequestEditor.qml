@@ -49,6 +49,7 @@ ColumnLayout {
                 spacing: Kirigami.Units.smallSpacing
                 ComboBox {
                     id: methodBox
+                    objectName: "requestMethodBox"
                     model: ["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"]
                     Layout.preferredWidth: 88
                     Layout.minimumWidth: 56
@@ -58,26 +59,35 @@ ColumnLayout {
                     padding: 0
                     leftPadding: 0; rightPadding: 4
                     onActivated: app.markDirty()
-                    // The chevron is the first thing to give way: below 72 px the
-                    // whole segment is the click target and the name keeps its room.
-                    indicator: Item {
-                        implicitWidth: methodBox.width >= 72 ? 16 : 0
-                        implicitHeight: 16
-                        visible: implicitWidth > 0
+                    // One label: the name and its chevron live in the content item.
+                    // A separate `indicator` is not laid out once the style is
+                    // stripped, so the arrow would float in a corner.
+                    indicator: null
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
+                        Text {
+                            id: methodLabel
+                            Layout.leftMargin: methodBox.width < 72 ? 4 : 10
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            text: methodBox.displayText
+                            color: app.methodColor(methodBox.currentText)
+                            font.bold: true
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                        }
+                        // The chevron is the first thing to give way: below 72 px
+                        // the whole segment is the click target and the name keeps
+                        // its room (ui.md C2).
                         Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: 12; height: 12
+                            objectName: "requestMethodChevron"
+                            visible: methodBox.width >= 72
+                            Layout.preferredWidth: 12
+                            Layout.preferredHeight: 12
+                            Layout.alignment: Qt.AlignVCenter
                             source: "arrow-down"
                             color: Kirigami.Theme.textColor
                         }
-                    }
-                    contentItem: Text {
-                        leftPadding: methodBox.width < 72 ? 4 : 10
-                        text: methodBox.displayText
-                        color: app.methodColor(methodBox.currentText)
-                        font.bold: true
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideRight
                     }
                     ToolTip.text: Strings.t.methodTooltip; ToolTip.visible: hovered
                 }

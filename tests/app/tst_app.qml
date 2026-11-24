@@ -345,6 +345,31 @@ TestCase {
         compare(highlighted[0], "requestSendButton", "and it is Send");
     }
 
+    // UI review row 1: the chevron belongs to the label. The style's own
+    // indicator slot is not laid out once the background is stripped, so the
+    // segment must carry no indicator and the chevron must sit inside it.
+    function test_request_method_chevron_belongs_to_the_label() {
+        backend.saveRequest("t/method", baseReq());
+        win.appController.openRequest("t/method");
+        wait(50);
+
+        var box = findChild(win, "requestMethodBox");
+        verify(box !== null, "method segment exists");
+        compare(box.indicator, null, "no detached indicator");
+
+        var chevron = findChild(win, "requestMethodChevron");
+        verify(chevron !== null, "chevron exists");
+        compare(chevron.visible, box.width >= 72, "the chevron gives way below 72 px");
+
+        var topLeft = chevron.mapToItem(box, 0, 0);
+        verify(topLeft.x >= 0, "chevron starts inside the segment: " + topLeft.x);
+        verify(topLeft.x + chevron.width <= box.width,
+               "chevron ends inside the segment: " + (topLeft.x + chevron.width));
+        var centreY = topLeft.y + chevron.height / 2;
+        verify(Math.abs(centreY - box.height / 2) <= box.height / 4,
+               "chevron is vertically centred, not in a corner: " + centreY);
+    }
+
     // Criterion 4: the URL keeps its floor while the row is squeezed; the icon
     // buttons keep their fixed width (design §2.2 space budget).
     function test_request_bar_url_width() {
