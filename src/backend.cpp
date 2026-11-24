@@ -185,7 +185,8 @@ QString Backend::secretsBackend() const
 
 QString Backend::colorScheme() const
 {
-    if (!canToggleTheme()) return QStringLiteral("system");
+    // The settings combo drives the QML theme even on KDE; only the status-bar
+    // quick toggle is hidden where the platform palette cannot follow.
     return m_settings.colorScheme();
 }
 
