@@ -171,10 +171,9 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: 3
                     onClicked: app.sending ? backend.cancel() : app.doSend()
-                    // delayed native tooltip; no immediate hover popup, which
-                    // would overlap the click target (DESIGN.md §1)
-                    ToolTip.text: Strings.t.sendTooltip
-                    ToolTip.delay: 700
+                    // delayed tooltip; UI review round 3 measured that a click
+                    // with it visible still dispatched the request
+                    ToolTip.text: Strings.t.sendTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
                 }
             }
             // The borderless field and segment lose Breeze's focus ring, so the
@@ -201,7 +200,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty
             onClicked: app.revertCurrent()
-            ToolTip.text: Strings.t.discardTooltip; ToolTip.delay: 700
+            ToolTip.text: Strings.t.discardTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
         }
         ToolButton {
             objectName: "requestSaveButton"
@@ -213,7 +212,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
-            ToolTip.text: Strings.t.saveTooltip; ToolTip.delay: 700
+            ToolTip.text: Strings.t.saveTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
         }
     }
 
