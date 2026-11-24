@@ -241,9 +241,11 @@ TestCase {
         var envList = findChild(win, "envList");
         verify(envList !== null, "environment list exists");
         var envRow = envList.itemAtIndex(1);
+        var envPlain = envList.itemAtIndex(0);
         verify(envRow !== null, "selected environment row is realised");
+        verify(envPlain !== null, "unselected environment row is realised");
         compare(envRow.highlighted, true, "the edited environment is the selected row");
-        verify(Qt.colorEqual(envRow.contentItem.color, Kirigami.Theme.textColor),
+        verify(Qt.colorEqual(envRow.contentItem.color, envPlain.contentItem.color),
                "selected environment label keeps the normal text colour");
 
         var palette = findChild(win, "commandPalette");
@@ -253,9 +255,11 @@ TestCase {
         var paletteList = findChild(palette, "paletteList");
         verify(paletteList !== null, "palette list exists");
         var paletteRow = paletteList.itemAtIndex(0);
+        var palettePlain = paletteList.itemAtIndex(1);
         verify(paletteRow !== null, "keyboard-current palette row is realised");
+        verify(palettePlain !== null, "unselected palette row is realised");
         compare(paletteRow.highlighted, true, "index 0 is the keyboard-current row");
-        verify(Qt.colorEqual(paletteRow.contentItem.color, Kirigami.Theme.textColor),
+        verify(Qt.colorEqual(paletteRow.contentItem.color, palettePlain.contentItem.color),
                "keyboard-current palette row keeps the normal text colour");
         palette.close();
     }
