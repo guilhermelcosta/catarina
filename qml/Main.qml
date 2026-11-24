@@ -108,6 +108,8 @@ Kirigami.ApplicationWindow {
         discardEnvDialog: discardEnvDialog
         scopePopup: scopePopup
         fileDialog: fileDialog
+        mainSplit: mainSplitView
+        innerSplit: innerSplitView
     }
 
     title: Strings.t.appName + (controller.currentTab >= 0 && controller.currentTab < tabsModel.count
@@ -155,6 +157,8 @@ Kirigami.ApplicationWindow {
         }
         // no saved tabs: we stay on the "No request open" placeholder
         // (we don't open the tree's first collection automatically)
+        // one frame after the first layout: restoring earlier clamps against 0
+        Qt.callLater(function () { controller.restorePanes(); });
     }
 
 
@@ -165,11 +169,13 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("newRequest"); onActivated: newReqDialog.openIn(controller.targetFolder()) }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("palette"); onActivated: cmdPalette.openPalette() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: root.routeFind() }
+    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("tabSearch"); onActivated: requestEditor.openTabSearch() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("prevTab"); onActivated: controller.prevTab() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("nextTab"); onActivated: controller.nextTab() }
     // Ctrl+/ is a hint shortcut, not part of the remappable map (spec non-goal).
     Shortcut { enabled: !controller.recordingShortcut; sequence: "Ctrl+/"; onActivated: root.openShortcuts() }
     onClosing: function (close) {
+        controller.persistPanes();
         controller.persistSession();
         if (!controller.forceQuit && controller.hasDirtyTabs()) { close.accepted = false; quitDialog.open(); }
     }
@@ -190,6 +196,7 @@ Kirigami.ApplicationWindow {
             }
 
             SplitView {
+                id: mainSplitView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 orientation: Qt.Horizontal
@@ -227,7 +234,11 @@ Kirigami.ApplicationWindow {
 
                         // ---- 0: editor + response ----
                         SplitView {
-                            orientation: Qt.Horizontal
+                            id: innerSplitView
+                            // recorded decision: stack at the window floor (<= 1000 px).
+                            // The width > 0 guard keeps the first layout (width 0) horizontal.
+                            orientation: mainPage.width > 0 && mainPage.width <= 1000
+                                         ? Qt.Vertical : Qt.Horizontal
                             handle: SplitGrip {}
 
                             RequestEditor {
@@ -243,6 +254,9 @@ Kirigami.ApplicationWindow {
                             ResponsePane {
                                 id: responsePane
                                 app: controller
+                                // stacked: response below, ~40 % of the inner height
+                                SplitView.preferredHeight: innerSplitView.orientation === Qt.Vertical
+                                                           ? innerSplitView.height * 0.4 : 0
                             }
                         }
 
@@ -402,6 +416,54 @@ Kirigami.ApplicationWindow {
     RenameEnvDialog { id: renameEnvDialog; app: controller; envScreen: envScreen }
     ScopePopup { id: scopePopup; app: controller; envVarsModel: envScreen.varsModel; envScreen: envScreen }
     FilePickDialog { id: fileDialog; fieldsModel: fieldsModel }
+
+    // The first restore runs before the splits have a width at startup; retry as
+    // soon as the layout gives them one (after that, resizes must not reset it).
+    Connections {
+        target: mainSplitView
+        function onWidthChanged() {
+            if (!controller.panesRestored)
+                controller.restorePanes();
+        }
+    }
+
+    Connections {
+        target: innerSplitView
+        function onWidthChanged() {
+            if (!controller.panesRestored)
+                controller.restorePanes();
+        }
+    }
+
+    // Orientation swap: the saved widths stay untouched while stacked and are
+    // re-applied (clamped) when the window widens again. The live widths are
+    // not captured on the way down: at the window floor they are squeezed by
+    // the layout, not chosen by the user.
+    Connections {
+        target: innerSplitView
+        function onOrientationChanged() {
+            if (innerSplitView.orientation === Qt.Horizontal)
+                Qt.callLater(function () { controller.restorePanes(); });
+        }
+    }
+
+    // Pane widths persist the moment the user releases a splitter handle, so
+    // closing at the window floor cannot write a layout-squeezed width.
+    Connections {
+        target: mainSplitView
+        function onResizingChanged() {
+            if (!mainSplitView.resizing)
+                controller.commitUserSidebarWidth();
+        }
+    }
+
+    Connections {
+        target: innerSplitView
+        function onResizingChanged() {
+            if (!innerSplitView.resizing)
+                controller.commitUserSplitPosition();
+        }
+    }
 
     Connections {
         target: backend

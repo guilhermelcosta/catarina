@@ -8,6 +8,7 @@ import "../Strings.js" as Strings
 // Confirm deletion (generic; respects settings.confirmDelete).
 Dialog {
     id: deleteDialog
+    objectName: "deleteDialog"
     title: Strings.t.deleteTitle; modal: true; anchors.centerIn: parent; width: 400
     header: DialogHeader { dialogTitle: deleteDialog.title }
     property string message: ""
@@ -20,6 +21,7 @@ Dialog {
             Button { id: deleteCancel; text: Strings.t.cancel; KeyNavigation.right: deleteConfirm; onClicked: deleteDialog.close() }
             Button {
                 id: deleteConfirm
+                objectName: "deleteConfirm"
                 text: Strings.t.delete; Accessible.defaultButton: true
                 KeyNavigation.left: deleteCancel
                 onClicked: { var f = deleteDialog.callback; deleteDialog.close(); if (f) f(); }

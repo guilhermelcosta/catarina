@@ -48,6 +48,7 @@ Popup {
             { id: "envVars", icon: "vcs-branch", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.manageEnvVariables, run: function () { app.openEnvTab(app.activeEnv); } },
             { id: "createEnv", icon: "list-add", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.createEnvironment, run: function () { createEnvDialog.open(); } },
             { id: "closeTab", icon: "window-close", shortcut: app.shortcutSeq("closeTab"), group: Strings.t.paletteGroupGlobal, label: Strings.t.closeTab, run: function () { app.closeTab(app.currentTab); } },
+            { id: "tabSearch", icon: "edit-find", shortcut: app.shortcutSeq("tabSearch"), group: Strings.t.paletteGroupContext, label: Strings.t.tabSearch, run: function () { app.requestEditor.openTabSearch(); } },
             { id: "reopenTab", icon: "view-refresh", shortcut: app.shortcutSeq("reopenTab"), group: Strings.t.paletteGroupGlobal, label: Strings.t.reopenTab, run: function () { app.reopenClosed(); } },
             { id: "saveRequest", icon: "document-save", shortcut: app.shortcutSeq("save"), group: Strings.t.paletteGroupContext, label: Strings.t.saveRequest, run: function () { app.saveCurrent(); } },
             { id: "sendRequest", icon: "document-send", shortcut: app.shortcutSeq("send"), group: Strings.t.paletteGroupContext, label: Strings.t.sendRequest, run: function () { app.doSend(); } },

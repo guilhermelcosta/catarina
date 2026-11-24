@@ -350,6 +350,10 @@ var t = {
     settingsEllipsis: "Settings…",
     manageEnvVariables: "Manage environment variables…",
     closeTab: "Close tab",
+    pinTab: "Pin tab",
+    unpinTab: "Unpin tab",
+    closeOthers: "Close others",
+    closeAll: "Close all",
     reopenTab: "Reopen closed tab",
     saveRequest: "Save request",
     sendRequest: "Send request",
@@ -366,7 +370,13 @@ var t = {
     shortcutNextTab: "Next tab",
     shortcutReopenTab: "Reopen closed tab",
     shortcutPalette: "Command palette",
-    shortcutFind: "Find in response"
+    shortcutFind: "Find in response",
+    shortcutTabSearch: "Search request",
+
+    // ---- tab search ----
+    tabSearch: "Search request",
+    tabSearchPlaceholder: "Search request",
+    tabSearchEmptyHint: "Type to search this request."
 };
 
 // ---- parameterized messages ----
@@ -392,8 +402,16 @@ function deleteItemConfirm(name) {
     return "Delete \"" + name + "\"?\nThis erases from disk (recursively, if a folder).";
 }
 function deleteEnvConfirm(name) { return "Delete environment \"" + name + "\"?"; }
+function closeAllConfirm(n) {
+    return n === 1 ? "Close 1 tab with unsaved changes?" : "Close " + n + " tabs with unsaved changes?";
+}
 function nCollections(n) { return n + (n === 1 ? " collection" : " collections"); }
 function lineRef(line, col) { return "Ln " + line + ", Col " + col; }
+function tabSurface(surface) {
+    var names = { url: "URL", params: "Params", headers: "Headers",
+                  fields: "Fields", vars: "Vars", body: "Body" };
+    return names[surface] || "";
+}
 function timeoutLabel(sec) { return t.timeoutLabelText + " " + (sec > 0 ? sec + " s" : t.noTimeout); }
 function restrictedTo(list) { return "restricted to: " + list; }
 // "The request 'x' has unsaved changes." (kind: collection|environment|request)

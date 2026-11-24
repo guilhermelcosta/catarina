@@ -393,8 +393,12 @@ TestCase {
         var sendWidth = send.width, saveWidth = save.width, revertWidth = revert.width;
 
         var restoredWidth = win.width;
-        win.width = win.minimumWidth;
+        // one pixel above the stacking threshold: horizontal, editor forced to
+        // its minimum by a wide response pane
+        win.width = win.minimumWidth + 1;
         wait(100);
+        win.appController.responsePane.splitWidth = 900;
+        wait(120);
         compare(editor.width, editor.SplitView.minimumWidth, "editor squeezed to its minimum");
         verify(editor.urlInput.width >= 220,
                "URL keeps its 220 px floor at the editor minimum: " + editor.urlInput.width);
@@ -420,6 +424,7 @@ TestCase {
         verify(method.width >= 56,
                "the method keeps its 56 px floor: " + method.width);
 
+        win.appController.responsePane.splitWidth = 430;
         win.width = restoredWidth;
         wait(100);
     }
@@ -1671,6 +1676,317 @@ TestCase {
         settings.editorWrap = true;
         settings.editorLineNumbers = false;
         settings.editorFontSize = 0;
+    }
+
+    // criterion 8: pane widths persist, restore clamped
+    function test_layout_panes_persist_and_restore_clamped() {
+        backend.saveRequest("panes/r", baseReq());
+        win.appController.openRequest("panes/r");
+        wait(150);
+        var c = win.appController;
+        var inner = c.innerSplit;
+        compare(inner.orientation, Qt.Horizontal, "the default window is horizontal");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        settings.sidebarWidth = 270;
+        settings.splitPosition = 0.3;
+        c.restorePanes();
+        wait(220);
+        verify(Math.abs(c.sidebar.width - 270) <= 2,
+               "the saved sidebar width applies (got " + c.sidebar.width + ")");
+        var frac = c.responsePane.width / inner.width;
+        verify(Math.abs(frac - 0.3) <= 0.04,
+               "the saved split fraction applies (got " + frac + ")");
+
+        c.persistPanes();
+        wait(30);
+        verify(Math.abs(settings.sidebarWidth - 270) <= 2, "persist writes the sidebar width");
+        verify(Math.abs(settings.splitPosition - 0.3) <= 0.04, "persist writes the split fraction");
+
+        // out-of-range values clamp to the window and the SplitView minimums
+        settings.sidebarWidth = 10;
+        settings.splitPosition = 0.95;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.restorePanes();
+        wait(220);
+        verify(c.sidebar.width >= 189,
+               "a too-small sidebar clamps to 190 (got " + c.sidebar.width + ")");
+        verify(c.responsePane.width >= 229,
+               "a too-wide response clamps to the 230 px minimum (got " + c.responsePane.width + ")");
+        verify(c.responsePane.width / inner.width <= 0.81, "the fraction clamps to 0.8");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.sidebar.expandedWidth = 250;
+        c.sidebar.splitWidth = 250;
+        c.responsePane.expandedWidth = 430;
+        c.responsePane.splitWidth = 430;
+        wait(120);
+    }
+
+    // criterion 8 regression: startup restores only once the window has a
+    // width, so the pre-layout split cannot collapse the saved values to the
+    // minimums (the old code did, and then persisted 190 on close)
+    function test_layout_restore_waits_for_the_first_layout() {
+        if (win) { win.destroy(); win = null; }
+        settings.sidebarWidth = 420;
+        settings.splitPosition = 0.35;
+        backend.saveRequest("panes/startup", baseReq());
+        var w = appComponent.createObject(null);
+        verify(w, "could not create Main");
+        win = w;
+        w.visible = true;
+        w.appController.openRequest("panes/startup");
+        wait(400);
+        compare(w.appController.panesRestored, true,
+                "restore runs once the window has a width");
+        verify(Math.abs(w.appController.sidebar.width - 420) <= 2,
+               "the saved sidebar width survives the first layout (got "
+               + w.appController.sidebar.width + ")");
+        var inner = w.appController.innerSplit;
+        verify(inner.width > 0, "the request editor is laid out");
+        verify(Math.abs(w.appController.responsePane.width / inner.width - 0.35) <= 0.05,
+               "the saved split fraction survives the first layout (got "
+               + (w.appController.responsePane.width / inner.width) + ")");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        w.appController.paneSidebarWidth = 0;
+        w.appController.paneSplitPosition = 0;
+        w.appController.sidebar.expandedWidth = 250;
+        w.appController.sidebar.splitWidth = 250;
+        w.appController.responsePane.expandedWidth = 430;
+        w.appController.responsePane.splitWidth = 430;
+        wait(120);
+    }
+
+    // criterion 8 regression: the window floor squeezes the panes; that live
+    // width is not a user choice and must not replace the saved value (on
+    // widening or on close)
+    function test_layout_squeeze_does_not_overwrite_saved_widths() {
+        backend.saveRequest("squeeze/r", baseReq());
+        win.appController.openRequest("squeeze/r");
+        wait(150);
+        var c = win.appController;
+        var inner = c.innerSplit;
+        var resp = c.responsePane;
+        var restoredWidth = win.width;
+        compare(inner.orientation, Qt.Horizontal, "the default window is horizontal");
+
+        settings.sidebarWidth = 420;
+        settings.splitPosition = 0.6;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.restorePanes();
+        wait(220);
+        var wideSidebar = c.sidebar.width;
+        var wideFraction = resp.width / inner.width;
+        verify(wideSidebar > 380, "the saved sidebar applies at the wide window (got "
+               + wideSidebar + ")");
+
+        // the window floor squeezes the live sidebar without the user dragging
+        c.sidebar.expandedWidth = 190;
+        c.sidebar.splitWidth = 190;
+        wait(120);
+        verify(c.sidebar.width < wideSidebar - 20,
+               "the live sidebar is squeezed (got " + c.sidebar.width + ")");
+
+        win.width = 1000;
+        wait(300);
+        compare(inner.orientation, Qt.Vertical, "the panes stack at the floor");
+
+        // closing at the floor must keep the saved values, not the squeeze
+        c.persistPanes();
+        wait(30);
+        verify(Math.abs(settings.sidebarWidth - 420) <= 1,
+               "the squeezed width is not persisted (got " + settings.sidebarWidth + ")");
+        verify(Math.abs(settings.splitPosition - 0.6) <= 0.01,
+               "the saved split survives the stacked layout (got " + settings.splitPosition + ")");
+
+        win.width = restoredWidth;
+        wait(300);
+        compare(inner.orientation, Qt.Horizontal, "widening restores the horizontal split");
+        verify(Math.abs(c.sidebar.width - wideSidebar) <= 2,
+               "the saved sidebar width returns (got " + c.sidebar.width + ")");
+        verify(Math.abs(resp.width / inner.width - wideFraction) <= 0.05,
+               "the saved split fraction returns (got " + (resp.width / inner.width) + ")");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.sidebar.expandedWidth = 250;
+        c.sidebar.splitWidth = 250;
+        c.responsePane.expandedWidth = 430;
+        c.responsePane.splitWidth = 430;
+        wait(120);
+    }
+
+    // criterion 9: vertical stack at <= 1000 px, horizontal above
+    function test_layout_stacks_vertically_at_the_window_floor() {
+        backend.saveRequest("stack/r", baseReq());
+        win.appController.openRequest("stack/r");
+        wait(150);
+        var c = win.appController;
+        var inner = c.innerSplit;
+        var resp = c.responsePane;
+        var restoredWidth = win.width;
+        compare(inner.orientation, Qt.Horizontal, "wide windows keep the horizontal split");
+        var horizontalFraction = resp.width / inner.width;
+
+        win.width = 1000;
+        wait(300);
+        compare(inner.orientation, Qt.Vertical, "the panes stack at 1000 px");
+        verify(Math.abs(resp.height - inner.height * 0.4) <= inner.height * 0.08,
+               "the stacked response is ~40 % of the height (got " + resp.height
+               + " of " + inner.height + ")");
+
+        win.width = restoredWidth;
+        wait(300);
+        compare(inner.orientation, Qt.Horizontal, "widening restores the horizontal split");
+        var back = resp.width / inner.width;
+        verify(Math.abs(back - horizontalFraction) <= 0.05,
+               "the horizontal widths reapply (got " + back + ", expected " + horizontalFraction + ")");
+    }
+
+    // criterion 10: Ctrl+Shift+A opens tab search; matches navigate
+    function test_tab_search_opens_and_navigates() {
+        var req = baseReq();
+        req.url = "http://example/needle";
+        req.params = [{ name: "q", value: "needle", enabled: true }];
+        req.body = "first needle second needle";
+        backend.saveRequest("find/r", req);
+        win.appController.openRequest("find/r");
+        wait(150);
+
+        var c = win.appController;
+        compare(c.shortcutSeq("tabSearch"), "Ctrl+Shift+A", "the shipped default");
+        keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier);
+        wait(120);
+        var search = findChild(win, "tabSearch");
+        var field = findChild(win, "tabSearchField");
+        verify(search !== null && field !== null, "the tab-search popup exists");
+        verify(search.visible, "Ctrl+Shift+A opens tab search");
+
+        // empty query: the prompt, not "no matches", and no result list
+        compare(search.hasQuery, false, "the popup opens with an empty query");
+        var hint = findChild(search, "tabSearchEmptyHint");
+        var list = findChild(search, "tabSearchList");
+        var empty = findChild(search, "tabSearchEmpty");
+        verify(hint !== null && hint.visible, "the empty-query prompt is shown");
+        verify(list !== null && !list.visible, "the result list is hidden while empty");
+        verify(empty !== null && !empty.visible, "no match state is not shown before typing");
+
+        field.text = "needle";
+        wait(100);
+        verify(search.matchCount >= 4,
+               "URL, params and two body hits match (got " + search.matchCount + ")");
+        compare(search.matches[0].surface, "url", "the URL match comes first");
+        compare(search.hasQuery, true, "typing starts the search");
+        verify(list.visible, "the result list appears with matches");
+        compare(list.count, search.matchCount, "the list shows every match");
+        verify(list.itemAtIndex(0) !== null, "the first match row exists");
+        var surfaceTag = findChild(list.itemAtIndex(0), "tabSearchSurface");
+        verify(surfaceTag !== null, "each row has a surface tag");
+        compare(surfaceTag.text, "URL", "the first row names the URL surface");
+
+        field.text = "zzz";
+        wait(80);
+        verify(empty.visible, "the no-match state appears");
+        compare(empty.text, Strings.notFound("zzz"), "the no-match copy carries the query");
+
+        field.text = "needle";
+        wait(80);
+        field.forceActiveFocus();
+        keyClick(Qt.Key_Down);
+        wait(40);
+        compare(search.currentIndex, 1, "Down advances the selection");
+        compare(search.matches[1].surface, "params");
+
+        search.activate(search.matches[search.matchCount - 1]);
+        wait(150);
+        compare(search.visible, false, "activation closes the popup");
+        var bar = findChild(win, "requestTabBar");
+        compare(bar.currentIndex, 2, "a body match switches to the Body tab");
+        var body = findChild(win, "bodyEditorArea");
+        verify(body.selectedText === "needle", "the body match is selected");
+
+        // no request open: no-op, never opens over another tab type
+        c.openSettingsTab();
+        wait(100);
+        c.requestEditor.openTabSearch();
+        wait(80);
+        verify(!search.visible, "tab search does not open outside a request tab");
+    }
+
+    // criterion 11: tab context menu closes others / all
+    function test_tab_context_menu_close_others_and_all() {
+        backend.saveRequest("ctx/a", baseReq());
+        backend.saveRequest("ctx/b", baseReq());
+        backend.saveRequest("ctx/c", baseReq());
+        var c = win.appController;
+        c.openRequest("ctx/a");
+        c.pinTab(c.currentTab);
+        c.openRequest("ctx/b");
+        c.pinTab(c.currentTab);
+        c.openRequest("ctx/c");
+        c.pinTab(c.currentTab);
+        wait(150);
+        compare(c.tabsModel.count, 3);
+
+        var menu = findChild(c.tabStrip, "tabCtxMenu");
+        verify(menu !== null, "the tab context menu exists");
+        verify(findChild(menu, "tabCtxCloseOthers") !== null, "Close others is offered");
+        verify(findChild(menu, "tabCtxCloseAll") !== null, "Close all is offered");
+        verify(findChild(menu, "tabCtxClose") !== null, "Close is offered");
+
+        c.closeOtherTabs(1);
+        wait(120);
+        compare(c.tabsModel.count, 1, "Close others keeps one tab");
+        compare(c.tabsModel.get(0).relPath, "ctx/b", "it keeps the requested tab");
+
+        c.closeAllTabs();
+        wait(120);
+        compare(c.tabsModel.count, 0, "Close all reaches the empty state");
+        compare(c.currentTab, -1);
+    }
+
+    // criterion 11: dirty bulk close uses one count-based confirmation
+    function test_tab_bulk_close_dirty_confirmation() {
+        backend.saveRequest("dirty/a", baseReq());
+        backend.saveRequest("dirty/b", baseReq());
+        backend.saveRequest("dirty/c", baseReq());
+        var c = win.appController;
+        c.openRequest("dirty/a");
+        c.pinTab(c.currentTab);
+        c.openRequest("dirty/b");
+        c.pinTab(c.currentTab);
+        c.openRequest("dirty/c");
+        c.pinTab(c.currentTab);
+        wait(120);
+        c.markDirty();
+        wait(30);
+
+        var previous = settings.confirmDelete;
+        settings.confirmDelete = true;
+        c.closeAllTabs();
+        wait(120);
+        var dialog = findChild(win, "deleteDialog");
+        verify(dialog !== null && dialog.visible, "dirty bulk close asks once");
+        compare(dialog.message, Strings.closeAllConfirm(1), "the message carries the dirty count");
+        var confirm = findChild(dialog, "deleteConfirm");
+        verify(confirm !== null, "the confirmation button exists");
+        confirm.clicked();
+        wait(120);
+        compare(c.tabsModel.count, 0, "confirming closes every tab");
+        compare(c.currentTab, -1);
+        settings.confirmDelete = previous;
     }
 
     // criterion 5: a custom accent retints the selection roles
