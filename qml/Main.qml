@@ -417,6 +417,24 @@ Kirigami.ApplicationWindow {
     ScopePopup { id: scopePopup; app: controller; envVarsModel: envScreen.varsModel; envScreen: envScreen }
     FilePickDialog { id: fileDialog; fieldsModel: fieldsModel }
 
+    // The first restore runs before the splits have a width at startup; retry as
+    // soon as the layout gives them one (after that, resizes must not reset it).
+    Connections {
+        target: mainSplitView
+        function onWidthChanged() {
+            if (!controller.panesRestored)
+                controller.restorePanes();
+        }
+    }
+
+    Connections {
+        target: innerSplitView
+        function onWidthChanged() {
+            if (!controller.panesRestored)
+                controller.restorePanes();
+        }
+    }
+
     // Orientation swap: keep the horizontal widths while stacked and reapply
     // them (clamped) when the window widens again.
     Connections {

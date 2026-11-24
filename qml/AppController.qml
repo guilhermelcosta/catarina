@@ -44,6 +44,8 @@ QtObject {
     // horizontal widths remembered while the panes are stacked vertically
     property real paneSidebarWidth: 0
     property real paneSplitPosition: 0
+    // set once restorePanes() has run with a real split width
+    property bool panesRestored: false
 
 property string selectedPath: ""
 property bool selectedIsFolder: false
@@ -1024,37 +1026,49 @@ function doSend() {
 // ================= pane layout =================
 // Restores the saved sidebar width and response-pane fraction, clamped to the
 // live window and the SplitView minimums (sidebar 190, response 230, editor
-// 380). Called one frame after the first layout (Main.Component.onCompleted).
+// 380). Called from Main.Component.onCompleted and retried on the first width
+// change, because at startup the split can still have no width.
 function restorePanes() {
-    if (mainSplit && sidebar) {
-        var sw = paneSidebarWidth > 0 ? paneSidebarWidth : settings.sidebarWidth;
-        if (sw > 0) {
-            var maxSidebar = Math.min(500, mainSplit.width - 388);   // editor minimum + handle
-            if (maxSidebar < 190) maxSidebar = 190;
-            sw = Math.max(190, Math.min(sw, maxSidebar));
-            sidebar.expandedWidth = sw;
-            sidebar.splitWidth = sw;
-            paneSidebarWidth = sw;
-        }
+    // Before the first layout the split has no width; clamping against it would
+    // collapse the saved widths to the minimums (and persist that on close).
+    // Defer until the split has a width; Main re-runs this on the width change
+    // that the first layout triggers.
+    if (!mainSplit || mainSplit.width <= 0)
+        return;
+    var sw = paneSidebarWidth > 0 ? paneSidebarWidth : settings.sidebarWidth;
+    if (sidebar && sw > 0) {
+        // reserve the editor and response minimums plus the two handles
+        var maxSidebar = Math.min(500, mainSplit.width - 626);
+        if (maxSidebar < 190) maxSidebar = 190;
+        sw = Math.max(190, Math.min(sw, maxSidebar));
+        sidebar.expandedWidth = sw;
+        sidebar.splitWidth = sw;
+        paneSidebarWidth = sw;
     }
-    if (innerSplit && responsePane && innerSplit.orientation === Qt.Horizontal
-            && innerSplit.width > 0) {
+    if (innerSplit && responsePane && innerSplit.orientation === Qt.Horizontal) {
+        // the split has not necessarily been laid out yet at startup: derive its
+        // final width from the sidebar we just applied instead of reading it
+        var innerWidth = mainSplit.width - (sidebar && sw > 0 ? sw : 190) - 8;
         var f = paneSplitPosition > 0 ? paneSplitPosition : settings.splitPosition;
-        if (f > 0) {
+        if (f > 0 && innerWidth > 0) {
             f = Math.max(0.2, Math.min(f, 0.8));
-            var maxResponse = innerSplit.width - 388;                 // editor minimum + handle
-            var rw = Math.max(230, Math.min(innerSplit.width * f, maxResponse));
+            var maxResponse = innerWidth - 388;                       // editor minimum + handle
+            var rw = Math.max(230, Math.min(innerWidth * f, maxResponse));
             responsePane.expandedWidth = rw;
             responsePane.splitWidth = rw;
-            paneSplitPosition = rw / innerSplit.width;
+            paneSplitPosition = Math.max(0.2, Math.min(rw / innerWidth, 0.8));
         }
     }
+    panesRestored = true;
 }
-// remembers the live horizontal widths before the panes stack vertically
+// remembers the live horizontal widths before the panes stack vertically; in
+// the stacked layout the response spans the full width, so it is not a
+// horizontal fraction
 function capturePanes() {
     if (sidebar && sidebarVisible && sidebar.width > 0)
         paneSidebarWidth = sidebar.width;
-    if (innerSplit && responsePane && innerSplit.width > 0 && responsePane.width > 0)
+    if (innerSplit && responsePane && innerSplit.width > 0 && responsePane.width > 0
+            && responsePane.width < innerSplit.width - 1)
         paneSplitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
 }
 // Saves the current widths on close. The stored split is width-based, so it is

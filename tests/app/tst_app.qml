@@ -1730,6 +1730,42 @@ TestCase {
         wait(120);
     }
 
+    // criterion 8 regression: startup restores only once the window has a
+    // width, so the pre-layout split cannot collapse the saved values to the
+    // minimums (the old code did, and then persisted 190 on close)
+    function test_layout_restore_waits_for_the_first_layout() {
+        if (win) { win.destroy(); win = null; }
+        settings.sidebarWidth = 420;
+        settings.splitPosition = 0.35;
+        backend.saveRequest("panes/startup", baseReq());
+        var w = appComponent.createObject(null);
+        verify(w, "could not create Main");
+        win = w;
+        w.visible = true;
+        w.appController.openRequest("panes/startup");
+        wait(400);
+        compare(w.appController.panesRestored, true,
+                "restore runs once the window has a width");
+        verify(Math.abs(w.appController.sidebar.width - 420) <= 2,
+               "the saved sidebar width survives the first layout (got "
+               + w.appController.sidebar.width + ")");
+        var inner = w.appController.innerSplit;
+        verify(inner.width > 0, "the request editor is laid out");
+        verify(Math.abs(w.appController.responsePane.width / inner.width - 0.35) <= 0.05,
+               "the saved split fraction survives the first layout (got "
+               + (w.appController.responsePane.width / inner.width) + ")");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        w.appController.paneSidebarWidth = 0;
+        w.appController.paneSplitPosition = 0;
+        w.appController.sidebar.expandedWidth = 250;
+        w.appController.sidebar.splitWidth = 250;
+        w.appController.responsePane.expandedWidth = 430;
+        w.appController.responsePane.splitWidth = 430;
+        wait(120);
+    }
+
     // criterion 9: vertical stack at <= 1000 px, horizontal above
     function test_layout_stacks_vertically_at_the_window_floor() {
         backend.saveRequest("stack/r", baseReq());
