@@ -51,7 +51,13 @@ ColumnLayout {
                     id: methodBox
                     objectName: "requestMethodBox"
                     model: ["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"]
-                    Layout.preferredWidth: 88
+                    Layout.preferredWidth: Math.max(56, Math.min(88,
+                        parent.width - (220 + 24 + Kirigami.Units.smallSpacing * 2 + 3)))
+                    // Quick Layouts hand the fillWidth URL its minimum without
+                    // shrinking the fixed segment, so the row spills Send over
+                    // Discard/Save when the pane tightens. Give the method the
+                    // slack instead: 88 px when there is room, down to the
+                    // 56 px floor (design §2.2; URL keeps its 220 px).
                     Layout.minimumWidth: 56
                     Layout.fillHeight: true
                     implicitHeight: Kirigami.Units.gridUnit * 2
