@@ -147,7 +147,7 @@ Item {
             Kirigami.Icon { source: "folder-documents"; implicitWidth: 16; implicitHeight: 16 }
             Label { text: Strings.t.collections; font.bold: true }
             Item { Layout.fillWidth: true }
-            ToolButton { id: addButton; objectName: "sidebarAddButton"; icon.name: "list-add"; onClicked: addMenu.popup(addButton); ToolTip.text: Strings.t.add; ToolTip.visible: hovered }
+            ToolButton { id: addButton; objectName: "sidebarAddButton"; icon.name: "list-add"; onClicked: addMenu.popup(addButton); ToolTip.text: Strings.t.add; ToolTip.delay: Kirigami.Units.toolTipDelay }
             ToolButton {
                 id: sidebarOverflowButton
                 objectName: "sidebarOverflowButton"

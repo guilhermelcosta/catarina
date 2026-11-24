@@ -177,7 +177,7 @@ function formatBody(format, body) {
 
 // Counts for the response tab labels: 0 when there is nothing to count.
 function headerCount(headers) {
-    if (!headers || headers.length === undefined) return 0;
+    if (!Array.isArray(headers)) return 0;
     return headers.length;
 }
 

@@ -518,6 +518,7 @@ TestCase {
         compare(Util.headerCount([{ name: "a" }, { name: "b" }]), 2);
         compare(Util.headerCount([]), 0);
         compare(Util.headerCount(undefined), 0, "malformed headers fall back to 0");
+        compare(Util.headerCount("abc"), 0, "a non-array header value falls back to 0");
 
         compare(Util.cookieCount("a=1\nb=2"), 2);
         compare(Util.cookieCount("a=1\n\nb=2\n"), 2, "empty lines are not cookies");

@@ -264,7 +264,7 @@ Item {
                 Layout.fillWidth: isNaN(parseInt(text))
                 Layout.minimumWidth: isNaN(parseInt(text)) ? 0 : Math.min(implicitWidth, 80)
                 elide: Text.ElideRight
-                wrapMode: Text.WordWrap
+                wrapMode: isNaN(parseInt(text)) ? Text.WordWrap : Text.NoWrap
                 font.bold: false
                 color: isNaN(parseInt(text)) ? statusColor(text) : Kirigami.Theme.textColor
             }
@@ -272,7 +272,6 @@ Item {
                 id: metaLabel
                 objectName: "responseMetaLabel"
                 visible: text.length > 0
-                Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: Math.min(implicitWidth, 220)
                 // keeps room for the status, format and overflow; the meta elides first
@@ -282,6 +281,7 @@ Item {
                 font.features: ({ "tnum": 1 })
                 opacity: 0.75
             }
+            Item { Layout.fillWidth: true }
             ComboBox {
                 id: formatSelector
                 objectName: "responseFormatSelector"
