@@ -405,9 +405,6 @@ TestCase {
         verify(revertPos.x + revert.width <= editor.width + 0.5,
                "discard stays inside the editor at its minimum: " + (revertPos.x + revert.width));
 
-        // Quick Layouts gave the fillWidth URL its minimum without shrinking the
-        // method, so Send spilled out of the container and over Discard/Save.
-        // Guard the real geometry, not just the buttons' own widths.
         var bar = findChild(win, "requestBar");
         var method = findChild(win, "requestMethodBox");
         var barPos = bar.mapToItem(editor, 0, 0);
