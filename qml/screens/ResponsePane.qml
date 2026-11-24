@@ -271,6 +271,9 @@ Item {
                 id: metaLabel
                 objectName: "responseMetaLabel"
                 visible: text.length > 0
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 0
                 Layout.maximumWidth: 220
                 elide: Text.ElideRight
                 text: metaLabelText()

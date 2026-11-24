@@ -1124,6 +1124,24 @@ TestCase {
                "the header stays one row at the default size, got " + row.height);
     }
 
+    function test_response_header_overflow_fits_at_min_width() {
+        seedResponse({ status: 200, statusText: "OK", time: "12 ms", size: "3 B",
+                       headers: [{ name: "A", value: "1" }], cookies: "", body: '{"a":1}' });
+        var pane = win.appController.responsePane;
+        pane.splitWidth = 230;
+        wait(300);
+        verify(pane.width <= 231, "pane is at the 230 px minimum, got " + pane.width);
+
+        var row = findChild(win, "responseHeaderRow");
+        var overflow = findChild(win, "responseOverflowButton");
+        verify(row && overflow, "header row and overflow exist");
+        verify(overflow.visible, "the overflow is always visible");
+        var right = row.x + overflow.x + overflow.width;
+        verify(right <= pane.width + 1,
+               "the overflow stays inside the pane, right edge " + right
+               + " > pane " + pane.width);
+    }
+
     function test_response_format_and_wrap_do_not_mutate() {
         var stored = '{"a":1}';
         seedResponse({ status: 200, statusText: "OK", time: "1 ms", size: "7 B",
