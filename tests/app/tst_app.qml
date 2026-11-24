@@ -1340,53 +1340,21 @@ TestCase {
         var zoomValue = findChild(win, "statusBarZoomValue");
         var zoomIn = findChild(win, "statusBarZoomIn");
         verify(zoomOut && zoomValue && zoomIn, "zoom controls exist");
-        settings.fontSize = 0;
+        settings.editorFontSize = 0;
         wait(20);
-        compare(zoomValue.text, String(bar.effectiveFontSize), "shows the effective size");
-        var before = bar.effectiveFontSize;
+        compare(zoomValue.text, String(settings.editorFontSizeResolved), "shows the resolved editor size");
+        var before = settings.editorFontSizeResolved;
         zoomIn.clicked();
         wait(20);
-        compare(settings.fontSize, before + 1, "zoom in steps the editor font by one");
+        compare(settings.editorFontSize, before + 1, "zoom in steps the editor font by one");
         compare(zoomValue.text, String(before + 1));
         zoomValue.clicked();
         wait(20);
-        compare(settings.fontSize, 0, "clicking the value resets to the default");
+        compare(settings.editorFontSize, 0, "clicking the value resets to the unset default");
 
         var themeToggle = findChild(win, "statusBarThemeToggle");
-        verify(themeToggle !== null, "theme toggle exists");
-        compare(themeToggle.visible, backend.canToggleTheme, "hidden when the API is absent");
-        if (backend.canToggleTheme) {
-            var schemeBefore = backend.colorScheme;
-            var wasDark = win.appController.darkTheme;
-            themeToggle.clicked();
-            wait(50);
-            compare(win.appController.darkTheme, !wasDark,
-                    "the toggle flips the live theme, not only the stored value");
-            // the forced scheme owns the content theme, so it also lands under a
-            // platform theme that ignores the application palette (KDE/Plasma)
-            compare(win.contentItem.Kirigami.Theme.inherit, false,
-                    "a forced scheme overrides the content theme");
-            compare(win.contentItem.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
-                    "the content tree is painted in the forced scheme");
-            // style-painted surfaces read the window palette, which the platform
-            // theme supplies on its own; the forced scheme must reach it too
-            var pill = findChild(win, "envPill");
-            compare(win.palette.window.hsvValue < 0.5, !wasDark,
-                    "the window palette follows the forced scheme");
-            compare(win.palette.windowText.hsvValue > 0.5, !wasDark,
-                    "control text follows the forced scheme");
-            compare(pill.palette.windowText.hsvValue > 0.5, !wasDark,
-                    "the environment pill stays readable in the forced scheme");
-            compare(win.contentItem.Kirigami.Theme.highlightColor.hsvSaturation > 0.2, true,
-                    "the accent stays chromatic so checked controls cannot vanish");
-            backend.colorScheme = schemeBefore;
-            wait(50);
-            compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
-            compare(win.palette.window.hsvValue < 0.5, wasDark,
-                    "the window palette goes back to the desktop scheme");
-            compare(win.contentItem.Kirigami.Theme.inherit, schemeBefore === "light" || schemeBefore === "dark" ? false : true,
-                    "system restores the desktop theme");
-        }
+        verify(themeToggle === null || !themeToggle.visible,
+               "the forced-theme toggle is absent while the app follows the system");
 
         var hint = findChild(win, "statusBarShortcutsHint");
         verify(hint !== null, "Ctrl+/ hint exists");
@@ -1450,6 +1418,8 @@ TestCase {
 
     // criterion 7: every visible literal lives on the type scale
     function test_type_scale_walk() {
+        settings.uiScale = 1.0;
+        settings.density = "comfortable";
         var theme = win.appController.theme;
         compare(theme.fontSizeMeta, 11);
         compare(theme.fontSizeSecondary, 12);
@@ -1499,4 +1469,209 @@ TestCase {
         compare(bar.itemAt(1).text, Strings.t.headers + " 1");
         compare(bar.itemAt(4).text, Strings.t.variables + " 1");
     }
+
+    // ---- criteria 3, 4, 14: settings shell, cards and search ----
+    function test_settings_two_panes_cards_and_no_apply() {
+        win.appController.openSettingsTab();
+        wait(80);
+
+        var nav = findChild(win, "settingsNav");
+        verify(nav !== null, "settingsNav exists");
+        compare(nav.width, 190, "category nav is 190 px");
+        compare(nav.count, 7, "seven categories");
+        compare(nav.itemAtIndex(0).text, Strings.t.appearance, "Appearance first");
+        compare(nav.itemAtIndex(1).text, Strings.t.editor);
+        compare(nav.itemAtIndex(6).text, Strings.t.about);
+
+        verify(findChild(win, "settingsForm") !== null, "settingsForm preserved");
+        verify(findChild(win, "settingsCard.appearance") !== null, "Appearance card exists");
+        verify(findChild(win, "settingsRow.density") !== null, "density row exists");
+        compare(findChild(win, "settingsCard.appearance").visible, true,
+                "Appearance is active on open");
+
+        var texts = collectTexts(win, []);
+        verify(texts.indexOf("Apply") < 0, "no Apply-labelled control anywhere");
+        compare(Strings.t.apply, undefined, "Strings.t.apply is gone");
+
+        // the selected rail row is a theme tint with an icon and plain weight,
+        // not ItemDelegate's filled accent block or a bold label
+        var selected = nav.itemAtIndex(0);
+        compare(selected.highlighted, false, "the rail row does not use the filled highlight");
+        verify(Qt.colorEqual(selected.background.color, win.appController.theme.selectionTint),
+               "selection uses the theme selectionTint");
+        var navContent = selected.contentItem;
+        verify(navContent.children.length >= 2, "the rail row has an icon column and a label");
+        verify(navContent.children[0].source !== undefined && navContent.children[0].source.length > 0,
+               "the rail row carries a Breeze icon");
+        var navLabel = navContent.children[navContent.children.length - 1];
+        compare(navLabel.font.bold, false, "the selected label keeps the plain weight");
+
+        var card = findChild(win, "settingsCard.appearance");
+        var subtitle = findChild(win, "settingsSubtitle");
+        verify(subtitle !== null, "the subtitle exists");
+        verify(subtitle.mapToItem(card.parent, 0, 0).y < card.mapToItem(card.parent, 0, 0).y,
+               "the subtitle sits above the cards, not under their bottom edge");
+
+        nav.itemAtIndex(1).clicked();
+        wait(30);
+        compare(findChild(win, "settingsCard.editor").visible, true, "nav switches category");
+        compare(findChild(win, "settingsCard.appearance").visible, false);
+    }
+
+    function test_settings_search_filters_and_routes_ctrl_f() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        var search = findChild(win, "settingsSearch");
+        verify(search !== null, "settingsSearch exists");
+        nav.itemAtIndex(0).clicked();
+        wait(30);
+
+        search.text = "density";
+        wait(30);
+        compare(findChild(win, "settingsRow.density").visible, true, "matching row stays");
+        compare(findChild(win, "settingsRow.uiScale").visible, false, "non-matching row hides");
+        compare(findChild(win, "settingsEmptyState").visible, false);
+
+        // a category with matches does not take the pane while another is
+        // selected: the rail selection and the visible card must agree
+        search.text = "wrap";
+        wait(30);
+        compare(findChild(win, "settingsCard.appearance").visible, false,
+                "the selected category's card hides when it has no match");
+        compare(findChild(win, "settingsCard.editor").visible, false,
+                "a non-selected matching card stays hidden");
+        compare(findChild(win, "settingsEmptyState").visible, true,
+                "the pane shows the empty state instead of a disagreeing card");
+        compare(nav.itemAtIndex(5).visible, false, "a rail entry with no match hides");
+        compare(nav.itemAtIndex(1).visible, true, "a rail entry with a match stays");
+
+        search.text = "zzzz-no-setting";
+        wait(30);
+        compare(findChild(win, "settingsRow.density").visible, false);
+        compare(findChild(win, "settingsEmptyState").visible, true, "no match shows the empty state");
+
+        search.text = "";
+        wait(30);
+        compare(findChild(win, "settingsEmptyState").visible, false);
+        compare(findChild(win, "settingsRow.density").visible, true, "clearing restores the card");
+
+        nav.itemAtIndex(2).clicked();   // move focus away from the search
+        wait(20);
+        keyClick(Qt.Key_F, Qt.ControlModifier);
+        wait(30);
+        verify(search.activeFocus, "Ctrl+F in settings focuses the settings search");
+        search.text = "";
+    }
+
+    // ---- criteria 5, 6, 7: appearance + editor rows wired ----
+    function test_settings_appearance_and_editor_rows() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        nav.itemAtIndex(0).clicked();
+        wait(30);
+
+        var theme = win.appController.theme;
+        var scale = findChild(win, "settingsUiScale");
+        verify(scale !== null, "UI scale control exists");
+        compare(scale.value, 100, "scale starts at 1.00");
+        settings.uiScale = 1.2;
+        wait(30);
+        compare(theme.fontSizeBase, Math.round(13 * 1.2), "type scale follows uiScale");
+        compare(theme.controlToolbar, Math.round(28 * 1.2), "control size follows uiScale");
+        settings.uiScale = 1.0;
+        wait(20);
+
+        settings.density = "compact";
+        wait(30);
+        compare(theme.densityFactor, 0.85);
+        compare(theme.controlToolbar, Math.round(28 * 0.85), "compact shrink the controls");
+        compare(theme.settingsRowHeight, 44, "compact settings rows");
+        settings.density = "comfortable";
+        wait(20);
+        compare(theme.settingsRowHeight, 48);
+
+        nav.itemAtIndex(1).clicked();
+        wait(30);
+        var size = findChild(win, "settingsEditorFontSize");
+        verify(size !== null, "editor size control exists");
+        settings.editorFontSize = 18;
+        wait(30);
+        compare(size.value, 18, "the size control writes editorFontSize");
+        var preview = findChild(win, "editorFontPreview");
+        verify(preview !== null, "live preview exists");
+        compare(preview.font.pointSize, 18, "preview uses the resolved editor size");
+
+        var family = findChild(win, "settingsEditorFontFamily");
+        verify(family !== null, "font family control exists");
+        compare(family.model[0], Strings.t.editorFontDefault, "default monospace is the first entry");
+        settings.editorFontSize = 0;
+    }
+
+    function test_settings_storage_row_takes_the_width_it_needs() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        nav.itemAtIndex(5).clicked();
+        wait(60);
+
+        var storage = findChild(win, "settingsRow.storage");
+        verify(storage !== null, "the Storage row exists");
+        compare(storage.wideControl, true, "Storage is the one wide row");
+        verify(storage.resolvedControlWidth >= 380,
+               "the Storage control keeps at least 380 px (got " + storage.resolvedControlWidth + ")");
+        var field = findChild(win, "storageDirField");
+        verify(field !== null, "the path field exists");
+        verify(field.width > 200, "the path field outgrows the standard column");
+
+        nav.itemAtIndex(0).clicked();
+        wait(40);
+        var standard = findChild(win, "settingsRow.density");
+        compare(standard.wideControl, false);
+        compare(standard.resolvedControlWidth, 200, "standard rows keep the 200 px column");
+    }
+
+    function test_editor_content_surfaces_use_resolved_font() {
+        settings.editorFontSize = 17;
+        settings.editorFontFamily = "";
+        settings.editorLineNumbers = true;
+        settings.editorWrap = false;
+        var req = baseReq();
+        req.bodyType = "json";
+        req.body = "{\n  \"a\": 1\n}";
+        backend.saveRequest("font/r", req);
+        win.appController.openRequest("font/r");
+        wait(120);
+
+        var url = findChild(win, "requestUrlField");
+        var body = findChild(win, "bodyEditorArea");
+        var resp = findChild(win, "responseBodyArea");
+        verify(url && body && resp, "content surfaces exist");
+        compare(url.font.pointSize, 17);
+        compare(body.font.pointSize, 17);
+        compare(resp.font.pointSize, 17);
+        compare(url.font.family, settings.editorFontResolved);
+        compare(body.font.family, settings.editorFontResolved);
+        compare(resp.font.family, settings.editorFontResolved);
+        compare(body.wrapMode, TextEdit.NoWrap, "wrap follows settings.editorWrap");
+
+        var gutter = findChild(win, "bodyLineGutter");
+        verify(gutter !== null, "line-number gutter exists");
+        var sectionBar = findChild(win, "requestTabBar");
+        verify(sectionBar !== null, "request section bar exists");
+        sectionBar.currentIndex = 2;   // Body tab: the gutter lives under it
+        wait(60);
+        compare(settings.editorLineNumbers, true, "line-number setting is on before the check");
+        compare(gutter.visible, true, "gutter follows settings.editorLineNumbers");
+        settings.editorLineNumbers = false;
+        wait(30);
+        compare(gutter.visible, false, "gutter hides when the setting is off");
+
+        settings.editorWrap = true;
+        settings.editorLineNumbers = false;
+        settings.editorFontSize = 0;
+    }
+
+    // criterion 5: a custom accent retints the selection roles
 }

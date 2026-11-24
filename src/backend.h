@@ -35,6 +35,8 @@ class Backend : public QObject
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
     // false on Qt < 6.8, where there is no runtime scheme API
     Q_PROPERTY(bool canToggleTheme READ canToggleTheme CONSTANT)
+    Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
+    Q_PROPERTY(QString qtVersion READ qtVersion CONSTANT)
 
 public:
     explicit Backend(QObject *parent = nullptr);
@@ -59,6 +61,10 @@ public:
     // opens the window already themed.
     static void applyColorScheme(const QString &scheme);
     bool canToggleTheme() const;
+    QString appVersion() const;
+    QString qtVersion() const;
+    // fixed-pitch families, cached; for the editor font picker
+    Q_INVOKABLE QStringList monospaceFamilies() const;
     // copies the built-in example collection (:/seed) on first use; only when
     // storage is still empty and just once (marks .catarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
@@ -174,6 +180,7 @@ private:
     QString m_secretsFile; // <m_appData>/secrets.json
     QString m_seedSource;  // where seedDefaultCollection copies from (default ":/seed")
     std::unique_ptr<SecretStore> m_secrets;
+    mutable QStringList m_monoFamilies;   // lazily filled cache
 
     HttpClient *m_http = nullptr;
     CollectionStorage *m_collections = nullptr;

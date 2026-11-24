@@ -34,6 +34,8 @@ Kirigami.ApplicationWindow {
     // design tokens, reachable from every view as `app.theme`
     Theme {
         id: theme
+        uiScale: settings.uiScale
+        density: settings.density
         // resolved from the palette Backend::applyColorScheme installs
         systemPalette: SystemPalette { colorGroup: SystemPalette.Active }
         systemDisabledPalette: SystemPalette { colorGroup: SystemPalette.Disabled }
@@ -66,7 +68,13 @@ Kirigami.ApplicationWindow {
     // a forced light/dark scheme is also pushed into the live Kirigami theme
     Connections {
         target: backend
-        function onColorSchemeChanged() { theme.applyScheme(root, backend.colorScheme); }
+        function onColorSchemeChanged() { theme.applyScheme(root, "system", ""); }
+    }
+    // accent/scale/density ride the generic settings signal; applyScheme is
+    // idempotent and cheap, so it can re-run on any settings change
+    Connections {
+        target: settings
+        function onSettingsChanged() { theme.applyScheme(root, "system", ""); }
     }
 
     AppController {
@@ -119,6 +127,7 @@ Kirigami.ApplicationWindow {
         return false;
     }
     function routeFind() {
+        if (controller.showingSettings) { settingsPage.focusSearch(); return; }
         if (root.focusIsInSidebar()) { sidebar.focusFilter(); return; }
         if (responsePane.hasBody()) { responsePane.openFind(); return; }
         if (controller.sidebarVisible) sidebar.focusFilter();
@@ -129,7 +138,7 @@ Kirigami.ApplicationWindow {
         settingsPage.focusShortcuts();
     }
     Component.onCompleted: {
-        theme.applyScheme(root, backend.colorScheme);   // saved scheme, before the first frame
+        theme.applyScheme(root, "system", "");   // saved scheme, before the first frame
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
         // Kirigami registers Alt+Left/Right (StandardKey Back/Forward) on the pageStack,

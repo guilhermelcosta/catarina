@@ -106,7 +106,8 @@ ColumnLayout {
                         anchors.fill: parent
                         background: null
                         placeholderText: Strings.t.urlExample
-                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                        font.family: settings.editorFontResolved
+                        font.pointSize: settings.editorFontSizeResolved
                         topPadding: 5; bottomPadding: 5; horizontalPadding: 8
                         resolved: app.resolvedVars
                         collection: app.currentCollection

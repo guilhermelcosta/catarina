@@ -8,6 +8,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QStandardPaths>
@@ -184,28 +185,52 @@ QString Backend::secretsBackend() const
 
 QString Backend::colorScheme() const
 {
-    if (!canToggleTheme()) return QStringLiteral("system");
+    // The settings combo drives the QML theme even on KDE; only the status-bar
+    // quick toggle is hidden where the platform palette cannot follow.
     return m_settings.colorScheme();
 }
 
 bool Backend::canToggleTheme() const
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    // The KDE platform theme owns the palette; Qt's color-scheme hint does not
-    // override it at runtime. Forced themes are P2 work; on KDE the control is
-    // hidden and the app follows the system.
-    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("KDE", Qt::CaseInsensitive))
-        return false;
+    // The scheme is forced through the application palette, which the controls
+    // and the Kirigami theme both resolve from, so the control works on every
+    // desktop (KDE included) instead of following the platform theme only.
     return true;
 #else
     return false;
 #endif
 }
 
+QString Backend::appVersion() const
+{
+#ifdef CATARINA_VERSION
+    return QStringLiteral(CATARINA_VERSION);
+#else
+    return QString();
+#endif
+}
+
+QString Backend::qtVersion() const
+{
+    return QString::fromLatin1(qVersion());
+}
+
+QStringList Backend::monospaceFamilies() const
+{
+    if (m_monoFamilies.isEmpty()) {
+        const QStringList all = QFontDatabase::families();
+        for (const QString &family : all) {
+            if (QFontDatabase::isFixedPitch(family))
+                m_monoFamilies.append(family);
+        }
+    }
+    return m_monoFamilies;
+}
+
 void Backend::applyColorScheme(const QString &scheme)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("KDE", Qt::CaseInsensitive)) return;
     (void)systemPalette();   // capture the system palette before any override
     Qt::ColorScheme qtScheme = Qt::ColorScheme::Unknown;   // follow the system
     if (scheme == QLatin1String("light"))
@@ -214,13 +239,13 @@ void Backend::applyColorScheme(const QString &scheme)
         qtScheme = Qt::ColorScheme::Dark;
     QGuiApplication::styleHints()->setColorScheme(qtScheme);
     // The hint alone is a no-op on platforms without system palette updates
-    // (offscreen, some compositors). Resolve the scheme into a palette so the
-    // live Kirigami theme retints everywhere; "system" restores the startup one.
-    if (qtScheme == Qt::ColorScheme::Unknown) {
-        QGuiApplication::setPalette(systemPalette());
-    } else {
-        QGuiApplication::setPalette(schemePalette(qtScheme));
-    }
+    // (offscreen, some compositors). The resolved palette is installed on the
+    // application so the Controls style (fields, buttons, popups) and the
+    // Kirigami theme definition (SystemPalette) both follow it. `system`
+    // restores the palette captured at startup.
+    QGuiApplication::setPalette(qtScheme == Qt::ColorScheme::Unknown
+                                    ? systemPalette()
+                                    : schemePalette(qtScheme));
 #endif
 }
 

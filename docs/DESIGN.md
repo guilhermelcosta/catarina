@@ -142,34 +142,57 @@ literal that duplicates a token is a bug.
 | `radiusChip` / `radiusControl` / `radiusPanel` | 4 / 6 / 8 px |
 | `textInformational` / `textTableHeader` / `textDecoration` | 0.75 / 0.65 / 0.5 |
 | `textDisabledRow` / `textDisabledVariable` | 0.45 / 0.4 |
-| fontSizeMeta / Secondary / Base / Emphasis | 11 / 12 / 13 / 14 px |
-| fontSizeScreenTitle / fontSizeCollectionTitle | 16 / 20 px |
-| controlToolbar / controlField / controlDialogButton | 28 / 32 / 36 px |
-| iconSize / hitTarget | 16 / 28 px |
+| fontSizeMeta / Secondary / Base / Emphasis | `Math.round(11 / 12 / 13 / 14 × uiScale)` px |
+| fontSizeScreenTitle / fontSizeCollectionTitle | `Math.round(16 / 20 × uiScale)` px |
+| controlToolbar / controlField / controlDialogButton | `Math.round(28 / 32 / 36 × uiScale × densityFactor)` px |
+| iconSize / hitTarget | 16 px / `Math.max(24, Math.round(28 × uiScale × densityFactor))` |
+| settingsRowHeight | `Math.round(48 × uiScale)` comfortable, `Math.round(44 × uiScale)` compact |
 | topBarHeight / hoverDurationMs / focusRingWidth | 40 px / 120 ms / 2 px |
 | chromeBorder | `Kirigami.Theme.textColor` at alpha 0.45 |
+
+**UI scale and density.** `Theme.uiScale` (1.0–1.5, from Settings) multiplies
+the six type sizes; `Theme.density` (`comfortable` / `compact`,
+`densityFactor` 0.85) also multiplies the control sizes and shortens the
+settings rows. At `uiScale = 1.0` and comfortable density every token keeps its
+literal value. The boundary is deliberate: **density re-derives the control
+tokens and settings rows only**; `Kirigami.Units` spacings are out of its reach
+in this slice. Editor content (URL field, request body, response body) scales
+only through `editorFontSizeResolved` — a UI-scale change never alters the
+editor text. `Theme` stays settings-free; `Main.qml` binds the two inputs.
 
 Both tints derive from the live `Kirigami.Theme`, so a desktop theme change
 retints the app without a restart.
 
-**Forced scheme.** The status-bar toggle persists `colorScheme` (`system` /
-`light` / `dark`) and `Backend::applyColorScheme` sets the Qt colour-scheme hint
-plus a resolved `QPalette`. A platform theme can ignore that palette: the KDE
-Kirigami theme reads the Plasma colour scheme, so the hint says dark while every
-surface stays light. `Theme.applyScheme(window, scheme)` in `qml/Theme.qml`
-therefore also writes the resolved palette roles into the window's content
-theme (`Kirigami.Theme.inherit: false` for the subtree, reset to `true` for
-`system`); `Main.qml` calls it at startup and on `colorSchemeChanged`. Never
-bind a surface to the raw palette when a token exists.
+**Forced scheme.** The theme row and the status-bar toggle persist
+`colorScheme` (`system` / `light` / `dark`). `Backend::applyColorScheme` sets the
+Qt colour-scheme hint and installs the resolved `QPalette` with
+`QGuiApplication::setPalette`, so the app does not depend on a platform theme
+re-resolving the system palette for it. `Theme.applyScheme(window, scheme)` in
+`qml/Theme.qml` then writes the same roles into the window's content theme
+(`Kirigami.Theme.inherit: false` for the subtree, reset to `true` for `system`)
+and into the content item's palette; `Main.qml` binds the window palette to the
+same `SystemPalette` and calls it at startup, on `colorSchemeChanged` and on
+accent change. Together the application palette, the window/content palette and
+the Kirigami content theme reach both the Kirigami roles and the style-painted
+controls (fields, combos, spin boxes, buttons, popups), so forced dark is not
+half-applied on KDE. `canToggleTheme` is true wherever Qt has the runtime
+colour-scheme API (Qt ≥ 6.8). Never bind a surface to the raw palette when a
+token exists.
 
-QtQuick Controls paint their style surfaces from the *window* palette, which the
-platform theme supplies independently of `QGuiApplication::setPalette`. `Main.qml`
-therefore binds the window palette roles to the same `SystemPalette` the Kirigami
-theme uses, so fields, buttons and default label colours follow the forced scheme
-too. When the platform theme has no usable accent (a neutral highlight, as under
-an isolated config), `schemePalette` falls back to Breeze's selection blue and
-derives the highlighted text from its luminance, so a checked control can never
-paint white on white.
+**Custom accent.** `applyScheme(window, scheme, accent)` takes the accent as a
+third argument (`""` = follow the system). After the scheme writes it overrides
+`highlightColor` and `focusColor` with the accent and picks
+`highlightedTextColor` (`#1a1a1a` on a light accent, `#ffffff` on a dark one) by
+`Util.luminance`, so a checked control can never paint white on white. The
+selection/hover tints derive from the live `Kirigami.Theme.highlightColor`, so
+they re-derive automatically.
+
+QtQuick Controls paint their style surfaces from their palette, and the Kirigami
+desktop style resolves its text roles from the application palette; both follow
+the forced scheme through the writes above. When the platform has no usable
+accent (a neutral highlight, as under an isolated config), `schemePalette` falls
+back to Breeze's selection blue and derives the highlighted text from its
+luminance, so a checked control can never paint white on white.
 
 **Type scale.** Every visible text uses one of the six sizes. The only
 exceptions are the editor-font content surfaces (URL field, request body,
@@ -346,6 +369,38 @@ In `qml/` (atomic and shell components):
   `assets/icons/catarina-badge.svg` stays unmasked and uses a higher `iconOpacity` (the app uses `0.9`) so
   the badge does not wash out. **Every placeholder uses this component** — center
   it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
+- **`SettingsCard.qml` / `SettingsRow.qml`** — settings grammar. `SettingsCard` is
+  a raised `alternateBackgroundColor` surface (`radiusPanel`, 1 px
+  `chromeBorder`) with a title and a column of rows; the card's padding is
+  `largeSpacing` on all four sides. `SettingsRow` keeps the label + description
+  on the left and puts the control in a fixed **200 px × uiScale** column on the
+  right (`controlWidth` overrides it); its height is `settingsRowHeight` and
+  `rowSearch` (label + description, lowercase) is the searchable text. The one
+  exception is `wideControl` (Storage): the control takes the row's remaining
+  width with a **380 px × uiScale floor**, because a path in a 200 px field is
+  unreadable. Both take `tokens` from the screen (`app.theme`), never a private
+  `Theme`.
+- **Settings screen (`qml/screens/SettingsScreen.qml`)** — two panes: a 190 px
+  `settingsNav` (seven categories: Appearance, Editor, Network, Behavior,
+  Shortcuts, Storage, About) and the card pane. Appearance is active on open;
+  the category is not persisted. Each rail row is a 16 px Breeze icon + label
+  with the plain font weight; the selected row is `selectionTint` (never the
+  filled `highlightColor` row or a bold label). **No Apply**: every control writes
+  its setting on change, and the storage path applies on `editingFinished` when
+  it is valid and differs from the current folder. The one-line subtitle
+  (`optionsApplyInstantly`) sits **above** the cards. `settingsSearch` sits above
+  it (single line, no magnifier, `Esc` clears): a row shows when `rowSearch`
+  contains the query, a rail entry hides when its category has no match, and the
+  pane stays on the selected category — its matches, or the transparent
+  `settingsEmptyState`, never another category's card. `Ctrl+F` on the settings
+  tab routes to `focusSearch()` before the sidebar/response branches.
+- **Editor content surfaces** — the URL field, request body and response body
+  bind `font.family: settings.editorFontResolved` and
+  `font.pointSize: settings.editorFontSizeResolved`; the status-bar zoom writes
+  the same `editorFontSize` (reset writes the unset `0`, the label always shows
+  the resolved size). `BodyEditor` honors `editorWrap`/`editorIndent`/
+  `editorBrackets`, and its 34 px line-number gutter (`bodyLineGutter`) renders
+  viewport-only from `positionToRectangle`, hiding when the setting is off.
 - **`HeaderTable.qml`** — read-only table (response HTTP headers); selectable cells + "Copy all".
 - **`ResolvedVarsTable.qml`** — read-only table of effective variables (Source/Name/Value).
   The Source column has **color and icon per scope** (global/collection/request) and the list is

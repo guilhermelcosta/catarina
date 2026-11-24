@@ -39,6 +39,7 @@ qt_add_library(catarina_core OBJECT
     src/settings.cpp
 )
 target_include_directories(catarina_core PRIVATE src)
+target_compile_definitions(catarina_core PRIVATE CATARINA_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(catarina_core PRIVATE ${CATARINA_SECRETS_DEFS})
 target_link_libraries(catarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
@@ -79,6 +80,8 @@ qt_add_resources(catarina "qml"
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
+        qml/SettingsCard.qml
+        qml/SettingsRow.qml
         qml/DialogHeader.qml
         qml/DialogActions.qml
         qml/ResolvedVarsTable.qml

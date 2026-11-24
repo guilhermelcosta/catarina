@@ -232,6 +232,26 @@ function cookieCount(cookies) {
     return n;
 }
 
+// Relative luminance (WCAG) of a colour: "#rrggbb" string or a Qt color
+// object ({r,g,b} in 0..1). Returns 0..1; invalid input returns 0.
+function luminance(c) {
+    var r = 0, g = 0, b = 0;
+    if (typeof c === "string") {
+        var m = /^#([0-9a-fA-F]{6})$/.exec(c);
+        if (!m) return 0;
+        var n = parseInt(m[1], 16);
+        r = ((n >> 16) & 255) / 255;
+        g = ((n >> 8) & 255) / 255;
+        b = (n & 255) / 255;
+    } else if (c && c.r !== undefined) {
+        r = c.r; g = c.g; b = c.b;
+    } else {
+        return 0;
+    }
+    function linear(v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+}
+
 // 1-based line/column for a cursor position, used by the response line reference.
 function lnCol(position, text) {
     text = text || "";
