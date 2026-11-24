@@ -478,8 +478,67 @@ TestCase {
         verify(withBody.indexOf("-d 'oi'") >= 0);
     }
 
-    function test_vartokens() {
-        var rv = [{ name: "test", enabled: true }, { name: "off", enabled: false },
+    // ---- Util.js: sidebar filter, response formatting and counts ----
+    function test_util_filterRows() {
+        var rows = [
+            { relPath: "users", name: "users" },
+            { relPath: "users/list", name: "List users" },
+            { relPath: "users/list/admin", name: "Admin" },
+            { relPath: "posts", name: "posts" }
+        ];
+        var byName = Util.filterRows(rows, "admin");
+        verify(byName["users/list/admin"], "self match on a request name");
+        verify(byName["users"], "ancestors of a hit stay visible");
+        verify(byName["users/list"], "the direct parent stays visible");
+        verify(!byName["posts"], "unrelated rows are not hits");
+
+        var bySegment = Util.filterRows(rows, "posts");
+        verify(bySegment["posts"], "folder path segment matches itself");
+
+        var byPath = Util.filterRows(rows, "user");
+        verify(byPath["users/list"], "a path-segment match marks the descendants' ancestors");
+
+        compare(Object.keys(Util.filterRows(rows, "")).length, 0, "empty filter means no filter");
+    }
+
+    function test_util_prettyJson_and_formatBody() {
+        compare(Util.prettyJson('{"a":1}'), '{\n  "a": 1\n}');
+        compare(Util.prettyJson("not json"), null);
+
+        var stored = '{"a":1}';
+        compare(Util.formatBody("json", stored), '{\n  "a": 1\n}');
+        compare(Util.formatBody("json", "not json"), "not json", "non-JSON falls back to the raw text");
+        compare(Util.formatBody("raw", stored), stored);
+        compare(Util.formatBody("html", stored), stored);
+        compare(Util.formatBody("xml", stored), stored);
+        compare(Util.formatBody("json", ""), "", "never throws on an empty body");
+    }
+
+    function test_util_header_and_cookie_counts() {
+        compare(Util.headerCount([{ name: "a" }, { name: "b" }]), 2);
+        compare(Util.headerCount([]), 0);
+        compare(Util.headerCount(undefined), 0, "malformed headers fall back to 0");
+        compare(Util.headerCount("abc"), 0, "a non-array header value falls back to 0");
+
+        compare(Util.cookieCount("a=1\nb=2"), 2);
+        compare(Util.cookieCount("a=1\n\nb=2\n"), 2, "empty lines are not cookies");
+        compare(Util.cookieCount(""), 0);
+        compare(Util.cookieCount(undefined), 0, "malformed cookies fall back to 0");
+    }
+
+    function test_util_lnCol() {
+        var text = "abc\ndef\nghi";
+        compare(Util.lnCol(0, text).line, 1);
+        compare(Util.lnCol(0, text).col, 1);
+        compare(Util.lnCol(4, text).line, 2, "first char of the second line");
+        compare(Util.lnCol(4, text).col, 1);
+        compare(Util.lnCol(6, text).line, 2);
+        compare(Util.lnCol(6, text).col, 3);
+        compare(Util.lnCol(-1, text).line, 1, "negative positions clamp");
+        compare(Util.lnCol(999, text).line, 3, "positions past the end clamp");
+    }
+
+    function test_vartokens() {        var rv = [{ name: "test", enabled: true }, { name: "off", enabled: false },
                   { name: "{{a}}", enabled: true }, { name: "", enabled: true }];
         compare(VarTokens.matchingNames(rv, ""), ["test"]);
         compare(VarTokens.matchingNames(rv, "te"), ["test"]);

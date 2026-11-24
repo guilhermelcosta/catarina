@@ -13,6 +13,7 @@ Item {
     property var treeModel
     property var addMenu
     property var ctxMenu
+    property var overflowMenu
     readonly property alias view: treeView
     property real expandedWidth: 250
     // current width of the split item. It is applied imperatively (not via a
@@ -100,6 +101,26 @@ Item {
             if (!parent.hidden && parent.depth < e.depth) { selectRow(p); return; }
         }
     }
+    // Ctrl+F route 1/3: focus the filter and select its text
+    function focusFilter() {
+        if (!app.sidebarVisible || width <= 0) return;
+        if (!filterField.visible) return;
+        filterField.forceActiveFocus();
+        filterField.selectAll();
+    }
+    // a selected row that the filter hides leaves no highlighted row until the
+    // filter clears; the selection itself stays in `app.selectedPath`
+    function syncSelection() {
+        var i = rowIndexAt(app.selectedPath);
+        treeView.currentIndex = (i < 0 || entryAt(i).hidden) ? -1 : i;
+    }
+    readonly property bool filterNoMatch: {
+        var rev = app.treeRevision;
+        if (app.treeFilter.length === 0 || treeView.count === 0) return false;
+        for (var i = 0; i < treeModel.count; i++)
+            if (!treeModel.get(i).hidden) return false;
+        return true;
+    }
 
     // keep the view on the selection when another screen (a tab) changes it
     Connections {
@@ -107,9 +128,11 @@ Item {
         function onSelectedPathChanged() {
             var i = rowIndexAt(app.selectedPath);
             if (i < 0) return;
+            if (entryAt(i).hidden) { treeView.currentIndex = -1; return; }
             treeView.currentIndex = i;
             treeView.positionViewAtIndex(i, ListView.Contain);
         }
+        function onTreeFilterChanged() { Qt.callLater(sidebar.syncSelection); }
     }
     // keep the content at full width and clip it: collapsing slides it out
     // instead of squeezing the labels/badges to zero
@@ -124,20 +147,45 @@ Item {
             Kirigami.Icon { source: "folder-documents"; implicitWidth: 16; implicitHeight: 16 }
             Label { text: Strings.t.collections; font.bold: true }
             Item { Layout.fillWidth: true }
-            ToolButton { id: addButton; icon.name: "list-add"; onClicked: addMenu.popup(addButton); ToolTip.text: Strings.t.add; ToolTip.visible: hovered }
+            ToolButton { id: addButton; objectName: "sidebarAddButton"; icon.name: "list-add"; onClicked: addMenu.popup(addButton); ToolTip.text: Strings.t.add; ToolTip.delay: Kirigami.Units.toolTipDelay }
             ToolButton {
-                icon.name: "edit-delete"
+                id: sidebarOverflowButton
+                objectName: "sidebarOverflowButton"
+                icon.name: "overflow-menu"
                 enabled: app.selectedPath.length > 0
-                onClicked: app.askDelete()
-                ToolTip.text: Strings.t.deleteSelected; ToolTip.visible: hovered
+                onClicked: overflowMenu.popup(sidebarOverflowButton)
+                ToolTip.text: Strings.t.moreActions; ToolTip.delay: Kirigami.Units.toolTipDelay
             }
         }
         Kirigami.Separator { Layout.fillWidth: true }
+        TextField {
+            id: filterField
+            objectName: "sidebarFilterField"
+            visible: treeView.count > 0
+            Layout.fillWidth: true
+            Layout.leftMargin: Kirigami.Units.smallSpacing
+            Layout.rightMargin: Kirigami.Units.smallSpacing
+            Layout.topMargin: Kirigami.Units.smallSpacing
+            implicitHeight: Kirigami.Units.gridUnit * 1.7
+            placeholderText: Strings.t.sidebarFilter
+            onTextChanged: if (app.treeFilter !== text) app.treeFilter = text
+            Keys.onEscapePressed: {
+                text = "";
+                app.treeFilter = "";
+                treeView.forceActiveFocus();
+            }
+            ToolTip.text: Strings.t.sidebarFilterHint
+            ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+        Kirigami.Separator { Layout.fillWidth: true }
+        Item {
+            id: treeArea
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         ListView {
             id: treeView
             objectName: "treeView"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.fill: parent
             clip: true
             model: treeModel
             visible: treeView.count > 0
@@ -202,10 +250,15 @@ Item {
                     spacing: 4
                     Item { Layout.preferredWidth: (model.depth || 0) * 12 + 16; Layout.preferredHeight: 1 }
                     Kirigami.Icon { visible: model.isFolder; source: (model.depth || 0) === 0 ? "folder-documents" : "folder"; implicitWidth: 16; implicitHeight: 16; color: Kirigami.Theme.textColor }
-                    MethodBadge {
+                    Label {
+                        objectName: "treeMethodLabel"
                         visible: !model.isFolder
-                        method: model.method
+                        text: (model.method || "").toUpperCase()
                         color: app.methodColor(model.method)
+                        font.pixelSize: 10
+                        font.bold: true
+                        Layout.preferredWidth: 42
+                        elide: Text.ElideRight
                     }
                     Label { Layout.fillWidth: true; text: model.name; elide: Text.ElideRight }
                 }
@@ -329,8 +382,7 @@ Item {
         }
 
         Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.fill: parent
             visible: treeView.count === 0
             EmptyState {
                 objectName: "sidebarEmptyState"
@@ -341,6 +393,20 @@ Item {
                 actionIcon: "folder-new"
                 onActionTriggered: app.openNewCollection()
             }
+        }
+        Item {
+            anchors.fill: parent
+            visible: sidebar.filterNoMatch
+            EmptyState {
+                objectName: "sidebarFilterEmpty"
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, 340)
+                title: Strings.t.noFilterMatches
+                message: Strings.t.noFilterMatchesMessage
+                shortcut: "Esc"
+                shortcutLabel: Strings.t.clearsFilter
+            }
+        }
         }
     }
 }

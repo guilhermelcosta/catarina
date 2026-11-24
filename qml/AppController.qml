@@ -65,6 +65,8 @@ property int tabDropIndex: -1
 property real ghostX: 0
 property real ghostY: 0
 property var collapsedFolders: ({})
+property string treeFilter: ""        // transient sidebar filter, never persisted
+property int treeRevision: 0          // bumped when the tree's hidden roles change
 property var collectionRequests: []
 property int collectionFolders: 0
 property bool collectionVarsDirty: false
@@ -133,14 +135,19 @@ function rebuildTree() {
     treeModel.clear();
     storageError = backend.storageReadable() ? "" : Strings.storageUnreadable(backend.storageDir);
     var a = backend.collectionTree();
+    var hits = filterHits(a);
     var collapsed = Object.keys(controller.collapsedFolders);
     for (var i = 0; i < a.length; i++) {
         var e = a[i];
         var hidden = false;
-        for (var c = 0; c < collapsed.length; c++) {
-            if (e.relPath !== collapsed[c] && e.relPath.indexOf(collapsed[c] + "/") === 0) {
-                hidden = true;
-                break;
+        if (hits !== null) {
+            hidden = hits[e.relPath] !== true;
+        } else {
+            for (var c = 0; c < collapsed.length; c++) {
+                if (e.relPath !== collapsed[c] && e.relPath.indexOf(collapsed[c] + "/") === 0) {
+                    hidden = true;
+                    break;
+                }
             }
         }
         treeModel.append({ name: e.name, relPath: e.relPath, isFolder: e.isFolder,
@@ -150,25 +157,59 @@ function rebuildTree() {
                            collapsed: controller.collapsedFolders[e.relPath] === true,
                            hidden: hidden });
     }
+    treeRevision++;
+}
+// map of tree hits for the active filter, or null when there is no filter.
+// `entries` lets rebuildTree reuse the array it already fetched.
+function filterHits(entries) {
+    if (treeFilter.length === 0) return null;
+    var rows = [];
+    if (entries === undefined) {
+        for (var i = 0; i < treeModel.count; i++) {
+            var e = treeModel.get(i);
+            rows.push({ relPath: e.relPath, name: e.name });
+        }
+    } else {
+        for (var j = 0; j < entries.length; j++)
+            rows.push({ relPath: entries[j].relPath, name: entries[j].name });
+    }
+    return Util.filterRows(rows, treeFilter);
 }
 // updates the "hidden"/"collapsed" roles in place (no model reset) so the
-// delegate height can animate when a folder is expanded/collapsed
+// delegate height can animate when a folder is expanded/collapsed or the
+// filter changes. With a filter, hidden means "not a tree hit".
 function applyCollapse() {
     var collapsed = Object.keys(controller.collapsedFolders);
+    var hits = filterHits();
     for (var i = 0; i < treeModel.count; i++) {
         var e = treeModel.get(i);
         var hidden = false;
-        for (var k = 0; k < collapsed.length; k++) {
-            if (e.relPath !== collapsed[k] && e.relPath.indexOf(collapsed[k] + "/") === 0) {
-                hidden = true;
-                break;
+        if (hits !== null) {
+            hidden = hits[e.relPath] !== true;
+        } else {
+            for (var k = 0; k < collapsed.length; k++) {
+                if (e.relPath !== collapsed[k] && e.relPath.indexOf(collapsed[k] + "/") === 0) {
+                    hidden = true;
+                    break;
+                }
             }
         }
         if (e.hidden !== hidden) treeModel.setProperty(i, "hidden", hidden);
         var isCollapsed = controller.collapsedFolders[e.relPath] === true;
         if (e.collapsed !== isCollapsed) treeModel.setProperty(i, "collapsed", isCollapsed);
     }
+    treeRevision++;
 }
+function collapseAll() {
+    var c = Object.assign({}, controller.collapsedFolders);
+    for (var i = 0; i < treeModel.count; i++) {
+        var e = treeModel.get(i);
+        if (e.isFolder) c[e.relPath] = true;
+    }
+    controller.collapsedFolders = c;
+    applyCollapse();
+}
+onTreeFilterChanged: applyCollapse()
 function toggleCollapse(relPath) {
     var c = Object.assign({}, controller.collapsedFolders);
     if (c[relPath]) delete c[relPath]; else c[relPath] = true;

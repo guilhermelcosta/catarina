@@ -126,3 +126,78 @@ function sessionPaths(tabs, current) {
     }
     return { paths: paths, current: idx };
 }
+
+// Sidebar filter: rows = [{ relPath, name }]. Returns a map relPath → true for
+// every tree hit: the row itself matches (name or path, case-insensitive) or a
+// descendant matches, so ancestors of a hit are never hidden. An empty filter
+// returns an empty map (the caller treats that as "no filter").
+function filterRows(rows, filter) {
+    var out = {}, hits = [], f = (filter || "").toLowerCase();
+    if (f.length === 0 || !rows) return out;
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (!r) continue;
+        var path = r.relPath || "", name = r.name || "";
+        if (path.toLowerCase().indexOf(f) >= 0 || name.toLowerCase().indexOf(f) >= 0) {
+            hits.push(path);
+            out[path] = true;
+        }
+    }
+    for (var h = 0; h < hits.length; h++) {
+        var p = hits[h];
+        var slash = p.lastIndexOf("/");
+        while (slash > 0) {
+            p = p.substring(0, slash);
+            out[p] = true;
+            slash = p.lastIndexOf("/");
+        }
+    }
+    return out;
+}
+
+// Pretty JSON, or null when the text does not parse.
+function prettyJson(text) {
+    try {
+        return JSON.stringify(JSON.parse(text), null, 2);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Body rendering for the format selector. Never throws; non-JSON formats keep
+// the stored text untouched.
+function formatBody(format, body) {
+    if (body === undefined || body === null) return "";
+    if (format === "json") {
+        var pretty = prettyJson(body);
+        return pretty === null ? body : pretty;
+    }
+    return body;
+}
+
+// Counts for the response tab labels: 0 when there is nothing to count.
+function headerCount(headers) {
+    if (!Array.isArray(headers)) return 0;
+    return headers.length;
+}
+
+function cookieCount(cookies) {
+    if (typeof cookies !== "string" || cookies.length === 0) return 0;
+    var lines = cookies.split(/\r?\n/), n = 0;
+    for (var i = 0; i < lines.length; i++)
+        if (lines[i].trim().length > 0) n++;
+    return n;
+}
+
+// 1-based line/column for a cursor position, used by the response line reference.
+function lnCol(position, text) {
+    text = text || "";
+    if (position < 0) position = 0;
+    if (position > text.length) position = text.length;
+    var line = 1, col = 1;
+    for (var i = 0; i < position; i++) {
+        if (text.charAt(i) === "\n") { line++; col = 1; }
+        else col++;
+    }
+    return { line: line, col: col };
+}

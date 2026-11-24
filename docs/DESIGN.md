@@ -268,13 +268,26 @@ In `qml/` (atomic and shell components):
   scope: global/collection/request, plus `dynamic` = purple + `tools-wizard`). Used by
   `ResolvedVarsTable` and `VarCompleter`.
 - **`MethodBadge.qml`** — HTTP method badge (colored abbreviation; color comes from
-  `app.methodColor`). Used in the tree, tabs, collection view, and history.
+  `app.methodColor`). Used in tabs, collection view, and history. **The sidebar tree does not use
+  it**: request rows render the method as plain uppercase 10 px bold coloured text
+  (`objectName: "treeMethodLabel"`, fixed 42 px column so names align). A value that is scanned
+  down a column is text, not a badge.
 - **Tree (`qml/Sidebar.qml`)** — nested collections/requests. **12px indent per level**.
   **Indent guides** (VS Code style): a vertical `1px` line per ancestor level, aligned to the
   center of that level's triangle (`x = level*12 + 9`), in `Kirigami.Theme.textColor` with
   `opacity: 0.15`. The delegate stores `itemDepth` and the guide `Repeater` uses
   `treeItem.itemDepth` (inside a `Repeater`, `model` is shadowed by its own model). Regression:
   `tests/app/tst_app.qml::test_indent_guides_por_profundidade`.
+  **Filter field** (`sidebarFilterField`): single-line control (`gridUnit * 1.7`) between the
+  header and the tree, hidden when there is no collection; no magnifier, no clear button — `Esc`
+  clears and returns focus to the tree. It binds `controller.treeFilter`; `applyCollapse()` makes
+  a row visible when it or a descendant matches (case-insensitive, name or path), so ancestors of
+  a hit never hide. A selected row that stops matching keeps `selectedPath` but clears
+  `currentIndex` until the filter clears. No match shows `sidebarFilterEmpty` (transparent
+  `EmptyState`, no icon, `Esc` hint).
+  **Header**: exactly two actions — primary `list-add` and one `overflow-menu` button
+  (`sidebarOverflowButton`, disabled without a selection) for Delete, Rename, Collapse all and
+  Reveal. Destructive actions do not get a permanent icon.
 - **`JsonTree.qml`** — JSON tree of the response (lazy: only parses when the "Tree" tab is active).
 - **`AuthEditor.qml`** — shared authentication editor (request and collection Authentication tab).
   `load(auth)` fills it in, `value()` returns the map, `edited` signal when the user changes it.
@@ -394,10 +407,24 @@ The request editor's top row is one object: `alternateBackgroundColor`, 1 px
   (`gridUnit * 1.7`), otherwise the `echoMode` dots change the row height depending on the font.
 - **Delete confirmations**: all follow `settings.confirmDelete` (either confirm on everything, or
   on nothing).
-- **Response**: Ctrl+F searches the full body; JSON always pretty; the status area reserves a
-  **minimum** height (`gridUnit * 2`) but **wraps** long messages instead of clipping. Error texts
-  carry no "Error:" prefix, and the unresolved-variable error is **concise** (a count, not the list
-  of names).
+- **Response**: one header row (`responseHeaderRow`): 8 px status dot + status text, tabular
+  `· time · size`, format selector (JSON/HTML/XML/Raw), wrap toggle, copy, find and one overflow.
+  The row never wraps; at the 230 px minimum the fixed actions demote into the overflow in this
+  order: find, copy, wrap — status and format stay, the meta line elides before the status does.
+  The header likes status as text: no pill, no badge, one filled colour (the dot), dot absent on
+  errors without a status code. Ctrl+F routes by focus: inside the sidebar it focuses the filter,
+  otherwise with a displayed body it opens the body find (else the sidebar filter while visible).
+  The body find searches the displayed body; the format selector only
+  re-renders it (`bodySource` keeps the stored body, never mutated; resets to JSON on the next
+  send). Wrap off is `TextEdit.NoWrap` with horizontal scrolling. Tab labels carry counts when a
+  response exists (`Headers 12`, `Cookies 2`); plain labels otherwise.
+  **Line reference** (`responseLineRef`): scrollable text areas that wrap show `Ln, Col`
+  right-aligned in the bottom strip, tabular figures, informational opacity, Body tab only and
+  only with a non-empty body. Never a gutter: a wrapped logical line spans several visual rows,
+  and the gutter would cost 30–40 px at the 230 px pane minimum. The strip else carries the
+  hover hint. The status area reserves a **minimum** height (`gridUnit * 2`) but **wraps** long
+  messages instead of clipping. Error texts carry no "Error:" prefix, and the
+  unresolved-variable error is **concise** (a count, not the list of names).
 - **Single-line fields with long content**: `TextArea` does **not** scroll itself, and moving the
   item would drag its native border, so every `VarField` scrolls the *text* by offsetting
   `horizontalPadding` (`scroll` + `ensureVisible(cursorRectangle)`) — the frame stays put, only the
