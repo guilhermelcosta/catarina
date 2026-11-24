@@ -183,7 +183,9 @@ they re-derive automatically. On KDE the platform theme owns the palette and may
 re-resolve it after these writes; there the app does **not** promise a live
 accent/scheme toggle, and a change is documented as taking effect after a
 restart. The status-bar toggle is already hidden where `canToggleTheme` is
-false.
+false; the Appearance theme row keeps the saved value visible but is disabled
+there, and its description states the restart requirement. Never ship an
+enabled scheme control that reverts on selection.
 
 QtQuick Controls paint their style surfaces from the *window* palette, which the
 platform theme supplies independently of `QGuiApplication::setPalette`. `Main.qml`

@@ -292,6 +292,7 @@ var t = {
     accentLabel: "Accent",
     densityLabel: "Density",
     themeDescription: "Follow the desktop or force a light or dark scheme.",
+    themeRestartDescription: "This desktop controls the theme; a forced scheme applies after a restart.",
     accentFollowSystem: "Follow system",
     accentCustom: "Custom…",
     accentDescription: "Selection and focus colour.",

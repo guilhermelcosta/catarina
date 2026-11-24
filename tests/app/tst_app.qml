@@ -1573,6 +1573,10 @@ TestCase {
         wait(30);
 
         var theme = win.appController.theme;
+        var themeCombo = findChild(win, "settingsTheme");
+        verify(themeCombo !== null, "theme control exists");
+        compare(themeCombo.enabled, backend.canToggleTheme,
+                "the theme control is disabled where the platform owns the palette");
         var scale = findChild(win, "settingsUiScale");
         verify(scale !== null, "UI scale control exists");
         compare(scale.value, 100, "scale starts at 1.00");

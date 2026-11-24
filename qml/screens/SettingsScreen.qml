@@ -148,12 +148,18 @@ Item {
                                 objectName: "settingsRow.theme"
                                 tokens: settingsPage.tokens
                                 label: Strings.t.themeLabel
-                                description: Strings.t.themeDescription
+                                description: backend.canToggleTheme
+                                             ? Strings.t.themeDescription
+                                             : Strings.t.themeRestartDescription
                                 visible: settingsPage.rowMatches(themeRow)
                                 ComboBox {
                                     id: themeCombo
                                     objectName: "settingsTheme"
                                     Layout.fillWidth: true
+                                    // The platform palette owns the scheme on KDE; a live
+                                    // combo there would revert on selection. Same rule as
+                                    // the status-bar toggle.
+                                    enabled: backend.canToggleTheme
                                     model: [Strings.t.themeSystem, Strings.t.themeLight, Strings.t.themeDark]
                                     Component.onCompleted: currentIndex = settingsPage.schemeIndex(backend.colorScheme)
                                     onActivated: backend.colorScheme = index === 1 ? "light"
