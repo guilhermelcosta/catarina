@@ -1355,6 +1355,17 @@ TestCase {
         var themeToggle = findChild(win, "statusBarThemeToggle");
         verify(themeToggle !== null, "theme toggle exists");
         compare(themeToggle.visible, backend.canToggleTheme, "hidden when the API is absent");
+        if (backend.canToggleTheme) {
+            var schemeBefore = backend.colorScheme;
+            var wasDark = win.appController.darkTheme;
+            themeToggle.clicked();
+            wait(50);
+            compare(win.appController.darkTheme, !wasDark,
+                    "the toggle flips the live theme, not only the stored value");
+            backend.colorScheme = schemeBefore;
+            wait(50);
+            compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
+        }
 
         var hint = findChild(win, "statusBarShortcutsHint");
         verify(hint !== null, "Ctrl+/ hint exists");

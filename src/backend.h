@@ -54,6 +54,10 @@ public:
     QString secretsBackend() const;
     QString colorScheme() const;
     void setColorScheme(const QString &scheme);
+    // Applies "system" | "light" | "dark" to the Qt palette/hints. Called by the
+    // property setter and by main() before the QML loads, so a stored scheme
+    // opens the window already themed.
+    static void applyColorScheme(const QString &scheme);
     bool canToggleTheme() const;
     // copies the built-in example collection (:/seed) on first use; only when
     // storage is still empty and just once (marks .catarina/.seeded)

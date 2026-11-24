@@ -3,16 +3,80 @@
 #include "net/http_client.h"
 #include "net/request_builder.h"
 
+#include <QColor>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QPalette>
 #include <QStandardPaths>
 #include <QStyleHints>
 #include <QUuid>
 
 namespace {
+
+// The palette in effect when the app started. Kept so "system" can restore it
+// after an explicit light/dark override.
+QPalette &systemPalette()
+{
+    static QPalette palette = QGuiApplication::palette();
+    return palette;
+}
+
+// Qt only updates the default palette when the platform reports a system
+// palette for the requested scheme. Under the offscreen platform (and some
+// desktops) that never happens, so the explicit scheme is resolved here. The
+// roles follow Breeze's neutral surfaces so the chrome stays the same hue.
+QPalette schemePalette(Qt::ColorScheme scheme)
+{
+    const QColor accent = systemPalette().color(QPalette::Highlight);
+    QPalette p = systemPalette();
+    if (scheme == Qt::ColorScheme::Dark) {
+        const QColor window(0x23, 0x26, 0x29);
+        const QColor base(0x1b, 0x1e, 0x20);
+        const QColor text(0xef, 0xf0, 0xf1);
+        p.setColor(QPalette::Window, window);
+        p.setColor(QPalette::WindowText, text);
+        p.setColor(QPalette::Base, base);
+        p.setColor(QPalette::AlternateBase, window);
+        p.setColor(QPalette::ToolTipBase, window);
+        p.setColor(QPalette::ToolTipText, text);
+        p.setColor(QPalette::Text, text);
+        p.setColor(QPalette::PlaceholderText, QColor(0xa0, 0xa4, 0xa8));
+        p.setColor(QPalette::Button, window);
+        p.setColor(QPalette::ButtonText, text);
+        p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::Link, accent);
+        p.setColor(QPalette::Highlight, accent);
+        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x7f, 0x8c, 0x8d));
+        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x7f, 0x8c, 0x8d));
+        p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x7f, 0x8c, 0x8d));
+    } else {
+        const QColor window(0xef, 0xf0, 0xf1);
+        const QColor base(0xff, 0xff, 0xff);
+        const QColor text(0x23, 0x26, 0x29);
+        p.setColor(QPalette::Window, window);
+        p.setColor(QPalette::WindowText, text);
+        p.setColor(QPalette::Base, base);
+        p.setColor(QPalette::AlternateBase, QColor(0xf7, 0xf7, 0xf7));
+        p.setColor(QPalette::ToolTipBase, QColor(0xff, 0xff, 0xdc));
+        p.setColor(QPalette::ToolTipText, text);
+        p.setColor(QPalette::Text, text);
+        p.setColor(QPalette::PlaceholderText, QColor(0x7f, 0x8c, 0x8d));
+        p.setColor(QPalette::Button, window);
+        p.setColor(QPalette::ButtonText, text);
+        p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::Link, accent);
+        p.setColor(QPalette::Highlight, accent);
+        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8f, 0x94, 0x98));
+        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8f, 0x94, 0x98));
+        p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x8f, 0x94, 0x98));
+    }
+    return p;
+}
 
 // recursively copies a resource directory (e.g. ":/seed") to disk,
 // recreating the same subfolder tree
@@ -95,16 +159,30 @@ bool Backend::canToggleTheme() const
 #endif
 }
 
-void Backend::setColorScheme(const QString &scheme)
+void Backend::applyColorScheme(const QString &scheme)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    (void)systemPalette();   // capture the system palette before any override
     Qt::ColorScheme qtScheme = Qt::ColorScheme::Unknown;   // follow the system
     if (scheme == QLatin1String("light"))
         qtScheme = Qt::ColorScheme::Light;
     else if (scheme == QLatin1String("dark"))
         qtScheme = Qt::ColorScheme::Dark;
     QGuiApplication::styleHints()->setColorScheme(qtScheme);
+    // The hint alone is a no-op on platforms without system palette updates
+    // (offscreen, some compositors). Resolve the scheme into a palette so the
+    // live Kirigami theme retints everywhere; "system" restores the startup one.
+    if (qtScheme == Qt::ColorScheme::Unknown) {
+        QGuiApplication::setPalette(systemPalette());
+    } else {
+        QGuiApplication::setPalette(schemePalette(qtScheme));
+    }
 #endif
+}
+
+void Backend::setColorScheme(const QString &scheme)
+{
+    applyColorScheme(scheme);
     m_settings.setScheme(scheme);
     emit colorSchemeChanged();
 }

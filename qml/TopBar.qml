@@ -30,8 +30,7 @@ Item {
             Label {
                 id: crumbCollection
                 objectName: "topBarBreadcrumb"
-                Layout.fillWidth: true
-                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: topBar.width * 0.4
                 text: app.breadcrumbCollection.length > 0
                       ? app.breadcrumbCollection : Strings.t.noRequestOpen
                 elide: Text.ElideRight
@@ -50,8 +49,7 @@ Item {
                 id: crumbRequest
                 objectName: "topBarBreadcrumbRequest"
                 visible: app.breadcrumbRequest.length > 0
-                Layout.fillWidth: true
-                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: topBar.width * 0.4
                 text: app.breadcrumbRequest
                 elide: Text.ElideRight
                 font.pixelSize: app.theme.fontSizeSecondary

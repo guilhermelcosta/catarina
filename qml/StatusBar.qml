@@ -37,7 +37,6 @@ Item {
             spacing: Kirigami.Units.smallSpacing
             Label {
                 objectName: "statusBarStorage"
-                Layout.fillWidth: true
                 elide: Text.ElideRight
                 font.pixelSize: app.theme.fontSizeMeta
                 opacity: app.theme.textInformational
@@ -50,7 +49,6 @@ Item {
             }
             Label {
                 objectName: "statusBarTimeout"
-                Layout.fillWidth: true
                 elide: Text.ElideRight
                 font.pixelSize: app.theme.fontSizeMeta
                 font.features: ({ "tnum": 1 })
