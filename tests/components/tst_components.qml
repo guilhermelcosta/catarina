@@ -38,6 +38,48 @@ TestCase {
     TextArea { id: emitProbe; onTextEdited: root.probeCount++ }
     property int probeCount: 0
 
+    // ---- design tokens (qml/Theme.qml) ----
+    Theme { id: themeTokens }
+    // the selection rule as the views apply it: selected beats hovered
+    QtObject {
+        id: tintProbe
+        property bool selected: false
+        property bool hovered: false
+        readonly property color background: selected ? themeTokens.selectionTint
+                                          : (hovered ? themeTokens.hoverTint : "transparent")
+    }
+
+    function test_theme_selection_and_hover_tints() {
+        verify(themeTokens.selectionTint.a >= 0.12 && themeTokens.selectionTint.a <= 0.20,
+               "selection alpha within 0.12-0.20, got " + themeTokens.selectionTint.a);
+        verify(themeTokens.hoverTint.a >= 0.04 && themeTokens.hoverTint.a <= 0.08,
+               "hover alpha within 0.04-0.08, got " + themeTokens.hoverTint.a);
+        verify(themeTokens.hoverTint.a < themeTokens.selectionTint.a,
+               "hover is strictly quieter than selection");
+        verify(themeTokens.selectionTint.a > 0, "tints derive from a live theme color");
+
+        tintProbe.selected = true;
+        tintProbe.hovered = true;
+        verify(Qt.colorEqual(tintProbe.background, themeTokens.selectionTint),
+               "a selected hovered row stays on the selection tint");
+        tintProbe.selected = false;
+        verify(Qt.colorEqual(tintProbe.background, themeTokens.hoverTint),
+               "a hovered unselected row uses the hover tint");
+        tintProbe.hovered = false;
+        compare(tintProbe.background.a, 0, "neither state is transparent");
+    }
+
+    function test_theme_radius_and_opacity_tiers() {
+        compare(themeTokens.radiusChip, 4);
+        compare(themeTokens.radiusControl, 6);
+        compare(themeTokens.radiusPanel, 8);
+        compare(themeTokens.textInformational, 0.75);
+        compare(themeTokens.textTableHeader, 0.65);
+        compare(themeTokens.textDecoration, 0.5);
+        compare(themeTokens.textDisabledRow, 0.45);
+        compare(themeTokens.textDisabledVariable, 0.4);
+    }
+
     // setting `text` programmatically doesn't emit textEdited (only the user emits). The
     // popup must emit so the KvTable model (onTextEdited) updates when choosing.
     function test_varcompleter_choose_emits_edit() {

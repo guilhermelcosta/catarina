@@ -92,6 +92,7 @@ qt_add_resources(catarina "qml"
         qml/MethodBadge.qml
         qml/SourceChip.qml
         qml/SplitGrip.qml
+        qml/Theme.qml
         qml/AppController.qml
         qml/Sidebar.qml
         qml/TabStrip.qml

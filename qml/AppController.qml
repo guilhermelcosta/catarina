@@ -9,6 +9,7 @@ QtObject {
     id: controller
 
     // injected by the window / components
+    property var theme
     property var window
     property var tabsModel
     property var paramsModel

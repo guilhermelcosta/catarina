@@ -31,8 +31,12 @@ Kirigami.ApplicationWindow {
     // exposed for screen behavior tests (tests/tst_app.qml)
     readonly property var appController: controller
 
+    // design tokens, reachable from every view as `app.theme`
+    Theme { id: theme }
+
     AppController {
         id: controller
+        theme: theme
         window: root
         tabsModel: tabsModel
         paramsModel: paramsModel
@@ -410,6 +414,7 @@ Kirigami.ApplicationWindow {
 
     CommandPalette {
         id: cmdPalette
+        objectName: "commandPalette"
         app: controller
         newReqDialog: newReqDialog
         curlImportDialog: curlImportDialog

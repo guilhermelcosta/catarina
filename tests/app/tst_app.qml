@@ -75,6 +75,37 @@ TestCase {
         compare(win.appController.collectRequest().method, "POST");
     }
 
+    // selection paint comes from app.theme (Theme.qml), not a literal or the
+    // Breeze full-saturation highlight
+    function test_sidebar_selection_uses_theme_tokens() {
+        backend.saveRequest("tint/a", baseReq());
+        backend.saveRequest("tint/b", baseReq());
+        win.appController.reloadTree();
+        wait(100);
+
+        var theme = win.appController.theme;
+        verify(theme, "theme is wired into the controller");
+
+        var tree = win.appController.treeModel;
+        var selIdx = -1, otherIdx = -1;
+        for (var i = 0; i < tree.count; i++) {
+            if (tree.get(i).relPath === "tint/a") selIdx = i;
+            else if (tree.get(i).relPath === "tint/b") otherIdx = i;
+        }
+        verify(selIdx >= 0 && otherIdx >= 0, "both rows are in the tree");
+
+        win.appController.selectedPath = "tint/a";
+        wait(50);
+        var selected = win.appController.sidebar.view.itemAtIndex(selIdx);
+        verify(selected, "selected delegate is visible");
+        verify(Qt.colorEqual(selected.background.color, theme.selectionTint),
+               "selected row paints the theme selection tint");
+
+        var plain = win.appController.sidebar.view.itemAtIndex(otherIdx);
+        verify(plain, "unselected delegate is visible");
+        compare(plain.background.color.a, 0, "unselected, unhovered row is transparent");
+    }
+
     // ---- keyboard navigation in the collections tree ----
     function test_sidebar_keyboard_navigation() {
         backend.saveRequest("kb/a", baseReq("GET"));
@@ -196,6 +227,41 @@ TestCase {
         var empty = findChild(win, "envEmptyState");
         verify(empty !== null, "empty state exists");
         verify(empty.visible, "visible when there is no environment");
+    }
+
+    // a selected row is a tinted surface, not the Breeze solid highlight, so its
+    // label must keep the normal text role or it disappears into the tint
+    function test_selected_rows_keep_normal_text_colour() {
+        win.appController.openEnvTab("");
+        win.appController.envList = [{ name: "tint-a" }, { name: "tint-b" }];
+        wait(50);
+        win.appController.envScreen.editing = "tint-b";
+        wait(50);
+
+        var envList = findChild(win, "envList");
+        verify(envList !== null, "environment list exists");
+        var envRow = envList.itemAtIndex(1);
+        var envPlain = envList.itemAtIndex(0);
+        verify(envRow !== null, "selected environment row is realised");
+        verify(envPlain !== null, "unselected environment row is realised");
+        compare(envRow.highlighted, true, "the edited environment is the selected row");
+        verify(Qt.colorEqual(envRow.contentItem.color, envPlain.contentItem.color),
+               "selected environment label keeps the normal text colour");
+
+        var palette = findChild(win, "commandPalette");
+        verify(palette !== null, "command palette exists");
+        palette.openPalette();
+        wait(50);
+        var paletteList = findChild(palette, "paletteList");
+        verify(paletteList !== null, "palette list exists");
+        var paletteRow = paletteList.itemAtIndex(0);
+        var palettePlain = paletteList.itemAtIndex(1);
+        verify(paletteRow !== null, "keyboard-current palette row is realised");
+        verify(palettePlain !== null, "unselected palette row is realised");
+        compare(paletteRow.highlighted, true, "index 0 is the keyboard-current row");
+        verify(Qt.colorEqual(paletteRow.contentItem.color, palettePlain.contentItem.color),
+               "keyboard-current palette row keeps the normal text colour");
+        palette.close();
     }
 
     function test_sidebar_empty_state() {
