@@ -260,7 +260,10 @@ TestCase {
         verify(paletteRow !== null, "keyboard-current palette row is realised");
         verify(palettePlain !== null, "unselected palette row is realised");
         compare(paletteRow.highlighted, true, "index 0 is the keyboard-current row");
-        verify(Qt.colorEqual(paletteRow.contentItem.color, palettePlain.contentItem.color),
+        var rowLabel = findChild(paletteRow, "paletteRowLabel");
+        var plainLabel = findChild(palettePlain, "paletteRowLabel");
+        verify(rowLabel !== null && plainLabel !== null, "palette rows render a label");
+        verify(Qt.colorEqual(rowLabel.color, plainLabel.color),
                "keyboard-current palette row keeps the normal text colour");
         palette.close();
     }
@@ -647,14 +650,15 @@ TestCase {
         win.appController.openRequest("surface/a");
         win.appController.pinTab(0);
         win.appController.openRequest("surface/b");
-        wait(100);
+        wait(250);
 
         var theme = win.appController.theme;
         var tabs = tabDelegates();
         var active = findChild(tabs[1], "tabSurface");
         var inactive = findChild(tabs[0], "tabSurface");
         verify(Qt.colorEqual(active.color, win.Kirigami.Theme.backgroundColor),
-               "the active tab paints the raised surface");
+               "the active tab paints the raised surface: " + active.color
+               + " vs " + win.Kirigami.Theme.backgroundColor);
         compare(active.radius, theme.radiusControl);
         var underline = findChild(active, "tabUnderline");
         compare(underline.height, 2);
@@ -1089,13 +1093,15 @@ TestCase {
         for (var i = 0; i < c.treeModel.count; i++)
             if (c.treeModel.get(i).relPath === "flt/method") idx = i;
         verify(idx >= 0, "request row in the tree");
+        c.sidebar.view.positionViewAtIndex(idx, ListView.Contain);
+        wait(50);
         var del = c.sidebar.view.itemAtIndex(idx);
         verify(del, "delegate visible");
 
         var label = findChild(del, "treeMethodLabel");
         verify(label !== null, "plain method label replaces the badge");
         compare(label.text, "PUT");
-        compare(label.font.pixelSize, 10);
+        compare(label.font.pixelSize, 11);
         compare(label.color, c.methodColor("PUT"));
     }
 
@@ -1219,5 +1225,278 @@ TestCase {
         verify(counter.visible, "counter shows with a match");
         compare(counter.text, "1/1");
         win.appController.responsePane.closeFind();
+    }
+
+    // ---- P1 cohesion: chrome, palette and type scale ----
+
+    // every Text/Label currently visible in `item`, as { name, size }
+    function collectFontSizes(item, out) {
+        if (!item) return out;
+        if (item.font !== undefined && typeof item.text === "string"
+                && item.visible && item.width > 0 && item.height > 0) {
+            var ps = item.font.pixelSize;
+            if (ps > 0) out.push({ name: String(item.objectName), size: ps });
+        }
+        var kids = item.children;
+        if (kids === undefined) return out;
+        for (var i = 0; i < kids.length; i++) collectFontSizes(kids[i], out);
+        return out;
+    }
+    function collectTexts(item, out) {
+        if (!item) return out;
+        if (typeof item.text === "string" && item.text.length > 0) out.push(item.text);
+        var kids = item.children;
+        if (kids === undefined) return out;
+        for (var i = 0; i < kids.length; i++) collectTexts(kids[i], out);
+        return out;
+    }
+
+    // criterion 3: one 40 px row, breadcrumb left, toggles + one overflow right
+    function test_top_bar_is_one_row_with_overflow() {
+        backend.saveRequest("chrome/r", baseReq());
+        win.appController.openRequest("chrome/r");
+        wait(50);
+
+        var bar = findChild(win, "topBar");
+        verify(bar !== null, "topBar exists");
+        compare(bar.height, win.appController.theme.topBarHeight, "top bar is one 40 px row");
+
+        var crumb = findChild(win, "topBarBreadcrumb");
+        verify(crumb !== null, "breadcrumb label exists");
+        compare(crumb.text, "chrome", "breadcrumb names the collection");
+        var crumbReq = findChild(win, "topBarBreadcrumbRequest");
+        verify(crumbReq !== null && crumbReq.visible, "breadcrumb shows the open request");
+        compare(crumbReq.text, "r");
+
+        var pill = findChild(win, "envPill");
+        var overflow = findChild(win, "topBarOverflow");
+        verify(pill !== null && overflow !== null, "pill and overflow exist");
+       verify(crumb.mapToItem(bar, 0, 0).x < pill.mapToItem(bar, 0, 0).x,
+               "context on the left, controls on the right");
+        verify(findChild(win, "topBarSidebarToggle") !== null, "collections toggle");
+        verify(findChild(win, "topBarResponseToggle") !== null, "response toggle");
+
+        var menu = findChild(win, "topBarOverflowMenu");
+        verify(menu !== null, "overflow menu exists");
+        compare(menu.itemAt(0).text, Strings.t.history, "History in the overflow");
+        compare(menu.itemAt(1).text, Strings.t.settings, "Settings in the overflow");
+
+        var texts = collectTexts(bar, []);
+        verify(texts.indexOf(Strings.t.appName) < 0, "no logo/wordmark in the top bar");
+    }
+
+    // criterion 4: outlined pill, chevron, popup anchored to it, live label
+    function test_env_pill_is_outlined_and_anchored() {
+        var pill = findChild(win, "envPill");
+        verify(pill !== null, "env pill exists");
+        compare(pill.background.border.width, 1, "outlined, not filled");
+        verify(Qt.colorEqual(pill.background.border.color,
+                             win.appController.theme.chromeBorder), "border uses the shared chrome value");
+        var chevron = findChild(win, "envPillChevron");
+        verify(chevron !== null, "pill draws a chevron");
+
+        var popup = findChild(win, "envPopup");
+        verify(popup !== null, "environment popup exists");
+        compare(popup.parent, pill, "popup anchors to the pill, not a fixed x/y");
+        pill.clicked();
+        wait(30);
+        verify(popup.visible, "the pill opens the popup");
+        verify(popup.y >= pill.height, "popup opens below the pill");
+        popup.close();
+        wait(20);
+
+        backend.saveEnvironment("pillenv", []);
+        win.appController.reloadEnvs();
+        win.appController.activateEnv("pillenv");
+        wait(50);
+        compare(pill.text, "pillenv", "activating an environment updates the pill");
+    }
+
+    // criterion 5: 28 px footer, live readouts, zoom, theme toggle, Ctrl+/ hint
+    function test_status_bar_readouts_and_controls() {
+        var bar = findChild(win, "statusBar");
+        verify(bar !== null, "statusBar exists");
+        compare(bar.height, win.appController.theme.controlToolbar, "status bar is 28 px");
+
+        var storage = findChild(win, "statusBarStorage");
+        verify(storage !== null, "storage readout exists");
+        compare(storage.text, Strings.t.storageLabel + " " + Strings.t.storageFile,
+                "the test runs on the file backend");
+
+        var timeout = findChild(win, "statusBarTimeout");
+        verify(timeout !== null, "timeout readout exists");
+        settings.timeoutSec = 30;
+        wait(20);
+        compare(timeout.text, "Timeout: 30 s");
+        settings.timeoutSec = 45;
+        wait(20);
+        compare(timeout.text, "Timeout: 45 s", "timeout follows settings live");
+        settings.timeoutSec = 0;
+        wait(20);
+        compare(timeout.text, "Timeout: no limit");
+        settings.timeoutSec = 30;
+
+        var zoomOut = findChild(win, "statusBarZoomOut");
+        var zoomValue = findChild(win, "statusBarZoomValue");
+        var zoomIn = findChild(win, "statusBarZoomIn");
+        verify(zoomOut && zoomValue && zoomIn, "zoom controls exist");
+        settings.fontSize = 0;
+        wait(20);
+        compare(zoomValue.text, String(bar.effectiveFontSize), "shows the effective size");
+        var before = bar.effectiveFontSize;
+        zoomIn.clicked();
+        wait(20);
+        compare(settings.fontSize, before + 1, "zoom in steps the editor font by one");
+        compare(zoomValue.text, String(before + 1));
+        zoomValue.clicked();
+        wait(20);
+        compare(settings.fontSize, 0, "clicking the value resets to the default");
+
+        var themeToggle = findChild(win, "statusBarThemeToggle");
+        verify(themeToggle !== null, "theme toggle exists");
+        compare(themeToggle.visible, backend.canToggleTheme, "hidden when the API is absent");
+        if (backend.canToggleTheme) {
+            var schemeBefore = backend.colorScheme;
+            var wasDark = win.appController.darkTheme;
+            themeToggle.clicked();
+            wait(50);
+            compare(win.appController.darkTheme, !wasDark,
+                    "the toggle flips the live theme, not only the stored value");
+            // the forced scheme owns the content theme, so it also lands under a
+            // platform theme that ignores the application palette (KDE/Plasma)
+            compare(win.contentItem.Kirigami.Theme.inherit, false,
+                    "a forced scheme overrides the content theme");
+            compare(win.contentItem.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
+                    "the content tree is painted in the forced scheme");
+            // style-painted surfaces read the window palette, which the platform
+            // theme supplies on its own; the forced scheme must reach it too
+            var pill = findChild(win, "envPill");
+            compare(win.palette.window.hsvValue < 0.5, !wasDark,
+                    "the window palette follows the forced scheme");
+            compare(win.palette.windowText.hsvValue > 0.5, !wasDark,
+                    "control text follows the forced scheme");
+            compare(pill.palette.windowText.hsvValue > 0.5, !wasDark,
+                    "the environment pill stays readable in the forced scheme");
+            compare(win.contentItem.Kirigami.Theme.highlightColor.hsvSaturation > 0.2, true,
+                    "the accent stays chromatic so checked controls cannot vanish");
+            backend.colorScheme = schemeBefore;
+            wait(50);
+            compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
+            compare(win.palette.window.hsvValue < 0.5, wasDark,
+                    "the window palette goes back to the desktop scheme");
+            compare(win.contentItem.Kirigami.Theme.inherit, schemeBefore === "light" || schemeBefore === "dark" ? false : true,
+                    "system restores the desktop theme");
+        }
+
+        var hint = findChild(win, "statusBarShortcutsHint");
+        verify(hint !== null, "Ctrl+/ hint exists");
+        compare(hint.text, Strings.t.shortcutsHintText);
+    }
+
+    // criterion 6: 520 px, icons, shortcut column, recents and fuzzy highlight
+    function test_command_palette_rows_recents_and_fuzzy() {
+        var palette = findChild(win, "commandPalette");
+        verify(palette !== null, "command palette exists");
+        palette.openPalette();
+        wait(50);
+        compare(palette.width, 520, "palette is 520 px wide");
+
+        var list = findChild(palette, "paletteList");
+        var sendIdx = -1;
+        for (var i = 0; i < palette.filtered.length; i++)
+            if (palette.filtered[i].label === Strings.t.sendRequest) sendIdx = i;
+        verify(sendIdx >= 0, "Send request is in the palette");
+        var row = list.itemAtIndex(sendIdx);
+        verify(row !== null, "row is realised");
+        var icon = findChild(row, "paletteRowIcon");
+        verify(icon !== null && icon.visible, "row carries an icon");
+        var label = findChild(row, "paletteRowLabel");
+        var shortcut = findChild(row, "paletteRowShortcut");
+        verify(label && shortcut, "label and shortcut column exist");
+        verify(shortcut.visible && shortcut.text.length > 0, "Send shows its shortcut");
+        verify(shortcut.mapToItem(row, 0, 0).x > label.mapToItem(row, 0, 0).x,
+               "shortcut sits right of the label");
+        verify(shortcut.mapToItem(row, 0, 0).x + shortcut.width <= row.width + 1,
+               "shortcut stays inside the row");
+
+        palette.applyFilter("snd");
+        wait(20);
+        var fuzzyIdx = -1;
+        for (var j = 0; j < palette.filtered.length; j++)
+            if (palette.filtered[j].label === Strings.t.sendRequest) fuzzyIdx = j;
+        verify(fuzzyIdx >= 0, "fuzzy subsequence finds Send request");
+        verify(palette.filtered[fuzzyIdx].ranges.length > 0, "matched ranges are recorded");
+        verify(palette.highlightText(palette.filtered[fuzzyIdx].label,
+                                     palette.filtered[fuzzyIdx].ranges).indexOf("<b>") >= 0,
+               "matched characters render highlighted");
+
+        // run a safe action, then reopen: it is the Recent group on top
+        palette.applyFilter("");
+        var reopenIdx = -1;
+        for (var k = 0; k < palette.filtered.length; k++)
+            if (palette.filtered[k].label === Strings.t.reopenTab) reopenIdx = k;
+        verify(reopenIdx >= 0, "Reopen closed tab is in the palette");
+        list.currentIndex = reopenIdx;
+        palette.trigger();
+        wait(20);
+        palette.openPalette();
+        wait(50);
+        compare(palette.filtered[0].group, Strings.t.paletteGroupRecent,
+                "recents group appears above the categories");
+        compare(palette.filtered[0].label, Strings.t.reopenTab);
+        compare(palette.paletteRecents.length, 1, "recents are bounded and in-session");
+        palette.close();
+    }
+
+    // criterion 7: every visible literal lives on the type scale
+    function test_type_scale_walk() {
+        var theme = win.appController.theme;
+        compare(theme.fontSizeMeta, 11);
+        compare(theme.fontSizeSecondary, 12);
+        compare(theme.fontSizeBase, 13);
+        compare(theme.fontSizeEmphasis, 14);
+        compare(theme.fontSizeScreenTitle, 16);
+        compare(theme.fontSizeCollectionTitle, 20);
+
+        backend.saveRequest("scale/r", baseReq());
+        win.appController.openRequest("scale/r");
+        wait(80);
+        var palette = findChild(win, "commandPalette");
+        palette.openPalette();
+        wait(50);
+
+        var sizes = collectFontSizes(win, []);
+        var allowed = { "11": true, "12": true, "13": true, "14": true, "16": true, "20": true };
+        // declared exceptions: the editor-font content surfaces (content, not chrome)
+        var exempt = { "requestUrlField": true, "bodyEditorArea": true, "responseBodyArea": true };
+        for (var i = 0; i < sizes.length; i++) {
+            if (exempt[sizes[i].name]) continue;
+            verify(allowed[sizes[i].size] === true,
+                   "off-scale font size " + sizes[i].size + " px on '" + sizes[i].name + "'");
+        }
+        palette.close();
+    }
+
+    // criterion 9: counts ride in the section labels, never on Body/Authentication
+    function test_request_section_tab_counts() {
+        backend.saveRequest("sect/r", baseReq());
+        win.appController.openRequest("sect/r");
+        wait(50);
+
+        var bar = findChild(win, "requestTabBar");
+        verify(bar !== null, "request section tab bar exists");
+        compare(bar.itemAt(0).text, Strings.t.parameters, "empty params: plain label");
+        compare(bar.itemAt(1).text, Strings.t.headers, "empty headers: plain label");
+        compare(bar.itemAt(4).text, Strings.t.variables, "empty vars: plain label");
+        compare(bar.itemAt(2).text, Strings.t.body, "Body never carries a count");
+        compare(bar.itemAt(3).text, Strings.t.authentication, "Authentication never carries a count");
+
+        win.appController.paramsModel.append({ name: "q", value: "1", enabled: true });
+        win.appController.headersModel.append({ name: "h", value: "1", enabled: true });
+        win.appController.requestVarsModel.append({ name: "v", value: "1", enabled: true });
+        wait(30);
+        compare(bar.itemAt(0).text, Strings.t.parameters + " 1");
+        compare(bar.itemAt(1).text, Strings.t.headers + " 1");
+        compare(bar.itemAt(4).text, Strings.t.variables + " 1");
     }
 }

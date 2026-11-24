@@ -487,7 +487,7 @@ Item {
                 anchors.rightMargin: Kirigami.Units.smallSpacing + (lineRef.visible ? lineRef.width : 0)
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
-                font.pixelSize: Kirigami.Theme.smallFont.pointSize
+                font.pixelSize: app.theme.fontSizeSecondary
                 opacity: 0.75
                 text: responseHint
             }
@@ -503,7 +503,7 @@ Item {
                     return Strings.lineRef(p.line, p.col);
                 }
                 font.features: ({ "tnum": 1 })
-                font.pixelSize: Kirigami.Theme.smallFont.pointSize
+                font.pixelSize: app.theme.fontSizeSecondary
                 opacity: 0.75
             }
         }

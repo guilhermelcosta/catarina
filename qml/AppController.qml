@@ -91,6 +91,22 @@ property var resolvedVars: []
 property var missingVars: []          // unresolved names (highlighted red); for tests/debug
 property var collectionResolvedVars: []
 property string currentCollection: ""
+// top-bar breadcrumb, kept here so Main/TopBar stay wiring-only (DESIGN.md §5)
+readonly property string breadcrumbCollection: {
+    if (showingCollection) return collectionOf(collectionPath);
+    if (currentTab >= 0 && currentTab < tabsModel.count) {
+        var ct = tabsModel.get(currentTab);
+        if (!ct.isCollection && !ct.isEnvironment && !ct.isSettings)
+            return currentCollection;
+    }
+    return "";
+}
+readonly property string breadcrumbRequest: {
+    if (currentTab < 0 || currentTab >= tabsModel.count) return "";
+    var t = tabsModel.get(currentTab);
+    if (t.isCollection || t.isEnvironment || t.isSettings) return "";
+    return t.name;
+}
 // warnings for duplicate variable names in the same scope (block save/send)
 property string requestVarsWarning: ""
 property string collectionVarsWarning: ""

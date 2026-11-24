@@ -97,6 +97,7 @@ Rectangle {
                     property bool isTabDelegate: true
                     property bool labelTruncated: tabLabel.truncated
                     property string tabName: model.name
+                    activeFocusOnTab: true
                     opacity: (app.dragging && app.tabDragIndex === index) ? 0.4 : 1
                     HoverHandler {
                         id: tabHover
@@ -120,7 +121,6 @@ Rectangle {
                         anchors.fill: parent
                         radius: app.theme.radiusControl
                         color: index === app.currentTab ? Kirigami.Theme.backgroundColor
-                             : tabHover.hovered ? app.theme.hoverTint
                              : "transparent"
                         Rectangle {
                             id: tabUnderline
@@ -132,6 +132,28 @@ Rectangle {
                             visible: index === app.currentTab
                             color: Kirigami.Theme.highlightColor
                         }
+                    }
+                    // hover tint fades; the active surface is a swap, not a tint,
+                    // and never brightens when hovered (docs/DESIGN.md §2)
+                    Rectangle {
+                        objectName: "tabHoverTint"
+                        anchors.fill: parent
+                        radius: tabSurface.radius
+                        color: (tabHover.hovered && index !== app.currentTab)
+                               ? app.theme.hoverTint : "transparent"
+                        Behavior on color {
+                            ColorAnimation { duration: app.theme.hoverDurationMs; easing.type: Easing.InOutQuad }
+                        }
+                    }
+                    // keyboard focus ring: the tab strips the platform chrome
+                    Rectangle {
+                        objectName: "tabFocusRing"
+                        anchors.fill: parent
+                        radius: tabSurface.radius
+                        color: "transparent"
+                        border.width: app.theme.focusRingWidth
+                        border.color: Kirigami.Theme.highlightColor
+                        visible: tabItem.activeFocus
                     }
                     // insertion point (to the left of this tab)
                     Rectangle {
@@ -159,8 +181,8 @@ Rectangle {
                             visible: !model.isCollection && !model.isEnvironment && !model.isSettings
                             method: model.method
                             color: app.methodColor(model.method)
-                            pixelSize: 8
-                            badgeHeight: 14
+                            pixelSize: app.theme.fontSizeMeta
+                            badgeHeight: 16
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Kirigami.Icon {
@@ -274,7 +296,7 @@ Rectangle {
                         Label {
                             anchors.centerIn: parent
                             text: "×"
-                            font.pixelSize: 16
+                            font.pixelSize: app.theme.fontSizeScreenTitle
                             color: closeHover.hovered ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
                         }
                         // same as pin: tooltip here steals the × click

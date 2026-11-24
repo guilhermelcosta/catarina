@@ -18,6 +18,21 @@ var t = {
     hideResponse: "Hide response panel",
     showResponse: "Show response panel",
     noEnvironment: "No environment",
+    breadcrumbSeparator: "/",
+
+    // ---- status bar ----
+    storageLabel: "Secrets:",
+    storageKeyring: "keyring",
+    storageFile: "file",
+    storageKeyringTooltip: "Secrets are stored in the OS keyring.",
+    storageFileTooltip: "Secrets are stored in a local file only you can read.",
+    zoomReset: "Reset text size to the default",
+    zoomOutTooltip: "Smaller editor text",
+    zoomInTooltip: "Larger editor text",
+    themeToggleTooltip: "Toggle light or dark theme",
+    shortcutsHintText: "Ctrl+/ shortcuts",
+    timeoutLabelText: "Timeout:",
+    noTimeout: "no limit",
 
     // ---- environments ----
     activeEnvironment: "Active environment",
@@ -294,6 +309,7 @@ var t = {
     // ---- command palette ----
     paletteGroupGlobal: "Global",
     paletteGroupContext: "Current context",
+    paletteGroupRecent: "Recent",
     newFolder: "New folder…",
     settingsEllipsis: "Settings…",
     manageEnvVariables: "Manage environment variables…",
@@ -342,6 +358,7 @@ function deleteItemConfirm(name) {
 function deleteEnvConfirm(name) { return "Delete environment \"" + name + "\"?"; }
 function nCollections(n) { return n + (n === 1 ? " collection" : " collections"); }
 function lineRef(line, col) { return "Ln " + line + ", Col " + col; }
+function timeoutLabel(sec) { return t.timeoutLabelText + " " + (sec > 0 ? sec + " s" : t.noTimeout); }
 function restrictedTo(list) { return "restricted to: " + list; }
 // "The request 'x' has unsaved changes." (kind: collection|environment|request)
 function unsavedItem(name, kind) {

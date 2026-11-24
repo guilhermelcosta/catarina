@@ -33,6 +33,20 @@ void Settings::setStorageDir(const QString &dir)
 
 int Settings::fontSize() const { return m_s.value(QStringLiteral("fontSize"), 0).toInt(); }
 void Settings::setFontSize(int v) { m_s.setValue(QStringLiteral("fontSize"), v); emit settingsChanged(); }
+QString Settings::colorScheme() const
+{
+    const QString s = m_s.value(QStringLiteral("colorScheme"), QStringLiteral("system")).toString();
+    return s == QStringLiteral("light") || s == QStringLiteral("dark") ? s : QStringLiteral("system");
+}
+void Settings::setScheme(const QString &scheme)
+{
+    const QString s = (scheme == QStringLiteral("light") || scheme == QStringLiteral("dark"))
+                          ? scheme : QStringLiteral("system");
+    if (s == colorScheme())
+        return;
+    m_s.setValue(QStringLiteral("colorScheme"), s);
+    emit colorSchemeChanged();
+}
 bool Settings::confirmDelete() const { return m_s.value(QStringLiteral("confirmDelete"), true).toBool(); }
 void Settings::setConfirmDelete(bool v) { m_s.setValue(QStringLiteral("confirmDelete"), v); emit settingsChanged(); }
 bool Settings::autoSaveOnSend() const { return m_s.value(QStringLiteral("autoSaveOnSend"), false).toBool(); }

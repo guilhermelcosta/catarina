@@ -29,6 +29,12 @@ class Backend : public QObject
     Q_OBJECT
     Q_PROPERTY(QString storageDir READ storageDir CONSTANT)
     Q_PROPERTY(QString activeEnvironment READ activeEnvironment NOTIFY environmentsChanged)
+    // secret-storage medium: "keyring" or "file", fixed at startup
+    Q_PROPERTY(QString secretsBackend READ secretsBackend CONSTANT)
+    // theme choice: "system" | "light" | "dark"; also persisted in Settings
+    Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
+    // false on Qt < 6.8, where there is no runtime scheme API
+    Q_PROPERTY(bool canToggleTheme READ canToggleTheme CONSTANT)
 
 public:
     explicit Backend(QObject *parent = nullptr);
@@ -45,6 +51,14 @@ public:
     Q_INVOKABLE bool storageReadable() const;                      // root exists and can be listed
     Q_INVOKABLE bool canUseStorageDir(const QString &dir) const;   // creatable and writable
     QString activeEnvironment() const;
+    QString secretsBackend() const;
+    QString colorScheme() const;
+    void setColorScheme(const QString &scheme);
+    // Applies "system" | "light" | "dark" to the Qt palette/hints. Called by the
+    // property setter and by main() before the QML loads, so a stored scheme
+    // opens the window already themed.
+    static void applyColorScheme(const QString &scheme);
+    bool canToggleTheme() const;
     // copies the built-in example collection (:/seed) on first use; only when
     // storage is still empty and just once (marks .catarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
@@ -142,6 +156,7 @@ signals:
     void collectionsChanged();
     void environmentsChanged();
     void historyChanged();
+    void colorSchemeChanged();
 
 private:
     // variables of the active environment (candidates for globals during resolution)

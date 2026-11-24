@@ -6,6 +6,13 @@
 
 function q(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
 
+// HTML-escape a plain label for a Text.RichText row (palette highlight).
+function escapeHtml(s) {
+    return String(s === undefined || s === null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 function fmtSize(n) {
     if (n < 1024) return n + " B";
     if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
@@ -125,6 +132,42 @@ function sessionPaths(tabs, current) {
         paths.push(tabs[i].relPath);
     }
     return { paths: paths, current: idx };
+}
+
+// Fuzzy command-palette match: case-insensitive subsequence. Returns null when
+// the label does not contain the query, else { score, ranges } where ranges is
+// a list of [start, length] runs to highlight. An empty query matches with no
+// ranges. Scores: consecutive runs and word starts are worth more, so better
+// matches sort first; the caller keeps the original order on ties.
+function fuzzyMatch(query, label) {
+    label = String(label === undefined || label === null ? "" : label);
+    query = String(query === undefined || query === null ? "" : query);
+    if (query.length === 0)
+        return { score: 0, ranges: [] };
+    var l = label.toLowerCase(), q = query.toLowerCase();
+    var positions = [], from = 0;
+    for (var i = 0; i < q.length; i++) {
+        var at = l.indexOf(q.charAt(i), from);
+        if (at < 0) return null;
+        positions.push(at);
+        from = at + 1;
+    }
+    var score = 0, ranges = [];
+    for (var p = 0; p < positions.length; p++) {
+        var pos = positions[p];
+        var prev = p > 0 ? positions[p - 1] : -1;
+        if (prev >= 0 && pos === prev + 1) score += 3;                 // consecutive run
+        if (pos === 0 || /\W/.test(label.charAt(pos - 1))) score += 2; // word start
+        ranges.push([pos, 1]);
+    }
+    // merge adjacent single-character runs into one highlight span
+    var merged = [];
+    for (var r = 0; r < ranges.length; r++) {
+        var last = merged[merged.length - 1];
+        if (last && last[0] + last[1] === ranges[r][0]) last[1] += ranges[r][1];
+        else merged.push(ranges[r]);
+    }
+    return { score: score, ranges: merged };
 }
 
 // Sidebar filter: rows = [{ relPath, name }]. Returns a map relPath → true for

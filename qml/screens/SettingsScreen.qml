@@ -11,6 +11,13 @@ Item {
     property var app
     property var folderPicker
     property alias dirField: storageDirField   // exposed for Main to wire to FolderPicker
+    // Ctrl+/ and the status-bar hint land here: scroll the Shortcuts card into view.
+    function focusShortcuts() {
+        Qt.callLater(function () {
+            var y = shortcutsLabel.y - Kirigami.Units.largeSpacing;
+            settingsScroll.contentItem.contentY = Math.max(0, y);
+        });
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.largeSpacing
@@ -74,7 +81,7 @@ Item {
                 CheckBox { text: Strings.t.autoSaveOnSend; checked: settings.autoSaveOnSend; onToggled: settings.autoSaveOnSend = checked }
 
                 Kirigami.Separator { Layout.fillWidth: true }
-                Label { text: Strings.t.shortcuts; font.bold: true }
+                Label { id: shortcutsLabel; text: Strings.t.shortcuts; font.bold: true }
                 Label { text: Strings.t.shortcutsHint; opacity: 0.75; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                 Repeater {
                     model: app.shortcutDefs

@@ -12,6 +12,7 @@ class Settings : public QObject
     Q_OBJECT
     Q_PROPERTY(QString storageDir READ storageDir WRITE setStorageDir NOTIFY storageDirChanged)
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY settingsChanged)
+    Q_PROPERTY(QString colorScheme READ colorScheme WRITE setScheme NOTIFY colorSchemeChanged)
     Q_PROPERTY(bool confirmDelete READ confirmDelete WRITE setConfirmDelete NOTIFY settingsChanged)
     Q_PROPERTY(bool autoSaveOnSend READ autoSaveOnSend WRITE setAutoSaveOnSend NOTIFY settingsChanged)
     Q_PROPERTY(int timeoutSec READ timeoutSec WRITE setTimeoutSec NOTIFY settingsChanged)
@@ -28,6 +29,9 @@ public:
 
     int fontSize() const;
     void setFontSize(int v);
+    // "system" (default) | "light" | "dark": hidden key, written by the status-bar toggle
+    QString colorScheme() const;
+    void setScheme(const QString &scheme);
     bool confirmDelete() const;
     void setConfirmDelete(bool v);
     bool autoSaveOnSend() const;
@@ -54,6 +58,7 @@ signals:
     void storageDirChanged();
     void settingsChanged();
     void shortcutsChanged();
+    void colorSchemeChanged();
 
 private:
     mutable QSettings m_s;

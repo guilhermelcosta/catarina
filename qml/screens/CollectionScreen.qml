@@ -21,7 +21,7 @@ ColumnLayout {
         Kirigami.Icon { source: app.collectionIsSubfolder ? "folder" : "folder-documents"; implicitWidth: 48; implicitHeight: 48; color: Kirigami.Theme.highlightColor }
         ColumnLayout {
             spacing: 0
-            Label { text: app.collectionPath.split("/").pop(); font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 6 }
+            Label { text: app.collectionPath.split("/").pop(); font.bold: true; font.pixelSize: app.theme.fontSizeCollectionTitle }
             Label { text: app.collectionIsSubfolder ? Strings.t.folder : Strings.t.collection; opacity: 0.75 }
         }
         Item { Layout.fillWidth: true }
@@ -71,7 +71,7 @@ ColumnLayout {
                 visible: !app.collectionIsSubfolder
                 text: Strings.t.effectiveVariables
                 font.bold: true
-                font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1
+                font.pixelSize: app.theme.fontSizeEmphasis
             }
             ResolvedVarsTable {
                 id: collectionResolvedTable
@@ -86,7 +86,7 @@ ColumnLayout {
                 opacity: 0.75
             }
             Kirigami.Separator { Layout.fillWidth: true }
-            Label { text: app.collectionIsSubfolder ? Strings.t.requestsInFolder : Strings.t.requestsInCollection; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
+            Label { text: app.collectionIsSubfolder ? Strings.t.requestsInFolder : Strings.t.requestsInCollection; font.bold: true; font.pixelSize: app.theme.fontSizeEmphasis }
             Repeater {
                 model: app.collectionRequests
                 delegate: ItemDelegate {
