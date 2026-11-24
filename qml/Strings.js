@@ -371,12 +371,12 @@ var t = {
     shortcutReopenTab: "Reopen closed tab",
     shortcutPalette: "Command palette",
     shortcutFind: "Find in response",
-    shortcutTabSearch: "Search in request",
+    shortcutTabSearch: "Search request",
 
     // ---- tab search ----
-    tabSearch: "Search in request…",
-    tabSearchPlaceholder: "Search the open request…",
-    tabSearchNoMatches: "No matches"
+    tabSearch: "Search request",
+    tabSearchPlaceholder: "Search request",
+    tabSearchEmptyHint: "Type to search this request."
 };
 
 // ---- parameterized messages ----

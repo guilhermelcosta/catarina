@@ -435,15 +435,33 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Orientation swap: keep the horizontal widths while stacked and reapply
-    // them (clamped) when the window widens again.
+    // Orientation swap: the saved widths stay untouched while stacked and are
+    // re-applied (clamped) when the window widens again. The live widths are
+    // not captured on the way down: at the window floor they are squeezed by
+    // the layout, not chosen by the user.
     Connections {
         target: innerSplitView
         function onOrientationChanged() {
-            if (innerSplitView.orientation === Qt.Vertical)
-                controller.capturePanes();
-            else
+            if (innerSplitView.orientation === Qt.Horizontal)
                 Qt.callLater(function () { controller.restorePanes(); });
+        }
+    }
+
+    // Pane widths persist the moment the user releases a splitter handle, so
+    // closing at the window floor cannot write a layout-squeezed width.
+    Connections {
+        target: mainSplitView
+        function onResizingChanged() {
+            if (!mainSplitView.resizing)
+                controller.commitUserSidebarWidth();
+        }
+    }
+
+    Connections {
+        target: innerSplitView
+        function onResizingChanged() {
+            if (!innerSplitView.resizing)
+                controller.commitUserSplitPosition();
         }
     }
 

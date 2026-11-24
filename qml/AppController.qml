@@ -41,7 +41,7 @@ QtObject {
     // split views injected by Main (wiring only); pane restore/save lives here
     property var mainSplit
     property var innerSplit
-    // horizontal widths remembered while the panes are stacked vertically
+    // widths the user chose by dragging (0 = untouched this session)
     property real paneSidebarWidth: 0
     property real paneSplitPosition: 0
     // set once restorePanes() has run with a real split width
@@ -1035,7 +1035,9 @@ function restorePanes() {
     // that the first layout triggers.
     if (!mainSplit || mainSplit.width <= 0)
         return;
-    var sw = paneSidebarWidth > 0 ? paneSidebarWidth : settings.sidebarWidth;
+    // Always restore from the saved values: a layout squeeze (window floor,
+    // stacked panes) must never become the value that is re-applied later.
+    var sw = settings.sidebarWidth;
     if (sidebar && sw > 0) {
         // reserve the editor and response minimums plus the two handles
         var maxSidebar = Math.min(500, mainSplit.width - 626);
@@ -1043,42 +1045,45 @@ function restorePanes() {
         sw = Math.max(190, Math.min(sw, maxSidebar));
         sidebar.expandedWidth = sw;
         sidebar.splitWidth = sw;
-        paneSidebarWidth = sw;
     }
     if (innerSplit && responsePane && innerSplit.orientation === Qt.Horizontal) {
         // the split has not necessarily been laid out yet at startup: derive its
         // final width from the sidebar we just applied instead of reading it
         var innerWidth = mainSplit.width - (sidebar && sw > 0 ? sw : 190) - 8;
-        var f = paneSplitPosition > 0 ? paneSplitPosition : settings.splitPosition;
+        var f = settings.splitPosition;
         if (f > 0 && innerWidth > 0) {
             f = Math.max(0.2, Math.min(f, 0.8));
             var maxResponse = innerWidth - 388;                       // editor minimum + handle
             var rw = Math.max(230, Math.min(innerWidth * f, maxResponse));
             responsePane.expandedWidth = rw;
             responsePane.splitWidth = rw;
-            paneSplitPosition = Math.max(0.2, Math.min(rw / innerWidth, 0.8));
         }
     }
     panesRestored = true;
 }
-// remembers the live horizontal widths before the panes stack vertically; in
-// the stacked layout the response spans the full width, so it is not a
-// horizontal fraction
-function capturePanes() {
-    if (sidebar && sidebarVisible && sidebar.width > 0)
-        paneSidebarWidth = sidebar.width;
-    if (innerSplit && responsePane && innerSplit.width > 0 && responsePane.width > 0
-            && responsePane.width < innerSplit.width - 1)
-        paneSplitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
+// The user dragged the main splitter: remember the chosen width and persist it
+// immediately, so a later layout squeeze cannot overwrite it.
+function commitUserSidebarWidth() {
+    if (!sidebar || !sidebarVisible || sidebar.width <= 0) return;
+    paneSidebarWidth = sidebar.width;
+    settings.sidebarWidth = Math.round(sidebar.width);
 }
-// Saves the current widths on close. The stored split is width-based, so it is
-// left untouched while the panes are stacked vertically.
+// The user dragged the request/response splitter while horizontal.
+function commitUserSplitPosition() {
+    if (!innerSplit || !responsePane || !responseVisible) return;
+    if (innerSplit.orientation !== Qt.Horizontal) return;
+    if (innerSplit.width <= 0 || responsePane.width <= 0) return;
+    paneSplitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
+    settings.splitPosition = paneSplitPosition;
+}
+// Saves the widths the user chose this session, if any. A width imposed by the
+// layout (window floor, stacked panes) is not a choice and must not win over
+// the saved value.
 function persistPanes() {
-    if (sidebar && sidebarVisible && sidebar.width > 0)
-        settings.sidebarWidth = Math.round(sidebar.width);
-    if (innerSplit && responsePane && responseVisible && innerSplit.orientation === Qt.Horizontal
-            && innerSplit.width > 0 && responsePane.width > 0)
-        settings.splitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
+    if (paneSidebarWidth > 0)
+        settings.sidebarWidth = Math.round(paneSidebarWidth);
+    if (paneSplitPosition > 0)
+        settings.splitPosition = Math.max(0.2, Math.min(paneSplitPosition, 0.8));
 }
 
 function persistSession() {

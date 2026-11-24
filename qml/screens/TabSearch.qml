@@ -16,16 +16,24 @@ Popup {
     property var editor
     property var matches: []
     readonly property int matchCount: matches.length
+    readonly property bool hasQuery: searchField.text.length > 0
     property int currentIndex: -1
-    width: 480
+    parent: editor
+    readonly property int margin: Kirigami.Units.gridUnit
+    width: parent ? Math.min(480, parent.width - margin * 2) : 480
     height: 330
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     padding: Kirigami.Units.smallSpacing
-    x: Math.max(0, (parent ? parent.width - width : 0) / 2)
-    y: Kirigami.Units.gridUnit
+    x: parent ? Math.round((parent.width - width) / 2) : 0
+    y: margin
 
+    function surfaceName(surface) {
+        var names = { url: "URL", params: "Params", headers: "Headers",
+                      fields: "Fields", vars: "Vars", body: "Body" };
+        return names[surface] || "";
+    }
     function refresh() {
         matches = editor && app ? Util.tabSearchMatches(app.collectRequest(), searchField.text) : [];
         currentIndex = matches.length > 0 ? 0 : -1;
@@ -79,11 +87,13 @@ Popup {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
+            visible: tabSearch.hasQuery && tabSearch.matches.length > 0
             model: tabSearch.matches
             currentIndex: tabSearch.currentIndex
             delegate: Rectangle {
                 width: resultList.width
-                height: rowLayout.implicitHeight + Kirigami.Units.smallSpacing * 2
+                height: Math.max(Math.round(44 * (app ? app.theme.uiScale : 1)),
+                                 rowLayout.implicitHeight + Kirigami.Units.smallSpacing * 2)
                 radius: 4
                 color: index === tabSearch.currentIndex ? app.theme.selectionTint : "transparent"
                 RowLayout {
@@ -92,19 +102,34 @@ Popup {
                     anchors.leftMargin: Kirigami.Units.smallSpacing
                     anchors.rightMargin: Kirigami.Units.smallSpacing
                     spacing: Kirigami.Units.smallSpacing
+                    // the surface the match lives in (URL, Params, Headers, …)
                     Label {
-                        objectName: "tabSearchLabel"
-                        text: modelData.label
-                        font.bold: true
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 150
-                    }
-                    Label {
-                        objectName: "tabSearchSnippet"
-                        text: modelData.snippet
-                        elide: Text.ElideRight
+                        objectName: "tabSearchSurface"
+                        text: tabSearch.surfaceName(modelData.surface)
+                        font.pixelSize: app.theme.fontSizeMeta
                         opacity: app.theme.textInformational
+                        Layout.preferredWidth: 64
+                        Layout.maximumWidth: 64
+                        elide: Text.ElideRight
+                    }
+                    ColumnLayout {
                         Layout.fillWidth: true
+                        spacing: 0
+                        Label {
+                            objectName: "tabSearchLabel"
+                            text: modelData.label
+                            font.pixelSize: app.theme.fontSizeBase
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            objectName: "tabSearchSnippet"
+                            text: modelData.snippet
+                            font.pixelSize: app.theme.fontSizeMeta
+                            elide: Text.ElideRight
+                            opacity: app.theme.textInformational
+                            Layout.fillWidth: true
+                        }
                     }
                 }
                 MouseArea {
@@ -115,9 +140,21 @@ Popup {
         }
 
         Label {
+            objectName: "tabSearchEmptyHint"
+            visible: !tabSearch.hasQuery
+            text: Strings.t.tabSearchEmptyHint
+            font.pixelSize: app.theme.fontSizeMeta
+            opacity: app.theme.textInformational
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Label {
             objectName: "tabSearchEmpty"
-            visible: tabSearch.matches.length === 0
-            text: Strings.t.tabSearchNoMatches
+            visible: tabSearch.hasQuery && tabSearch.matches.length === 0
+            text: Strings.notFound(searchField.text)
+            font.pixelSize: app.theme.fontSizeMeta
             opacity: app.theme.textInformational
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter

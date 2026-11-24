@@ -1766,6 +1766,68 @@ TestCase {
         wait(120);
     }
 
+    // criterion 8 regression: the window floor squeezes the panes; that live
+    // width is not a user choice and must not replace the saved value (on
+    // widening or on close)
+    function test_layout_squeeze_does_not_overwrite_saved_widths() {
+        backend.saveRequest("squeeze/r", baseReq());
+        win.appController.openRequest("squeeze/r");
+        wait(150);
+        var c = win.appController;
+        var inner = c.innerSplit;
+        var resp = c.responsePane;
+        var restoredWidth = win.width;
+        compare(inner.orientation, Qt.Horizontal, "the default window is horizontal");
+
+        settings.sidebarWidth = 420;
+        settings.splitPosition = 0.6;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.restorePanes();
+        wait(220);
+        var wideSidebar = c.sidebar.width;
+        var wideFraction = resp.width / inner.width;
+        verify(wideSidebar > 380, "the saved sidebar applies at the wide window (got "
+               + wideSidebar + ")");
+
+        // the window floor squeezes the live sidebar without the user dragging
+        c.sidebar.expandedWidth = 190;
+        c.sidebar.splitWidth = 190;
+        wait(120);
+        verify(c.sidebar.width < wideSidebar - 20,
+               "the live sidebar is squeezed (got " + c.sidebar.width + ")");
+
+        win.width = 1000;
+        wait(300);
+        compare(inner.orientation, Qt.Vertical, "the panes stack at the floor");
+
+        // closing at the floor must keep the saved values, not the squeeze
+        c.persistPanes();
+        wait(30);
+        verify(Math.abs(settings.sidebarWidth - 420) <= 1,
+               "the squeezed width is not persisted (got " + settings.sidebarWidth + ")");
+        verify(Math.abs(settings.splitPosition - 0.6) <= 0.01,
+               "the saved split survives the stacked layout (got " + settings.splitPosition + ")");
+
+        win.width = restoredWidth;
+        wait(300);
+        compare(inner.orientation, Qt.Horizontal, "widening restores the horizontal split");
+        verify(Math.abs(c.sidebar.width - wideSidebar) <= 2,
+               "the saved sidebar width returns (got " + c.sidebar.width + ")");
+        verify(Math.abs(resp.width / inner.width - wideFraction) <= 0.05,
+               "the saved split fraction returns (got " + (resp.width / inner.width) + ")");
+
+        settings.sidebarWidth = 0;
+        settings.splitPosition = 0;
+        c.paneSidebarWidth = 0;
+        c.paneSplitPosition = 0;
+        c.sidebar.expandedWidth = 250;
+        c.sidebar.splitWidth = 250;
+        c.responsePane.expandedWidth = 430;
+        c.responsePane.splitWidth = 430;
+        wait(120);
+    }
+
     // criterion 9: vertical stack at <= 1000 px, horizontal above
     function test_layout_stacks_vertically_at_the_window_floor() {
         backend.saveRequest("stack/r", baseReq());
@@ -1812,12 +1874,35 @@ TestCase {
         verify(search !== null && field !== null, "the tab-search popup exists");
         verify(search.visible, "Ctrl+Shift+A opens tab search");
 
+        // empty query: the prompt, not "no matches", and no result list
+        compare(search.hasQuery, false, "the popup opens with an empty query");
+        var hint = findChild(search, "tabSearchEmptyHint");
+        var list = findChild(search, "tabSearchList");
+        var empty = findChild(search, "tabSearchEmpty");
+        verify(hint !== null && hint.visible, "the empty-query prompt is shown");
+        verify(list !== null && !list.visible, "the result list is hidden while empty");
+        verify(empty !== null && !empty.visible, "no match state is not shown before typing");
+
         field.text = "needle";
         wait(100);
         verify(search.matchCount >= 4,
                "URL, params and two body hits match (got " + search.matchCount + ")");
         compare(search.matches[0].surface, "url", "the URL match comes first");
+        compare(search.hasQuery, true, "typing starts the search");
+        verify(list.visible, "the result list appears with matches");
+        compare(list.count, search.matchCount, "the list shows every match");
+        verify(list.itemAtIndex(0) !== null, "the first match row exists");
+        var surfaceTag = findChild(list.itemAtIndex(0), "tabSearchSurface");
+        verify(surfaceTag !== null, "each row has a surface tag");
+        compare(surfaceTag.text, "URL", "the first row names the URL surface");
 
+        field.text = "zzz";
+        wait(80);
+        verify(empty.visible, "the no-match state appears");
+        compare(empty.text, Strings.notFound("zzz"), "the no-match copy carries the query");
+
+        field.text = "needle";
+        wait(80);
         field.forceActiveFocus();
         keyClick(Qt.Key_Down);
         wait(40);
