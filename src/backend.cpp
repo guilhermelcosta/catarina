@@ -24,15 +24,41 @@ QPalette &systemPalette()
     return palette;
 }
 
+// The accent a forced scheme paints selection/checked surfaces with. A platform
+// theme without a colour scheme (isolated config, minimal environment) reports a
+// neutral or near-window highlight, which would paint checked controls white on
+// white and hide the highlighted text; fall back to Breeze's selection blue.
+QColor accentColor(const QColor &window)
+{
+    QColor accent;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+    accent = systemPalette().color(QPalette::Accent);
+#endif
+    if (!accent.isValid())
+        accent = systemPalette().color(QPalette::Highlight);
+    if (!accent.isValid() || accent.hsvSaturationF() < 0.2
+        || qAbs(accent.lightness() - window.lightness()) < 40)
+        accent = QColor(0x3d, 0xae, 0xe9);
+    return accent;
+}
+
+// The text painted on top of `accent`; white only when the accent is dark.
+QColor onAccentColor(const QColor &accent)
+{
+    return accent.lightness() > 127 ? QColor(0x23, 0x26, 0x29)
+                                    : QColor(0xff, 0xff, 0xff);
+}
+
 // Qt only updates the default palette when the platform reports a system
 // palette for the requested scheme. Under the offscreen platform (and some
 // desktops) that never happens, so the explicit scheme is resolved here. The
 // roles follow Breeze's neutral surfaces so the chrome stays the same hue.
 QPalette schemePalette(Qt::ColorScheme scheme)
 {
-    const QColor accent = systemPalette().color(QPalette::Highlight);
     QPalette p = systemPalette();
     if (scheme == Qt::ColorScheme::Dark) {
+        const QColor accent = accentColor(QColor(0x23, 0x26, 0x29));
+        const QColor onAccent = onAccentColor(accent);
         const QColor window(0x23, 0x26, 0x29);
         const QColor base(0x1b, 0x1e, 0x20);
         const QColor text(0xef, 0xf0, 0xf1);
@@ -49,11 +75,16 @@ QPalette schemePalette(Qt::ColorScheme scheme)
         p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
         p.setColor(QPalette::Link, accent);
         p.setColor(QPalette::Highlight, accent);
-        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::HighlightedText, onAccent);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        p.setColor(QPalette::Accent, accent);
+#endif
         p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x7f, 0x8c, 0x8d));
         p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x7f, 0x8c, 0x8d));
         p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x7f, 0x8c, 0x8d));
     } else {
+        const QColor accent = accentColor(QColor(0xef, 0xf0, 0xf1));
+        const QColor onAccent = onAccentColor(accent);
         const QColor window(0xef, 0xf0, 0xf1);
         const QColor base(0xff, 0xff, 0xff);
         const QColor text(0x23, 0x26, 0x29);
@@ -70,7 +101,10 @@ QPalette schemePalette(Qt::ColorScheme scheme)
         p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
         p.setColor(QPalette::Link, accent);
         p.setColor(QPalette::Highlight, accent);
-        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::HighlightedText, onAccent);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        p.setColor(QPalette::Accent, accent);
+#endif
         p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8f, 0x94, 0x98));
         p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8f, 0x94, 0x98));
         p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x8f, 0x94, 0x98));

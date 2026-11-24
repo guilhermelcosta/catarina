@@ -162,6 +162,15 @@ theme (`Kirigami.Theme.inherit: false` for the subtree, reset to `true` for
 `system`); `Main.qml` calls it at startup and on `colorSchemeChanged`. Never
 bind a surface to the raw palette when a token exists.
 
+QtQuick Controls paint their style surfaces from the *window* palette, which the
+platform theme supplies independently of `QGuiApplication::setPalette`. `Main.qml`
+therefore binds the window palette roles to the same `SystemPalette` the Kirigami
+theme uses, so fields, buttons and default label colours follow the forced scheme
+too. When the platform theme has no usable accent (a neutral highlight, as under
+an isolated config), `schemePalette` falls back to Breeze's selection blue and
+derives the highlighted text from its luminance, so a checked control can never
+paint white on white.
+
 **Type scale.** Every visible text uses one of the six sizes. The only
 exceptions are the editor-font content surfaces (URL field, request body,
 response body), which the zoom control scales; they are declared in the

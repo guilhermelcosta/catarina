@@ -1368,9 +1368,22 @@ TestCase {
                     "a forced scheme overrides the content theme");
             compare(win.contentItem.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
                     "the content tree is painted in the forced scheme");
+            // style-painted surfaces read the window palette, which the platform
+            // theme supplies on its own; the forced scheme must reach it too
+            var pill = findChild(win, "envPill");
+            compare(win.palette.window.hsvValue < 0.5, !wasDark,
+                    "the window palette follows the forced scheme");
+            compare(win.palette.windowText.hsvValue > 0.5, !wasDark,
+                    "control text follows the forced scheme");
+            compare(pill.palette.windowText.hsvValue > 0.5, !wasDark,
+                    "the environment pill stays readable in the forced scheme");
+            compare(win.contentItem.Kirigami.Theme.highlightColor.hsvSaturation > 0.2, true,
+                    "the accent stays chromatic so checked controls cannot vanish");
             backend.colorScheme = schemeBefore;
             wait(50);
             compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
+            compare(win.palette.window.hsvValue < 0.5, wasDark,
+                    "the window palette goes back to the desktop scheme");
             compare(win.contentItem.Kirigami.Theme.inherit, schemeBefore === "light" || schemeBefore === "dark" ? false : true,
                     "system restores the desktop theme");
         }

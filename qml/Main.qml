@@ -39,6 +39,30 @@ Kirigami.ApplicationWindow {
         systemDisabledPalette: SystemPalette { colorGroup: SystemPalette.Disabled }
     }
 
+    // QtQuick Controls resolve their palette from the window, and the platform
+    // theme supplies that palette independently of QGuiApplication::setPalette.
+    // Bind it to the same resolved palette the Kirigami theme uses, so the
+    // style-painted surfaces (fields, buttons, labels) follow a forced scheme.
+    palette.window: theme.systemPalette.window
+    palette.windowText: theme.systemPalette.windowText
+    palette.base: theme.systemPalette.base
+    palette.alternateBase: theme.systemPalette.alternateBase
+    palette.text: theme.systemPalette.text
+    palette.button: theme.systemPalette.button
+    palette.buttonText: theme.systemPalette.buttonText
+    palette.brightText: theme.systemPalette.brightText
+    palette.highlight: theme.systemPalette.highlight
+    palette.highlightedText: theme.systemPalette.highlightedText
+    palette.placeholderText: theme.systemPalette.placeholderText
+    palette.light: theme.systemPalette.light
+    palette.midlight: theme.systemPalette.midlight
+    palette.dark: theme.systemPalette.dark
+    palette.mid: theme.systemPalette.mid
+    palette.shadow: theme.systemPalette.shadow
+    palette.disabled.windowText: theme.systemDisabledPalette.windowText
+    palette.disabled.text: theme.systemDisabledPalette.text
+    palette.disabled.buttonText: theme.systemDisabledPalette.buttonText
+
     // a forced light/dark scheme is also pushed into the live Kirigami theme
     Connections {
         target: backend
