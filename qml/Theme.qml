@@ -42,6 +42,41 @@ QtObject {
     readonly property int iconSize: 16
     readonly property int hitTarget: 28              // minimum click area
 
+    // Forced colour scheme. The KDE Kirigami platform theme reports the Plasma
+    // colour scheme and ignores the QGuiApplication palette, so
+    // QStyleHints::setColorScheme alone leaves the UI in the desktop scheme while
+    // the hint says otherwise. Backend::applyColorScheme resolves the scheme into
+    // that palette anyway; SystemPalette sees it here, and the resolved roles are
+    // pushed into the window's content theme (which every view inherits), so the
+    // forced scheme reaches every surface on every platform.
+    // assigned by Main.qml (a QtObject cannot own SystemPalette children)
+    property var systemPalette
+    property var systemDisabledPalette
+
+    function applyScheme(window, scheme) {
+        const forced = scheme === "light" || scheme === "dark";
+        const target = window.contentItem.Kirigami.Theme;
+        if (!forced) {
+            target.backgroundColor = undefined;
+            target.alternateBackgroundColor = undefined;
+            target.textColor = undefined;
+            target.disabledTextColor = undefined;
+            target.highlightColor = undefined;
+            target.highlightedTextColor = undefined;
+            target.focusColor = undefined;
+            target.inherit = true;      // back to the desktop theme
+            return;
+        }
+        target.inherit = false;         // own the theme data for the whole tree
+        target.backgroundColor = systemPalette.window;
+        target.alternateBackgroundColor = Qt.darker(systemPalette.window, 1.05);
+        target.textColor = systemPalette.text;
+        target.disabledTextColor = systemDisabledPalette.windowText;
+        target.highlightColor = systemPalette.highlight;
+        target.highlightedTextColor = systemPalette.highlightedText;
+        target.focusColor = systemPalette.highlight;
+    }
+
     // chrome
     readonly property int topBarHeight: 40
     readonly property int hoverDurationMs: 120

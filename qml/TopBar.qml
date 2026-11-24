@@ -62,22 +62,44 @@ Item {
         RowLayout {
             spacing: 0
             ToolButton {
+                id: sidebarToggle
                 objectName: "topBarSidebarToggle"
                 checkable: true; checked: app.sidebarVisible
                 icon.name: app.sidebarVisible ? "view-left-close" : "view-left-new"
+                icon.color: checked ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
                 implicitWidth: app.theme.hitTarget
                 implicitHeight: app.theme.controlToolbar
                 onToggled: app.sidebarVisible = checked
+                // the style paints the checked state from the desktop palette,
+                // which does not follow a forced scheme; draw it from tokens
+                background: Rectangle {
+                    radius: app.theme.radiusControl
+                    color: sidebarToggle.checked ? Kirigami.Theme.highlightColor
+                         : sidebarToggle.hovered ? app.theme.hoverTint : "transparent"
+                    Behavior on color {
+                        ColorAnimation { duration: app.theme.hoverDurationMs; easing.type: Easing.InOutQuad }
+                    }
+                }
                 ToolTip.text: app.sidebarVisible ? Strings.t.hideCollections : Strings.t.showCollections
                 ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             ToolButton {
+                id: responseToggle
                 objectName: "topBarResponseToggle"
                 checkable: true; checked: app.responseVisible
                 icon.name: app.responseVisible ? "view-right-close" : "view-right-new"
+                icon.color: checked ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
                 implicitWidth: app.theme.hitTarget
                 implicitHeight: app.theme.controlToolbar
                 onToggled: app.responseVisible = checked
+                background: Rectangle {
+                    radius: app.theme.radiusControl
+                    color: responseToggle.checked ? Kirigami.Theme.highlightColor
+                         : responseToggle.hovered ? app.theme.hoverTint : "transparent"
+                    Behavior on color {
+                        ColorAnimation { duration: app.theme.hoverDurationMs; easing.type: Easing.InOutQuad }
+                    }
+                }
                 ToolTip.text: app.responseVisible ? Strings.t.hideResponse : Strings.t.showResponse
                 ToolTip.delay: Kirigami.Units.toolTipDelay
             }

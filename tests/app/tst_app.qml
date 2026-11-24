@@ -1362,9 +1362,17 @@ TestCase {
             wait(50);
             compare(win.appController.darkTheme, !wasDark,
                     "the toggle flips the live theme, not only the stored value");
+            // the forced scheme owns the content theme, so it also lands under a
+            // platform theme that ignores the application palette (KDE/Plasma)
+            compare(win.contentItem.Kirigami.Theme.inherit, false,
+                    "a forced scheme overrides the content theme");
+            compare(win.contentItem.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
+                    "the content tree is painted in the forced scheme");
             backend.colorScheme = schemeBefore;
             wait(50);
             compare(win.appController.darkTheme, wasDark, "restoring the scheme restores the theme");
+            compare(win.contentItem.Kirigami.Theme.inherit, schemeBefore === "light" || schemeBefore === "dark" ? false : true,
+                    "system restores the desktop theme");
         }
 
         var hint = findChild(win, "statusBarShortcutsHint");

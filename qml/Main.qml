@@ -32,7 +32,18 @@ Kirigami.ApplicationWindow {
     readonly property var appController: controller
 
     // design tokens, reachable from every view as `app.theme`
-    Theme { id: theme }
+    Theme {
+        id: theme
+        // resolved from the palette Backend::applyColorScheme installs
+        systemPalette: SystemPalette { colorGroup: SystemPalette.Active }
+        systemDisabledPalette: SystemPalette { colorGroup: SystemPalette.Disabled }
+    }
+
+    // a forced light/dark scheme is also pushed into the live Kirigami theme
+    Connections {
+        target: backend
+        function onColorSchemeChanged() { theme.applyScheme(root, backend.colorScheme); }
+    }
 
     AppController {
         id: controller
@@ -94,6 +105,7 @@ Kirigami.ApplicationWindow {
         settingsPage.focusShortcuts();
     }
     Component.onCompleted: {
+        theme.applyScheme(root, backend.colorScheme);   // saved scheme, before the first frame
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
         // Kirigami registers Alt+Left/Right (StandardKey Back/Forward) on the pageStack,

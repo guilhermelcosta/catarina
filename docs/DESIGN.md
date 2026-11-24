@@ -152,6 +152,16 @@ literal that duplicates a token is a bug.
 Both tints derive from the live `Kirigami.Theme`, so a desktop theme change
 retints the app without a restart.
 
+**Forced scheme.** The status-bar toggle persists `colorScheme` (`system` /
+`light` / `dark`) and `Backend::applyColorScheme` sets the Qt colour-scheme hint
+plus a resolved `QPalette`. A platform theme can ignore that palette: the KDE
+Kirigami theme reads the Plasma colour scheme, so the hint says dark while every
+surface stays light. `Theme.applyScheme(window, scheme)` in `qml/Theme.qml`
+therefore also writes the resolved palette roles into the window's content
+theme (`Kirigami.Theme.inherit: false` for the subtree, reset to `true` for
+`system`); `Main.qml` calls it at startup and on `colorSchemeChanged`. Never
+bind a surface to the raw palette when a token exists.
+
 **Type scale.** Every visible text uses one of the six sizes. The only
 exceptions are the editor-font content surfaces (URL field, request body,
 response body), which the zoom control scales; they are declared in the
