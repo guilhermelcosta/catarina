@@ -182,11 +182,20 @@ QString Backend::secretsBackend() const
     return m_secrets ? m_secrets->medium() : QStringLiteral("file");
 }
 
-QString Backend::colorScheme() const { return m_settings.colorScheme(); }
+QString Backend::colorScheme() const
+{
+    if (!canToggleTheme()) return QStringLiteral("system");
+    return m_settings.colorScheme();
+}
 
 bool Backend::canToggleTheme() const
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    // The KDE platform theme owns the palette; Qt's color-scheme hint does not
+    // override it at runtime. Forced themes are P2 work; on KDE the control is
+    // hidden and the app follows the system.
+    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("KDE", Qt::CaseInsensitive))
+        return false;
     return true;
 #else
     return false;
@@ -196,6 +205,7 @@ bool Backend::canToggleTheme() const
 void Backend::applyColorScheme(const QString &scheme)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("KDE", Qt::CaseInsensitive)) return;
     (void)systemPalette();   // capture the system palette before any override
     Qt::ColorScheme qtScheme = Qt::ColorScheme::Unknown;   // follow the system
     if (scheme == QLatin1String("light"))
