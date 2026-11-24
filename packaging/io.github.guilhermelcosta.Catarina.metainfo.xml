@@ -58,6 +58,13 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.9" date="2026-11-24">
+      <description>
+        <ul>
+          <li>feat: theme-derived selection and hover for list surfaces (#132)</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.8" date="2026-11-23">
       <description>
         <ul>
