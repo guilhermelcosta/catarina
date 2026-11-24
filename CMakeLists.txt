@@ -96,6 +96,8 @@ qt_add_resources(catarina "qml"
         qml/AppController.qml
         qml/Sidebar.qml
         qml/TabStrip.qml
+        qml/TopBar.qml
+        qml/StatusBar.qml
         qml/dialogs/NewReqDialog.qml
         qml/dialogs/NameDialog.qml
         qml/dialogs/ConfirmCloseDialog.qml

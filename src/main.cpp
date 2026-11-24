@@ -6,6 +6,7 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QStyleHints>
 #include <QtLogging>
 
 #include <cstdio>
@@ -46,6 +47,15 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon(QStringLiteral(":/icons/catarina-badge.svg")));
 
     Settings settings;
+
+    // Open in the scheme saved by the status-bar toggle (before the QML loads).
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    const QString savedScheme = settings.colorScheme();
+    if (savedScheme == QLatin1String("light"))
+        QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
+    else if (savedScheme == QLatin1String("dark"))
+        QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+#endif
 
     Backend backend;
     backend.seedDefaultCollection();

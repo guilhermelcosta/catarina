@@ -934,6 +934,7 @@ int main(int argc, char **argv)
     {
         auto mem = SecretStore::createInMemory();
         CHECK(mem->value(QStringLiteral("x")).isEmpty());
+        CHECK(mem->medium() == QStringLiteral("file"));   // never the keyring
         CHECK(mem->save(QStringLiteral("x"), QStringLiteral("s3cr3t")));
         CHECK(mem->value(QStringLiteral("x")) == QStringLiteral("s3cr3t"));
         CHECK(mem->remove(QStringLiteral("x")));
@@ -944,6 +945,7 @@ int main(int argc, char **argv)
         Backend bMem;
         bMem.setStorageDir(tmp.path() + QStringLiteral("/mem"));
         bMem.setSecretStore(SecretStore::createInMemory());
+        CHECK(bMem.secretsBackend() == QStringLiteral("file"));   // CATARINA_SECRETS_BACKEND=file
         CHECK(bMem.saveSecret(QStringLiteral("id1"), QStringLiteral("v1")));
         CHECK(bMem.secretValue(QStringLiteral("id1")) == QStringLiteral("v1"));
         CHECK(bMem.removeSecret(QStringLiteral("id1")));

@@ -41,7 +41,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         text: root.title
         font.bold: true
-        font.pointSize: Kirigami.Theme.defaultFont.pointSize + 2
+        font.pixelSize: 16
         visible: root.title.length > 0
     }
     Label {

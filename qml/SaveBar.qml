@@ -24,7 +24,7 @@ RowLayout {
 
     spacing: Kirigami.Units.smallSpacing
 
-    Label { text: bar.title; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
+    Label { text: bar.title; font.bold: true; font.pixelSize: 14 }
     ToolButton {
         visible: bar.showRename
         icon.name: "edit-rename"

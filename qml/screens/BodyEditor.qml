@@ -74,6 +74,7 @@ ColumnLayout {
         Layout.bottomMargin: Kirigami.Units.smallSpacing
         TextArea {
             id: bodyArea
+            objectName: "bodyEditorArea"
             placeholderText: Strings.t.jsonExample
             font.family: "monospace"
             font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize

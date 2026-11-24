@@ -88,6 +88,11 @@ Kirigami.ApplicationWindow {
         if (responsePane.hasBody()) { responsePane.openFind(); return; }
         if (controller.sidebarVisible) sidebar.focusFilter();
     }
+    // Ctrl+/ and the status-bar hint land on the Shortcuts card in Settings.
+    function openShortcuts() {
+        controller.openSettingsTab();
+        settingsPage.focusShortcuts();
+    }
     Component.onCompleted: {
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
@@ -117,6 +122,8 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: root.routeFind() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("prevTab"); onActivated: controller.prevTab() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("nextTab"); onActivated: controller.nextTab() }
+    // Ctrl+/ is a hint shortcut, not part of the remappable map (spec non-goal).
+    Shortcut { enabled: !controller.recordingShortcut; sequence: "Ctrl+/"; onActivated: root.openShortcuts() }
     onClosing: function (close) {
         controller.persistSession();
         if (!controller.forceQuit && controller.hasDirtyTabs()) { close.accepted = false; quitDialog.open(); }
@@ -132,104 +139,10 @@ Kirigami.ApplicationWindow {
             spacing: 0
 
             // ---------- top bar ----------
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.margins: Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.smallSpacing
-                Kirigami.Icon { source: "qrc:/icons/catarina-badge.svg"; implicitWidth: 22; implicitHeight: 22 }
-                Label { text: Strings.t.appName; font.bold: true }
-                Item { Layout.fillWidth: true }
-                // panel group: left (collections) and right (response)
-                RowLayout {
-                    spacing: 0
-                    ToolButton {
-                        checkable: true; checked: controller.sidebarVisible
-                        icon.name: controller.sidebarVisible ? "view-left-close" : "view-left-new"
-                        onToggled: controller.sidebarVisible = checked
-                        ToolTip.text: controller.sidebarVisible ? Strings.t.hideCollections : Strings.t.showCollections
-                        ToolTip.visible: hovered
-                    }
-                    ToolButton {
-                        checkable: true; checked: controller.responseVisible
-                        icon.name: controller.responseVisible ? "view-right-close" : "view-right-new"
-                        onToggled: controller.responseVisible = checked
-                        ToolTip.text: controller.responseVisible ? Strings.t.hideResponse : Strings.t.showResponse
-                        ToolTip.visible: hovered
-                    }
-                }
-                ToolButton {
-                    icon.name: "view-history"; text: Strings.t.history
-                    display: AbstractButton.TextBesideIcon
-                    onClicked: historyDialog.openAndLoad()
-                }
-                Button {
-                    id: envButton
-                    icon.name: "vcs-branch"
-                    text: controller.activeEnv.length > 0 ? controller.activeEnv : Strings.t.noEnvironment
-                    onClicked: envPopup.open()
-                }
-                ToolButton {
-                    icon.name: "configure"
-                    onClicked: controller.openSettingsTab()
-                    ToolTip.text: Strings.t.settings; ToolTip.visible: hovered
-                }
-                Popup {
-                    id: envPopup
-                    x: mainPage.width - width - 12
-                    y: 46
-                    width: 260
-                    padding: Kirigami.Units.smallSpacing
-                    onOpened: controller.reloadEnvs()
-                    ColumnLayout {
-                        width: envPopup.availableWidth
-                        spacing: Kirigami.Units.smallSpacing
-
-                        Label {
-                            visible: controller.envList.length > 0
-                            text: Strings.t.activeEnvironment
-                            font.bold: true
-                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                        }
-                        Repeater {
-                            model: controller.envList
-                            delegate: ItemDelegate {
-                                Layout.fillWidth: true
-                                text: modelData.name
-                                font.bold: modelData.name === controller.activeEnv
-                                icon.name: modelData.name === controller.activeEnv ? "checkmark" : ""
-                                onClicked: {
-                                    controller.activateEnv(modelData.name);
-                                    envPopup.close();
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            visible: controller.envList.length === 0
-                            spacing: Kirigami.Units.smallSpacing
-                            Label { text: Strings.t.readyToStart; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                            Label {
-                                text: Strings.t.createEnvHint
-                                wrapMode: Text.WordWrap; Layout.fillWidth: true
-                                horizontalAlignment: Text.AlignHCenter; opacity: 0.75
-                            }
-                        }
-
-                        Kirigami.Separator { Layout.fillWidth: true }
-                        ItemDelegate {
-                            Layout.fillWidth: true; text: Strings.t.createEnvironment; icon.name: "list-add"
-                            onClicked: { envPopup.close(); createEnvDialog.open(); }
-                        }
-                        ItemDelegate {
-                            Layout.fillWidth: true; text: Strings.t.manageVariables; icon.name: "configure"
-                            visible: controller.envList.length > 0
-                            onClicked: { envPopup.close(); controller.openEnvTab(controller.activeEnv); }
-                        }
-                    }
-                }
+            TopBar {
+                id: topBar
+                app: controller
             }
-
-            Kirigami.Separator { Layout.fillWidth: true }
 
             SplitView {
                 Layout.fillWidth: true
@@ -333,6 +246,13 @@ Kirigami.ApplicationWindow {
                     }
                 }
             }
+
+            // ---------- status bar ----------
+            StatusBar {
+                id: statusBar
+                app: controller
+                onShortcutsRequested: root.openShortcuts()
+            }
         }
 
         // "block" that follows the mouse during the drag
@@ -357,7 +277,7 @@ Kirigami.ApplicationWindow {
                     implicitHeight: 15
                     radius: 3
                     color: Qt.rgba(1, 1, 1, 0.25)
-                    Text { id: ghostBadge; anchors.centerIn: parent; text: controller.dragMethod; color: Kirigami.Theme.highlightedTextColor; font.pixelSize: 9; font.bold: true }
+                    Text { id: ghostBadge; anchors.centerIn: parent; text: controller.dragMethod; color: Kirigami.Theme.highlightedTextColor; font.pixelSize: theme.fontSizeMeta; font.bold: true }
                 }
                 Kirigami.Icon {
                     visible: controller.dragMethod.length === 0

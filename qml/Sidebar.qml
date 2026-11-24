@@ -221,6 +221,9 @@ Item {
                     color: treeItem.highlighted ? app.theme.selectionTint
                          : treeItem.hovered ? app.theme.hoverTint
                          : "transparent"
+                    Behavior on color {
+                        ColorAnimation { duration: app.theme.hoverDurationMs; easing.type: Easing.InOutQuad }
+                    }
                 }
 
                 // indent guides (VS Code style): one vertical line per ancestor level,
@@ -255,9 +258,9 @@ Item {
                         visible: !model.isFolder
                         text: (model.method || "").toUpperCase()
                         color: app.methodColor(model.method)
-                        font.pixelSize: 10
+                        font.pixelSize: app.theme.fontSizeMeta
                         font.bold: true
-                        Layout.preferredWidth: 42
+                        Layout.preferredWidth: 46
                         elide: Text.ElideRight
                     }
                     Label { Layout.fillWidth: true; text: model.name; elide: Text.ElideRight }

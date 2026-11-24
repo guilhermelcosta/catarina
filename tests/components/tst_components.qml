@@ -80,8 +80,49 @@ TestCase {
         compare(themeTokens.textDisabledVariable, 0.4);
     }
 
-    // setting `text` programmatically doesn't emit textEdited (only the user emits). The
-    // popup must emit so the KvTable model (onTextEdited) updates when choosing.
+    // criterion 7 / 8: the type scale and the control sizes are tokens
+    function test_theme_type_scale_tokens() {
+        compare(themeTokens.fontSizeMeta, 11);
+        compare(themeTokens.fontSizeSecondary, 12);
+        compare(themeTokens.fontSizeBase, 13);
+        compare(themeTokens.fontSizeEmphasis, 14);
+        compare(themeTokens.fontSizeScreenTitle, 16);
+        compare(themeTokens.fontSizeCollectionTitle, 20);
+    }
+
+    function test_theme_control_size_tokens() {
+        compare(themeTokens.controlToolbar, 28);
+        compare(themeTokens.controlField, 32);
+        compare(themeTokens.controlDialogButton, 36);
+        compare(themeTokens.iconSize, 16);
+        compare(themeTokens.hitTarget, 28);
+        compare(themeTokens.topBarHeight, 40);
+        compare(themeTokens.hoverDurationMs, 120);
+        compare(themeTokens.focusRingWidth, 2);
+    }
+
+    // ---- Util.js: fuzzy palette matching ----
+    function test_util_fuzzyMatch() {
+        var empty = Util.fuzzyMatch("", "Send request");
+        verify(empty !== null, "empty query matches everything");
+        compare(empty.score, 0);
+        compare(empty.ranges.length, 0, "empty query highlights nothing");
+
+        compare(Util.fuzzyMatch("zzz", "Send request"), null, "absent characters never match");
+        compare(Util.fuzzyMatch("??", "abc"), null, "punctuation-only query never throws");
+
+        var sub = Util.fuzzyMatch("snd", "Send request");
+        verify(sub !== null, "subsequence matches out of order characters");
+        compare(JSON.stringify(sub.ranges), JSON.stringify([[0, 1], [2, 2]]));
+        var run = Util.fuzzyMatch("send", "Send request");
+        verify(run !== null && run.score > sub.score, "a consecutive run scores higher");
+        var start = Util.fuzzyMatch("req", "Send request");
+        var middle = Util.fuzzyMatch("ndr", "Send request");
+        verify(start.score > middle.score, "a word start scores higher than a scattered hit");
+        compare(JSON.stringify(run.ranges), JSON.stringify([[0, 4]]), "adjacent runs merge");
+    }
+
+
     function test_varcompleter_choose_emits_edit() {
         root.probeCount = 0;
         emitProbe.text = "{{";

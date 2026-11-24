@@ -40,7 +40,7 @@ Item {
             }
             Text {
                 text: chip.source
-                font.pixelSize: 9
+                font.pixelSize: 11
                 font.bold: true
                 color: chip.sourceColor(chip.source)
             }

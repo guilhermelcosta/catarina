@@ -102,6 +102,7 @@ ColumnLayout {
 
                     VarField {
                         id: urlField
+                        objectName: "requestUrlField"
                         anchors.fill: parent
                         background: null
                         placeholderText: Strings.t.urlExample
@@ -183,7 +184,7 @@ ColumnLayout {
                 anchors.fill: parent
                 radius: requestBar.radius
                 color: "transparent"
-                border.width: 1
+                border.width: app.theme.focusRingWidth
                 border.color: Kirigami.Theme.highlightColor
                 visible: methodBox.activeFocus || urlField.activeFocus || requestSendButton.activeFocus
             }
@@ -195,8 +196,8 @@ ColumnLayout {
             icon.name: "edit-undo"
             text: Strings.t.discard
             display: AbstractButton.IconOnly
-            implicitWidth: 24; implicitHeight: 24
-            Layout.preferredWidth: 24; Layout.minimumWidth: 24
+            implicitWidth: app.theme.controlToolbar; implicitHeight: app.theme.controlToolbar
+            Layout.preferredWidth: app.theme.controlToolbar; Layout.minimumWidth: app.theme.controlToolbar
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty
             onClicked: app.revertCurrent()
@@ -207,8 +208,8 @@ ColumnLayout {
             icon.name: "document-save"
             text: Strings.t.save
             display: AbstractButton.IconOnly
-            implicitWidth: 24; implicitHeight: 24
-            Layout.preferredWidth: 24; Layout.minimumWidth: 24
+            implicitWidth: app.theme.controlToolbar; implicitHeight: app.theme.controlToolbar
+            Layout.preferredWidth: app.theme.controlToolbar; Layout.minimumWidth: app.theme.controlToolbar
             Layout.alignment: Qt.AlignVCenter
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
@@ -218,12 +219,13 @@ ColumnLayout {
 
     TabBar {
         id: reqTabBar
+        objectName: "requestTabBar"
         Layout.fillWidth: true
-        TabButton { text: Strings.t.parameters }
-        TabButton { text: Strings.t.headers }
+        TabButton { text: Strings.t.parameters + (paramsModel.count > 0 ? " " + paramsModel.count : "") }
+        TabButton { text: Strings.t.headers + (headersModel.count > 0 ? " " + headersModel.count : "") }
         TabButton { text: Strings.t.body }
         TabButton { text: Strings.t.authentication }
-        TabButton { text: Strings.t.variables }
+        TabButton { text: Strings.t.variables + (requestVarsModel.count > 0 ? " " + requestVarsModel.count : "") }
     }
 
     StackLayout {

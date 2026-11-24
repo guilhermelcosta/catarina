@@ -142,9 +142,75 @@ literal that duplicates a token is a bug.
 | `radiusChip` / `radiusControl` / `radiusPanel` | 4 / 6 / 8 px |
 | `textInformational` / `textTableHeader` / `textDecoration` | 0.75 / 0.65 / 0.5 |
 | `textDisabledRow` / `textDisabledVariable` | 0.45 / 0.4 |
+| fontSizeMeta / Secondary / Base / Emphasis | 11 / 12 / 13 / 14 px |
+| fontSizeScreenTitle / fontSizeCollectionTitle | 16 / 20 px |
+| controlToolbar / controlField / controlDialogButton | 28 / 32 / 36 px |
+| iconSize / hitTarget | 16 / 28 px |
+| topBarHeight / hoverDurationMs / focusRingWidth | 40 px / 120 ms / 2 px |
+| chromeBorder | `Kirigami.Theme.textColor` at alpha 0.45 |
 
 Both tints derive from the live `Kirigami.Theme`, so a desktop theme change
 retints the app without a restart.
+
+**Type scale.** Every visible text uses one of the six sizes. The only
+exceptions are the editor-font content surfaces (URL field, request body,
+response body), which the zoom control scales; they are declared in the
+`tst_app` walk. The four sidebar `font.pixelSize` literals that used to sit
+off-scale now read `fontSizeMeta`; the fixed method column widened from 42 to
+46 px so a three-letter method still fits at 11 px bold.
+
+**Control sizes.** Toolbar buttons are `controlToolbar` (28) tall, inline fields
+`controlField` (32), dialog buttons `controlDialogButton` (36), icons `iconSize`
+(16), and no click area is smaller than `hitTarget` (28). The request bar's Save
+and Discard buttons moved from 24 to 28 in this slice.
+
+### Chrome: top bar and footer
+
+- **Top bar (`qml/TopBar.qml`, 40 px, `topBarHeight`).** One row, no logo and no
+  wordmark. Left: a breadcrumb label (`fontSizeSecondary`, collection normal,
+  request normal, placeholder at `textInformational`, one `/` separator at
+  `textDecoration`, `ElideRight`, capped at 45% of the bar). Right: the two
+  panel toggles, the environment pill, and one overflow button holding History
+  and Settings. Extract it as a component; `Main.qml` stays wiring-only.
+- **One outlined control in the chrome: the environment pill.** Transparent
+  fill, 1 px `chromeBorder`, `radiusControl`, chevron at `iconSize`, text
+  `fontSizeSecondary`, max 160 px. Hover paints `hoverTint` over 120 ms — never
+  a filled chip, never `highlighted`. Its popup is a `Popup` with
+  `parent: envPill`, never a fixed page x/y. This is the single deliberate
+  break in border contrast: `disabledTextColor` measured below the 3:1 WCAG
+  floor for a control boundary, so `chromeBorder` (textColor at 0.45) is shared
+  by the pill and every popup this chrome opens.
+- **Footer (`qml/StatusBar.qml`, 28 px, `controlToolbar`).** Readouts on the
+  left (`Secrets: keyring|file`, `Timeout: 30 s`), controls on the right (zoom,
+  theme toggle, `Ctrl+/ shortcuts`). 11 px (`fontSizeMeta`) informational text,
+  no background of its own, no border-top, no colour coding. `file` is a
+  legitimate mode, not a warning: the tooltip carries the explanation. Labels
+  elide before controls shrink; the bar never wraps or grows. The theme toggle
+  is hidden (not disabled) when `canToggleTheme` is false.
+- **Palette row anatomy:** 16 px icon (`iconSize`), 8 px gap, label at 13 px,
+  elastic gap, shortcut at 11 px informational with `Font.TabularNums`. 520 px,
+  no title, no footer. Recents are in-session, bounded to 5 and appear as a
+  `Recent` group above the categories when the query is empty. Fuzzy
+  subsequence matching (`Util.fuzzyMatch`) keeps ties in the original order and
+  paints matched runs bold in `highlightColor` through rich text (HTML-escaped).
+- **Section counts are label text:** `Parameters 2`, `Headers 5`, `Variables 3`
+  (`Strings.t.parameters` + count), same size and colour, plain labels when the
+  model is empty. Body and Authentication never carry a count.
+
+### Hover fade, focus ring, popup chrome
+
+- **Hover fade:** every surface that paints `selectionTint`/`hoverTint` adds
+  `Behavior on color { ColorAnimation { duration: app.theme.hoverDurationMs } }`
+  (120 ms, `Easing.InOutQuad`). Applied to `Sidebar` tree rows, `TabStrip` tabs
+  and `CommandPalette` rows. Hover stays quieter than selection, a selected row
+  never brightens, and the 2 px tab underline does not fade.
+- **Focus ring:** only controls that stripped the platform chrome draw
+  `focusRingWidth` (2 px) `highlightColor`: the request-bar container (overlay
+  only, no geometry change) and the tab-strip tabs. Standard Breeze controls
+  keep their native ring; custom rings never fade.
+- **Popup chrome:** popups opened by the chrome (`envPopup`, the overflow menu
+  and the command palette) paint `radiusPanel` (8) + a 1 px `chromeBorder`.
+
 
 ---
 
@@ -229,7 +295,8 @@ Quick check: `find /usr/share/icons -iname "<name>.svg"`.
 
 **Organization:** atomic components in `qml/`; screens in `qml/screens/` (`CollectionScreen`,
 `EnvironmentScreen`, `SettingsScreen`, `RequestEditor` + `BodyEditor`/`ReqVarsEditor`,
-`ResponsePane`, `Sidebar`, `TabStrip`); modals/popups in `qml/dialogs/`; pure logic in
+`ResponsePane`, `Sidebar`, `TabStrip`); window chrome in `qml/` (`TopBar`, `StatusBar`);
+modals/popups in `qml/dialogs/`; pure logic in
 `qml/Util.js` and `qml/js/` (`VarTokens.js`).
 
 **State and orchestration:** `Main.qml` is **just the window + wiring**. State and actions (tree,

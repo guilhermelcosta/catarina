@@ -7,7 +7,9 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QStandardPaths>
+#include <QStyleHints>
 #include <QUuid>
 
 namespace {
@@ -76,6 +78,37 @@ Backend::Backend(QObject *parent)
 }
 
 QString Backend::storageDir() const { return m_dir; }
+
+QString Backend::secretsBackend() const
+{
+    return m_secrets ? m_secrets->medium() : QStringLiteral("file");
+}
+
+QString Backend::colorScheme() const { return m_settings.colorScheme(); }
+
+bool Backend::canToggleTheme() const
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    return true;
+#else
+    return false;
+#endif
+}
+
+void Backend::setColorScheme(const QString &scheme)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    Qt::ColorScheme qtScheme = Qt::ColorScheme::Unknown;   // follow the system
+    if (scheme == QLatin1String("light"))
+        qtScheme = Qt::ColorScheme::Light;
+    else if (scheme == QLatin1String("dark"))
+        qtScheme = Qt::ColorScheme::Dark;
+    QGuiApplication::styleHints()->setColorScheme(qtScheme);
+#endif
+    m_settings.setScheme(scheme);
+    emit colorSchemeChanged();
+}
+
 
 void Backend::setSecretStore(std::unique_ptr<SecretStore> store)
 {

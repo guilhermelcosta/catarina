@@ -98,6 +98,8 @@ public:
 
     QKeychain::Error error() const { return m_error; }
 
+    QString medium() const override { return QStringLiteral("keyring"); }
+
     // migrates a legacy blob (old file) to the keychain
     bool importLegacy(const QString &json) { return writeRaw(json); }
 
@@ -126,6 +128,9 @@ void SecretStore::ensureLoaded() const
 }
 
 void SecretStore::preload() const { ensureLoaded(); }
+
+QString SecretStore::medium() const { return QStringLiteral("file"); }
+
 
 QString SecretStore::value(const QString &id) const
 {

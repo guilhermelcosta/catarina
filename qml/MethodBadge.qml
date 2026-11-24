@@ -7,7 +7,7 @@ Item {
     id: badge
     property string method: ""
     property color color: "transparent"
-    property int pixelSize: 9
+    property int pixelSize: 11
     property int badgeHeight: 16
     implicitWidth: label.implicitWidth + 8
     implicitHeight: badgeHeight
