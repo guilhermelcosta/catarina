@@ -153,7 +153,7 @@ Rectangle {
                         anchors.right: parent.right
                         anchors.leftMargin: 10
                         // clears the pin (unpinned) and close hit areas
-                        anchors.rightMargin: 50
+                        anchors.rightMargin: 56
                         spacing: 6
                         MethodBadge {
                             visible: !model.isCollection && !model.isEnvironment && !model.isSettings
@@ -238,7 +238,7 @@ Rectangle {
                         id: pinBtn
                         objectName: "tabPin"
                         anchors.right: parent.right
-                        anchors.rightMargin: model.pinned === true ? 6 : 26
+                        anchors.rightMargin: model.pinned === true ? 6 : 30
                         anchors.verticalCenter: parent.verticalCenter
                         width: 24
                         height: 24
@@ -261,7 +261,8 @@ Rectangle {
                     Item {
                         id: closeBtn
                         objectName: "tabClose"
-                        visible: model.pinned !== true
+                        visible: !model.isCollection && !model.isEnvironment && !model.isSettings
+                                 && model.pinned !== true
                                  && (tabHover.hovered || index === app.currentTab)
                         anchors.right: parent.right
                         anchors.rightMargin: 6

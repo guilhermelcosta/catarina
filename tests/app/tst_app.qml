@@ -430,6 +430,29 @@ TestCase {
         verify(findChild(tabs[2], "tabPin").visible, "the pinned tab shows the pin");
     }
 
+    // M2: an inactive, unpinned tab hides close. The older test pinned both
+    // inactive tabs, so an implementation that shows × on every unpinned tab
+    // would still pass.
+    function test_tab_close_hidden_on_inactive_unpinned() {
+        backend.saveRequest("idle/a", baseReq());
+        backend.saveRequest("idle/b", baseReq());
+        backend.saveRequest("idle/c", baseReq());
+        win.appController.openRequest("idle/a");
+        win.appController.pinTab(0);
+        win.appController.openRequest("idle/b");
+        win.appController.tabsModel.setProperty(1, "preview", false);
+        win.appController.openRequest("idle/c");
+        compare(win.appController.currentTab, 2);
+        wait(100);
+
+        var tabs = tabDelegates();
+        compare(tabs.length, 3);
+        verify(findChild(tabs[2], "tabClose").visible,
+               "the active tab shows the close control");
+        verify(!findChild(tabs[1], "tabClose").visible,
+               "an inactive unpinned tab hides the close control");
+    }
+
     function test_tab_width_bounds() {
         var longName = "long" + "o".repeat(160);
         backend.saveRequest(longName, baseReq());
