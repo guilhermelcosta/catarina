@@ -21,6 +21,7 @@ QtObject {
     readonly property int radiusPanel: 8
 
     // text opacity tiers, docs/DESIGN.md §2
+    readonly property color textColor: Kirigami.Theme.textColor
     readonly property real textInformational: 0.75   // empty-state, secondary, help
     readonly property real textTableHeader: 0.65     // bold table column header
     readonly property real textDecoration: 0.5       // separator glyphs, colons

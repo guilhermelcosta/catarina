@@ -135,7 +135,7 @@ Item {
                     objectName: "envPillLabel"
                     Layout.fillWidth: true
                     text: envPill.text
-                    color: Kirigami.Theme.textColor
+                    color: app.theme.textColor
                     elide: Text.ElideRight
                     font.pixelSize: app.theme.fontSizeSecondary
                     opacity: app.activeEnv.length > 0 ? 1 : app.theme.textInformational
@@ -145,7 +145,7 @@ Item {
                     source: "arrow-down"
                     implicitWidth: app.theme.iconSize
                     implicitHeight: app.theme.iconSize
-                    color: Kirigami.Theme.textColor
+                    color: app.theme.textColor
                 }
             }
         }
