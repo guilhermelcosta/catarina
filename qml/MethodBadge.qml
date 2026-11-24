@@ -5,9 +5,11 @@ import QtQuick.Layouts
 // (`root.methodColor`) because it depends on the theme; the background is the same color at 18%.
 Item {
     id: badge
+    // design tokens (this component takes no `app`; the token source is shared)
+    Theme { id: tokens }
     property string method: ""
     property color color: "transparent"
-    property int pixelSize: 11
+    property int pixelSize: tokens.fontSizeMeta
     property int badgeHeight: 16
     implicitWidth: label.implicitWidth + 8
     implicitHeight: badgeHeight
