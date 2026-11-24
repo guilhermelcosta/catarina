@@ -1122,6 +1122,15 @@ TestCase {
         verify(row !== null, "header row");
         verify(row.height <= Kirigami.Units.gridUnit * 3,
                "the header stays one row at the default size, got " + row.height);
+        verify(meta.width >= Math.min(meta.implicitWidth, 220) - 1,
+               "the merged meta keeps its space, width " + meta.width
+               + " of " + meta.implicitWidth + " in a " + row.width + " px row");
+        compare(status.lineCount, 1, "the status stays on one line instead of wrapping");
+        var overflow = findChild(win, "responseOverflowButton");
+        var right = row.x + overflow.x + overflow.width;
+        verify(right <= win.appController.responsePane.width + 1,
+               "every header control fits at 1280x800, right edge " + right
+               + " > pane " + win.appController.responsePane.width);
     }
 
     function test_response_header_overflow_fits_at_min_width() {

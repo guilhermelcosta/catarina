@@ -271,10 +271,10 @@ Item {
                 id: metaLabel
                 objectName: "responseMetaLabel"
                 visible: text.length > 0
-                Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                Layout.preferredWidth: 0
-                Layout.maximumWidth: 220
+                Layout.preferredWidth: Math.min(implicitWidth, 220)
+                // keeps room for the status, format and overflow; the meta elides first
+                Layout.maximumWidth: Math.min(220, Math.max(0, responsePane.width - 210))
                 elide: Text.ElideRight
                 text: metaLabelText()
                 font.family: "monospace"   // tabular figures for time/size
