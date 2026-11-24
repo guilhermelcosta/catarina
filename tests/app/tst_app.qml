@@ -1377,6 +1377,20 @@ TestCase {
                     "control text follows the forced scheme");
             compare(pill.palette.windowText.hsvValue > 0.5, !wasDark,
                     "the environment pill stays readable in the forced scheme");
+            var pillLabel = findChild(win, "envPillLabel");
+            verify(pillLabel !== null, "the pill label exists");
+            verify(Qt.colorEqual(pillLabel.color, win.contentItem.Kirigami.Theme.textColor),
+                   "the pill label uses the overridden text role");
+            compare(win.contentItem.palette.window.hsvValue < 0.5, !wasDark,
+                    "the controls' content palette follows the forced scheme");
+            var searchField = findChild(win, "settingsSearch");
+            verify(searchField !== null, "the settings search field exists");
+            compare(searchField.Kirigami.Theme.backgroundColor.hsvValue < 0.5, !wasDark,
+                    "a control's Kirigami theme follows the forced scheme");
+            compare(searchField.palette.base.hsvValue < 0.5, !wasDark,
+                    "a control's palette follows the forced scheme");
+            compare(searchField.color.hsvValue > 0.5, !wasDark,
+                    "field text stays readable in the forced scheme");
             compare(win.contentItem.Kirigami.Theme.highlightColor.hsvSaturation > 0.2, true,
                     "the accent stays chromatic so checked controls cannot vanish");
             backend.colorScheme = schemeBefore;
@@ -1525,6 +1539,25 @@ TestCase {
         verify(texts.indexOf("Apply") < 0, "no Apply-labelled control anywhere");
         compare(Strings.t.apply, undefined, "Strings.t.apply is gone");
 
+        // the selected rail row is a theme tint with an icon and plain weight,
+        // not ItemDelegate's filled accent block or a bold label
+        var selected = nav.itemAtIndex(0);
+        compare(selected.highlighted, false, "the rail row does not use the filled highlight");
+        verify(Qt.colorEqual(selected.background.color, win.appController.theme.selectionTint),
+               "selection uses the theme selectionTint");
+        var navContent = selected.contentItem;
+        verify(navContent.children.length >= 2, "the rail row has an icon column and a label");
+        verify(navContent.children[0].source !== undefined && navContent.children[0].source.length > 0,
+               "the rail row carries a Breeze icon");
+        var navLabel = navContent.children[navContent.children.length - 1];
+        compare(navLabel.font.bold, false, "the selected label keeps the plain weight");
+
+        var card = findChild(win, "settingsCard.appearance");
+        var subtitle = findChild(win, "settingsSubtitle");
+        verify(subtitle !== null, "the subtitle exists");
+        verify(subtitle.mapToItem(card.parent, 0, 0).y < card.mapToItem(card.parent, 0, 0).y,
+               "the subtitle sits above the cards, not under their bottom edge");
+
         nav.itemAtIndex(1).clicked();
         wait(30);
         compare(findChild(win, "settingsCard.editor").visible, true, "nav switches category");
@@ -1545,6 +1578,19 @@ TestCase {
         compare(findChild(win, "settingsRow.accent").visible, true, "matching row stays");
         compare(findChild(win, "settingsRow.theme").visible, false, "non-matching row hides");
         compare(findChild(win, "settingsEmptyState").visible, false);
+
+        // a category with matches does not take the pane while another is
+        // selected: the rail selection and the visible card must agree
+        search.text = "wrap";
+        wait(30);
+        compare(findChild(win, "settingsCard.appearance").visible, false,
+                "the selected category's card hides when it has no match");
+        compare(findChild(win, "settingsCard.editor").visible, false,
+                "a non-selected matching card stays hidden");
+        compare(findChild(win, "settingsEmptyState").visible, true,
+                "the pane shows the empty state instead of a disagreeing card");
+        compare(nav.itemAtIndex(5).visible, false, "a rail entry with no match hides");
+        compare(nav.itemAtIndex(1).visible, true, "a rail entry with a match stays");
 
         search.text = "zzzz-no-setting";
         wait(30);
@@ -1611,6 +1657,29 @@ TestCase {
         verify(family !== null, "font family control exists");
         compare(family.model[0], Strings.t.editorFontDefault, "default monospace is the first entry");
         settings.editorFontSize = 0;
+    }
+
+    function test_settings_storage_row_takes_the_width_it_needs() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var nav = findChild(win, "settingsNav");
+        nav.itemAtIndex(5).clicked();
+        wait(60);
+
+        var storage = findChild(win, "settingsRow.storage");
+        verify(storage !== null, "the Storage row exists");
+        compare(storage.wideControl, true, "Storage is the one wide row");
+        verify(storage.resolvedControlWidth >= 380,
+               "the Storage control keeps at least 380 px (got " + storage.resolvedControlWidth + ")");
+        var field = findChild(win, "storageDirField");
+        verify(field !== null, "the path field exists");
+        verify(field.width > 200, "the path field outgrows the standard column");
+
+        nav.itemAtIndex(0).clicked();
+        wait(40);
+        var standard = findChild(win, "settingsRow.theme");
+        compare(standard.wideControl, false);
+        compare(standard.resolvedControlWidth, 200, "standard rows keep the 200 px column");
     }
 
     function test_editor_content_surfaces_use_resolved_font() {

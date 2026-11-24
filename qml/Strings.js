@@ -275,9 +275,8 @@ var t = {
 
     // ---- settings ----
     view: "View:",
-    settingsSubtitle: "Changes apply immediately. No Apply button.",
     settingsSearchPlaceholder: "Search settings",
-    settingsNoMatches: "No setting matches this search.",
+    settingsNoMatches: "No setting matches.",
     about: "About",
     storage: "Storage",
     aboutTitle: "About",

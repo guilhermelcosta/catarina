@@ -51,13 +51,14 @@ QtObject {
     // settings rows: 44-52 px at scale 1.0
     readonly property int settingsRowHeight: Math.round((density === "compact" ? 44 : 48) * uiScale)
 
-    // Forced colour scheme. The KDE Kirigami platform theme reports the Plasma
-    // colour scheme and ignores the QGuiApplication palette, so
-    // QStyleHints::setColorScheme alone leaves the UI in the desktop scheme while
-    // the hint says otherwise. Backend::applyColorScheme resolves the scheme into
-    // that palette anyway; SystemPalette sees it here, and the resolved roles are
-    // pushed into the window's content theme (which every view inherits), so the
-    // forced scheme reaches every surface on every platform.
+    // Forced colour scheme. Backend::applyColorScheme installs the resolved
+    // scheme as the application palette and the Qt colour-scheme hint. The
+    // Kirigami desktop style resolves its control roles from that palette
+    // (inherit: false), so a content-theme override alone leaves light fields
+    // inside a dark shell. Here the same roles are also written to the content
+    // theme and the content item palette (which the style-painted surfaces read)
+    // so every surface follows a forced light/dark consistently. `system`
+    // restores the roles captured at startup.
     // assigned by Main.qml (a QtObject cannot own SystemPalette children)
     property var systemPalette
     property var systemDisabledPalette
@@ -84,6 +85,23 @@ QtObject {
             target.highlightColor = systemPalette.highlight;
             target.highlightedTextColor = systemPalette.highlightedText;
             target.focusColor = systemPalette.highlight;
+        }
+        // The style-painted surfaces (fields, combos, spin boxes, buttons,
+        // popups) resolve their QPalette from the window/item chain, not from
+        // the Kirigami roles above. Push the same resolved palette into the
+        // content item so a forced scheme cannot leave light controls inside a
+        // dark shell. Bindings keep the item palette following `systemPalette`
+        // when the desktop theme changes at runtime.
+        const item = window.contentItem;
+        if (item && item.palette) {
+            const roles = ["window", "windowText", "base", "alternateBase",
+                           "text", "button", "buttonText", "brightText",
+                           "highlight", "highlightedText", "placeholderText",
+                           "light", "midlight", "dark", "mid", "shadow"];
+            for (let i = 0; i < roles.length; ++i) {
+                const role = roles[i];
+                item.palette[role] = Qt.binding(function () { return systemPalette[role]; });
+            }
         }
         // Custom accent: override the three selection roles after the scheme.
         // The highlighted text follows the accent luminance, so a checked

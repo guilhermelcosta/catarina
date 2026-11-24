@@ -23,13 +23,13 @@ Item {
     readonly property string query: settingsSearch.text.toLowerCase()
 
     readonly property var categories: [
-        { name: Strings.t.appearance },
-        { name: Strings.t.editor },
-        { name: Strings.t.network },
-        { name: Strings.t.behavior },
-        { name: Strings.t.shortcuts },
-        { name: Strings.t.storage },
-        { name: Strings.t.about }
+        { name: Strings.t.appearance, icon: "preferences-desktop", fallback: "preferences-other" },
+        { name: Strings.t.editor, icon: "accessories-text-editor", fallback: "text-x-generic" },
+        { name: Strings.t.network, icon: "network-workgroup", fallback: "network-wired" },
+        { name: Strings.t.behavior, icon: "preferences-system", fallback: "preferences-other" },
+        { name: Strings.t.shortcuts, icon: "preferences-desktop-keyboard", fallback: "configure" },
+        { name: Strings.t.storage, icon: "folder-documents", fallback: "document-open" },
+        { name: Strings.t.about, icon: "help-about", fallback: "help-contents" }
     ]
 
     function rowMatches(row) {
@@ -42,18 +42,23 @@ Item {
         return false;
     }
     function cardShown(index) {
+        // Search never moves the selection: the pane shows the active category's
+        // matches (or the empty state), not every category that happens to match.
+        if (index !== settingsCategory) return false;
+        return query.length === 0 || categoryMatches(index);
+    }
+    function categoryMatches(index) {
         var rows = cardRows[index] || [];
-        if (query.length === 0)
-            return settingsCategory === index;
         for (var i = 0; i < rows.length; i++)
             if (String(rows[i].rowSearch).indexOf(query) >= 0) return true;
         if (index === 4) return shortcutMatches();
         return false;
     }
+    function navMatches(index) {
+        return query.length === 0 || categoryMatches(index);
+    }
     function anyMatch() {
-        for (var c = 0; c < 7; c++)
-            if (cardShown(c)) return true;
-        return false;
+        return categoryMatches(settingsCategory);
     }
 
     // Ctrl+/ and the status-bar hint land here: select the Shortcuts category.
@@ -94,17 +99,42 @@ Item {
             interactive: false
 
             delegate: ItemDelegate {
+                id: navRow
                 width: ListView.view.width
-                implicitHeight: settingsPage.tokens.settingsRowHeight
+                implicitHeight: visible ? settingsPage.tokens.settingsRowHeight : 0
                 text: modelData.name
-                highlighted: settingsPage.settingsCategory === index
+                // selection is a tint from the theme, never ItemDelegate's
+                // filled highlight (docs/DESIGN.md §2, the settings nav row)
+                highlighted: false
+                visible: settingsPage.navMatches(index)
                 onClicked: settingsPage.settingsCategory = index
-                contentItem: Label {
-                    leftPadding: 8
-                    text: modelData.name
-                    elide: Text.ElideRight
-                    font.bold: settingsPage.settingsCategory === index
-                    font.pixelSize: settingsPage.tokens.fontSizeBase
+                background: Rectangle {
+                    radius: settingsPage.tokens.radiusControl
+                    color: settingsPage.settingsCategory === index
+                           ? settingsPage.tokens.selectionTint
+                           : navRow.hovered ? settingsPage.tokens.hoverTint : "transparent"
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: settingsPage.tokens.hoverDurationMs
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                }
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    Kirigami.Icon {
+                        source: modelData.icon
+                        fallback: modelData.fallback
+                        implicitWidth: settingsPage.tokens.iconSize
+                        implicitHeight: settingsPage.tokens.iconSize
+                        color: Kirigami.Theme.textColor
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        text: modelData.name
+                        elide: Text.ElideRight
+                        font.pixelSize: settingsPage.tokens.fontSizeBase
+                    }
                 }
             }
         }
@@ -137,6 +167,15 @@ Item {
                         width: settingsScroll.availableWidth
                         spacing: Kirigami.Units.smallSpacing
 
+                        Label {
+                            objectName: "settingsSubtitle"
+                            Layout.fillWidth: true
+                            text: Strings.t.optionsApplyInstantly
+                            opacity: 0.75
+                            font.pixelSize: settingsPage.tokens.fontSizeSecondary
+                            visible: settingsPage.query.length === 0
+                        }
+
                         SettingsCard {
                             objectName: "settingsCard.appearance"
                             tokens: settingsPage.tokens
@@ -156,9 +195,10 @@ Item {
                                     id: themeCombo
                                     objectName: "settingsTheme"
                                     Layout.fillWidth: true
-                                    // The platform palette owns the scheme on KDE; a live
-                                    // combo there would revert on selection. Same rule as
-                                    // the status-bar toggle.
+                                    // The scheme is forced through the application
+                                    // palette, so it applies at runtime on every
+                                    // desktop instead of only following the
+                                    // platform theme.
                                     enabled: backend.canToggleTheme
                                     model: [Strings.t.themeSystem, Strings.t.themeLight, Strings.t.themeDark]
                                     Component.onCompleted: currentIndex = settingsPage.schemeIndex(backend.colorScheme)
@@ -481,6 +521,7 @@ Item {
                                 id: storageRow
                                 objectName: "settingsRow.storage"
                                 tokens: settingsPage.tokens
+                                wideControl: true
                                 label: Strings.t.collectionsFolder
                                 description: Strings.t.storageDirHint
                                 visible: settingsPage.rowMatches(storageRow)
@@ -489,6 +530,7 @@ Item {
                                     spacing: Kirigami.Units.smallSpacing
                                     TextField {
                                         id: storageDirField
+                                        objectName: "storageDirField"
                                         Layout.fillWidth: true
                                         text: settings.storageDir
                                         onEditingFinished: settingsPage.applyStorage()
@@ -555,14 +597,6 @@ Item {
                             }
                         }
 
-                        Label {
-                            Layout.fillWidth: true
-                            Layout.topMargin: Kirigami.Units.smallSpacing
-                            text: Strings.t.settingsSubtitle
-                            opacity: 0.75
-                            font.pixelSize: settingsPage.tokens.fontSizeSecondary
-                            visible: settingsPage.query.length === 0
-                        }
                     }
                 }
             }
