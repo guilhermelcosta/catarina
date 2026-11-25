@@ -13,10 +13,7 @@ SplitView {
     orientation: Qt.Vertical
     handle: SplitGrip {}
 
-    function revealRow(index) { return varsTable.revealRow(index); }
-
     KvTable {
-        id: varsTable
         SplitView.fillWidth: true
         SplitView.fillHeight: true
         SplitView.minimumHeight: Kirigami.Units.gridUnit * 3

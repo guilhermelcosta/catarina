@@ -34,37 +34,6 @@ Item {
     signal pickFile(int index)
     signal scopeRequested(int index, real gx, real gy)
 
-    // row highlighted by revealRow() (tab search); -1 = none
-    property int revealedRow: -1
-    // Scrolls row `i` into view and tints it briefly (tab-search activation).
-    // Returns false when the row is out of range or filtered out.
-    function revealRow(i) {
-        if (i < 0 || model === undefined || model === null || model.count === undefined
-                || i >= model.count) return false;
-        if (rowFilter !== null && !rowFilter(i)) return false;
-        revealedRow = i;
-        kvList.positionViewAtIndex(i, ListView.Contain);
-        Qt.callLater(repositionReveal);
-        revealTimer.restart();
-        return true;
-    }
-    function repositionReveal() {
-        if (revealedRow < 0) return;
-        var it = kvList.itemAtIndex(revealedRow);
-        if (!it) return;
-        revealTint.y = it.y;
-        revealTint.height = it.height;
-    }
-    Timer {
-        id: revealTimer
-        interval: 1200
-        onTriggered: table.revealedRow = -1
-    }
-    Connections {
-        target: kvList
-        function onContentYChanged() { table.repositionReveal(); }
-    }
-
     // bump on every edit: forces re-evaluation of the repeated-name highlight
     property int revision: 0
     onEdited: revision++
@@ -392,21 +361,6 @@ Item {
             Layout.bottomMargin: table.colSpacing
             onClicked: { table.addRequested(); table.edited(); }
         }
-    }
-
-    // brief highlight for revealRow(); parented to the list content so it scrolls with it
-    Rectangle {
-        id: revealTint
-        objectName: "kvRevealTint"
-        parent: kvList.contentItem
-        z: -1
-        x: 0
-        width: kvList.width
-        height: 0
-        radius: 4
-        visible: table.revealedRow >= 0
-        color: Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g,
-                       Kirigami.Theme.highlightColor.b, 0.16)
     }
 
     // row removal confirmation (same global delete config)

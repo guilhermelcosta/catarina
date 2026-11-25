@@ -3,123 +3,14 @@
 #include "net/http_client.h"
 #include "net/request_builder.h"
 
-#include <QColor>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
-#include <QFontDatabase>
-#include <QGuiApplication>
-#include <QPalette>
-#include <QRegularExpression>
 #include <QStandardPaths>
-#include <QStyleHints>
 #include <QUuid>
 
 namespace {
-
-// strict "#rrggbb"; "" is allowed (unset) — never a partial write
-bool validIdentityColor(const QString &color)
-{
-    static const QRegularExpression re(QStringLiteral("^#[0-9a-fA-F]{6}$"));
-    return color.isEmpty() || re.match(color).hasMatch();
-}
-
-// The palette in effect when the app started. Kept so "system" can restore it
-// after an explicit light/dark override.
-QPalette &systemPalette()
-{
-    static QPalette palette = QGuiApplication::palette();
-    return palette;
-}
-
-// The accent a forced scheme paints selection/checked surfaces with. A platform
-// theme without a colour scheme (isolated config, minimal environment) reports a
-// neutral or near-window highlight, which would paint checked controls white on
-// white and hide the highlighted text; fall back to Breeze's selection blue.
-QColor accentColor(const QColor &window)
-{
-    QColor accent;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
-    accent = systemPalette().color(QPalette::Accent);
-#endif
-    if (!accent.isValid())
-        accent = systemPalette().color(QPalette::Highlight);
-    if (!accent.isValid() || accent.hsvSaturationF() < 0.2
-        || qAbs(accent.lightness() - window.lightness()) < 40)
-        accent = QColor(0x3d, 0xae, 0xe9);
-    return accent;
-}
-
-// The text painted on top of `accent`; white only when the accent is dark.
-QColor onAccentColor(const QColor &accent)
-{
-    return accent.lightness() > 127 ? QColor(0x23, 0x26, 0x29)
-                                    : QColor(0xff, 0xff, 0xff);
-}
-
-// Qt only updates the default palette when the platform reports a system
-// palette for the requested scheme. Under the offscreen platform (and some
-// desktops) that never happens, so the explicit scheme is resolved here. The
-// roles follow Breeze's neutral surfaces so the chrome stays the same hue.
-QPalette schemePalette(Qt::ColorScheme scheme)
-{
-    QPalette p = systemPalette();
-    if (scheme == Qt::ColorScheme::Dark) {
-        const QColor accent = accentColor(QColor(0x23, 0x26, 0x29));
-        const QColor onAccent = onAccentColor(accent);
-        const QColor window(0x23, 0x26, 0x29);
-        const QColor base(0x1b, 0x1e, 0x20);
-        const QColor text(0xef, 0xf0, 0xf1);
-        p.setColor(QPalette::Window, window);
-        p.setColor(QPalette::WindowText, text);
-        p.setColor(QPalette::Base, base);
-        p.setColor(QPalette::AlternateBase, window);
-        p.setColor(QPalette::ToolTipBase, window);
-        p.setColor(QPalette::ToolTipText, text);
-        p.setColor(QPalette::Text, text);
-        p.setColor(QPalette::PlaceholderText, QColor(0xa0, 0xa4, 0xa8));
-        p.setColor(QPalette::Button, window);
-        p.setColor(QPalette::ButtonText, text);
-        p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
-        p.setColor(QPalette::Link, accent);
-        p.setColor(QPalette::Highlight, accent);
-        p.setColor(QPalette::HighlightedText, onAccent);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
-        p.setColor(QPalette::Accent, accent);
-#endif
-        p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x7f, 0x8c, 0x8d));
-        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x7f, 0x8c, 0x8d));
-        p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x7f, 0x8c, 0x8d));
-    } else {
-        const QColor accent = accentColor(QColor(0xef, 0xf0, 0xf1));
-        const QColor onAccent = onAccentColor(accent);
-        const QColor window(0xef, 0xf0, 0xf1);
-        const QColor base(0xff, 0xff, 0xff);
-        const QColor text(0x23, 0x26, 0x29);
-        p.setColor(QPalette::Window, window);
-        p.setColor(QPalette::WindowText, text);
-        p.setColor(QPalette::Base, base);
-        p.setColor(QPalette::AlternateBase, QColor(0xf7, 0xf7, 0xf7));
-        p.setColor(QPalette::ToolTipBase, QColor(0xff, 0xff, 0xdc));
-        p.setColor(QPalette::ToolTipText, text);
-        p.setColor(QPalette::Text, text);
-        p.setColor(QPalette::PlaceholderText, QColor(0x7f, 0x8c, 0x8d));
-        p.setColor(QPalette::Button, window);
-        p.setColor(QPalette::ButtonText, text);
-        p.setColor(QPalette::BrightText, QColor(0xff, 0xff, 0xff));
-        p.setColor(QPalette::Link, accent);
-        p.setColor(QPalette::Highlight, accent);
-        p.setColor(QPalette::HighlightedText, onAccent);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
-        p.setColor(QPalette::Accent, accent);
-#endif
-        p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8f, 0x94, 0x98));
-        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8f, 0x94, 0x98));
-        p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x8f, 0x94, 0x98));
-    }
-    return p;
-}
 
 // recursively copies a resource directory (e.g. ":/seed") to disk,
 // recreating the same subfolder tree
@@ -185,85 +76,6 @@ Backend::Backend(QObject *parent)
 }
 
 QString Backend::storageDir() const { return m_dir; }
-
-QString Backend::secretsBackend() const
-{
-    return m_secrets ? m_secrets->medium() : QStringLiteral("file");
-}
-
-QString Backend::colorScheme() const
-{
-    // The settings combo drives the QML theme even on KDE; only the status-bar
-    // quick toggle is hidden where the platform palette cannot follow.
-    return m_settings.colorScheme();
-}
-
-bool Backend::canToggleTheme() const
-{
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    // The scheme is forced through the application palette, which the controls
-    // and the Kirigami theme both resolve from, so the control works on every
-    // desktop (KDE included) instead of following the platform theme only.
-    return true;
-#else
-    return false;
-#endif
-}
-
-QString Backend::appVersion() const
-{
-#ifdef CATARINA_VERSION
-    return QStringLiteral(CATARINA_VERSION);
-#else
-    return QString();
-#endif
-}
-
-QString Backend::qtVersion() const
-{
-    return QString::fromLatin1(qVersion());
-}
-
-QStringList Backend::monospaceFamilies() const
-{
-    if (m_monoFamilies.isEmpty()) {
-        const QStringList all = QFontDatabase::families();
-        for (const QString &family : all) {
-            if (QFontDatabase::isFixedPitch(family))
-                m_monoFamilies.append(family);
-        }
-    }
-    return m_monoFamilies;
-}
-
-void Backend::applyColorScheme(const QString &scheme)
-{
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    (void)systemPalette();   // capture the system palette before any override
-    Qt::ColorScheme qtScheme = Qt::ColorScheme::Unknown;   // follow the system
-    if (scheme == QLatin1String("light"))
-        qtScheme = Qt::ColorScheme::Light;
-    else if (scheme == QLatin1String("dark"))
-        qtScheme = Qt::ColorScheme::Dark;
-    QGuiApplication::styleHints()->setColorScheme(qtScheme);
-    // The hint alone is a no-op on platforms without system palette updates
-    // (offscreen, some compositors). The resolved palette is installed on the
-    // application so the Controls style (fields, buttons, popups) and the
-    // Kirigami theme definition (SystemPalette) both follow it. `system`
-    // restores the palette captured at startup.
-    QGuiApplication::setPalette(qtScheme == Qt::ColorScheme::Unknown
-                                    ? systemPalette()
-                                    : schemePalette(qtScheme));
-#endif
-}
-
-void Backend::setColorScheme(const QString &scheme)
-{
-    applyColorScheme(scheme);
-    m_settings.setScheme(scheme);
-    emit colorSchemeChanged();
-}
-
 
 void Backend::setSecretStore(std::unique_ptr<SecretStore> store)
 {
@@ -516,17 +328,6 @@ bool Backend::createFolder(const QString &relPath) { return m_collections->creat
 bool Backend::moveEntry(const QString &from, const QString &toFolder) { return m_collections->moveEntry(from, toFolder); }
 bool Backend::renameEntry(const QString &relPath, const QString &newName) { return m_collections->renameEntry(relPath, newName); }
 bool Backend::duplicateEntry(const QString &relPath) { return m_collections->duplicateEntry(relPath); }
-QVariantMap Backend::collectionIdentity(const QString &collection) const
-{
-    return m_collections->identity(collection);
-}
-bool Backend::setCollectionIdentity(const QString &collection, const QString &icon,
-                                    const QString &color)
-{
-    if (collection.isEmpty() || !validIdentityColor(color))
-        return false;
-    return m_collections->saveIdentity(collection, icon, color);
-}
 
 bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
 {
@@ -598,13 +399,6 @@ bool Backend::saveEnvironment(const QString &name, const QVariantList &variables
 bool Backend::deleteEnvironment(const QString &name) { return m_envs->remove(name); }
 bool Backend::renameEnvironment(const QString &oldName, const QString &newName) { return m_envs->rename(oldName, newName); }
 void Backend::setActiveEnvironment(const QString &name) { m_envs->setActive(name); }
-
-bool Backend::setEnvironmentColor(const QString &name, const QString &color)
-{
-    if (name.isEmpty() || !validIdentityColor(color))
-        return false;
-    return m_envs->setColor(name, color);
-}
 
 // ---------------------------------------------------------------- history
 

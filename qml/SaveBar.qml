@@ -9,8 +9,6 @@ import "Strings.js" as Strings
 // `showRename` adds a pencil next to the title (e.g. rename environment).
 RowLayout {
     id: bar
-    // design tokens (this component takes no `app`; the token source is shared)
-    Theme { id: tokens }
     property string title: ""
     property bool dirty: false
     property bool showDiscard: false
@@ -26,7 +24,7 @@ RowLayout {
 
     spacing: Kirigami.Units.smallSpacing
 
-    Label { text: bar.title; font.bold: true; font.pixelSize: tokens.fontSizeEmphasis }
+    Label { text: bar.title; font.bold: true; font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1 }
     ToolButton {
         visible: bar.showRename
         icon.name: "edit-rename"

@@ -63,21 +63,6 @@ drawn line. A `1px` handle is nearly impossible to grab. The app's pattern:
 a centered `1px` line (visual), `cursorShape` according to orientation, and hover/drag
 highlighting. Every new `SplitView` uses `handle: SplitGrip {}`.
 
-### Pane layout (rule)
-- The sidebar width (`sidebarWidth`) and the request/response fraction
-  (`splitPosition`, 0.20–0.80) persist in settings. `AppController.restorePanes()`
-  restores them one frame after the first layout and clamps to the live window
-  and the minimums: sidebar 190, response 230, editor 380. `persistPanes()`
-  writes the widths chosen by the user when a splitter is released, not the
-  layout-squeezed widths of a narrow window.
-- At window width **≤ 1000 px** the inner `SplitView` stacks vertically (request
-  above, response below at ~40 % height); above it the horizontal split returns
-  with the remembered widths. The width guard must ignore the first layout
-  (`width > 0`), otherwise the split starts vertical and overrides the saved
-  widths.
-- Widths are what is stored: while stacked the saved fraction is untouched and
-  reapplied when the window widens.
-
 ### ⚠️ `ListModel`: declare roles in `append`, not via `setProperty`
 A role created by `setProperty` **after** the delegate already exists **does not reach the
 delegate**: `model.<role>` stays `undefined` forever (`get(i)` even sees the value, but the UI
@@ -118,186 +103,6 @@ Muted text must keep at least 4.5:1 against its background (WCAG AA). On the
 light theme 0.6 sampled at about 3.9:1, so informational text starts at 0.75;
 0.5 is reserved for decoration and disabled states.
 
-### Selection and hover
-
-List selection has exactly one state, `ItemDelegate.highlighted`. A
-selection/hover surface paints its own background from `app.theme`
-(`qml/Theme.qml`, exposed through `AppController.theme`):
-
-| Row state | Background |
-|---|---|
-| selected (`highlighted`) | `app.theme.selectionTint` |
-| hovered, not selected | `app.theme.hoverTint` |
-| hovered **and** selected | `app.theme.selectionTint` |
-| neither | `"transparent"` |
-
-- Selection alpha stays in **0.12–0.20**, hover in **0.04–0.08**, and hover is
-  strictly quieter: hovering a selected row must not brighten it.
-- Drag/drop-target borders, the collapse-icon hover accent and text selection
-  keep the Kirigami `highlightColor`; they are affordances, not selection
-  surfaces.
-- An explicit `background` replaces the Breeze full-saturation highlight and its
-  pressed/focus ring; keep the replacement minimal (transparent / hover / selection).
-- The tinted surface is **not** a solid highlight, so a selected row's label keeps
-  `Kirigami.Theme.textColor`. Breeze's `ItemDelegate` content item switches to
-  `highlightedTextColor` while `highlighted`, which makes the name vanish into the
-  pale tint in the light theme; give the delegate an explicit `contentItem` with
-  the normal text role instead of darkening the tint.
-
-### Tokens
-
-`qml/Theme.qml` is the single source for the selection/hover tints, the radius
-scale and the text opacity tiers. Views read them as `app.theme.<token>`; a
-literal that duplicates a token is a bug.
-
-| Token | Value |
-|---|---|
-| `selectionTint` | `Kirigami.Theme.highlightColor` at alpha 0.16 |
-| `hoverTint` | `Kirigami.Theme.highlightColor` at alpha 0.06 |
-| `radiusChip` / `radiusControl` / `radiusPanel` | 4 / 6 / 8 px |
-| `textInformational` / `textTableHeader` / `textDecoration` | 0.75 / 0.65 / 0.5 |
-| `textDisabledRow` / `textDisabledVariable` | 0.45 / 0.4 |
-| fontSizeMeta / Secondary / Base / Emphasis | `Math.round(11 / 12 / 13 / 14 × uiScale)` px |
-| fontSizeScreenTitle / fontSizeCollectionTitle | `Math.round(16 / 20 × uiScale)` px |
-| controlToolbar / controlField / controlDialogButton | `Math.round(28 / 32 / 36 × uiScale × densityFactor)` px |
-| iconSize / hitTarget | 16 px / `Math.max(24, Math.round(28 × uiScale × densityFactor))` |
-| settingsRowHeight | `Math.round(48 × uiScale)` comfortable, `Math.round(44 × uiScale)` compact |
-| topBarHeight / hoverDurationMs / focusRingWidth | 40 px / 120 ms / 2 px |
-| chromeBorder | `Kirigami.Theme.textColor` at alpha 0.45 |
-| methodColors | seven entries, light/dark table (below) |
-| swatchColors | eight decorative identity hues |
-
-**Method colours (criterion 15).** `Theme.methodColors` is the single source for
-the HTTP method text; `AppController.methodColor(m)` falls back to
-`Kirigami.Theme.textColor` for an unknown method. Every entry clears **4.5:1**
-against both `backgroundColor` and `alternateBackgroundColor` in light and dark
-(`tst_components::test_method_colors_contrast`):
-
-| Method | Light | Dark |
-|---|---|---|
-| GET | `#2b702e` | `#9ccc65` |
-| POST | `#9c4f00` | `#ffb74d` |
-| PUT | `#1565c0` | `#64b5f6` |
-| PATCH | `#8e24aa` | `#ce93d8` |
-| DELETE | `#c62828` | `#ef9a9a` |
-| HEAD | `#795548` | `#bcaaa4` |
-| OPTIONS | `#4e6570` | `#90a4ae` |
-
-The dynamic-variable purple (`tools-wizard`) is not a method colour.
-
-**Identity colours.** Environment colour (`.catarina/environments.json`) and
-collection identity (`.identity.json`) are optional; unset is `""` and renders
-today's look. Both are dots/icons, never text, so the WCAG text floor does not
-apply. Surfaces: env pill, env popup rows, environment list rows and the
-environment tab (icon tint); collection sidebar depth-0 row, collection tab and
-the collection screen title (icon + tint). Command-palette rows carry an
-additive `iconColor`; the environment rows (`envVars`, `createEnv`) use it, and
-there are no collection rows today.
-
-**UI scale and density.** `Theme.uiScale` (1.0–1.5, from Settings) multiplies
-the six type sizes; `Theme.density` (`comfortable` / `compact`,
-`densityFactor` 0.85) also multiplies the control sizes and shortens the
-settings rows. At `uiScale = 1.0` and comfortable density every token keeps its
-literal value. The boundary is deliberate: **density re-derives the control
-tokens and settings rows only**; `Kirigami.Units` spacings are out of its reach
-in this slice. Editor content (URL field, request body, response body) scales
-only through `editorFontSizeResolved` — a UI-scale change never alters the
-editor text. `Theme` stays settings-free; `Main.qml` binds the two inputs.
-
-Both tints derive from the live `Kirigami.Theme`, so a desktop theme change
-retints the app without a restart.
-
-**Forced scheme.** The theme row and the status-bar toggle persist
-`colorScheme` (`system` / `light` / `dark`). `Backend::applyColorScheme` sets the
-Qt colour-scheme hint and installs the resolved `QPalette` with
-`QGuiApplication::setPalette`, so the app does not depend on a platform theme
-re-resolving the system palette for it. `Theme.applyScheme(window, scheme)` in
-`qml/Theme.qml` then writes the same roles into the window's content theme
-(`Kirigami.Theme.inherit: false` for the subtree, reset to `true` for `system`)
-and into the content item's palette; `Main.qml` binds the window palette to the
-same `SystemPalette` and calls it at startup, on `colorSchemeChanged` and on
-accent change. Together the application palette, the window/content palette and
-the Kirigami content theme reach both the Kirigami roles and the style-painted
-controls (fields, combos, spin boxes, buttons, popups), so forced dark is not
-half-applied on KDE. `canToggleTheme` is true wherever Qt has the runtime
-colour-scheme API (Qt ≥ 6.8). Never bind a surface to the raw palette when a
-token exists.
-
-**Custom accent.** `applyScheme(window, scheme, accent)` takes the accent as a
-third argument (`""` = follow the system). After the scheme writes it overrides
-`highlightColor` and `focusColor` with the accent and picks
-`highlightedTextColor` (`#1a1a1a` on a light accent, `#ffffff` on a dark one) by
-`Util.luminance`, so a checked control can never paint white on white. The
-selection/hover tints derive from the live `Kirigami.Theme.highlightColor`, so
-they re-derive automatically.
-
-QtQuick Controls paint their style surfaces from their palette, and the Kirigami
-desktop style resolves its text roles from the application palette; both follow
-the forced scheme through the writes above. When the platform has no usable
-accent (a neutral highlight, as under an isolated config), `schemePalette` falls
-back to Breeze's selection blue and derives the highlighted text from its
-luminance, so a checked control can never paint white on white.
-
-**Type scale.** Every visible text uses one of the six sizes. The only
-exceptions are the editor-font content surfaces (URL field, request body,
-response body), which the zoom control scales; they are declared in the
-`tst_app` walk. The four sidebar `font.pixelSize` literals that used to sit
-off-scale now read `fontSizeMeta`; the fixed method column widened from 42 to
-46 px so a three-letter method still fits at 11 px bold.
-
-**Control sizes.** Toolbar buttons are `controlToolbar` (28) tall, inline fields
-`controlField` (32), dialog buttons `controlDialogButton` (36), icons `iconSize`
-(16), and no click area is smaller than `hitTarget` (28). The request bar's Save
-and Discard buttons moved from 24 to 28 in this slice.
-
-### Chrome: top bar and footer
-
-- **Top bar (`qml/TopBar.qml`, 40 px, `topBarHeight`).** One row, no logo and no
-  wordmark. Left: a breadcrumb label (`fontSizeSecondary`, collection normal,
-  request normal, placeholder at `textInformational`, one `/` separator at
-  `textDecoration`, `ElideRight`, capped at 45% of the bar). Right: the two
-  panel toggles, the environment pill, and one overflow button holding History
-  and Settings. Extract it as a component; `Main.qml` stays wiring-only.
-- **One outlined control in the chrome: the environment pill.** Transparent
-  fill, 1 px `chromeBorder`, `radiusControl`, chevron at `iconSize`, text
-  `fontSizeSecondary`, max 160 px. Hover paints `hoverTint` over 120 ms — never
-  a filled chip, never `highlighted`. Its popup is a `Popup` with
-  `parent: envPill`, never a fixed page x/y. This is the single deliberate
-  break in border contrast: `disabledTextColor` measured below the 3:1 WCAG
-  floor for a control boundary, so `chromeBorder` (textColor at 0.45) is shared
-  by the pill and every popup this chrome opens.
-- **Footer (`qml/StatusBar.qml`, 28 px, `controlToolbar`).** Readouts on the
-  left (`Secrets: keyring|file`, `Timeout: 30 s`), controls on the right (zoom,
-  theme toggle, `Ctrl+/ shortcuts`). 11 px (`fontSizeMeta`) informational text,
-  no background of its own, no border-top, no colour coding. `file` is a
-  legitimate mode, not a warning: the tooltip carries the explanation. Labels
-  elide before controls shrink; the bar never wraps or grows. The theme toggle
-  is hidden (not disabled) when `canToggleTheme` is false.
-- **Palette row anatomy:** 16 px icon (`iconSize`), 8 px gap, label at 13 px,
-  elastic gap, shortcut at 11 px informational with `Font.TabularNums`. 520 px,
-  no title, no footer. Recents are in-session, bounded to 5 and appear as a
-  `Recent` group above the categories when the query is empty. Fuzzy
-  subsequence matching (`Util.fuzzyMatch`) keeps ties in the original order and
-  paints matched runs bold in `highlightColor` through rich text (HTML-escaped).
-- **Section counts are label text:** `Parameters 2`, `Headers 5`, `Variables 3`
-  (`Strings.t.parameters` + count), same size and colour, plain labels when the
-  model is empty. Body and Authentication never carry a count.
-
-### Hover fade, focus ring, popup chrome
-
-- **Hover fade:** every surface that paints `selectionTint`/`hoverTint` adds
-  `Behavior on color { ColorAnimation { duration: app.theme.hoverDurationMs } }`
-  (120 ms, `Easing.InOutQuad`). Applied to `Sidebar` tree rows, `TabStrip` tabs
-  and `CommandPalette` rows. Hover stays quieter than selection, a selected row
-  never brightens, and the 2 px tab underline does not fade.
-- **Focus ring:** only controls that stripped the platform chrome draw
-  `focusRingWidth` (2 px) `highlightColor`: the request-bar container (overlay
-  only, no geometry change) and the tab-strip tabs. Standard Breeze controls
-  keep their native ring; custom rings never fade.
-- **Popup chrome:** popups opened by the chrome (`envPopup`, the overflow menu
-  and the command palette) paint `radiusPanel` (8) + a 1 px `chromeBorder`.
-
-
 ---
 
 ## 3. Buttons and actions
@@ -315,7 +120,7 @@ see below); secondary = `ToolButton` with icon only + tooltip.
 | Remove row | `ToolButton` | `list-remove` | last column |
 | Delete (destructive) | `Button`/`ToolButton` | `edit-delete` | toolbar (tree) / footer (environment list) |
 | Duplicate | `MenuItem` | `edit-duplicate` | menus |
-| Send request | `Button { highlighted }`, icon only | `document-send` | inside the request bar, right edge |
+| Send request | `Button { highlighted }` | `document-send` | request toolbar |
 
 - **Dialogs (pattern)** — use the shared pieces, all with the same distances:
   1. `header: DialogHeader { dialogTitle: <id>.title }` (bold title; the auxiliary text is not).
@@ -381,8 +186,7 @@ Quick check: `find /usr/share/icons -iname "<name>.svg"`.
 
 **Organization:** atomic components in `qml/`; screens in `qml/screens/` (`CollectionScreen`,
 `EnvironmentScreen`, `SettingsScreen`, `RequestEditor` + `BodyEditor`/`ReqVarsEditor`,
-`ResponsePane`, `Sidebar`, `TabStrip`); window chrome in `qml/` (`TopBar`, `StatusBar`);
-modals/popups in `qml/dialogs/`; pure logic in
+`ResponsePane`, `Sidebar`, `TabStrip`); modals/popups in `qml/dialogs/`; pure logic in
 `qml/Util.js` and `qml/js/` (`VarTokens.js`).
 
 **State and orchestration:** `Main.qml` is **just the window + wiring**. State and actions (tree,
@@ -413,52 +217,6 @@ In `qml/` (atomic and shell components):
   `assets/icons/catarina-badge.svg` stays unmasked and uses a higher `iconOpacity` (the app uses `0.9`) so
   the badge does not wash out. **Every placeholder uses this component** — center
   it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
-- **`Keycap.qml`** — one chip per shortcut segment: `radiusChip`, 1 px
-  `chromeBorder`, bold monospaced `fontSizeMeta`, `hitTarget`-ish padding.
-  Sequences split with the pure `Util.keycaps(seq)`; the settings rows and the
-  overlay share it.
-- **`dialogs/ShortcutsOverlay.qml`** — `Ctrl+/` (fixed, not remappable) opens a
-  modal `shortcutsOverlay`: one row per `shortcutDefs` entry (label + keycap
-  chips), `Esc` and click-outside close. The status-bar hint routes through the
-  same `Main.openShortcuts()`. Remapped rows keep the duplicate-shortcut
-  grammar: `Util.duplicateShortcuts` flags both ids and the row label turns red
-  + bold (the `KvTable` duplicate-name language) until one is reset or
-  re-captured. The newer capture (later in `shortcutsOrder`) holds the key;
-  `AppController.shortcutSeq` makes the older one fall back to its default.
-  `SettingsScreen.focusShortcuts()` still selects the Shortcuts card (contract
-  kept; no global shortcut points there anymore).
-- **`SettingsCard.qml` / `SettingsRow.qml`** — settings grammar. `SettingsCard` is
-  a raised `alternateBackgroundColor` surface (`radiusPanel`, 1 px
-  `chromeBorder`) with a title and a column of rows; the card's padding is
-  `largeSpacing` on all four sides. `SettingsRow` keeps the label + description
-  on the left and puts the control in a fixed **200 px × uiScale** column on the
-  right (`controlWidth` overrides it); its height is `settingsRowHeight` and
-  `rowSearch` (label + description, lowercase) is the searchable text. The one
-  exception is `wideControl` (Storage): the control takes the row's remaining
-  width with a **380 px × uiScale floor**, because a path in a 200 px field is
-  unreadable. Both take `tokens` from the screen (`app.theme`), never a private
-  `Theme`.
-- **Settings screen (`qml/screens/SettingsScreen.qml`)** — two panes: a 190 px
-  `settingsNav` (seven categories: Appearance, Editor, Network, Behavior,
-  Shortcuts, Storage, About) and the card pane. Appearance is active on open;
-  the category is not persisted. Each rail row is a 16 px Breeze icon + label
-  with the plain font weight; the selected row is `selectionTint` (never the
-  filled `highlightColor` row or a bold label). **No Apply**: every control writes
-  its setting on change, and the storage path applies on `editingFinished` when
-  it is valid and differs from the current folder. The one-line subtitle
-  (`optionsApplyInstantly`) sits **above** the cards. `settingsSearch` sits above
-  it (single line, no magnifier, `Esc` clears): a row shows when `rowSearch`
-  contains the query, a rail entry hides when its category has no match, and the
-  pane stays on the selected category — its matches, or the transparent
-  `settingsEmptyState`, never another category's card. `Ctrl+F` on the settings
-  tab routes to `focusSearch()` before the sidebar/response branches.
-- **Editor content surfaces** — the URL field, request body and response body
-  bind `font.family: settings.editorFontResolved` and
-  `font.pointSize: settings.editorFontSizeResolved`; the status-bar zoom writes
-  the same `editorFontSize` (reset writes the unset `0`, the label always shows
-  the resolved size). `BodyEditor` honors `editorWrap`/`editorIndent`/
-  `editorBrackets`, and its 34 px line-number gutter (`bodyLineGutter`) renders
-  viewport-only from `positionToRectangle`, hiding when the setting is off.
 - **`HeaderTable.qml`** — read-only table (response HTTP headers); selectable cells + "Copy all".
 - **`ResolvedVarsTable.qml`** — read-only table of effective variables (Source/Name/Value).
   The Source column has **color and icon per scope** (global/collection/request) and the list is
@@ -467,26 +225,13 @@ In `qml/` (atomic and shell components):
   scope: global/collection/request, plus `dynamic` = purple + `tools-wizard`). Used by
   `ResolvedVarsTable` and `VarCompleter`.
 - **`MethodBadge.qml`** — HTTP method badge (colored abbreviation; color comes from
-  `app.methodColor`). Used in tabs, collection view, and history. **The sidebar tree does not use
-  it**: request rows render the method as plain uppercase 10 px bold coloured text
-  (`objectName: "treeMethodLabel"`, fixed 42 px column so names align). A value that is scanned
-  down a column is text, not a badge.
+  `app.methodColor`). Used in the tree, tabs, collection view, and history.
 - **Tree (`qml/Sidebar.qml`)** — nested collections/requests. **12px indent per level**.
   **Indent guides** (VS Code style): a vertical `1px` line per ancestor level, aligned to the
   center of that level's triangle (`x = level*12 + 9`), in `Kirigami.Theme.textColor` with
   `opacity: 0.15`. The delegate stores `itemDepth` and the guide `Repeater` uses
   `treeItem.itemDepth` (inside a `Repeater`, `model` is shadowed by its own model). Regression:
   `tests/app/tst_app.qml::test_indent_guides_por_profundidade`.
-  **Filter field** (`sidebarFilterField`): single-line control (`gridUnit * 1.7`) between the
-  header and the tree, hidden when there is no collection; no magnifier, no clear button — `Esc`
-  clears and returns focus to the tree. It binds `controller.treeFilter`; `applyCollapse()` makes
-  a row visible when it or a descendant matches (case-insensitive, name or path), so ancestors of
-  a hit never hide. A selected row that stops matching keeps `selectedPath` but clears
-  `currentIndex` until the filter clears. No match shows `sidebarFilterEmpty` (transparent
-  `EmptyState`, no icon, `Esc` hint).
-  **Header**: exactly two actions — primary `list-add` and one `overflow-menu` button
-  (`sidebarOverflowButton`, disabled without a selection) for Delete, Rename, Collapse all and
-  Reveal. Destructive actions do not get a permanent icon.
 - **`JsonTree.qml`** — JSON tree of the response (lazy: only parses when the "Tree" tab is active).
 - **`AuthEditor.qml`** — shared authentication editor (request and collection Authentication tab).
   `load(auth)` fills it in, `value()` returns the map, `edited` signal when the user changes it.
@@ -514,39 +259,6 @@ In `qml/` (atomic and shell components):
   `variableNoteFor`, `error` signal), and QML translates via `Strings.variableNote` /
   `Strings.backendError`.
 
-### Tab strip (rule)
-The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
-`app.theme` for surfaces and radii.
-
-- **Bounded width:** `tabMinWidth: 90`, `tabMaxWidth: 200`. A long name clamps
-  at 200 px and elides right (`Text.ElideRight`); a short one floors at 90 px and
-  the label absorbs the slack. Never reintroduce a per-label width cap.
-- **Surfaces:** active tab paints `Kirigami.Theme.backgroundColor` (raised over
-  the strip's `alternateBackgroundColor`) with `radius: app.theme.radiusControl`;
-  hovered-not-active is `app.theme.hoverTint`; neither is transparent; hovering
-  an active tab never brightens it. The active tab keeps the 2 px
-  `highlightColor` underline (an affordance, not a selection surface).
-- **Controls appear on hover, not dimmed:** close `×` only on the active or
-  hovered tab, pin only on a hovered or pinned tab, both fully opaque when
-  visible, hit area at least 24×24. Pinned tabs never show `×`.
-- **Tooltip without the steal trap:** the strip owns one `ToolTip`, opens it only
-  when the label is actually elided and positions it **below** the tab band.
-  Never attach `ToolTip.visible: hovered` to the tab, pin or `×` (section 1).
-- **Scroll into view:** switching tabs (click, shortcut, new tab, session
-  restore) scrolls the active tab into view one frame later, so a freshly
-  appended delegate has its geometry.
-- **Context menu (`tabCtxMenu`):** right-clicking a tab offers Pin/Unpin,
-  Close, Close others and Close all. Utility tabs (settings, environment,
-  collection) only get Close. Close others/all use one count-based
-  confirmation when dirty tabs are affected, and Close all reaches the empty
-  state.
-- **Tab search (`Ctrl+Shift+A`, remappable):** `TabSearch.qml` opens a popup
-  over the request editor (`tabSearchField`); matching is the pure
-  `Util.tabSearchMatches` over URL, params/headers/fields/vars (name + value)
-  and body. Enter activates: URL focuses the URL field, body selects the range,
-  a table row switches to its section and calls `KvTable.revealRow(index)`.
-  The popup never opens outside a request tab.
-
 ### Responsive tables (rule)
 - Flexible columns: `Layout.fillWidth: true` + **explicit `Layout.preferredWidth` and
   `Layout.minimumWidth`** (never rely on the implicit size of `Label` vs `TextField` — that's what
@@ -555,19 +267,6 @@ The open-request strip (`qml/TabStrip.qml`) follows these rules; it consumes
   in `KvTable`).
 - **Header and rows use the same `preferred`/`minimum`** → they stay aligned.
 - **Never** derive a column width from the table's own `width` (creates a layout polish loop).
-
-### Request bar (rule)
-The request editor's top row is one object: `alternateBackgroundColor`, 1 px
-`disabledTextColor`, `radiusControl`, `gridUnit * 2`.
-- Method (`ComboBox`, `background: null`, `app.methodColor`, 88 px preferred,
-  56 minimum), URL (the shared `VarField`, `background: null` at the call site)
-  and Send (highlighted icon-only `Button`) share one border; Send is the only
-  primary.
-- Fixed 160 px budget; URL floor 220 px; when space runs out the icons clip.
-- Discard then Save are 24×24 icon-only `ToolButton`s after the container; the
-  tab dot carries the dirty state, so there is no "unsaved" label.
-- The container draws the 1 px `highlightColor` focus overlay; never change
-  `border.width` or the padding.
 
 ---
 
@@ -617,24 +316,10 @@ The request editor's top row is one object: `alternateBackgroundColor`, 1 px
   (`gridUnit * 1.7`), otherwise the `echoMode` dots change the row height depending on the font.
 - **Delete confirmations**: all follow `settings.confirmDelete` (either confirm on everything, or
   on nothing).
-- **Response**: one header row (`responseHeaderRow`): 8 px status dot + status text, tabular
-  `· time · size`, format selector (JSON/HTML/XML/Raw), wrap toggle, copy, find and one overflow.
-  The row never wraps; at the 230 px minimum the fixed actions demote into the overflow in this
-  order: find, copy, wrap — status and format stay, the meta line elides before the status does.
-  The header likes status as text: no pill, no badge, one filled colour (the dot), dot absent on
-  errors without a status code. Ctrl+F routes by focus: inside the sidebar it focuses the filter,
-  otherwise with a displayed body it opens the body find (else the sidebar filter while visible).
-  The body find searches the displayed body; the format selector only
-  re-renders it (`bodySource` keeps the stored body, never mutated; resets to JSON on the next
-  send). Wrap off is `TextEdit.NoWrap` with horizontal scrolling. Tab labels carry counts when a
-  response exists (`Headers 12`, `Cookies 2`); plain labels otherwise.
-  **Line reference** (`responseLineRef`): scrollable text areas that wrap show `Ln, Col`
-  right-aligned in the bottom strip, tabular figures, informational opacity, Body tab only and
-  only with a non-empty body. Never a gutter: a wrapped logical line spans several visual rows,
-  and the gutter would cost 30–40 px at the 230 px pane minimum. The strip else carries the
-  hover hint. The status area reserves a **minimum** height (`gridUnit * 2`) but **wraps** long
-  messages instead of clipping. Error texts carry no "Error:" prefix, and the
-  unresolved-variable error is **concise** (a count, not the list of names).
+- **Response**: Ctrl+F searches the full body; JSON always pretty; the status area reserves a
+  **minimum** height (`gridUnit * 2`) but **wraps** long messages instead of clipping. Error texts
+  carry no "Error:" prefix, and the unresolved-variable error is **concise** (a count, not the list
+  of names).
 - **Single-line fields with long content**: `TextArea` does **not** scroll itself, and moving the
   item would drag its native border, so every `VarField` scrolls the *text* by offsetting
   `horizontalPadding` (`scroll` + `ensureVisible(cursorRectangle)`) — the frame stays put, only the
@@ -696,7 +381,4 @@ The request editor's top row is one object: `alternateBackgroundColor`, 1 px
 5. Icon exists in the theme and follows the convention — section 4.
 6. If it's a table: use `KvTable`; if you need a new column/option, **extend the `KvTable`**.
 7. A new screen/delegate talks to the app via `app` (AppController) — do **not** access window ids.
-8. Selection/hover backgrounds come from `app.theme` (`selectionTint` / `hoverTint`), never a literal — section 2.
-9. If a new pattern emerged → **document it here**.
-10. Tab strip: bounded width, hover-only controls, tooltip below the band —
-    section 5 (Tab strip).
+8. If a new pattern emerged → **document it here**.

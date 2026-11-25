@@ -23,10 +23,6 @@ public:
     // loads the blob now (the Backend does it in the ctor, before the QML)
     void preload() const;
 
-    // which medium stores secrets: "keyring" or "file". Fixed at construction;
-    // never reads, writes or logs a credential value.
-    virtual QString medium() const;
-
     // OS keychain when available (and not forced to a file by
     // CATARINA_SECRETS_BACKEND=file); otherwise a 0600 file at filePath.
     // The first time the keychain exists but is empty, it migrates the file there and deletes it.

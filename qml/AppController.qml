@@ -9,7 +9,6 @@ QtObject {
     id: controller
 
     // injected by the window / components
-    property var theme
     property var window
     property var tabsModel
     property var paramsModel
@@ -38,14 +37,6 @@ QtObject {
     property var discardEnvDialog
     property var scopePopup
     property var fileDialog
-    // split views injected by Main (wiring only); pane restore/save lives here
-    property var mainSplit
-    property var innerSplit
-    // widths the user chose by dragging (0 = untouched this session)
-    property real paneSidebarWidth: 0
-    property real paneSplitPosition: 0
-    // set once restorePanes() has run with a real split width
-    property bool panesRestored: false
 
 property string selectedPath: ""
 property bool selectedIsFolder: false
@@ -73,8 +64,6 @@ property int tabDropIndex: -1
 property real ghostX: 0
 property real ghostY: 0
 property var collapsedFolders: ({})
-property string treeFilter: ""        // transient sidebar filter, never persisted
-property int treeRevision: 0          // bumped when the tree's hidden roles change
 property var collectionRequests: []
 property int collectionFolders: 0
 property bool collectionVarsDirty: false
@@ -99,22 +88,6 @@ property var resolvedVars: []
 property var missingVars: []          // unresolved names (highlighted red); for tests/debug
 property var collectionResolvedVars: []
 property string currentCollection: ""
-// top-bar breadcrumb, kept here so Main/TopBar stay wiring-only (DESIGN.md §5)
-readonly property string breadcrumbCollection: {
-    if (showingCollection) return collectionOf(collectionPath);
-    if (currentTab >= 0 && currentTab < tabsModel.count) {
-        var ct = tabsModel.get(currentTab);
-        if (!ct.isCollection && !ct.isEnvironment && !ct.isSettings)
-            return currentCollection;
-    }
-    return "";
-}
-readonly property string breadcrumbRequest: {
-    if (currentTab < 0 || currentTab >= tabsModel.count) return "";
-    var t = tabsModel.get(currentTab);
-    if (t.isCollection || t.isEnvironment || t.isSettings) return "";
-    return t.name;
-}
 // warnings for duplicate variable names in the same scope (block save/send)
 property string requestVarsWarning: ""
 property string collectionVarsWarning: ""
@@ -131,8 +104,14 @@ readonly property color jsonKeyColor: darkTheme ? "#61afef" : "#005cc5"
 
 // ================= helpers =================
 function methodColor(m) {
-    var table = theme ? theme.methodColors : null;
-    return (table && table[m]) ? table[m] : Kirigami.Theme.textColor;
+    switch (m) {
+    case "GET":    return Kirigami.Theme.positiveTextColor;
+    case "POST":   return Kirigami.Theme.neutralTextColor;
+    case "PUT":    return Kirigami.Theme.activeTextColor;
+    case "PATCH":  return "#b180d7";
+    case "DELETE": return Kirigami.Theme.negativeTextColor;
+    default:       return Kirigami.Theme.textColor;
+    }
 }
 function parentOf(p) { var i = p.lastIndexOf("/"); return i < 0 ? "" : p.substring(0, i); }
 function collectionOf(p) { var i = p.indexOf("/"); return i < 0 ? p : p.substring(0, i); }
@@ -144,31 +123,6 @@ function collectionNames() {
     }
     return out;
 }
-// identity of a collection/folder at relPath, read from the tree model:
-// { icon, color } (both "" when unset; subfolders never carry one)
-readonly property var collectionIcons: ["folder-documents", "folder", "folder-important",
-    "folder-html", "folder-image"]
-function collectionIcon(name) {
-    return name && name.length > 0 && collectionIcons.indexOf(name) >= 0
-        ? name : "folder-documents";
-}
-function identityFor(relPath) {
-    for (var i = 0; i < treeModel.count; i++) {
-        var e = treeModel.get(i);
-        if (e.relPath === relPath)
-            return { icon: e.icon !== undefined ? e.icon : "",
-                     color: e.color !== undefined ? e.color : "" };
-    }
-    return { icon: "", color: "" };
-}
-// identity colour of an environment ("" when unset or unknown)
-function environmentColor(name) {
-    for (var i = 0; i < envList.length; i++)
-        if (envList[i].name === name)
-            return envList[i].color !== undefined ? envList[i].color : "";
-    return "";
-}
-function activeEnvColor() { return environmentColor(activeEnv); }
 function reloadTree() {   // coalesce: several requests in the same tick become 1 rebuild
     if (treeReloadQueued) return;
     treeReloadQueued = true;
@@ -178,83 +132,42 @@ function rebuildTree() {
     treeModel.clear();
     storageError = backend.storageReadable() ? "" : Strings.storageUnreadable(backend.storageDir);
     var a = backend.collectionTree();
-    var hits = filterHits(a);
     var collapsed = Object.keys(controller.collapsedFolders);
     for (var i = 0; i < a.length; i++) {
         var e = a[i];
         var hidden = false;
-        if (hits !== null) {
-            hidden = hits[e.relPath] !== true;
-        } else {
-            for (var c = 0; c < collapsed.length; c++) {
-                if (e.relPath !== collapsed[c] && e.relPath.indexOf(collapsed[c] + "/") === 0) {
-                    hidden = true;
-                    break;
-                }
+        for (var c = 0; c < collapsed.length; c++) {
+            if (e.relPath !== collapsed[c] && e.relPath.indexOf(collapsed[c] + "/") === 0) {
+                hidden = true;
+                break;
             }
         }
         treeModel.append({ name: e.name, relPath: e.relPath, isFolder: e.isFolder,
                            method: e.method !== undefined ? e.method : "",
                            depth: e.depth !== undefined ? e.depth : 0,
-                           icon: e.icon !== undefined ? e.icon : "",
-                           color: e.color !== undefined ? e.color : "",
                            hasChildren: e.hasChildren === true,
                            collapsed: controller.collapsedFolders[e.relPath] === true,
                            hidden: hidden });
     }
-    treeRevision++;
-}
-// map of tree hits for the active filter, or null when there is no filter.
-// `entries` lets rebuildTree reuse the array it already fetched.
-function filterHits(entries) {
-    if (treeFilter.length === 0) return null;
-    var rows = [];
-    if (entries === undefined) {
-        for (var i = 0; i < treeModel.count; i++) {
-            var e = treeModel.get(i);
-            rows.push({ relPath: e.relPath, name: e.name });
-        }
-    } else {
-        for (var j = 0; j < entries.length; j++)
-            rows.push({ relPath: entries[j].relPath, name: entries[j].name });
-    }
-    return Util.filterRows(rows, treeFilter);
 }
 // updates the "hidden"/"collapsed" roles in place (no model reset) so the
-// delegate height can animate when a folder is expanded/collapsed or the
-// filter changes. With a filter, hidden means "not a tree hit".
+// delegate height can animate when a folder is expanded/collapsed
 function applyCollapse() {
     var collapsed = Object.keys(controller.collapsedFolders);
-    var hits = filterHits();
     for (var i = 0; i < treeModel.count; i++) {
         var e = treeModel.get(i);
         var hidden = false;
-        if (hits !== null) {
-            hidden = hits[e.relPath] !== true;
-        } else {
-            for (var k = 0; k < collapsed.length; k++) {
-                if (e.relPath !== collapsed[k] && e.relPath.indexOf(collapsed[k] + "/") === 0) {
-                    hidden = true;
-                    break;
-                }
+        for (var k = 0; k < collapsed.length; k++) {
+            if (e.relPath !== collapsed[k] && e.relPath.indexOf(collapsed[k] + "/") === 0) {
+                hidden = true;
+                break;
             }
         }
         if (e.hidden !== hidden) treeModel.setProperty(i, "hidden", hidden);
         var isCollapsed = controller.collapsedFolders[e.relPath] === true;
         if (e.collapsed !== isCollapsed) treeModel.setProperty(i, "collapsed", isCollapsed);
     }
-    treeRevision++;
 }
-function collapseAll() {
-    var c = Object.assign({}, controller.collapsedFolders);
-    for (var i = 0; i < treeModel.count; i++) {
-        var e = treeModel.get(i);
-        if (e.isFolder) c[e.relPath] = true;
-    }
-    controller.collapsedFolders = c;
-    applyCollapse();
-}
-onTreeFilterChanged: applyCollapse()
 function toggleCollapse(relPath) {
     var c = Object.assign({}, controller.collapsedFolders);
     if (c[relPath]) delete c[relPath]; else c[relPath] = true;
@@ -777,42 +690,6 @@ function reopenClosed() {
     if (closedTabs.length === 0) return;
     openRequest(closedTabs.pop());
 }
-// unsaved state of a tab at index i (mirrors closeTab's per-type rule)
-function tabIsDirty(i) {
-    if (i < 0 || i >= tabsModel.count) return false;
-    var t = tabsModel.get(i);
-    if (t.isSettings) return false;
-    if (t.isEnvironment) return i === currentTab && envScreen.envVarsDirty;
-    if (t.isCollection) return i === currentTab && (collectionVarsDirty || collectionHeadersDirty || collectionAuthDirty);
-    return t.dirty === true;
-}
-// closes the given indices (descending, so removals don't shift what is left)
-function closeIndices(indices) {
-    var sorted = indices.slice().sort(function (a, b) { return b - a; });
-    for (var i = 0; i < sorted.length; i++) doCloseTab(sorted[i], false);
-}
-// Close others / Close all: clean tabs close at once; when dirty tabs are
-// affected, one confirmation carries their count (reuses the delete flow).
-function closeTabsWithConfirm(indices) {
-    if (indices.length === 0) return;
-    var dirty = 0;
-    for (var i = 0; i < indices.length; i++)
-        if (tabIsDirty(indices[i])) dirty++;
-    if (dirty === 0) { closeIndices(indices); return; }
-    controller.confirmDelete(Strings.closeAllConfirm(dirty), function () { closeIndices(indices); });
-}
-function closeOtherTabs(i) {
-    if (i < 0 || i >= tabsModel.count) return;
-    var indices = [];
-    for (var k = 0; k < tabsModel.count; k++)
-        if (k !== i) indices.push(k);
-    closeTabsWithConfirm(indices);
-}
-function closeAllTabs() {
-    var indices = [];
-    for (var k = 0; k < tabsModel.count; k++) indices.push(k);
-    closeTabsWithConfirm(indices);
-}
 
 // opens the new item dialog: folder (inside the selection) or collection (root)
 function openNewFolder() { nameDialog.base = controller.targetFolder(); nameDialog.asCollection = false; nameDialog.open(); }
@@ -1044,69 +921,6 @@ function doSend() {
     responsePane.clearResponse();
     backend.send(collectRequest(), collectionOf(t.relPath));
 }
-// ================= pane layout =================
-// Restores the saved sidebar width and response-pane fraction, clamped to the
-// live window and the SplitView minimums (sidebar 190, response 230, editor
-// 380). Called from Main.Component.onCompleted and retried on the first width
-// change, because at startup the split can still have no width.
-function restorePanes() {
-    // Before the first layout the split has no width; clamping against it would
-    // collapse the saved widths to the minimums (and persist that on close).
-    // Defer until the split has a width; Main re-runs this on the width change
-    // that the first layout triggers.
-    if (!mainSplit || mainSplit.width <= 0)
-        return;
-    // Always restore from the saved values: a layout squeeze (window floor,
-    // stacked panes) must never become the value that is re-applied later.
-    var sw = settings.sidebarWidth;
-    if (sidebar && sw > 0) {
-        // reserve the editor and response minimums plus the two handles
-        var maxSidebar = Math.min(500, mainSplit.width - 626);
-        if (maxSidebar < 190) maxSidebar = 190;
-        sw = Math.max(190, Math.min(sw, maxSidebar));
-        sidebar.expandedWidth = sw;
-        sidebar.splitWidth = sw;
-    }
-    if (innerSplit && responsePane && innerSplit.orientation === Qt.Horizontal) {
-        // the split has not necessarily been laid out yet at startup: derive its
-        // final width from the sidebar we just applied instead of reading it
-        var innerWidth = mainSplit.width - (sidebar && sw > 0 ? sw : 190) - 8;
-        var f = settings.splitPosition;
-        if (f > 0 && innerWidth > 0) {
-            f = Math.max(0.2, Math.min(f, 0.8));
-            var maxResponse = innerWidth - 388;                       // editor minimum + handle
-            var rw = Math.max(230, Math.min(innerWidth * f, maxResponse));
-            responsePane.expandedWidth = rw;
-            responsePane.splitWidth = rw;
-        }
-    }
-    panesRestored = true;
-}
-// The user dragged the main splitter: remember the chosen width and persist it
-// immediately, so a later layout squeeze cannot overwrite it.
-function commitUserSidebarWidth() {
-    if (!sidebar || !sidebarVisible || sidebar.width <= 0) return;
-    paneSidebarWidth = sidebar.width;
-    settings.sidebarWidth = Math.round(sidebar.width);
-}
-// The user dragged the request/response splitter while horizontal.
-function commitUserSplitPosition() {
-    if (!innerSplit || !responsePane || !responseVisible) return;
-    if (innerSplit.orientation !== Qt.Horizontal) return;
-    if (innerSplit.width <= 0 || responsePane.width <= 0) return;
-    paneSplitPosition = Math.max(0.2, Math.min(responsePane.width / innerSplit.width, 0.8));
-    settings.splitPosition = paneSplitPosition;
-}
-// Saves the widths the user chose this session, if any. A width imposed by the
-// layout (window floor, stacked panes) is not a choice and must not win over
-// the saved value.
-function persistPanes() {
-    if (paneSidebarWidth > 0)
-        settings.sidebarWidth = Math.round(paneSidebarWidth);
-    if (paneSplitPosition > 0)
-        settings.splitPosition = Math.max(0.2, Math.min(paneSplitPosition, 0.8));
-}
-
 function persistSession() {
     // only pinned tabs come back in the next session (preview/unpinned are transient)
     var arr = [];
@@ -1198,33 +1012,14 @@ property var shortcutDefs: [
     { id: "nextTab", label: Strings.t.shortcutNextTab, def: "Alt+Right" },
     { id: "reopenTab", label: Strings.t.shortcutReopenTab, def: "Ctrl+Shift+T" },
     { id: "palette", label: Strings.t.shortcutPalette, def: "Ctrl+K" },
-    { id: "findInResponse", label: Strings.t.shortcutFind, def: "Ctrl+F" },
-    { id: "tabSearch", label: Strings.t.shortcutTabSearch, def: "Ctrl+Shift+A" }
+    { id: "findInResponse", label: Strings.t.shortcutFind, def: "Ctrl+F" }
 ]
 function shortcutSeq(id) {
     var def = "";
     for (var i = 0; i < shortcutDefs.length; i++)
         if (shortcutDefs[i].id === id) def = shortcutDefs[i].def;
     var m = settings.shortcuts;
-    var seq = (m && m[id] !== undefined) ? m[id] : def;
-    // One active binding per sequence: the newer capture (later in
-    // shortcutsOrder; absent = oldest) holds the key, the older steps aside to
-    // its default.
-    var dupes = Util.duplicateShortcuts(shortcutDefs, m, settings.shortcutsOrder);
-    if (dupes[id] !== true) return seq;
-    var order = settings.shortcutsOrder || [];
-    function rank(x) { var at = order.indexOf(x); return at < 0 ? -1 : at; }
-    for (var j = 0; j < shortcutDefs.length; j++) {
-        var other = shortcutDefs[j].id;
-        if (other === id) continue;
-        var oseq = (m && m[other] !== undefined) ? m[other] : shortcutDefs[j].def;
-        if (oseq === seq && rank(other) > rank(id)) return def;
-    }
-    return seq;
-}
-// ids whose effective sequence collides (red + bold rows in Settings)
-function shortcutConflicts() {
-    return Util.duplicateShortcuts(shortcutDefs, settings.shortcuts, settings.shortcutsOrder);
+    return (m && m[id] !== undefined) ? m[id] : def;
 }
 property bool recordingShortcut: false
 function prevTab() { if (tabsModel.count > 1) switchTab((currentTab - 1 + tabsModel.count) % tabsModel.count); }

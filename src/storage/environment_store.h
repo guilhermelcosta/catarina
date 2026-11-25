@@ -17,7 +17,7 @@ public:
     void setFile(const QString &path);   // <dir>/.catarina/environments.json
     void load();
 
-    QVariantList list() const;                                    // {name, count, color}
+    QVariantList list() const;                                    // {name, count}
     QVariantList variables(const QString &name) const;
     QVariantList activeVariables() const;                         // for the resolver
     QString active() const;
@@ -26,8 +26,6 @@ public:
     bool remove(const QString &name);
     bool rename(const QString &oldName, const QString &newName);
     void setActive(const QString &name);
-    // identity colour ("#rrggbb"); empty clears it. Validation lives in Backend.
-    bool setColor(const QString &name, const QString &color);
 
     // swaps oldName for newName in the environment variables' scope (collection rename)
     bool renameCollectionScope(const QString &oldName, const QString &newName);
@@ -39,7 +37,6 @@ private:
     struct Env {
         QString name;
         QVariantList variables;
-        QString color;
     };
     void saveFile() const;
 
