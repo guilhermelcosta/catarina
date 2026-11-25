@@ -58,6 +58,21 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.10" date="2026-11-25">
+      <description>
+        <ul>
+          <li>revert: roll back the visual refinement phases (#149)</li>
+          <li>feat: P2c shortcuts, identity and method colours (#147)</li>
+          <li>feat: P2b pane persistence and tab search (#145)</li>
+          <li>feat: P2a settings shell, editor and density (#143)</li>
+          <li>feat: P1 cohesion (#141)</li>
+          <li>feat: P0 closeout sidebar filter and response header (#139)</li>
+          <li>feat: one request bar (#137)</li>
+          <li>feat: restyle the request tab strip (#135)</li>
+          <li>feat: theme-derived selection and hover for list surfaces (#132)</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.9" date="2026-11-24">
       <description>
         <ul>
