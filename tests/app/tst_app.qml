@@ -32,6 +32,17 @@ TestCase {
         if (win) { win.destroy(); win = null; }
     }
 
+    function tabDelegate(controller, i) {
+        var n = 0;
+        for (var c = 0; c < controller.tabStrip.row.children.length; c++) {
+            var it = controller.tabStrip.row.children[c];
+            if (!it.isTabDelegate) continue;
+            if (n === i) return it;
+            ++n;
+        }
+        return null;
+    }
+
     function baseReq(method) {
         return { method: method !== undefined ? method : "GET", url: "http://example/x",
                  params: [], headers: [], fields: [], body: "", bodyType: "none",
@@ -1987,6 +1998,176 @@ TestCase {
         compare(c.tabsModel.count, 0, "confirming closes every tab");
         compare(c.currentTab, -1);
         settings.confirmDelete = previous;
+    }
+
+    // criterion 12: Ctrl+/ opens the shortcuts overlay with keycap chips; Esc closes
+    function test_shortcuts_overlay_and_focus() {
+        win.appController.openSettingsTab();
+        wait(80);
+        var page = findChild(win, "settingsPage");
+        verify(page !== null, "the settings screen is reachable");
+
+        keyClick(Qt.Key_Slash, Qt.ControlModifier);
+        wait(100);
+        var overlay = findChild(win, "shortcutsOverlay");
+        verify(overlay !== null, "the shortcuts overlay exists");
+        verify(overlay.visible, "Ctrl+/ opens the shortcuts overlay");
+
+        var label = findChild(overlay.contentItem, "shortcutOverlayLabel");
+        verify(label !== null, "rows carry a label");
+        compare(label.text, Strings.t.shortcutSend, "the first row is the first shortcut");
+        var keycap = findChild(overlay.contentItem, "keycap");
+        verify(keycap !== null, "a keycap chip exists");
+        compare(keycap.label, "Ctrl", "the sequence is split into keycaps");
+
+        keyClick(Qt.Key_Escape);
+        wait(80);
+        verify(!overlay.visible, "Esc closes the overlay");
+
+        // focusShortcuts still retargets the settings category (contract kept)
+        page.focusShortcuts();
+        wait(60);
+        compare(findChild(win, "settingsCard.shortcuts").visible, true,
+                "focusShortcuts selects the Shortcuts card");
+    }
+
+    // criterion 13: duplicate capture flags both rows and only the newer wins;
+    // reset clears the conflict
+    function test_shortcut_duplicate_flag_and_reset() {
+        var c = win.appController;
+        settings.resetShortcut("newRequest");
+        settings.resetShortcut("save");
+
+        settings.setShortcut("newRequest", "Ctrl+Shift+K");
+        settings.setShortcut("save", "Ctrl+Shift+K");
+        wait(80);
+
+        var conflicts = c.shortcutConflicts();
+        compare(conflicts.newRequest, true, "both rows are flagged");
+        compare(conflicts.save, true);
+        compare(c.shortcutSeq("save"), "Ctrl+Shift+K", "the newer capture holds the key");
+        compare(c.shortcutSeq("newRequest"), "Ctrl+T", "the older steps aside to its default");
+
+        win.appController.openSettingsTab();
+        wait(80);
+        findChild(win, "settingsPage").settingsCategory = 4;
+        wait(80);
+        var repeater = findChild(win, "shortcutRowsRepeater");
+        verify(repeater !== null && repeater.count === c.shortcutDefs.length,
+               "one row per shortcut");
+        var newRow = repeater.itemAt(1);
+        var saveRow = repeater.itemAt(3);
+        verify(newRow !== null && saveRow !== null, "shortcut rows exist");
+        compare(newRow.conflict, true, "the duplicate row is flagged");
+        compare(saveRow.conflict, true);
+        var rowLabel = findChild(newRow, "settingsRowLabel");
+        verify(rowLabel.font.bold, "the flagged label is bold");
+        verify(Qt.colorEqual(rowLabel.color, Kirigami.Theme.negativeTextColor),
+               "the flagged label is red");
+
+        settings.resetShortcut("save");
+        wait(40);
+        compare(c.shortcutConflicts().newRequest, undefined, "reset clears the conflict");
+        compare(saveRow.conflict, false);
+
+        settings.resetShortcut("newRequest");
+        wait(20);
+    }
+
+    // criterion 16: environment colour and collection identity render on every
+    // surface (pill, popup, env list, tab strip, sidebar, palette)
+    function test_identity_renders_across_surfaces() {
+        var c = win.appController;
+        backend.saveEnvironment("ident-env", []);
+        backend.setEnvironmentColor("ident-env", "#1565c0");
+        c.reloadEnvs();
+        c.activateEnv("ident-env");
+        wait(80);
+
+        var pillDot = findChild(win, "envPillDot");
+        verify(pillDot !== null && pillDot.visible, "the env pill carries a colour dot");
+        verify(Qt.colorEqual(pillDot.color, "#1565c0"), "the pill dot is the env colour");
+
+        c.openEnvTab("ident-env");
+        wait(120);
+        var list = findChild(win, "envList");
+        var idx = -1;
+        for (var i = 0; i < list.count; i++)
+            if (list.model[i].name === "ident-env") idx = i;
+        verify(idx >= 0, "the environment is listed");
+        var listDot = findChild(list.itemAtIndex(idx), "envListDot");
+        verify(listDot !== null && listDot.visible, "the env list row carries the dot");
+        verify(Qt.colorEqual(listDot.color, "#1565c0"));
+
+        // environment tab: the branch icon is tinted
+        var envTabIdx = -1;
+        for (var t = 0; t < c.tabsModel.count; t++)
+            if (c.tabsModel.get(t).isEnvironment === true) envTabIdx = t;
+        verify(envTabIdx >= 0, "the environment tab is open");
+        var tabIcon = findChild(tabDelegate(c, envTabIdx), "tabStripTypeIcon");
+        verify(tabIcon !== null, "the tab icon exists");
+        verify(Qt.colorEqual(tabIcon.color, "#1565c0"), "the environment tab is tinted");
+
+        // palette: env rows use the additive iconColor field
+        var palette = findChild(win, "commandPalette");
+        palette.openPalette();
+        wait(60);
+        var envRow = -1;
+        for (var p = 0; p < palette.filtered.length; p++)
+            if (palette.filtered[p].id === "envVars") envRow = p;
+        verify(envRow >= 0, "the palette has the environment row");
+        compare(palette.filtered[envRow].iconColor, "#1565c0",
+                "palette env rows carry the colour");
+        palette.close();
+
+        // collection identity: sidebar depth-0 icon + colour, and the tab strip
+        backend.deleteEntry("ident-col");
+        backend.createFolder("ident-col");
+        backend.setCollectionIdentity("ident-col", "folder", "#00838f");
+        c.reloadTree();
+        wait(100);
+        var treeIdx = -1;
+        for (var r = 0; r < c.treeModel.count; r++)
+            if (c.treeModel.get(r).relPath === "ident-col") treeIdx = r;
+        verify(treeIdx >= 0, "the collection is in the tree");
+        compare(c.treeModel.get(treeIdx).icon, "folder");
+        compare(c.treeModel.get(treeIdx).color, "#00838f");
+        var treeIcon = findChild(c.sidebar.view.itemAtIndex(treeIdx), "treeRowIcon");
+        verify(treeIcon !== null, "the tree row icon exists");
+        compare(treeIcon.source, "folder");
+        verify(Qt.colorEqual(treeIcon.color, "#00838f"), "the tree row is tinted");
+
+        c.openCollection("ident-col");
+        wait(100);
+        var colTabIdx = c.currentTab;
+        var colIcon = findChild(tabDelegate(c, colTabIdx), "tabStripTypeIcon");
+        verify(colIcon !== null, "the collection tab icon exists");
+        compare(colIcon.source, "folder");
+        verify(Qt.colorEqual(colIcon.color, "#00838f"), "the collection tab is tinted");
+
+        // an icon name the theme cannot resolve falls back, never a blank icon
+        backend.setCollectionIdentity("ident-col", "folder-code", "#00838f");
+        c.reloadTree();
+        wait(100);
+        var fallbackIdx = -1;
+        for (var q = 0; q < c.treeModel.count; q++)
+            if (c.treeModel.get(q).relPath === "ident-col") fallbackIdx = q;
+        var fallbackIcon = findChild(c.sidebar.view.itemAtIndex(fallbackIdx), "treeRowIcon");
+        verify(fallbackIcon !== null, "the fallback tree icon exists");
+        compare(fallbackIcon.source, "folder-documents", "unknown icon falls back");
+        c.openCollection("ident-col");
+        wait(100);
+        var fallbackTab = findChild(tabDelegate(c, c.currentTab), "tabStripTypeIcon");
+        verify(fallbackTab !== null, "the fallback tab icon exists");
+        compare(fallbackTab.source, "folder-documents", "the tab falls back too");
+
+        // round-trip and defaults are unchanged when unset
+        verify(backend.setCollectionIdentity("ident-col", "", ""), "identity clears");
+        backend.deleteEntry("ident-col");
+        backend.setEnvironmentColor("ident-env", "");
+        backend.deleteEnvironment("ident-env");
+        c.reloadEnvs();
+        c.closeTab(c.currentTab);
     }
 
     // criterion 5: a custom accent retints the selection roles

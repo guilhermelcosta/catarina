@@ -34,16 +34,22 @@ void EnvironmentStore::load()
     for (const QJsonValue &v : root.value(QStringLiteral("environments")).toArray()) {
         const QJsonObject o = v.toObject();
         m_envs.append({o.value(RS::kName).toString(),
-                       o.value(QStringLiteral("variables")).toArray().toVariantList()});
+                       o.value(QStringLiteral("variables")).toArray().toVariantList(),
+                       o.value(QStringLiteral("color")).toString()});
     }
 }
 
 void EnvironmentStore::saveFile() const
 {
     QJsonArray arr;
-    for (const Env &e : m_envs)
-        arr.append(QJsonObject{{RS::kName, e.name},
-                               {QStringLiteral("variables"), QJsonArray::fromVariantList(e.variables)}});
+    for (const Env &e : m_envs) {
+        QJsonObject o{{RS::kName, e.name},
+                      {QStringLiteral("variables"), QJsonArray::fromVariantList(e.variables)}};
+        // unset colours keep the old byte-format (no key)
+        if (!e.color.isEmpty())
+            o.insert(QStringLiteral("color"), e.color);
+        arr.append(o);
+    }
     const QJsonObject root{{QStringLiteral("active"), m_active},
                            {QStringLiteral("environments"), arr}};
 
@@ -62,7 +68,8 @@ QVariantList EnvironmentStore::list() const
         for (const QVariant &v : e.variables)
             if (!v.toMap().value(RS::kName).toString().isEmpty())
                 ++count;
-        out.append(QVariantMap{{RS::kName, e.name}, {QStringLiteral("count"), count}});
+        out.append(QVariantMap{{RS::kName, e.name}, {QStringLiteral("count"), count},
+                               {QStringLiteral("color"), e.color}});
     }
     return out;
 }
@@ -94,7 +101,7 @@ bool EnvironmentStore::save(const QString &name, const QVariantList &vars)
             return true;
         }
     }
-    m_envs.append({name, vars});
+    m_envs.append({name, vars, QString()});
     if (m_active.isEmpty())
         m_active = name;
     saveFile();
@@ -143,6 +150,19 @@ void EnvironmentStore::setActive(const QString &name)
     m_active = name;
     saveFile();
     emit changed();
+}
+
+bool EnvironmentStore::setColor(const QString &name, const QString &color)
+{
+    for (Env &e : m_envs) {
+        if (e.name != name)
+            continue;
+        e.color = color;
+        saveFile();
+        emit changed();
+        return true;
+    }
+    return false;
 }
 
 bool EnvironmentStore::renameCollectionScope(const QString &oldName, const QString &newName)

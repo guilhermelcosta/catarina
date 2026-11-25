@@ -575,6 +575,40 @@ int main(int argc, char **argv)
         b.deleteEntry(QStringLiteral("__tree__"));
     }
 
+    // collection identity: optional .identity.json, read back by the tree
+    b.deleteEntry(QStringLiteral("__id__"));
+    CHECK(b.createFolder(QStringLiteral("__id__")));
+    CHECK(b.createFolder(QStringLiteral("__id__/sub")));
+    CHECK(b.setCollectionIdentity(QStringLiteral("__id__"), QStringLiteral("folder-code"),
+                                  QStringLiteral("#00838f")));
+    CHECK(!b.setCollectionIdentity(QStringLiteral("__id__"), QStringLiteral("folder"),
+                                   QStringLiteral("nope")));
+    CHECK(b.collectionIdentity(QStringLiteral("__id__"))
+              .value(QStringLiteral("icon")) == QStringLiteral("folder-code"));
+    {
+        bool topSeen = false, subHasNone = false;
+        for (const QVariant &v : b.collectionTree()) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("relPath")) == QStringLiteral("__id__")) {
+                topSeen = true;
+                CHECK(m.value(QStringLiteral("icon")) == QStringLiteral("folder-code"));
+                CHECK(m.value(QStringLiteral("color")) == QStringLiteral("#00838f"));
+            }
+            if (m.value(QStringLiteral("relPath")) == QStringLiteral("__id__/sub"))
+                subHasNone = !m.contains(QStringLiteral("icon"));
+        }
+        CHECK(topSeen && subHasNone);
+    }
+    {
+        Backend b2;   // the file survives a reload (cache must not mask it)
+        CHECK(b2.collectionIdentity(QStringLiteral("__id__"))
+                  .value(QStringLiteral("color")) == QStringLiteral("#00838f"));
+    }
+    CHECK(b.setCollectionIdentity(QStringLiteral("__id__"), QString(), QString()));
+    CHECK(b.collectionIdentity(QStringLiteral("__id__"))
+              .value(QStringLiteral("icon")).toString().isEmpty());
+    b.deleteEntry(QStringLiteral("__id__"));
+
     // environments: rename/duplicate/persist
     CHECK(b.renameEnvironment(QStringLiteral("__e1__"), QStringLiteral("__e1b__")));
     CHECK(b.activeEnvironment() == QStringLiteral("__e1b__"));
@@ -591,6 +625,39 @@ int main(int argc, char **argv)
         CHECK(b2.environments().isEmpty());
     }
     b.deleteEnvironment(QStringLiteral("__e1b__"));
+
+    // environment colour: round-trip through the file; unset keeps the old shape
+    CHECK(b.saveEnvironment(QStringLiteral("__ecol__"), {}));
+    CHECK(b.setEnvironmentColor(QStringLiteral("__ecol__"), QStringLiteral("#123456")));
+    CHECK(!b.setEnvironmentColor(QStringLiteral("__ecol__"), QStringLiteral("red")));
+    CHECK(!b.setEnvironmentColor(QStringLiteral("__ecol__"), QStringLiteral("#12345")));
+    {
+        bool colorSeen = false;
+        for (const QVariant &v : b.environments()) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("name")) == QStringLiteral("__ecol__")) {
+                colorSeen = true;
+                CHECK(m.value(QStringLiteral("color")) == QStringLiteral("#123456"));
+            }
+        }
+        CHECK(colorSeen);
+        Backend b2;   // reloads from the file
+        bool reloaded = false;
+        for (const QVariant &v : b2.environments())
+            if (v.toMap().value(QStringLiteral("name")) == QStringLiteral("__ecol__")) {
+                reloaded = true;
+                CHECK(v.toMap().value(QStringLiteral("color")) == QStringLiteral("#123456"));
+            }
+        CHECK(reloaded);
+    }
+    CHECK(b.setEnvironmentColor(QStringLiteral("__ecol__"), QString()));
+    {
+        Backend b2;
+        for (const QVariant &v : b2.environments())
+            if (v.toMap().value(QStringLiteral("name")) == QStringLiteral("__ecol__"))
+                CHECK(v.toMap().value(QStringLiteral("color")).toString().isEmpty());
+    }
+    b.deleteEnvironment(QStringLiteral("__ecol__"));
 
     // ---------------------------------------------------------------- collection
     b.deleteEntry(QStringLiteral("__col__"));

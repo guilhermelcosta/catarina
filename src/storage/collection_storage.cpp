@@ -69,6 +69,7 @@ void CollectionStorage::clearCaches()
     m_varsCache.clear();
     m_headersCache.clear();
     m_authCache.clear();
+    m_identityCache.clear();
 }
 
 QString CollectionStorage::requestPath(const QString &relPath) const
@@ -88,10 +89,17 @@ void CollectionStorage::walk(const QString &rel, int depth, QVariantList &out) c
         if (sub.startsWith(QLatin1Char('.')))   // .catarina and the like stay out of the tree
             continue;
         const QString childRel = rel.isEmpty() ? sub : rel + QLatin1Char('/') + sub;
-        out.append(QVariantMap{{QStringLiteral("name"), sub},
-                               {QStringLiteral("relPath"), childRel},
-                               {QStringLiteral("isFolder"), true},
-                               {QStringLiteral("depth"), depth}});
+        QVariantMap entry{{QStringLiteral("name"), sub},
+                          {QStringLiteral("relPath"), childRel},
+                          {QStringLiteral("isFolder"), true},
+                          {QStringLiteral("depth"), depth}};
+        // identity belongs to a top-level collection only
+        if (depth == 0) {
+            const QVariantMap id = identity(childRel);
+            entry.insert(QStringLiteral("icon"), id.value(QStringLiteral("icon")).toString());
+            entry.insert(QStringLiteral("color"), id.value(QStringLiteral("color")).toString());
+        }
+        out.append(entry);
         walk(childRel, depth + 1, out);
     }
     const QFileInfoList files = dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name);
@@ -387,6 +395,59 @@ bool CollectionStorage::saveAuth(const QString &collection, const QVariantMap &a
     const bool ok = f.commit();
     if (ok) {
         m_authCache[collection].mtime = -1;
+        emit changed();
+    }
+    return ok;
+}
+
+QVariantMap CollectionStorage::identity(const QString &collection) const
+{
+    if (collection.isEmpty() || collection.contains(QLatin1Char('/')))
+        return {};
+    const QString path = m_root + QLatin1Char('/') + collection + QStringLiteral("/.identity.json");
+    const qint64 mt = QFileInfo(path).lastModified().toMSecsSinceEpoch();
+    CachedJson &slot = m_identityCache[collection];
+    if (slot.mtime == mt)
+        return slot.value.toMap();
+    QVariantMap out;
+    QFile f(path);
+    if (f.open(QIODevice::ReadOnly)) {
+        const QJsonObject o = QJsonDocument::fromJson(f.readAll()).object();
+        out.insert(QStringLiteral("icon"), o.value(QStringLiteral("icon")).toString());
+        out.insert(QStringLiteral("color"), o.value(QStringLiteral("color")).toString());
+    }
+    slot.mtime = mt;
+    slot.value = out;
+    return out;
+}
+
+bool CollectionStorage::saveIdentity(const QString &collection, const QString &icon,
+                                     const QString &color)
+{
+    if (collection.isEmpty() || collection.contains(QLatin1Char('/')))
+        return false;
+    const QString dir = m_root + QLatin1Char('/') + collection;
+    const QString path = dir + QStringLiteral("/.identity.json");
+    if (icon.isEmpty() && color.isEmpty()) {
+        // back to today's look: no file at all
+        QFile::remove(path);
+        m_identityCache[collection].mtime = -1;
+        emit changed();
+        return true;
+    }
+    QDir().mkpath(dir);
+    QJsonObject obj;
+    if (!icon.isEmpty())
+        obj.insert(QStringLiteral("icon"), icon);
+    if (!color.isEmpty())
+        obj.insert(QStringLiteral("color"), color);
+    QSaveFile f(path);
+    if (!f.open(QIODevice::WriteOnly))
+        return false;
+    f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+    const bool ok = f.commit();
+    if (ok) {
+        m_identityCache[collection].mtime = -1;
         emit changed();
     }
     return ok;

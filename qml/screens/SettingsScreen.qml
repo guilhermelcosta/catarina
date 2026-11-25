@@ -11,6 +11,7 @@ import "../Strings.js" as Strings
 // `app` = window; `folderPicker` = FolderDialog. docs/DESIGN.md §5.
 Item {
     id: settingsPage
+    objectName: "settingsPage"
     property var app
     property var folderPicker
     property alias dirField: storageDirField   // exposed for Main to wire to FolderPicker
@@ -419,11 +420,14 @@ Item {
                                 visible: settingsPage.query.length === 0
                             }
                             Repeater {
+                                objectName: "shortcutRowsRepeater"
                                 model: app.shortcutDefs
                                 delegate: SettingsRow {
+                                    objectName: "settingsRow.shortcut." + index
                                     Layout.fillWidth: true
                                     tokens: settingsPage.tokens
                                     label: modelData.label
+                                    conflict: app.shortcutConflicts()[modelData.id] === true
                                     visible: settingsPage.query.length === 0
                                              || String(modelData.label).toLowerCase().indexOf(settingsPage.query) >= 0
                                     RowLayout {

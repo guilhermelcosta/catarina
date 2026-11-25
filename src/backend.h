@@ -103,6 +103,10 @@ public:
     Q_INVOKABLE bool renameEntry(const QString &relPath, const QString &newName);
     // duplicates a request or folder as "<name> copy"
     Q_INVOKABLE bool duplicateEntry(const QString &relPath);
+    // optional identity of a top-level collection: { icon, color } ("" = unset)
+    Q_INVOKABLE QVariantMap collectionIdentity(const QString &collection) const;
+    Q_INVOKABLE bool setCollectionIdentity(const QString &collection, const QString &icon,
+                                           const QString &color);
 
     // ---- collection variables (versioned, without secrets) ----
     Q_INVOKABLE QVariantList collectionVariables(const QString &collection) const;
@@ -125,6 +129,8 @@ public:
     Q_INVOKABLE bool deleteEnvironment(const QString &name);
     Q_INVOKABLE bool renameEnvironment(const QString &oldName, const QString &newName);
     Q_INVOKABLE void setActiveEnvironment(const QString &name);
+    // identity colour of an environment ("#rrggbb", "" clears); invalid = false, no write
+    Q_INVOKABLE bool setEnvironmentColor(const QString &name, const QString &color);
 
     // ---- secrets (outside the repo) ----
     Q_INVOKABLE QString secretValue(const QString &id) const;

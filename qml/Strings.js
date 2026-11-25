@@ -327,9 +327,18 @@ var t = {
     autoSaveOnSend: "Save automatically when sending",
     shortcuts: "Shortcuts",
     shortcutsHint: "Click a shortcut and press the new combination. Esc cancels.",
+    shortcutsOverlayTitle: "Keyboard shortcuts",
     restoreDefault: "Restore default",
     optionsApplyInstantly: "Options apply instantly.",
     pressCombination: "Press the combination…",
+    environmentColour: "Environment colour",
+    environmentColourDescription: "Tints the environment dot, pill and tab.",
+    collectionIcon: "Icon",
+    collectionColour: "Colour",
+    collectionIdentityDescription: "Shown in the sidebar, the collection tab and the tab strip.",
+    customColour: "Custom…",
+    resetColour: "Reset colour",
+    resetIcon: "Reset icon",
 
     // ---- menus ----
     newCollection: "New collection",

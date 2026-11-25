@@ -52,6 +52,24 @@ QtObject {
     // settings rows: 44-52 px at scale 1.0
     readonly property int settingsRowHeight: Math.round((density === "compact" ? 44 : 48) * uiScale)
 
+    // HTTP method colours (criterion 15): each entry clears 4.5:1 against both
+    // backgroundColor and alternateBackgroundColor in its scheme (tst_components).
+    readonly property var methodColorsLight: ({
+        GET: "#2b702e", POST: "#9c4f00", PUT: "#1565c0", PATCH: "#8e24aa",
+        DELETE: "#c62828", HEAD: "#795548", OPTIONS: "#4e6570"
+    })
+    readonly property var methodColorsDark: ({
+        GET: "#9ccc65", POST: "#ffb74d", PUT: "#64b5f6", PATCH: "#ce93d8",
+        DELETE: "#ef9a9a", HEAD: "#bcaaa4", OPTIONS: "#90a4ae"
+    })
+    readonly property var methodColors: Kirigami.Theme.backgroundColor.hsvValue < 0.5
+                                         ? methodColorsDark : methodColorsLight
+    // decorative hues for identity pickers (dots/icons, never text)
+    readonly property var swatchColors: [
+        "#c62828", "#ef6c00", "#f9a825", "#2e7d32",
+        "#00838f", "#1565c0", "#6a1b9a", "#ad1457"
+    ]
+
     // Forced colour scheme. Backend::applyColorScheme installs the resolved
     // scheme as the application palette and the Qt colour-scheme hint. The
     // Kirigami desktop style resolves its control roles from that palette

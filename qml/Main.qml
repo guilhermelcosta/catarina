@@ -134,10 +134,9 @@ Kirigami.ApplicationWindow {
         if (responsePane.hasBody()) { responsePane.openFind(); return; }
         if (controller.sidebarVisible) sidebar.focusFilter();
     }
-    // Ctrl+/ and the status-bar hint land on the Shortcuts card in Settings.
+    // Ctrl+/ and the status-bar hint open the shortcuts overlay.
     function openShortcuts() {
-        controller.openSettingsTab();
-        settingsPage.focusShortcuts();
+        shortcutsOverlay.openOverlay();
     }
     Component.onCompleted: {
         theme.applyScheme(root, "system", "");   // saved scheme, before the first frame
@@ -416,6 +415,7 @@ Kirigami.ApplicationWindow {
     RenameEnvDialog { id: renameEnvDialog; app: controller; envScreen: envScreen }
     ScopePopup { id: scopePopup; app: controller; envVarsModel: envScreen.varsModel; envScreen: envScreen }
     FilePickDialog { id: fileDialog; fieldsModel: fieldsModel }
+    ShortcutsOverlay { id: shortcutsOverlay; app: controller }
 
     // The first restore runs before the splits have a width at startup; retry as
     // soon as the layout gives them one (after that, resizes must not reset it).

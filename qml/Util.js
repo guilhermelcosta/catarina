@@ -286,6 +286,35 @@ function tabSearchMatches(request, query) {
     return out;
 }
 
+// Keycap chips for a shortcut sequence: "Ctrl+Shift+A" -> ["Ctrl","Shift","A"].
+// Pure and shared by the overlay and the settings rows.
+function keycaps(seq) {
+    if (seq === undefined || seq === null) return [];
+    var s = String(seq);
+    if (s.length === 0) return [];
+    return s.split("+");
+}
+
+// Shortcut conflict detection: returns a map id -> true for every id whose
+// stored (override or default) sequence equals another id's. `defs` is
+// [{ id, def }], `overrides` is the persisted { id: sequence } map.
+function duplicateShortcuts(defs, overrides, order) {
+    var out = {}, seqs = [], ids = [];
+    overrides = overrides || {};
+    for (var i = 0; i < (defs || []).length; i++) {
+        var d = defs[i];
+        if (!d || !d.id) continue;
+        var seq = (overrides[d.id] !== undefined) ? overrides[d.id] : d.def;
+        if (seq === undefined || seq === null || seq.length === 0) continue;
+        ids.push(d.id);
+        seqs.push(seq);
+    }
+    for (var a = 0; a < seqs.length; a++)
+        for (var b = a + 1; b < seqs.length; b++)
+            if (seqs[a] === seqs[b]) { out[ids[a]] = true; out[ids[b]] = true; }
+    return out;
+}
+
 // Relative luminance (WCAG) of a colour: "#rrggbb" string or a Qt color
 // object ({r,g,b} in 0..1). Returns 0..1; invalid input returns 0.
 function luminance(c) {

@@ -131,14 +131,8 @@ readonly property color jsonKeyColor: darkTheme ? "#61afef" : "#005cc5"
 
 // ================= helpers =================
 function methodColor(m) {
-    switch (m) {
-    case "GET":    return Kirigami.Theme.positiveTextColor;
-    case "POST":   return Kirigami.Theme.neutralTextColor;
-    case "PUT":    return Kirigami.Theme.activeTextColor;
-    case "PATCH":  return "#b180d7";
-    case "DELETE": return Kirigami.Theme.negativeTextColor;
-    default:       return Kirigami.Theme.textColor;
-    }
+    var table = theme ? theme.methodColors : null;
+    return (table && table[m]) ? table[m] : Kirigami.Theme.textColor;
 }
 function parentOf(p) { var i = p.lastIndexOf("/"); return i < 0 ? "" : p.substring(0, i); }
 function collectionOf(p) { var i = p.indexOf("/"); return i < 0 ? p : p.substring(0, i); }
@@ -150,6 +144,31 @@ function collectionNames() {
     }
     return out;
 }
+// identity of a collection/folder at relPath, read from the tree model:
+// { icon, color } (both "" when unset; subfolders never carry one)
+readonly property var collectionIcons: ["folder-documents", "folder", "folder-important",
+    "folder-html", "folder-image"]
+function collectionIcon(name) {
+    return name && name.length > 0 && collectionIcons.indexOf(name) >= 0
+        ? name : "folder-documents";
+}
+function identityFor(relPath) {
+    for (var i = 0; i < treeModel.count; i++) {
+        var e = treeModel.get(i);
+        if (e.relPath === relPath)
+            return { icon: e.icon !== undefined ? e.icon : "",
+                     color: e.color !== undefined ? e.color : "" };
+    }
+    return { icon: "", color: "" };
+}
+// identity colour of an environment ("" when unset or unknown)
+function environmentColor(name) {
+    for (var i = 0; i < envList.length; i++)
+        if (envList[i].name === name)
+            return envList[i].color !== undefined ? envList[i].color : "";
+    return "";
+}
+function activeEnvColor() { return environmentColor(activeEnv); }
 function reloadTree() {   // coalesce: several requests in the same tick become 1 rebuild
     if (treeReloadQueued) return;
     treeReloadQueued = true;
@@ -177,6 +196,8 @@ function rebuildTree() {
         treeModel.append({ name: e.name, relPath: e.relPath, isFolder: e.isFolder,
                            method: e.method !== undefined ? e.method : "",
                            depth: e.depth !== undefined ? e.depth : 0,
+                           icon: e.icon !== undefined ? e.icon : "",
+                           color: e.color !== undefined ? e.color : "",
                            hasChildren: e.hasChildren === true,
                            collapsed: controller.collapsedFolders[e.relPath] === true,
                            hidden: hidden });
@@ -1185,7 +1206,25 @@ function shortcutSeq(id) {
     for (var i = 0; i < shortcutDefs.length; i++)
         if (shortcutDefs[i].id === id) def = shortcutDefs[i].def;
     var m = settings.shortcuts;
-    return (m && m[id] !== undefined) ? m[id] : def;
+    var seq = (m && m[id] !== undefined) ? m[id] : def;
+    // One active binding per sequence: the newer capture (later in
+    // shortcutsOrder; absent = oldest) holds the key, the older steps aside to
+    // its default.
+    var dupes = Util.duplicateShortcuts(shortcutDefs, m, settings.shortcutsOrder);
+    if (dupes[id] !== true) return seq;
+    var order = settings.shortcutsOrder || [];
+    function rank(x) { var at = order.indexOf(x); return at < 0 ? -1 : at; }
+    for (var j = 0; j < shortcutDefs.length; j++) {
+        var other = shortcutDefs[j].id;
+        if (other === id) continue;
+        var oseq = (m && m[other] !== undefined) ? m[other] : shortcutDefs[j].def;
+        if (oseq === seq && rank(other) > rank(id)) return def;
+    }
+    return seq;
+}
+// ids whose effective sequence collides (red + bold rows in Settings)
+function shortcutConflicts() {
+    return Util.duplicateShortcuts(shortcutDefs, settings.shortcuts, settings.shortcutsOrder);
 }
 property bool recordingShortcut: false
 function prevTab() { if (tabsModel.count > 1) switchTab((currentTab - 1 + tabsModel.count) % tabsModel.count); }
