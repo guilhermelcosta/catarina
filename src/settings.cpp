@@ -225,18 +225,29 @@ QVariantMap Settings::shortcuts() const
 {
     return m_s.value(QStringLiteral("shortcuts")).toMap();
 }
+QStringList Settings::shortcutsOrder() const
+{
+    return m_s.value(QStringLiteral("shortcutsOrder")).toStringList();
+}
 void Settings::setShortcut(const QString &id, const QString &sequence)
 {
     QVariantMap m = shortcuts();
     m.insert(id, sequence);
+    QStringList order = shortcutsOrder();
+    order.removeAll(id);
+    order.append(id);   // newest capture wins a duplicate sequence
     m_s.setValue(QStringLiteral("shortcuts"), m);
+    m_s.setValue(QStringLiteral("shortcutsOrder"), order);
     emit shortcutsChanged();
 }
 void Settings::resetShortcut(const QString &id)
 {
     QVariantMap m = shortcuts();
     m.remove(id);
+    QStringList order = shortcutsOrder();
+    order.removeAll(id);
     m_s.setValue(QStringLiteral("shortcuts"), m);
+    m_s.setValue(QStringLiteral("shortcutsOrder"), order);
     emit shortcutsChanged();
 }
 QString Settings::keySequence(int key, int modifiers) const

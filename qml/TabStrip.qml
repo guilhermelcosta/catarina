@@ -201,12 +201,19 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Kirigami.Icon {
+                            objectName: "tabStripTypeIcon"
                             visible: model.isCollection || model.isEnvironment || model.isSettings
+                            readonly property var identity: model.isCollection
+                                ? app.identityFor(model.relPath) : ({ icon: "", color: "" })
                             source: model.isSettings ? "configure"
                                   : (model.isEnvironment ? "vcs-branch"
-                                  : (model.relPath.indexOf("/") < 0 ? "folder-documents" : "folder"))
+                                  : (identity.icon.length > 0 ? identity.icon
+                                     : (model.relPath.indexOf("/") < 0 ? "folder-documents" : "folder")))
                             implicitWidth: 14; implicitHeight: 14
-                            color: Kirigami.Theme.textColor
+                            color: model.isEnvironment
+                                   ? (app.activeEnvColor().length > 0 ? app.activeEnvColor()
+                                                                     : Kirigami.Theme.textColor)
+                                   : (identity.color.length > 0 ? identity.color : Kirigami.Theme.textColor)
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Label {

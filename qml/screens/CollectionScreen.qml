@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import ".."
@@ -8,21 +9,98 @@ import "../Strings.js" as Strings
 // Collection screen (overview/headers/variables/authentication). `app` = window;
 // models and new-request dialog injected; the auth editor exposed to the window.
 ColumnLayout {
+    id: collectionScreen
     property var app
     property var newReqDialog
     property var collectionHeadersModel
     property var collectionVarsModel
     property alias authEditor: collectionAuthEditor
+    // curated Breeze names, all confirmed in the theme (docs/DESIGN.md §4)
+    readonly property var identityIcons: ["folder-documents", "folder", "folder-network",
+        "folder-key", "folder-important", "folder-html", "folder-code", "folder-image"]
+    property var collectionIdentity: ({ icon: "", color: "" })
+    function refreshIdentity() {
+        if (app.collectionIsSubfolder) {
+            collectionIdentity = ({ icon: "", color: "" });
+            return;
+        }
+        var id = backend.collectionIdentity(app.collectionPath);
+        collectionIdentity = ({ icon: id.icon !== undefined ? id.icon : "",
+                                color: id.color !== undefined ? id.color : "" });
+    }
+    function writeIdentity(icon, color) {
+        if (backend.setCollectionIdentity(app.collectionPath, icon, color))
+            refreshIdentity();
+    }
+    Component.onCompleted: refreshIdentity()
+    Connections {
+        target: app
+        function onCollectionPathChanged() { refreshIdentity(); }
+    }
+    Connections {
+        target: backend
+        function onCollectionsChanged() { refreshIdentity(); }
+    }
     spacing: 0
     RowLayout {
         Layout.fillWidth: true
         Layout.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.largeSpacing
-        Kirigami.Icon { source: app.collectionIsSubfolder ? "folder" : "folder-documents"; implicitWidth: 48; implicitHeight: 48; color: Kirigami.Theme.highlightColor }
+        Kirigami.Icon {
+            source: app.collectionIsSubfolder ? "folder"
+                  : (collectionIdentity.icon.length > 0 ? collectionIdentity.icon : "folder-documents")
+            implicitWidth: 48; implicitHeight: 48
+            color: collectionIdentity.color.length > 0 ? collectionIdentity.color
+                                                       : Kirigami.Theme.highlightColor
+        }
         ColumnLayout {
             spacing: 0
             Label { text: app.collectionPath.split("/").pop(); font.bold: true; font.pixelSize: app.theme.fontSizeCollectionTitle }
             Label { text: app.collectionIsSubfolder ? Strings.t.folder : Strings.t.collection; opacity: 0.75 }
+        }
+        // identity of a top-level collection only (subfolders have none)
+        RowLayout {
+            objectName: "collectionIdentityRow"
+            visible: !app.collectionIsSubfolder
+            Layout.leftMargin: Kirigami.Units.largeSpacing
+            spacing: Kirigami.Units.smallSpacing
+            Label { text: Strings.t.collectionIcon; opacity: app.theme.textInformational }
+            ComboBox {
+                id: iconCombo
+                objectName: "collectionIconCombo"
+                implicitWidth: 180
+                model: [Strings.t.resetIcon].concat(collectionScreen.identityIcons)
+                currentIndex: {
+                    var i = collectionIdentity.icon.length > 0
+                            ? collectionScreen.identityIcons.indexOf(collectionIdentity.icon) : -1;
+                    return i < 0 ? 0 : i + 1;
+                }
+                onActivated: writeIdentity(index === 0 ? "" : model[index],
+                                           collectionIdentity.color)
+            }
+            Label { text: Strings.t.collectionColour; opacity: app.theme.textInformational }
+            Rectangle {
+                objectName: "collectionColorChip"
+                implicitWidth: 22
+                implicitHeight: 22
+                radius: 11
+                color: collectionIdentity.color.length > 0
+                       ? collectionIdentity.color : "transparent"
+                border.width: 1
+                border.color: app.theme.chromeBorder
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: collectionColorDialog.open()
+                }
+            }
+            ToolButton {
+                objectName: "collectionColorReset"
+                icon.name: "edit-clear"
+                visible: collectionIdentity.color.length > 0
+                onClicked: writeIdentity(collectionIdentity.icon, "")
+                ToolTip.text: Strings.t.resetColour; ToolTip.visible: hovered
+            }
         }
         Item { Layout.fillWidth: true }
         Button { icon.name: "document-new"; text: Strings.t.newRequest; onClicked: newReqDialog.openIn(app.collectionPath) }
@@ -199,5 +277,15 @@ ColumnLayout {
             }
         }
     }
+    }
+
+    // custom identity colour: writes only on accepted
+    ColorDialog {
+        id: collectionColorDialog
+        objectName: "collectionColorDialog"
+        title: Strings.t.collectionColour
+        selectedColor: collectionIdentity.color.length > 0
+                       ? collectionIdentity.color : Kirigami.Theme.highlightColor
+        onAccepted: writeIdentity(collectionIdentity.icon, color)
     }
 }

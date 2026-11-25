@@ -33,6 +33,8 @@ class Settings : public QObject
     Q_PROPERTY(int timeoutSec READ timeoutSec WRITE setTimeoutSec NOTIFY settingsChanged)
     Q_PROPERTY(bool ignoreSsl READ ignoreSsl WRITE setIgnoreSsl NOTIFY settingsChanged)
     Q_PROPERTY(QVariantMap shortcuts READ shortcuts NOTIFY shortcutsChanged)
+    // capture order (newest last): resolves which side of a duplicate owns the key
+    Q_PROPERTY(QStringList shortcutsOrder READ shortcutsOrder NOTIFY shortcutsChanged)
     Q_PROPERTY(QStringList openTabs READ openTabs NOTIFY settingsChanged)
     Q_PROPERTY(int openTabIndex READ openTabIndex NOTIFY settingsChanged)
 
@@ -86,6 +88,7 @@ public:
 
     // shortcuts: only remapped ones are kept (id -> sequence)
     QVariantMap shortcuts() const;
+    QStringList shortcutsOrder() const;
     Q_INVOKABLE void setShortcut(const QString &id, const QString &sequence);
     Q_INVOKABLE void resetShortcut(const QString &id);
     Q_INVOKABLE QString keySequence(int key, int modifiers) const;   // for key capture

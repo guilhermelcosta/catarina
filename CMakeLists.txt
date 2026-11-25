@@ -92,6 +92,7 @@ qt_add_resources(catarina "qml"
         qml/VarField.qml
         qml/AuthEditor.qml
         qml/ShortcutField.qml
+        qml/Keycap.qml
         qml/MethodBadge.qml
         qml/SourceChip.qml
         qml/SplitGrip.qml
@@ -118,6 +119,7 @@ qt_add_resources(catarina "qml"
         qml/dialogs/FilePickDialog.qml
         qml/dialogs/DeleteDialog.qml
         qml/dialogs/CommandPalette.qml
+        qml/dialogs/ShortcutsOverlay.qml
         qml/screens/SettingsScreen.qml
         qml/screens/EnvironmentScreen.qml
         qml/screens/CollectionScreen.qml

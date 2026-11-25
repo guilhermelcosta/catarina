@@ -164,6 +164,35 @@ literal that duplicates a token is a bug.
 | settingsRowHeight | `Math.round(48 × uiScale)` comfortable, `Math.round(44 × uiScale)` compact |
 | topBarHeight / hoverDurationMs / focusRingWidth | 40 px / 120 ms / 2 px |
 | chromeBorder | `Kirigami.Theme.textColor` at alpha 0.45 |
+| methodColors | seven entries, light/dark table (below) |
+| swatchColors | eight decorative identity hues |
+
+**Method colours (criterion 15).** `Theme.methodColors` is the single source for
+the HTTP method text; `AppController.methodColor(m)` falls back to
+`Kirigami.Theme.textColor` for an unknown method. Every entry clears **4.5:1**
+against both `backgroundColor` and `alternateBackgroundColor` in light and dark
+(`tst_components::test_method_colors_contrast`):
+
+| Method | Light | Dark |
+|---|---|---|
+| GET | `#2b702e` | `#9ccc65` |
+| POST | `#9c4f00` | `#ffb74d` |
+| PUT | `#1565c0` | `#64b5f6` |
+| PATCH | `#8e24aa` | `#ce93d8` |
+| DELETE | `#c62828` | `#ef9a9a` |
+| HEAD | `#795548` | `#bcaaa4` |
+| OPTIONS | `#4e6570` | `#90a4ae` |
+
+The dynamic-variable purple (`tools-wizard`) is not a method colour.
+
+**Identity colours.** Environment colour (`.catarina/environments.json`) and
+collection identity (`.identity.json`) are optional; unset is `""` and renders
+today's look. Both are dots/icons, never text, so the WCAG text floor does not
+apply. Surfaces: env pill, env popup rows, environment list rows and the
+environment tab (icon tint); collection sidebar depth-0 row, collection tab and
+the collection screen title (icon + tint). Command-palette rows carry an
+additive `iconColor`; the environment rows (`envVars`, `createEnv`) use it, and
+there are no collection rows today.
 
 **UI scale and density.** `Theme.uiScale` (1.0–1.5, from Settings) multiplies
 the six type sizes; `Theme.density` (`comfortable` / `compact`,
@@ -384,6 +413,20 @@ In `qml/` (atomic and shell components):
   `assets/icons/catarina-badge.svg` stays unmasked and uses a higher `iconOpacity` (the app uses `0.9`) so
   the badge does not wash out. **Every placeholder uses this component** — center
   it with `anchors.centerIn: parent; width: Math.min(parent.width - largeSpacing*2, 340)`.
+- **`Keycap.qml`** — one chip per shortcut segment: `radiusChip`, 1 px
+  `chromeBorder`, bold monospaced `fontSizeMeta`, `hitTarget`-ish padding.
+  Sequences split with the pure `Util.keycaps(seq)`; the settings rows and the
+  overlay share it.
+- **`dialogs/ShortcutsOverlay.qml`** — `Ctrl+/` (fixed, not remappable) opens a
+  modal `shortcutsOverlay`: one row per `shortcutDefs` entry (label + keycap
+  chips), `Esc` and click-outside close. The status-bar hint routes through the
+  same `Main.openShortcuts()`. Remapped rows keep the duplicate-shortcut
+  grammar: `Util.duplicateShortcuts` flags both ids and the row label turns red
+  + bold (the `KvTable` duplicate-name language) until one is reset or
+  re-captured. The newer capture (later in `shortcutsOrder`) holds the key;
+  `AppController.shortcutSeq` makes the older one fall back to its default.
+  `SettingsScreen.focusShortcuts()` still selects the Shortcuts card (contract
+  kept; no global shortcut points there anymore).
 - **`SettingsCard.qml` / `SettingsRow.qml`** — settings grammar. `SettingsCard` is
   a raised `alternateBackgroundColor` surface (`radiusPanel`, 1 px
   `chromeBorder`) with a title and a column of rows; the card's padding is

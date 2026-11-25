@@ -131,6 +131,14 @@ Item {
             }
             contentItem: RowLayout {
                 spacing: Kirigami.Units.smallSpacing
+                Rectangle {
+                    objectName: "envPillDot"
+                    visible: app.activeEnvColor().length > 0
+                    implicitWidth: 8
+                    implicitHeight: 8
+                    radius: 4
+                    color: app.activeEnvColor()
+                }
                 Label {
                     objectName: "envPillLabel"
                     Layout.fillWidth: true
@@ -214,6 +222,23 @@ Item {
                     text: modelData.name
                     font.bold: modelData.name === app.activeEnv
                     icon.name: modelData.name === app.activeEnv ? "checkmark" : ""
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
+                        Rectangle {
+                            objectName: "envPopupDot"
+                            visible: modelData.color !== undefined && modelData.color.length > 0
+                            implicitWidth: 8
+                            implicitHeight: 8
+                            radius: 4
+                            color: modelData.color !== undefined ? modelData.color : "transparent"
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                            elide: Text.ElideRight
+                            font.bold: modelData.name === app.activeEnv
+                        }
+                    }
                     onClicked: {
                         app.activateEnv(modelData.name);
                         envPopup.close();

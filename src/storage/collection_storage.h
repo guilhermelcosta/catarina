@@ -37,6 +37,10 @@ public:
     QVariantMap auth(const QString &collection) const;
     bool saveAuth(const QString &collection, const QVariantMap &auth);
 
+    // optional per-collection identity: { "icon": <breeze name>, "color": "#rrggbb" }
+    QVariantMap identity(const QString &collection) const;
+    bool saveIdentity(const QString &collection, const QString &icon, const QString &color);
+
 signals:
     void changed();
     // renamed a collection (top-level folder): the Backend repoints the scope of the
@@ -58,4 +62,5 @@ private:
     mutable QHash<QString, CachedJson> m_varsCache;               // collection -> variables
     mutable QHash<QString, CachedJson> m_headersCache;            // collection -> headers
     mutable QHash<QString, CachedJson> m_authCache;               // collection -> auth
+    mutable QHash<QString, CachedJson> m_identityCache;           // collection -> identity
 };

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 
 // One settings row: label + description on the left, control in a fixed
 // 200 px column (× uiScale) on the right. The control is the default child.
@@ -13,6 +14,8 @@ Item {
     property var tokens
     property string label: ""
     property string description: ""
+    // duplicate-shortcut language: red + bold label (same as KvTable's duplicate name)
+    property bool conflict: false
     // -1 = the standard settingsControlWidth (200 × uiScale)
     property int controlWidth: -1
     property bool wideControl: false
@@ -38,10 +41,13 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             spacing: 2
             Label {
+                objectName: "settingsRowLabel"
                 Layout.fillWidth: true
                 text: row.label
                 wrapMode: Text.WordWrap
                 font.pixelSize: tokens ? tokens.fontSizeBase : 13
+                font.bold: row.conflict
+                color: row.conflict ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
             }
             Label {
                 Layout.fillWidth: true

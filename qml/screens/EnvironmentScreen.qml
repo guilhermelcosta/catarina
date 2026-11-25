@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import ".."
@@ -134,6 +135,7 @@ Item {
                     id: envRow
                     width: ListView.view.width
                     text: modelData.name
+                    leftPadding: (modelData.color !== undefined && modelData.color.length > 0) ? 16 : 6
                     highlighted: modelData.name === envScreen.editing
                     // selection is a tinted surface, not the Breeze solid highlight:
                     // keep the normal text role or the label vanishes into the tint
@@ -142,6 +144,18 @@ Item {
                         color: Kirigami.Theme.textColor
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
+                    }
+                    // colour dot before the label (8 px, unset = no dot)
+                    Rectangle {
+                        objectName: "envListDot"
+                        visible: modelData.color !== undefined && modelData.color.length > 0
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: modelData.color !== undefined ? modelData.color : "transparent"
+                        anchors.left: parent.left
+                        anchors.leftMargin: 4
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                     background: Rectangle {
                         color: envRow.highlighted ? app.theme.selectionTint
@@ -193,6 +207,49 @@ Item {
                 onSave: envScreen.save()
                 onDiscard: envScreen.loadVars(envScreen.editing)
                 onRename: envScreen.startRename(envScreen.editing)
+            }
+
+            // identity colour: 8 decorative swatches + a custom picker + clear.
+            // Colour is a dot/icon, never text, so the WCAG text floor does not apply.
+            RowLayout {
+                objectName: "envColorRow"
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Label { text: Strings.t.environmentColour; opacity: app.theme.textInformational }
+                Repeater {
+                    model: app.theme.swatchColors
+                    delegate: Rectangle {
+                        objectName: "envColorSwatch"
+                        implicitWidth: 18
+                        implicitHeight: 18
+                        radius: 9
+                        color: modelData
+                        border.width: app.environmentColor(envScreen.editing) === modelData ? 2 : 0
+                        border.color: app.theme.chromeBorder
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (backend.setEnvironmentColor(envScreen.editing, modelData))
+                                    app.reloadEnvs();
+                            }
+                        }
+                    }
+                }
+                Button {
+                    text: Strings.t.customColour
+                    onClicked: envColorDialog.open()
+                }
+                ToolButton {
+                    objectName: "envColorReset"
+                    icon.name: "edit-clear"
+                    visible: app.environmentColor(envScreen.editing).length > 0
+                    onClicked: {
+                        if (backend.setEnvironmentColor(envScreen.editing, ""))
+                            app.reloadEnvs();
+                    }
+                    ToolTip.text: Strings.t.resetColour; ToolTip.visible: hovered
+                }
             }
 
             RowLayout {
@@ -266,6 +323,20 @@ Item {
                 actionIcon: "list-add"
                 onActionTriggered: createEnvDialog.open()
             }
+        }
+    }
+
+    // custom environment colour: writes only on accepted
+    ColorDialog {
+        id: envColorDialog
+        objectName: "envColorDialog"
+        title: Strings.t.environmentColour
+        selectedColor: app.environmentColor(envScreen.editing).length > 0
+                       ? app.environmentColor(envScreen.editing)
+                       : Kirigami.Theme.highlightColor
+        onAccepted: {
+            if (backend.setEnvironmentColor(envScreen.editing, color))
+                app.reloadEnvs();
         }
     }
 }

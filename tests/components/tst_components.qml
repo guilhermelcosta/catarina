@@ -136,6 +136,60 @@ TestCase {
         verify(Util.luminance("#ff0000") < Util.luminance("#ff8080"), "lighter red is brighter");
     }
 
+    // criterion 15: every method colour clears 4.5:1 on both list surfaces in
+    // light and dark (the two palette backgrounds the app paints with)
+    function contrast(c1, c2) {
+        var a = Util.luminance(c1), b = Util.luminance(c2);
+        var hi = Math.max(a, b), lo = Math.min(a, b);
+        return (hi + 0.05) / (lo + 0.05);
+    }
+    function test_method_colors_contrast() {
+        var lightBg = ["#eff0f1", "#e9eaeb"];
+        var darkBg = ["#1b1e20", "#232629"];
+        var methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+        for (var i = 0; i < methods.length; i++) {
+            var m = methods[i];
+            verify(themeTokens.methodColorsLight[m] !== undefined, "light colour for " + m);
+            verify(themeTokens.methodColorsDark[m] !== undefined, "dark colour for " + m);
+            for (var l = 0; l < lightBg.length; l++)
+                verify(contrast(themeTokens.methodColorsLight[m], lightBg[l]) >= 4.5,
+                       m + " light on " + lightBg[l] + " is "
+                       + contrast(themeTokens.methodColorsLight[m], lightBg[l]).toFixed(2));
+            for (var d = 0; d < darkBg.length; d++)
+                verify(contrast(themeTokens.methodColorsDark[m], darkBg[d]) >= 4.5,
+                       m + " dark on " + darkBg[d] + " is "
+                       + contrast(themeTokens.methodColorsDark[m], darkBg[d]).toFixed(2));
+        }
+        // the live table is the scheme's table
+        var live = themeTokens.methodColors;
+        verify(live === themeTokens.methodColorsLight || live === themeTokens.methodColorsDark,
+               "methodColors follows the live background");
+    }
+
+    // Util.keycaps and Util.duplicateShortcuts (shortcut conflict grammar)
+    function test_util_keycaps_and_duplicateShortcuts() {
+        compare(JSON.stringify(Util.keycaps("Ctrl+Shift+A")),
+                JSON.stringify(["Ctrl", "Shift", "A"]));
+        compare(Util.keycaps("").length, 0);
+        compare(Util.keycaps(undefined).length, 0);
+        compare(JSON.stringify(Util.keycaps("Ctrl+/")), JSON.stringify(["Ctrl", "/"]));
+
+        var defs = [
+            { id: "send", def: "Ctrl+Return" },
+            { id: "newRequest", def: "Ctrl+T" },
+            { id: "save", def: "Ctrl+S" }
+        ];
+        compare(Object.keys(Util.duplicateShortcuts(defs, {}, [])).length, 0,
+                "no duplicates by default");
+        var overrides = { save: "Ctrl+Return" };
+        var dupes = Util.duplicateShortcuts(defs, overrides, ["save"]);
+        compare(dupes.send, true);
+        compare(dupes.save, true);
+        compare(dupes.newRequest, undefined);
+        compare(Object.keys(Util.duplicateShortcuts(defs, { save: "Ctrl+S" }, [])).length, 0,
+                "an override equal to its own default is not a duplicate");
+    }
+
     // ---- Util.js: fuzzy palette matching ----
     function test_util_fuzzyMatch() {
         var empty = Util.fuzzyMatch("", "Send request");

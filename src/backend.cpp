@@ -11,11 +11,19 @@
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPalette>
+#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStyleHints>
 #include <QUuid>
 
 namespace {
+
+// strict "#rrggbb"; "" is allowed (unset) — never a partial write
+bool validIdentityColor(const QString &color)
+{
+    static const QRegularExpression re(QStringLiteral("^#[0-9a-fA-F]{6}$"));
+    return color.isEmpty() || re.match(color).hasMatch();
+}
 
 // The palette in effect when the app started. Kept so "system" can restore it
 // after an explicit light/dark override.
@@ -508,6 +516,17 @@ bool Backend::createFolder(const QString &relPath) { return m_collections->creat
 bool Backend::moveEntry(const QString &from, const QString &toFolder) { return m_collections->moveEntry(from, toFolder); }
 bool Backend::renameEntry(const QString &relPath, const QString &newName) { return m_collections->renameEntry(relPath, newName); }
 bool Backend::duplicateEntry(const QString &relPath) { return m_collections->duplicateEntry(relPath); }
+QVariantMap Backend::collectionIdentity(const QString &collection) const
+{
+    return m_collections->identity(collection);
+}
+bool Backend::setCollectionIdentity(const QString &collection, const QString &icon,
+                                    const QString &color)
+{
+    if (collection.isEmpty() || !validIdentityColor(color))
+        return false;
+    return m_collections->saveIdentity(collection, icon, color);
+}
 
 bool Backend::saveRequest(const QString &relPath, const QVariantMap &data)
 {
@@ -579,6 +598,13 @@ bool Backend::saveEnvironment(const QString &name, const QVariantList &variables
 bool Backend::deleteEnvironment(const QString &name) { return m_envs->remove(name); }
 bool Backend::renameEnvironment(const QString &oldName, const QString &newName) { return m_envs->rename(oldName, newName); }
 void Backend::setActiveEnvironment(const QString &name) { m_envs->setActive(name); }
+
+bool Backend::setEnvironmentColor(const QString &name, const QString &color)
+{
+    if (name.isEmpty() || !validIdentityColor(color))
+        return false;
+    return m_envs->setColor(name, color);
+}
 
 // ---------------------------------------------------------------- history
 

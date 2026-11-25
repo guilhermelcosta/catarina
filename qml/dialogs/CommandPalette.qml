@@ -45,8 +45,8 @@ Popup {
             { id: "importCurl", icon: "document-import", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.importCurl, run: function () { curlImportDialog.openFresh(); } },
             { id: "history", icon: "view-history", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.history, run: function () { historyDialog.openAndLoad(); } },
             { id: "settings", icon: "configure", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.settingsEllipsis, run: function () { app.openSettingsTab(); } },
-            { id: "envVars", icon: "vcs-branch", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.manageEnvVariables, run: function () { app.openEnvTab(app.activeEnv); } },
-            { id: "createEnv", icon: "list-add", shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.createEnvironment, run: function () { createEnvDialog.open(); } },
+            { id: "envVars", icon: "vcs-branch", iconColor: app.activeEnvColor(), shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.manageEnvVariables, run: function () { app.openEnvTab(app.activeEnv); } },
+            { id: "createEnv", icon: "list-add", iconColor: app.activeEnvColor(), shortcut: "", group: Strings.t.paletteGroupGlobal, label: Strings.t.createEnvironment, run: function () { createEnvDialog.open(); } },
             { id: "closeTab", icon: "window-close", shortcut: app.shortcutSeq("closeTab"), group: Strings.t.paletteGroupGlobal, label: Strings.t.closeTab, run: function () { app.closeTab(app.currentTab); } },
             { id: "tabSearch", icon: "edit-find", shortcut: app.shortcutSeq("tabSearch"), group: Strings.t.paletteGroupContext, label: Strings.t.tabSearch, run: function () { app.requestEditor.openTabSearch(); } },
             { id: "reopenTab", icon: "view-refresh", shortcut: app.shortcutSeq("reopenTab"), group: Strings.t.paletteGroupGlobal, label: Strings.t.reopenTab, run: function () { app.reopenClosed(); } },
@@ -78,7 +78,8 @@ Popup {
         for (var i = 0; i < paletteRecents.length; i++) {
             var a = actionById(paletteRecents[i]);
             if (a === null) continue;
-            out.push({ id: a.id, icon: a.icon, shortcut: a.shortcut,
+            out.push({ id: a.id, icon: a.icon, iconColor: a.iconColor || "",
+                       shortcut: a.shortcut,
                        group: Strings.t.paletteGroupRecent, label: a.label,
                        run: a.run, ranges: null, score: 0 });
         }
@@ -90,7 +91,8 @@ Popup {
             out = recentRows();
             for (var i = 0; i < allActions.length; i++) {
                 var a = allActions[i];
-                out.push({ id: a.id, icon: a.icon, shortcut: a.shortcut,
+                out.push({ id: a.id, icon: a.icon, iconColor: a.iconColor || "",
+                           shortcut: a.shortcut,
                            group: a.group, label: a.label, run: a.run,
                            ranges: null, score: 0 });
             }
@@ -100,7 +102,8 @@ Popup {
                 var act = allActions[j];
                 var m = Util.fuzzyMatch(q, act.label);
                 if (m === null) continue;
-                scored.push({ id: act.id, icon: act.icon, shortcut: act.shortcut,
+                scored.push({ id: act.id, icon: act.icon, iconColor: act.iconColor || "",
+                              shortcut: act.shortcut,
                               group: act.group, label: act.label, run: act.run,
                               ranges: m.ranges, score: m.score, order: j });
             }
@@ -192,7 +195,9 @@ Popup {
                         source: modelData.icon !== undefined ? modelData.icon : ""
                         implicitWidth: app.theme.iconSize
                         implicitHeight: app.theme.iconSize
-                        color: Kirigami.Theme.textColor
+                        color: (modelData.iconColor !== undefined
+                                && modelData.iconColor.length > 0)
+                               ? modelData.iconColor : Kirigami.Theme.textColor
                         Layout.alignment: Qt.AlignVCenter
                     }
                     Label {

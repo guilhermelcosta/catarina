@@ -252,7 +252,18 @@ Item {
                 contentItem: RowLayout {
                     spacing: 4
                     Item { Layout.preferredWidth: (model.depth || 0) * 12 + 16; Layout.preferredHeight: 1 }
-                    Kirigami.Icon { visible: model.isFolder; source: (model.depth || 0) === 0 ? "folder-documents" : "folder"; implicitWidth: 16; implicitHeight: 16; color: Kirigami.Theme.textColor }
+                    Kirigami.Icon {
+                        objectName: "treeRowIcon"
+                        visible: model.isFolder
+                        source: {
+                            if ((model.depth || 0) === 0 && model.icon && model.icon.length > 0)
+                                return model.icon;
+                            return (model.depth || 0) === 0 ? "folder-documents" : "folder";
+                        }
+                        implicitWidth: 16; implicitHeight: 16
+                        color: (model.depth || 0) === 0 && model.color && model.color.length > 0
+                               ? model.color : Kirigami.Theme.textColor
+                    }
                     Label {
                         objectName: "treeMethodLabel"
                         visible: !model.isFolder
