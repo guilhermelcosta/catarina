@@ -207,7 +207,8 @@ Rectangle {
                                 ? app.identityFor(model.relPath) : ({ icon: "", color: "" })
                             source: model.isSettings ? "configure"
                                   : (model.isEnvironment ? "vcs-branch"
-                                  : (identity.icon.length > 0 ? identity.icon
+                                  : (identity.icon.length > 0
+                                     ? app.collectionIcon(identity.icon)
                                      : (model.relPath.indexOf("/") < 0 ? "folder-documents" : "folder")))
                             implicitWidth: 14; implicitHeight: 14
                             color: model.isEnvironment

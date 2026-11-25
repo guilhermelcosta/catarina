@@ -16,8 +16,7 @@ ColumnLayout {
     property var collectionVarsModel
     property alias authEditor: collectionAuthEditor
     // curated Breeze names, all confirmed in the theme (docs/DESIGN.md §4)
-    readonly property var identityIcons: ["folder-documents", "folder", "folder-network",
-        "folder-key", "folder-important", "folder-html", "folder-code", "folder-image"]
+    readonly property var identityIcons: app.collectionIcons
     property var collectionIdentity: ({ icon: "", color: "" })
     function refreshIdentity() {
         if (app.collectionIsSubfolder) {
@@ -48,7 +47,8 @@ ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
         Kirigami.Icon {
             source: app.collectionIsSubfolder ? "folder"
-                  : (collectionIdentity.icon.length > 0 ? collectionIdentity.icon : "folder-documents")
+                  : (collectionIdentity.icon.length > 0
+                     ? app.collectionIcon(collectionIdentity.icon) : "folder-documents")
             implicitWidth: 48; implicitHeight: 48
             color: collectionIdentity.color.length > 0 ? collectionIdentity.color
                                                        : Kirigami.Theme.highlightColor

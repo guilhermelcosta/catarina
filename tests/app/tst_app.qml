@@ -2123,18 +2123,18 @@ TestCase {
         // collection identity: sidebar depth-0 icon + colour, and the tab strip
         backend.deleteEntry("ident-col");
         backend.createFolder("ident-col");
-        backend.setCollectionIdentity("ident-col", "folder-code", "#00838f");
+        backend.setCollectionIdentity("ident-col", "folder", "#00838f");
         c.reloadTree();
         wait(100);
         var treeIdx = -1;
         for (var r = 0; r < c.treeModel.count; r++)
             if (c.treeModel.get(r).relPath === "ident-col") treeIdx = r;
         verify(treeIdx >= 0, "the collection is in the tree");
-        compare(c.treeModel.get(treeIdx).icon, "folder-code");
+        compare(c.treeModel.get(treeIdx).icon, "folder");
         compare(c.treeModel.get(treeIdx).color, "#00838f");
         var treeIcon = findChild(c.sidebar.view.itemAtIndex(treeIdx), "treeRowIcon");
         verify(treeIcon !== null, "the tree row icon exists");
-        compare(treeIcon.source, "folder-code");
+        compare(treeIcon.source, "folder");
         verify(Qt.colorEqual(treeIcon.color, "#00838f"), "the tree row is tinted");
 
         c.openCollection("ident-col");
@@ -2142,8 +2142,24 @@ TestCase {
         var colTabIdx = c.currentTab;
         var colIcon = findChild(tabDelegate(c, colTabIdx), "tabStripTypeIcon");
         verify(colIcon !== null, "the collection tab icon exists");
-        compare(colIcon.source, "folder-code");
+        compare(colIcon.source, "folder");
         verify(Qt.colorEqual(colIcon.color, "#00838f"), "the collection tab is tinted");
+
+        // an icon name the theme cannot resolve falls back, never a blank icon
+        backend.setCollectionIdentity("ident-col", "folder-code", "#00838f");
+        c.reloadTree();
+        wait(100);
+        var fallbackIdx = -1;
+        for (var q = 0; q < c.treeModel.count; q++)
+            if (c.treeModel.get(q).relPath === "ident-col") fallbackIdx = q;
+        var fallbackIcon = findChild(c.sidebar.view.itemAtIndex(fallbackIdx), "treeRowIcon");
+        verify(fallbackIcon !== null, "the fallback tree icon exists");
+        compare(fallbackIcon.source, "folder-documents", "unknown icon falls back");
+        c.openCollection("ident-col");
+        wait(100);
+        var fallbackTab = findChild(tabDelegate(c, c.currentTab), "tabStripTypeIcon");
+        verify(fallbackTab !== null, "the fallback tab icon exists");
+        compare(fallbackTab.source, "folder-documents", "the tab falls back too");
 
         // round-trip and defaults are unchanged when unset
         verify(backend.setCollectionIdentity("ident-col", "", ""), "identity clears");

@@ -257,7 +257,7 @@ Item {
                         visible: model.isFolder
                         source: {
                             if ((model.depth || 0) === 0 && model.icon && model.icon.length > 0)
-                                return model.icon;
+                                return app.collectionIcon(model.icon);
                             return (model.depth || 0) === 0 ? "folder-documents" : "folder";
                         }
                         implicitWidth: 16; implicitHeight: 16

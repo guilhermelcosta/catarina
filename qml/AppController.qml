@@ -146,6 +146,12 @@ function collectionNames() {
 }
 // identity of a collection/folder at relPath, read from the tree model:
 // { icon, color } (both "" when unset; subfolders never carry one)
+readonly property var collectionIcons: ["folder-documents", "folder", "folder-important",
+    "folder-html", "folder-image"]
+function collectionIcon(name) {
+    return name && name.length > 0 && collectionIcons.indexOf(name) >= 0
+        ? name : "folder-documents";
+}
 function identityFor(relPath) {
     for (var i = 0; i < treeModel.count; i++) {
         var e = treeModel.get(i);
