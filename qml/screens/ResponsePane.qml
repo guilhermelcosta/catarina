@@ -18,19 +18,7 @@ Item {
     property int findMatchIndex: 0
     property int findMatchTotal: 0
     property string responseHint: ""
-    property string bodySource: ""          // stored response body, never mutated by format/wrap
-    property string responseFormat: "json"
-    property string metaTime: ""
-    property string metaSize: ""
-    readonly property int headerCount: Util.headerCount(responseHeaders)
-    readonly property int cookieLineCount: Util.cookieCount(responseCookies)
-    function hasBody() { return bodySource.length > 0; }
-    function clearResponse() {
-        setResponseBody(""); responseHeaders = []; responseCookies = ""; netMeta = ({});
-        statusLabel.text = "";
-        metaTime = ""; metaSize = "";
-        responseFormat = "json"; formatSelector.currentIndex = 0;
-    }
+    function clearResponse() { setResponseBody(""); responseHeaders = []; netMeta = ({}); }
 
     function hint(text) { responseHint = text; }
     function openFind() {
@@ -87,13 +75,7 @@ Item {
         bodyScroll.contentItem.contentX = 0;
     }
     function setResponseBody(body) {
-        bodySource = body;   // full body: Ctrl+F searches all of the displayed content
-    }
-    function metaLabelText() {
-        var t = "";
-        if (metaTime.length > 0) t = "· " + metaTime;
-        if (metaSize.length > 0) t += (t.length > 0 ? " · " : "· ") + metaSize;
-        return t;
+        responseBody.text = body;   // full body: Ctrl+F searches all of the content
     }
     // parses the JSON only when the "Tree" tab is visible
     function syncJsonTree() {
@@ -124,13 +106,14 @@ Item {
             responseHeaders = [];
             responseCookies = "";
             netMeta = ({});
-            metaTime = ""; metaSize = "";
             syncJsonTree();
             statusLabel.text = "";
+            timeLabel.text = "";
+            sizeLabel.text = "";
         } else {
             statusLabel.text = r.status + " " + r.statusText;
-            metaTime = r.time;
-            metaSize = r.size;
+            timeLabel.text = r.time;
+            sizeLabel.text = r.size;
             responseHeaders = r.headers !== undefined ? r.headers : [];
             responseCookies = r.cookies !== undefined ? r.cookies : "";
             netMeta = r.meta !== undefined ? r.meta : ({});
@@ -152,10 +135,10 @@ Item {
 
     Connections {
         target: backend
-        function onStarted() { app.sending = true; statusLabel.text = Strings.t.sending; metaTime = ""; metaSize = ""; }
+        function onStarted() { app.sending = true; statusLabel.text = Strings.t.sending; }
         function onCanceled() {
             app.sending = false;
-            statusLabel.text = Strings.t.canceled; metaTime = ""; metaSize = "";
+            statusLabel.text = Strings.t.canceled; timeLabel.text = ""; sizeLabel.text = "";
         }
         function onResponseReady(status, statusText, headers, body, elapsedMs, sizeBytes) {
             app.sending = false;
@@ -173,10 +156,8 @@ Item {
                 app.responses[app.tabsModel.get(app.currentTab).relPath] = rec;
             evictResponses();
             statusLabel.text = status + " " + statusText;
-            metaTime = rec.time;
-            metaSize = rec.size;
-            responseFormat = "json";
-            formatSelector.currentIndex = 0;
+            timeLabel.text = rec.time;
+            sizeLabel.text = rec.size;
             responseHeaders = rec.headers;
             responseCookies = rec.cookies;
             setResponseBody(body);
@@ -185,7 +166,7 @@ Item {
         function onError(code, args) {
             app.sending = false;
             statusLabel.text = Strings.backendError(code, args);
-            metaTime = ""; metaSize = "";
+            timeLabel.text = ""; sizeLabel.text = "";
         }
         function onResponseMeta(meta) {
             netMeta = meta;
@@ -238,143 +219,63 @@ Item {
         spacing: 0
 
         RowLayout {
-            id: responseHeaderRow
-            objectName: "responseHeaderRow"
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.smallSpacing
             Layout.minimumHeight: Kirigami.Units.gridUnit * 2   // reserves the height even with no response
             spacing: Kirigami.Units.smallSpacing
-            // status signal: one 8 px dot, no pill. A numeric status only: an
-            // error or "Canceled" has no code, so a dot would be a lie.
             Rectangle {
-                objectName: "responseStatusDot"
-                visible: statusLabel.text.length > 0 && !app.sending
-                         && !isNaN(parseInt(statusLabel.text))
+                id: statusBadge
+                visible: statusLabel.text.length > 0
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 8
-                implicitHeight: 8
-                radius: 4
-                color: statusColor(statusLabel.text)
-            }
-            Label {
-                id: statusLabel
-                objectName: "statusLabel"
-                textFormat: Text.PlainText
-                Layout.preferredWidth: implicitWidth
-                Layout.fillWidth: isNaN(parseInt(text))
-                Layout.minimumWidth: isNaN(parseInt(text)) ? 0 : Math.min(implicitWidth, 80)
-                elide: Text.ElideRight
-                wrapMode: isNaN(parseInt(text)) ? Text.WordWrap : Text.NoWrap
-                font.bold: false
-                color: isNaN(parseInt(text)) ? statusColor(text) : Kirigami.Theme.textColor
-            }
-            Label {
-                id: metaLabel
-                objectName: "responseMetaLabel"
-                visible: text.length > 0
+                // content-sized, but allowed to shrink (and wrap) when the row is narrow:
+                // fillWidth lets the layout compress it, maximumWidth stops it stretching
+                Layout.fillWidth: true
+                Layout.preferredWidth: statusMetrics.width + 14
+                Layout.maximumWidth: statusMetrics.width + 14
                 Layout.minimumWidth: 0
-                Layout.preferredWidth: Math.min(implicitWidth, 220)
-                // keeps room for the status, format and overflow; the meta elides first
-                Layout.maximumWidth: Math.min(220, Math.max(0, responsePane.width - 210))
-                elide: Text.ElideRight
-                text: metaLabelText()
-                font.features: ({ "tnum": 1 })
-                opacity: 0.75
+                implicitHeight: statusLabel.implicitHeight + 6
+                radius: 4
+                color: Qt.rgba(statusColor(statusLabel.text).r,
+                               statusColor(statusLabel.text).g,
+                               statusColor(statusLabel.text).b, 0.18)
+                TextMetrics { id: statusMetrics; font: statusLabel.font; text: statusLabel.text }
+                Label {
+                    id: statusLabel
+                    objectName: "statusLabel"
+                    textFormat: Text.PlainText
+                    x: 7; y: 3
+                    width: parent.width - 14
+                    wrapMode: Text.WordWrap
+                    font.bold: true
+                    color: statusColor(text)
+                }
             }
             Item { Layout.fillWidth: true }
-            ComboBox {
-                id: formatSelector
-                objectName: "responseFormatSelector"
-                enabled: bodySource.length > 0
-                Layout.preferredWidth: 96
-                model: [Strings.t.responseFormatJson, Strings.t.responseFormatHtml,
-                        Strings.t.responseFormatXml, Strings.t.responseFormatRaw]
-                currentIndex: 0
-                onCurrentIndexChanged: if (currentIndex >= 0) responseFormat = formatAt(currentIndex)
-                function formatAt(i) { return ["json", "html", "xml", "raw"][i] || "json"; }
-            }
+            Label { id: timeLabel; visible: text.length > 0; opacity: 0.7 }
+            Label { id: sizeLabel; visible: text.length > 0; opacity: 0.7 }
             ToolButton {
-                id: wrapToggle
-                objectName: "responseWrapToggle"
-                icon.name: "text-wrap"
-                checkable: true
-                checked: true
-                visible: responsePane.width >= 300
-                enabled: bodySource.length > 0
-                onClicked: hint(Strings.t.responseWrap)
-                ToolTip.text: Strings.t.responseWrap
-                ToolTip.delay: Kirigami.Units.toolTipDelay
-            }
-            ToolButton {
-                objectName: "responseCopyButton"
-                visible: responsePane.width >= 330
-                enabled: bodySource.length > 0
+                visible: responseBody.text.length > 0
                 icon.name: "edit-copy"; text: Strings.t.copy
-                display: AbstractButton.IconOnly
+                display: AbstractButton.TextBesideIcon
                 onClicked: { varSupport.copyText(responseBody.text.length > 0 ? responseBody.text : ""); app.notify(Strings.t.responseCopied); }
                 onHoveredChanged: hint(hovered ? Strings.t.copyResponse : "")
             }
             ToolButton {
-                objectName: "responseFindButton"
-                visible: responsePane.width >= 360
-                enabled: bodySource.length > 0
+                visible: responseBody.text.length > 0
                 icon.name: "edit-find"
                 onClicked: openFind()
                 onHoveredChanged: hint(hovered ? Strings.t.findTooltip : "")
-            }
-            ToolButton {
-                id: headerOverflowButton
-                objectName: "responseOverflowButton"
-                icon.name: "overflow-menu"
-                onClicked: headerOverflowMenu.popup(headerOverflowButton)
-                ToolTip.text: Strings.t.responseOverflow
-                ToolTip.delay: Kirigami.Units.toolTipDelay
-            }
-        }
-        Menu {
-            id: headerOverflowMenu
-            MenuItem {
-                text: Strings.t.copyResponseShort
-                enabled: bodySource.length > 0
-                onTriggered: { varSupport.copyText(responseBody.text); app.notify(Strings.t.responseCopied); }
-            }
-            MenuItem {
-                text: Strings.t.findResponse
-                enabled: bodySource.length > 0
-                onTriggered: openFind()
-            }
-            MenuItem {
-                text: Strings.t.responseWrap
-                checkable: true; checked: wrapToggle.checked
-                enabled: bodySource.length > 0
-                onTriggered: wrapToggle.checked = !wrapToggle.checked
-            }
-            MenuSeparator {}
-            Menu {
-                title: Strings.t.responseFormat
-                enabled: bodySource.length > 0
-                MenuItem { text: Strings.t.responseFormatJson; onTriggered: formatSelector.currentIndex = 0 }
-                MenuItem { text: Strings.t.responseFormatHtml; onTriggered: formatSelector.currentIndex = 1 }
-                MenuItem { text: Strings.t.responseFormatXml; onTriggered: formatSelector.currentIndex = 2 }
-                MenuItem { text: Strings.t.responseFormatRaw; onTriggered: formatSelector.currentIndex = 3 }
             }
         }
 
         TabBar {
             id: respTabBar
-            objectName: "responseTabBar"
             Layout.fillWidth: true
             onCurrentIndexChanged: if (currentIndex === 1) syncJsonTree()
             TabButton { text: Strings.t.responseBody; onHoveredChanged: hint(hovered ? Strings.t.bodyHint : "") }
             TabButton { text: Strings.t.responseTree; onHoveredChanged: hint(hovered ? Strings.t.treeHint : "") }
-            TabButton {
-                text: Strings.t.responseHeaders + (headerCount > 0 ? " " + headerCount : "")
-                onHoveredChanged: hint(hovered ? Strings.t.headersHint : "")
-            }
-            TabButton {
-                text: Strings.t.responseCookies + (cookieLineCount > 0 ? " " + cookieLineCount : "")
-                onHoveredChanged: hint(hovered ? Strings.t.cookiesHint : "")
-            }
+            TabButton { text: Strings.t.responseHeaders; onHoveredChanged: hint(hovered ? Strings.t.headersHint : "") }
+            TabButton { text: Strings.t.responseCookies; onHoveredChanged: hint(hovered ? Strings.t.cookiesHint : "") }
             TabButton { text: Strings.t.responseNetwork; onHoveredChanged: hint(hovered ? Strings.t.networkHint : "") }
         }
 
@@ -387,7 +288,6 @@ Item {
             visible: findVisible
             TextField {
                 id: findField
-                objectName: "responseFindField"
                 Layout.fillWidth: true
                 placeholderText: Strings.t.searchResponse
                 onAccepted: findNext(false)
@@ -395,11 +295,10 @@ Item {
                 Keys.onEscapePressed: closeFind()
             }
             Label {
-                objectName: "responseFindCounter"
                 visible: findMatchTotal > 0
                 text: findMatchIndex + "/" + findMatchTotal
                 opacity: 0.75
-                font.features: ({ "tnum": 1 })
+                font.family: "monospace"
             }
             ToolButton {
                 icon.name: "go-up"; onClicked: findNext(true)
@@ -430,10 +329,9 @@ Item {
                         objectName: "responseBodyArea"
                         readOnly: true
                         textFormat: TextEdit.PlainText
-                        font.family: settings.editorFontResolved
-                        font.pointSize: settings.editorFontSizeResolved
-                        text: Util.formatBody(responseFormat, bodySource)
-                        wrapMode: wrapToggle.checked ? TextEdit.Wrap : TextEdit.NoWrap
+                        font.family: "monospace"
+                        font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                        wrapMode: TextEdit.Wrap
                         selectionColor: Kirigami.Theme.highlightColor
                         selectedTextColor: Kirigami.Theme.highlightedTextColor
                         Component.onCompleted:
@@ -484,27 +382,12 @@ Item {
                 id: hintLabel
                 anchors.fill: parent
                 anchors.leftMargin: Kirigami.Units.smallSpacing
-                anchors.rightMargin: Kirigami.Units.smallSpacing + (lineRef.visible ? lineRef.width : 0)
+                anchors.rightMargin: Kirigami.Units.smallSpacing
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
-                font.pixelSize: app.theme.fontSizeSecondary
+                font.pixelSize: Kirigami.Theme.smallFont.pointSize
                 opacity: 0.75
                 text: responseHint
-            }
-            Label {
-                id: lineRef
-                objectName: "responseLineRef"
-                anchors.right: parent.right
-                anchors.rightMargin: Kirigami.Units.smallSpacing
-                anchors.verticalCenter: parent.verticalCenter
-                visible: respTabBar.currentIndex === 0 && bodySource.length > 0
-                text: {
-                    var p = Util.lnCol(responseBody.cursorPosition, responseBody.text);
-                    return Strings.lineRef(p.line, p.col);
-                }
-                font.features: ({ "tnum": 1 })
-                font.pixelSize: app.theme.fontSizeSecondary
-                opacity: 0.75
             }
         }
     }

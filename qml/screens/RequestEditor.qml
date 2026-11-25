@@ -23,236 +23,126 @@ ColumnLayout {
     property alias body: bodyEditor.body
     function setMethod(m) { var i = methodBox.find(m); methodBox.currentIndex = i >= 0 ? i : 0; }
     function setBodyType(v) { bodyEditor.setBodyType(v); }
-    // ---- tab search (Ctrl+Shift+A) ----
-    function currentTabIsRequest() {
-        if (!app || app.showingSettings || app.showingEnv || app.showingCollection) return false;
-        if (app.currentTab < 0 || app.currentTab >= app.tabsModel.count) return false;
-        var t = app.tabsModel.get(app.currentTab);
-        return !t.isCollection && !t.isEnvironment && !t.isSettings;
-    }
-    function openTabSearch() {
-        if (!currentTabIsRequest()) return;   // no-op outside a request tab
-        tabSearch.open();
-    }
-    function revealUrlMatch() {
-        reqTabBar.currentIndex = 0;
-        urlField.forceActiveFocus();
-        urlField.selectAll();
-    }
-    function revealBodyRange(start, end) {
-        reqTabBar.currentIndex = 2;
-        bodyEditor.revealRange(start, end);
-    }
-    function revealTableRow(surface, index) {
-        if (surface === "params") { reqTabBar.currentIndex = 0; paramsTable.revealRow(index); }
-        else if (surface === "headers") { reqTabBar.currentIndex = 1; headersTable.revealRow(index); }
-        else if (surface === "fields") { reqTabBar.currentIndex = 2; bodyEditor.revealFieldRow(index); }
-        else if (surface === "vars") { reqTabBar.currentIndex = 4; reqVars.revealRow(index); }
-    }
     SplitView.fillWidth: true
     SplitView.minimumWidth: 380
     spacing: Kirigami.Units.smallSpacing
 
-    // Request bar: one border around method, URL and Send (docs/DESIGN.md §5,
-    // pattern 9). The URL owns all the slack; the fixed minimums (160 px) keep
-    // it at 220 px or more even at the 380 px editor minimum.
     RowLayout {
         Layout.fillWidth: true
+        Layout.margins: Kirigami.Units.smallSpacing
         spacing: Kirigami.Units.smallSpacing
-        Rectangle {
-            id: requestBar
-            objectName: "requestBar"
-            Layout.fillWidth: true
-            implicitHeight: Kirigami.Units.gridUnit * 2
-            color: Kirigami.Theme.alternateBackgroundColor
-            radius: app.theme.radiusControl
-            border.width: 1
-            border.color: Kirigami.Theme.disabledTextColor
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 4; anchors.rightMargin: 4
-                spacing: Kirigami.Units.smallSpacing
-                ComboBox {
-                    id: methodBox
-                    objectName: "requestMethodBox"
-                    model: ["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"]
-                    Layout.preferredWidth: Math.max(56, Math.min(88,
-                        parent.width - (220 + 24 + Kirigami.Units.smallSpacing * 2 + 3)))
-                    Layout.minimumWidth: 56
-                    Layout.fillHeight: true
-                    implicitHeight: Kirigami.Units.gridUnit * 2
-                    background: null
-                    padding: 0
-                    leftPadding: 0; rightPadding: 4
-                    onActivated: app.markDirty()
-                    // One label: the name and its chevron live in the content item.
-                    // A separate `indicator` is not laid out once the style is
-                    // stripped, so the arrow would float in a corner.
-                    indicator: null
-                    contentItem: RowLayout {
-                        spacing: Kirigami.Units.smallSpacing
-                        Text {
-                            id: methodLabel
-                            Layout.leftMargin: methodBox.width < 72 ? 4 : 10
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            text: methodBox.displayText
-                            color: app.methodColor(methodBox.currentText)
-                            font.bold: true
-                            verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideRight
-                        }
-                        // The chevron is the first thing to give way: below 72 px
-                        // the whole segment is the click target and the name keeps
-                        // its room (ui.md C2).
-                        Kirigami.Icon {
-                            objectName: "requestMethodChevron"
-                            visible: methodBox.width >= 72
-                            Layout.preferredWidth: 12
-                            Layout.preferredHeight: 12
-                            Layout.alignment: Qt.AlignVCenter
-                            source: "arrow-down"
-                            color: Kirigami.Theme.textColor
-                        }
-                    }
-                    ToolTip.text: Strings.t.methodTooltip
-                    ToolTip.delay: 700
-                    ToolTip.visible: hovered && !methodBox.popup.visible
-                }
-                Item {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 220
-                    Layout.fillHeight: true
-                    implicitHeight: Kirigami.Units.gridUnit * 2
-
-                    VarField {
-                        id: urlField
-                        objectName: "requestUrlField"
-                        anchors.fill: parent
-                        background: null
-                        placeholderText: Strings.t.urlExample
-                        font.family: settings.editorFontResolved
-                        font.pointSize: settings.editorFontSizeResolved
-                        topPadding: 5; bottomPadding: 5; horizontalPadding: 8
-                        resolved: app.resolvedVars
-                        collection: app.currentCollection
-                        onTextEdited: app.markDirty()
-                        onAccepted: app.doSend()
-                    }
-
-                    // Preview of the query appended by the active params (what buildUrl
-                    // joins to the URL). Visual only, doesn't interfere with editing. If the URL
-                    // typed overflows the field, it hides (the end disappears in the scroll).
-                    TextMetrics {
-                        id: urlTextMetrics
-                        font: urlField.font
-                        text: urlField.text
-                    }
-                    Rectangle {
-                        id: urlQueryGhost
-                        // readable highlight in both themes: blends the accent with the text
-                        // color (lightens on dark, darkens on light)
-                        readonly property color accent: Kirigami.ColorUtils.linearInterpolation(
-                            Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.8)
-                        readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
-                        enabled: false
-                        visible: app.querySuffix().length > 0 && urlField.text.length > 0
-                                 && urlField.scroll === 0
-                                 && startX <= urlField.width - urlField.rightPadding
-                        x: startX
-                        y: urlField.topPadding
-                        height: queryGhostText.implicitHeight
-                        width: Math.min(queryGhostText.implicitWidth + 8,
-                                        urlField.width - x - urlField.rightPadding)
-                        radius: 3
-                        color: Qt.rgba(accent.r, accent.g, accent.b, 0.16)
-                        // the width is clamped to the field, but a Text with a width
-                        // smaller than its margins goes negative and Qt paints it at
-                        // full implicit width; clip keeps it inside the field
-                        clip: true
-                        Text {
-                            id: queryGhostText
-                            anchors.fill: parent
-                            anchors.leftMargin: 4; anchors.rightMargin: 4
-                            verticalAlignment: Text.AlignVCenter
-                            text: app.querySuffix()
-                            color: urlQueryGhost.accent
-                            font: urlField.font
-                            elide: Text.ElideRight
-                        }
-                    }
-                }
-                Button {
-                    id: requestSendButton
-                    objectName: "requestSendButton"
-                    display: AbstractButton.IconOnly
-                    icon.name: app.sending ? "process-stop" : "document-send"
-                    text: app.sending ? Strings.t.cancel : Strings.t.send
-                    highlighted: !app.sending
-                    Layout.preferredWidth: 24
-                    Layout.minimumWidth: 24
-                    // inset inside the container so the highlighted chrome does
-                    // not double the container's border (ui-review round 1)
-                    Layout.preferredHeight: Kirigami.Units.gridUnit * 2 - 6
-                    Layout.fillHeight: false
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.rightMargin: 3
-                    onClicked: app.sending ? backend.cancel() : app.doSend()
-                    // delayed tooltip; UI review round 3 measured that a click
-                    // with it visible still dispatched the request
-                    ToolTip.text: Strings.t.sendTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
-                }
-            }
-            // The borderless field and segment lose Breeze's focus ring, so the
-            // container draws it. Overlay only: the space budget must not move
-            // (ui.md C1), hence no change to border.width or padding.
-            Rectangle {
-                anchors.fill: parent
-                radius: requestBar.radius
-                color: "transparent"
-                border.width: app.theme.focusRingWidth
-                border.color: Kirigami.Theme.highlightColor
-                visible: methodBox.activeFocus || urlField.activeFocus || requestSendButton.activeFocus
+        ComboBox {
+            id: methodBox
+            model: ["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS"]
+            implicitWidth: 120
+            onActivated: app.markDirty()
+            contentItem: Text {
+                leftPadding: 10
+                text: methodBox.displayText
+                color: app.methodColor(methodBox.currentText)
+                font.bold: true
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
             }
         }
-        // Persistence is not part of composing a request: quiet icon-only
-        // buttons outside the bar, Discard before Save.
+        Item {
+            Layout.fillWidth: true
+            implicitHeight: Kirigami.Units.gridUnit * 2
+
+            VarField {
+                id: urlField
+                anchors.fill: parent
+                placeholderText: Strings.t.urlExample
+                font.pointSize: settings.fontSize > 0 ? settings.fontSize : Kirigami.Theme.defaultFont.pointSize
+                topPadding: 5; bottomPadding: 5; horizontalPadding: 8
+                resolved: app.resolvedVars
+                collection: app.currentCollection
+                onTextEdited: app.markDirty()
+                onAccepted: app.doSend()
+            }
+
+            // Preview of the query appended by the active params (what buildUrl
+            // joins to the URL). Visual only, doesn't interfere with editing. If the URL
+            // typed overflows the field, it hides (the end disappears in the scroll).
+            TextMetrics {
+                id: urlTextMetrics
+                font: urlField.font
+                text: urlField.text
+            }
+            Rectangle {
+                id: urlQueryGhost
+                // readable highlight in both themes: blends the accent with the text
+                // color (lightens on dark, darkens on light)
+                readonly property color accent: Kirigami.ColorUtils.linearInterpolation(
+                    Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.8)
+                readonly property real startX: urlField.leftPadding + urlTextMetrics.advanceWidth
+                enabled: false
+                visible: app.querySuffix().length > 0 && urlField.text.length > 0
+                         && urlField.scroll === 0
+                         && startX <= urlField.width - urlField.rightPadding
+                x: startX
+                y: urlField.topPadding
+                height: queryGhostText.implicitHeight
+                width: Math.min(queryGhostText.implicitWidth + 8,
+                                urlField.width - x - urlField.rightPadding)
+                radius: 3
+                color: Qt.rgba(accent.r, accent.g, accent.b, 0.16)
+                // the width is clamped to the field, but a Text with a width
+                // smaller than its margins goes negative and Qt paints it at
+                // full implicit width; clip keeps it inside the field
+                clip: true
+                Text {
+                    id: queryGhostText
+                    anchors.fill: parent
+                    anchors.leftMargin: 4; anchors.rightMargin: 4
+                    verticalAlignment: Text.AlignVCenter
+                    text: app.querySuffix()
+                    color: urlQueryGhost.accent
+                    font: urlField.font
+                    elide: Text.ElideRight
+                }
+            }
+        }
+        Button {
+            icon.name: app.sending ? "process-stop" : "document-send"
+            text: app.sending ? Strings.t.cancel : Strings.t.send
+            highlighted: !app.sending
+            onClicked: app.sending ? backend.cancel() : app.doSend()
+        }
+        Label {
+            objectName: "requestDirtyLabel"
+            text: app.currentDirty ? Strings.t.unsavedMarker : ""
+            opacity: 0.75
+            visible: text.length > 0
+        }
         ToolButton {
             objectName: "requestRevertButton"
             icon.name: "edit-undo"
             text: Strings.t.discard
-            display: AbstractButton.IconOnly
-            implicitWidth: app.theme.controlToolbar; implicitHeight: app.theme.controlToolbar
-            Layout.preferredWidth: app.theme.controlToolbar; Layout.minimumWidth: app.theme.controlToolbar
-            Layout.alignment: Qt.AlignVCenter
+            display: AbstractButton.TextBesideIcon
             enabled: app.currentDirty
             onClicked: app.revertCurrent()
-            ToolTip.text: Strings.t.discardTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
+            ToolTip.text: Strings.t.discardTooltip; ToolTip.visible: hovered
         }
         ToolButton {
             objectName: "requestSaveButton"
             icon.name: "document-save"
             text: Strings.t.save
-            display: AbstractButton.IconOnly
-            implicitWidth: app.theme.controlToolbar; implicitHeight: app.theme.controlToolbar
-            Layout.preferredWidth: app.theme.controlToolbar; Layout.minimumWidth: app.theme.controlToolbar
-            Layout.alignment: Qt.AlignVCenter
+            display: AbstractButton.TextBesideIcon
             enabled: app.currentDirty && app.requestVarsWarning.length === 0
             onClicked: app.saveCurrent()
-            ToolTip.text: Strings.t.saveTooltip; ToolTip.delay: 700; ToolTip.visible: hovered
+            ToolTip.text: Strings.t.saveTooltip; ToolTip.visible: hovered
         }
     }
 
     TabBar {
         id: reqTabBar
-        objectName: "requestTabBar"
         Layout.fillWidth: true
-        TabButton { text: Strings.t.parameters + (paramsModel.count > 0 ? " " + paramsModel.count : "") }
-        TabButton { text: Strings.t.headers + (headersModel.count > 0 ? " " + headersModel.count : "") }
+        TabButton { text: Strings.t.parameters }
+        TabButton { text: Strings.t.headers }
         TabButton { text: Strings.t.body }
         TabButton { text: Strings.t.authentication }
-        TabButton { text: Strings.t.variables + (requestVarsModel.count > 0 ? " " + requestVarsModel.count : "") }
+        TabButton { text: Strings.t.variables }
     }
 
     StackLayout {
@@ -260,8 +150,8 @@ ColumnLayout {
         Layout.fillHeight: true
         currentIndex: reqTabBar.currentIndex
 
-        KvTable { id: paramsTable; model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
-        KvTable { id: headersTable; model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
+        KvTable { model: paramsModel; keyPlaceholder: Strings.t.parameter; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: paramsModel.append({ name: "", value: "", enabled: true }); onEdited: { app.markDirty(); app.paramsRevision++; } }
+        KvTable { model: headersModel; keyPlaceholder: Strings.t.header; resolved: app.resolvedVars; collection: app.currentCollection; onAddRequested: headersModel.append({ name: "", value: "", enabled: true }); onEdited: app.markDirty() }
 
         // NB: qualify with `editor.` — `fieldsModel`/`fileDialog` are properties
         // of this component; without the prefix QML would resolve to the property
@@ -279,11 +169,5 @@ ColumnLayout {
         // editable variables (top) + effective ones (bottom), with a draggable
         // divider — at most half the tab height.
         ReqVarsEditor { id: reqVars; objectName: "reqVarsEditor"; app: editor.app; requestVarsModel: editor.requestVarsModel }
-    }
-
-    TabSearch {
-        id: tabSearch
-        app: editor.app
-        editor: editor
     }
 }

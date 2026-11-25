@@ -12,27 +12,13 @@ var t = {
     // ---- top bar / panels ----
     history: "History",
     settings: "Settings",
+    deleteSelected: "Delete selected",
     moreActions: "More actions",
     hideCollections: "Hide collections panel",
     showCollections: "Show collections panel",
     hideResponse: "Hide response panel",
     showResponse: "Show response panel",
     noEnvironment: "No environment",
-    breadcrumbSeparator: "/",
-
-    // ---- status bar ----
-    storageLabel: "Secrets:",
-    storageKeyring: "keyring",
-    storageFile: "file",
-    storageKeyringTooltip: "Secrets are stored in the OS keyring.",
-    storageFileTooltip: "Secrets are stored in a local file only you can read.",
-    zoomReset: "Reset text size to the default",
-    zoomOutTooltip: "Smaller editor text",
-    zoomInTooltip: "Larger editor text",
-    themeToggleTooltip: "Toggle light or dark theme",
-    shortcutsHintText: "Ctrl+/ shortcuts",
-    timeoutLabelText: "Timeout:",
-    noTimeout: "no limit",
 
     // ---- environments ----
     activeEnvironment: "Active environment",
@@ -74,13 +60,6 @@ var t = {
     noRequestOpen: "No request open",
     noRequestOpenHint: "Select a request in the sidebar or create a new one.",
     newRequest: "New request",
-    sidebarFilter: "Filter by name or path",
-    sidebarFilterHint: "Filter by name or path, Esc clears",
-    noFilterMatches: "No matches",
-    noFilterMatchesMessage: "No request or folder matches this filter.",
-    clearsFilter: "clears the filter",
-    collapseAll: "Collapse all",
-    reveal: "Reveal",
 
     // ---- request ----
     parameters: "Parameters",
@@ -112,13 +91,12 @@ var t = {
     rename: "Rename",
     close: "Close",
     clear: "Clear",
+    apply: "Apply",
     browse: "Browse…",
     formatButton: "Prettify",
     unsavedMarker: "unsaved changes",
     discardTooltip: "Discard unsaved changes",
     saveTooltip: "Save (Ctrl+S)",
-    sendTooltip: "Send (Ctrl+Return)",
-    methodTooltip: "HTTP method",
     renameTooltip: "Rename",
 
     // auth types
@@ -152,15 +130,6 @@ var t = {
     networkHint: "Connection details and the sent request",
     clearFind: "Clear search",
     findTooltip: "Find in response (Ctrl+F)",
-    findResponse: "Find",
-    copyResponseShort: "Copy response",
-    responseFormat: "Format",
-    responseFormatJson: "JSON",
-    responseFormatHtml: "HTML",
-    responseFormatXml: "XML",
-    responseFormatRaw: "Raw",
-    responseWrap: "Wrap lines",
-    responseOverflow: "More response actions",
 
     // ---- network ----
     connection: "Connection",
@@ -275,46 +244,9 @@ var t = {
 
     // ---- settings ----
     view: "View:",
-    settingsSearchPlaceholder: "Search settings",
-    settingsNoMatches: "No setting matches.",
-    about: "About",
-    storage: "Storage",
-    aboutTitle: "About",
-    aboutVersion: "Version",
-    aboutQtVersion: "Qt version",
-    aboutLicense: "Licence",
     appearance: "Appearance",
-    themeSystem: "System",
-    themeLight: "Light",
-    themeDark: "Dark",
-    themeLabel: "Theme",
-    accentLabel: "Accent",
-    densityLabel: "Density",
-    themeDescription: "Follow the desktop or force a light or dark scheme.",
-    themeRestartDescription: "This desktop controls the theme; a forced scheme applies after a restart.",
-    accentFollowSystem: "Follow system",
-    accentCustom: "Custom…",
-    accentDescription: "Selection and focus colour.",
-    densityComfortable: "Comfortable",
-    densityCompact: "Compact",
-    densityDescription: "Spacing of the toolbar and settings rows.",
-    uiScale: "UI scale",
-    uiScaleDescription: "Scales the interface text and controls, not the editor content.",
-    editor: "Editor",
     editorFont: "Editor font:",
-    editorFontFamily: "Font family",
-    editorFontFamilyDescription: "Monospace font used by the URL, request body and response body.",
-    editorFontSize: "Font size",
-    editorFontSizeDescription: "Editor text size; the status-bar zoom is the same knob.",
-    editorFontDefault: "Default monospace",
-    editorLineNumbers: "Line numbers",
-    editorLineNumbersDescription: "Number the request body lines.",
-    editorWrap: "Wrap lines",
-    editorWrapDescription: "Wrap long lines instead of scrolling sideways.",
-    editorIndent: "Indent width",
-    editorIndentDescription: "Spaces inserted by Enter and auto-indent.",
-    editorBrackets: "Bracket auto-close",
-    editorBracketsDescription: "Close brackets and quotes as you type.",
+    defaultZero: "0 = default",
     collectionsFolder: "Folder where collections are saved:",
     storageDirHint: "When applied, catarina uses this folder. Current collections are not moved — to bring them, copy the files there.",
     storageDirInvalid: "Choose a folder that exists and is writable.",
@@ -327,18 +259,9 @@ var t = {
     autoSaveOnSend: "Save automatically when sending",
     shortcuts: "Shortcuts",
     shortcutsHint: "Click a shortcut and press the new combination. Esc cancels.",
-    shortcutsOverlayTitle: "Keyboard shortcuts",
     restoreDefault: "Restore default",
     optionsApplyInstantly: "Options apply instantly.",
     pressCombination: "Press the combination…",
-    environmentColour: "Environment colour",
-    environmentColourDescription: "Tints the environment dot, pill and tab.",
-    collectionIcon: "Icon",
-    collectionColour: "Colour",
-    collectionIdentityDescription: "Shown in the sidebar, the collection tab and the tab strip.",
-    customColour: "Custom…",
-    resetColour: "Reset colour",
-    resetIcon: "Reset icon",
 
     // ---- menus ----
     newCollection: "New collection",
@@ -354,15 +277,10 @@ var t = {
     // ---- command palette ----
     paletteGroupGlobal: "Global",
     paletteGroupContext: "Current context",
-    paletteGroupRecent: "Recent",
     newFolder: "New folder…",
     settingsEllipsis: "Settings…",
     manageEnvVariables: "Manage environment variables…",
     closeTab: "Close tab",
-    pinTab: "Pin tab",
-    unpinTab: "Unpin tab",
-    closeOthers: "Close others",
-    closeAll: "Close all",
     reopenTab: "Reopen closed tab",
     saveRequest: "Save request",
     sendRequest: "Send request",
@@ -379,13 +297,7 @@ var t = {
     shortcutNextTab: "Next tab",
     shortcutReopenTab: "Reopen closed tab",
     shortcutPalette: "Command palette",
-    shortcutFind: "Find in response",
-    shortcutTabSearch: "Search request",
-
-    // ---- tab search ----
-    tabSearch: "Search request",
-    tabSearchPlaceholder: "Search request",
-    tabSearchEmptyHint: "Type to search this request."
+    shortcutFind: "Find in response"
 };
 
 // ---- parameterized messages ----
@@ -411,17 +323,7 @@ function deleteItemConfirm(name) {
     return "Delete \"" + name + "\"?\nThis erases from disk (recursively, if a folder).";
 }
 function deleteEnvConfirm(name) { return "Delete environment \"" + name + "\"?"; }
-function closeAllConfirm(n) {
-    return n === 1 ? "Close 1 tab with unsaved changes?" : "Close " + n + " tabs with unsaved changes?";
-}
 function nCollections(n) { return n + (n === 1 ? " collection" : " collections"); }
-function lineRef(line, col) { return "Ln " + line + ", Col " + col; }
-function tabSurface(surface) {
-    var names = { url: "URL", params: "Params", headers: "Headers",
-                  fields: "Fields", vars: "Vars", body: "Body" };
-    return names[surface] || "";
-}
-function timeoutLabel(sec) { return t.timeoutLabelText + " " + (sec > 0 ? sec + " s" : t.noTimeout); }
 function restrictedTo(list) { return "restricted to: " + list; }
 // "The request 'x' has unsaved changes." (kind: collection|environment|request)
 function unsavedItem(name, kind) {

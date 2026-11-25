@@ -29,14 +29,6 @@ class Backend : public QObject
     Q_OBJECT
     Q_PROPERTY(QString storageDir READ storageDir CONSTANT)
     Q_PROPERTY(QString activeEnvironment READ activeEnvironment NOTIFY environmentsChanged)
-    // secret-storage medium: "keyring" or "file", fixed at startup
-    Q_PROPERTY(QString secretsBackend READ secretsBackend CONSTANT)
-    // theme choice: "system" | "light" | "dark"; also persisted in Settings
-    Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
-    // false on Qt < 6.8, where there is no runtime scheme API
-    Q_PROPERTY(bool canToggleTheme READ canToggleTheme CONSTANT)
-    Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
-    Q_PROPERTY(QString qtVersion READ qtVersion CONSTANT)
 
 public:
     explicit Backend(QObject *parent = nullptr);
@@ -53,18 +45,6 @@ public:
     Q_INVOKABLE bool storageReadable() const;                      // root exists and can be listed
     Q_INVOKABLE bool canUseStorageDir(const QString &dir) const;   // creatable and writable
     QString activeEnvironment() const;
-    QString secretsBackend() const;
-    QString colorScheme() const;
-    void setColorScheme(const QString &scheme);
-    // Applies "system" | "light" | "dark" to the Qt palette/hints. Called by the
-    // property setter and by main() before the QML loads, so a stored scheme
-    // opens the window already themed.
-    static void applyColorScheme(const QString &scheme);
-    bool canToggleTheme() const;
-    QString appVersion() const;
-    QString qtVersion() const;
-    // fixed-pitch families, cached; for the editor font picker
-    Q_INVOKABLE QStringList monospaceFamilies() const;
     // copies the built-in example collection (:/seed) on first use; only when
     // storage is still empty and just once (marks .catarina/.seeded)
     Q_INVOKABLE void seedDefaultCollection();
@@ -103,10 +83,6 @@ public:
     Q_INVOKABLE bool renameEntry(const QString &relPath, const QString &newName);
     // duplicates a request or folder as "<name> copy"
     Q_INVOKABLE bool duplicateEntry(const QString &relPath);
-    // optional identity of a top-level collection: { icon, color } ("" = unset)
-    Q_INVOKABLE QVariantMap collectionIdentity(const QString &collection) const;
-    Q_INVOKABLE bool setCollectionIdentity(const QString &collection, const QString &icon,
-                                           const QString &color);
 
     // ---- collection variables (versioned, without secrets) ----
     Q_INVOKABLE QVariantList collectionVariables(const QString &collection) const;
@@ -129,8 +105,6 @@ public:
     Q_INVOKABLE bool deleteEnvironment(const QString &name);
     Q_INVOKABLE bool renameEnvironment(const QString &oldName, const QString &newName);
     Q_INVOKABLE void setActiveEnvironment(const QString &name);
-    // identity colour of an environment ("#rrggbb", "" clears); invalid = false, no write
-    Q_INVOKABLE bool setEnvironmentColor(const QString &name, const QString &color);
 
     // ---- secrets (outside the repo) ----
     Q_INVOKABLE QString secretValue(const QString &id) const;
@@ -168,7 +142,6 @@ signals:
     void collectionsChanged();
     void environmentsChanged();
     void historyChanged();
-    void colorSchemeChanged();
 
 private:
     // variables of the active environment (candidates for globals during resolution)
@@ -186,7 +159,6 @@ private:
     QString m_secretsFile; // <m_appData>/secrets.json
     QString m_seedSource;  // where seedDefaultCollection copies from (default ":/seed")
     std::unique_ptr<SecretStore> m_secrets;
-    mutable QStringList m_monoFamilies;   // lazily filled cache
 
     HttpClient *m_http = nullptr;
     CollectionStorage *m_collections = nullptr;

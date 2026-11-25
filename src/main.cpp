@@ -47,9 +47,6 @@ int main(int argc, char *argv[])
 
     Settings settings;
 
-    // Open in the scheme saved by the status-bar toggle (before the QML loads).
-    Backend::applyColorScheme(settings.colorScheme());
-
     Backend backend;
     backend.seedDefaultCollection();
     VarSupport varSupport;

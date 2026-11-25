@@ -39,7 +39,6 @@ qt_add_library(catarina_core OBJECT
     src/settings.cpp
 )
 target_include_directories(catarina_core PRIVATE src)
-target_compile_definitions(catarina_core PRIVATE CATARINA_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(catarina_core PRIVATE ${CATARINA_SECRETS_DEFS})
 target_link_libraries(catarina_core PRIVATE Qt6::Core Qt6::Gui Qt6::Network ${CATARINA_SECRETS_LIBS})
 
@@ -80,8 +79,6 @@ qt_add_resources(catarina "qml"
         qml/KvTable.qml
         qml/SaveBar.qml
         qml/EmptyState.qml
-        qml/SettingsCard.qml
-        qml/SettingsRow.qml
         qml/DialogHeader.qml
         qml/DialogActions.qml
         qml/ResolvedVarsTable.qml
@@ -92,16 +89,12 @@ qt_add_resources(catarina "qml"
         qml/VarField.qml
         qml/AuthEditor.qml
         qml/ShortcutField.qml
-        qml/Keycap.qml
         qml/MethodBadge.qml
         qml/SourceChip.qml
         qml/SplitGrip.qml
-        qml/Theme.qml
         qml/AppController.qml
         qml/Sidebar.qml
         qml/TabStrip.qml
-        qml/TopBar.qml
-        qml/StatusBar.qml
         qml/dialogs/NewReqDialog.qml
         qml/dialogs/NameDialog.qml
         qml/dialogs/ConfirmCloseDialog.qml
@@ -119,12 +112,10 @@ qt_add_resources(catarina "qml"
         qml/dialogs/FilePickDialog.qml
         qml/dialogs/DeleteDialog.qml
         qml/dialogs/CommandPalette.qml
-        qml/dialogs/ShortcutsOverlay.qml
         qml/screens/SettingsScreen.qml
         qml/screens/EnvironmentScreen.qml
         qml/screens/CollectionScreen.qml
         qml/screens/RequestEditor.qml
-        qml/screens/TabSearch.qml
         qml/screens/BodyEditor.qml
         qml/screens/ReqVarsEditor.qml
         qml/screens/ResponsePane.qml

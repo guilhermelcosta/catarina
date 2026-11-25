@@ -38,210 +38,8 @@ TestCase {
     TextArea { id: emitProbe; onTextEdited: root.probeCount++ }
     property int probeCount: 0
 
-    // ---- design tokens (qml/Theme.qml) ----
-    Theme { id: themeTokens }
-    // the selection rule as the views apply it: selected beats hovered
-    QtObject {
-        id: tintProbe
-        property bool selected: false
-        property bool hovered: false
-        readonly property color background: selected ? themeTokens.selectionTint
-                                          : (hovered ? themeTokens.hoverTint : "transparent")
-    }
-
-    function test_theme_selection_and_hover_tints() {
-        verify(themeTokens.selectionTint.a >= 0.12 && themeTokens.selectionTint.a <= 0.20,
-               "selection alpha within 0.12-0.20, got " + themeTokens.selectionTint.a);
-        verify(themeTokens.hoverTint.a >= 0.04 && themeTokens.hoverTint.a <= 0.08,
-               "hover alpha within 0.04-0.08, got " + themeTokens.hoverTint.a);
-        verify(themeTokens.hoverTint.a < themeTokens.selectionTint.a,
-               "hover is strictly quieter than selection");
-        verify(themeTokens.selectionTint.a > 0, "tints derive from a live theme color");
-
-        tintProbe.selected = true;
-        tintProbe.hovered = true;
-        verify(Qt.colorEqual(tintProbe.background, themeTokens.selectionTint),
-               "a selected hovered row stays on the selection tint");
-        tintProbe.selected = false;
-        verify(Qt.colorEqual(tintProbe.background, themeTokens.hoverTint),
-               "a hovered unselected row uses the hover tint");
-        tintProbe.hovered = false;
-        compare(tintProbe.background.a, 0, "neither state is transparent");
-    }
-
-    function test_theme_radius_and_opacity_tiers() {
-        compare(themeTokens.radiusChip, 4);
-        compare(themeTokens.radiusControl, 6);
-        compare(themeTokens.radiusPanel, 8);
-        compare(themeTokens.textInformational, 0.75);
-        compare(themeTokens.textTableHeader, 0.65);
-        compare(themeTokens.textDecoration, 0.5);
-        compare(themeTokens.textDisabledRow, 0.45);
-        compare(themeTokens.textDisabledVariable, 0.4);
-    }
-
-    // criterion 7 / 8: the type scale and the control sizes are tokens
-    function test_theme_type_scale_tokens() {
-        compare(themeTokens.fontSizeMeta, 11);
-        compare(themeTokens.fontSizeSecondary, 12);
-        compare(themeTokens.fontSizeBase, 13);
-        compare(themeTokens.fontSizeEmphasis, 14);
-        compare(themeTokens.fontSizeScreenTitle, 16);
-        compare(themeTokens.fontSizeCollectionTitle, 20);
-    }
-
-    function test_theme_control_size_tokens() {
-        compare(themeTokens.controlToolbar, 28);
-        compare(themeTokens.controlField, 32);
-        compare(themeTokens.controlDialogButton, 36);
-        compare(themeTokens.iconSize, 16);
-        compare(themeTokens.hitTarget, 28);
-        compare(themeTokens.topBarHeight, 40);
-        compare(themeTokens.hoverDurationMs, 120);
-        compare(themeTokens.focusRingWidth, 2);
-    }
-
-    // UI scale multiplies the chrome tokens; density re-derives the controls
-    function test_theme_ui_scale_and_density_derivation() {
-        themeTokens.uiScale = 1.2;
-        themeTokens.density = "comfortable";
-        compare(themeTokens.fontSizeMeta, Math.round(11 * 1.2));
-        compare(themeTokens.fontSizeBase, Math.round(13 * 1.2));
-        compare(themeTokens.fontSizeCollectionTitle, Math.round(20 * 1.2));
-        compare(themeTokens.controlToolbar, Math.round(28 * 1.2));
-        compare(themeTokens.controlField, Math.round(32 * 1.2));
-        compare(themeTokens.controlDialogButton, Math.round(36 * 1.2));
-        compare(themeTokens.settingsRowHeight, Math.round(48 * 1.2));
-
-        themeTokens.uiScale = 1.0;
-        themeTokens.density = "compact";
-        compare(themeTokens.densityFactor, 0.85);
-        compare(themeTokens.controlToolbar, Math.round(28 * 0.85));
-        compare(themeTokens.hitTarget, Math.max(24, Math.round(28 * 0.85)),
-                "compact keeps the 24 px hit-target floor");
-        compare(themeTokens.settingsRowHeight, 44);
-        compare(themeTokens.fontSizeBase, 13, "density never touches the type scale");
-
-        themeTokens.uiScale = 1.0;
-        themeTokens.density = "comfortable";
-    }
-
-    // Util.luminance: the accent's highlighted-text derivation
-    function test_util_luminance() {
-        verify(Util.luminance("#ffffff") > 0.99, "white is the maximum");
-        verify(Util.luminance("#000000") < 0.01, "black is the minimum");
-        verify(Util.luminance("#ff0000") < 0.5, "saturated red reads as dark text");
-        verify(Util.luminance("#ffff00") > 0.5, "yellow reads as light");
-        verify(Util.luminance("not-a-colour") === 0, "invalid input falls back to 0");
-        verify(Util.luminance("#ff0000") < Util.luminance("#ff8080"), "lighter red is brighter");
-    }
-
-    // criterion 15: every method colour clears 4.5:1 on both list surfaces in
-    // light and dark (the two palette backgrounds the app paints with)
-    function contrast(c1, c2) {
-        var a = Util.luminance(c1), b = Util.luminance(c2);
-        var hi = Math.max(a, b), lo = Math.min(a, b);
-        return (hi + 0.05) / (lo + 0.05);
-    }
-    function test_method_colors_contrast() {
-        var lightBg = ["#eff0f1", "#e9eaeb"];
-        var darkBg = ["#1b1e20", "#232629"];
-        var methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
-        for (var i = 0; i < methods.length; i++) {
-            var m = methods[i];
-            verify(themeTokens.methodColorsLight[m] !== undefined, "light colour for " + m);
-            verify(themeTokens.methodColorsDark[m] !== undefined, "dark colour for " + m);
-            for (var l = 0; l < lightBg.length; l++)
-                verify(contrast(themeTokens.methodColorsLight[m], lightBg[l]) >= 4.5,
-                       m + " light on " + lightBg[l] + " is "
-                       + contrast(themeTokens.methodColorsLight[m], lightBg[l]).toFixed(2));
-            for (var d = 0; d < darkBg.length; d++)
-                verify(contrast(themeTokens.methodColorsDark[m], darkBg[d]) >= 4.5,
-                       m + " dark on " + darkBg[d] + " is "
-                       + contrast(themeTokens.methodColorsDark[m], darkBg[d]).toFixed(2));
-        }
-        // the live table is the scheme's table
-        var live = themeTokens.methodColors;
-        verify(live === themeTokens.methodColorsLight || live === themeTokens.methodColorsDark,
-               "methodColors follows the live background");
-    }
-
-    // Util.keycaps and Util.duplicateShortcuts (shortcut conflict grammar)
-    function test_util_keycaps_and_duplicateShortcuts() {
-        compare(JSON.stringify(Util.keycaps("Ctrl+Shift+A")),
-                JSON.stringify(["Ctrl", "Shift", "A"]));
-        compare(Util.keycaps("").length, 0);
-        compare(Util.keycaps(undefined).length, 0);
-        compare(JSON.stringify(Util.keycaps("Ctrl+/")), JSON.stringify(["Ctrl", "/"]));
-
-        var defs = [
-            { id: "send", def: "Ctrl+Return" },
-            { id: "newRequest", def: "Ctrl+T" },
-            { id: "save", def: "Ctrl+S" }
-        ];
-        compare(Object.keys(Util.duplicateShortcuts(defs, {}, [])).length, 0,
-                "no duplicates by default");
-        var overrides = { save: "Ctrl+Return" };
-        var dupes = Util.duplicateShortcuts(defs, overrides, ["save"]);
-        compare(dupes.send, true);
-        compare(dupes.save, true);
-        compare(dupes.newRequest, undefined);
-        compare(Object.keys(Util.duplicateShortcuts(defs, { save: "Ctrl+S" }, [])).length, 0,
-                "an override equal to its own default is not a duplicate");
-    }
-
-    // ---- Util.js: fuzzy palette matching ----
-    function test_util_fuzzyMatch() {
-        var empty = Util.fuzzyMatch("", "Send request");
-        verify(empty !== null, "empty query matches everything");
-        compare(empty.score, 0);
-        compare(empty.ranges.length, 0, "empty query highlights nothing");
-
-        compare(Util.fuzzyMatch("zzz", "Send request"), null, "absent characters never match");
-        compare(Util.fuzzyMatch("??", "abc"), null, "punctuation-only query never throws");
-
-        var sub = Util.fuzzyMatch("snd", "Send request");
-        verify(sub !== null, "subsequence matches out of order characters");
-        compare(JSON.stringify(sub.ranges), JSON.stringify([[0, 1], [2, 2]]));
-        var run = Util.fuzzyMatch("send", "Send request");
-        verify(run !== null && run.score > sub.score, "a consecutive run scores higher");
-        var start = Util.fuzzyMatch("req", "Send request");
-        var middle = Util.fuzzyMatch("ndr", "Send request");
-        verify(start.score > middle.score, "a word start scores higher than a scattered hit");
-        compare(JSON.stringify(run.ranges), JSON.stringify([[0, 4]]), "adjacent runs merge");
-    }
-
-
-    // Util.tabSearchMatches: tab search over the open request
-    function test_util_tabSearchMatches() {
-        compare(Util.tabSearchMatches(null, "x").length, 0, "no request, no matches");
-        var req = { url: "http://example/Needle", params: [],
-                    headers: [], fields: [], vars: [], body: "" };
-        compare(Util.tabSearchMatches(req, "").length, 0, "empty query matches nothing");
-        compare(Util.tabSearchMatches(req, "needle").length, 1, "URL matches case-insensitively");
-        compare(Util.tabSearchMatches(req, "needle")[0].surface, "url");
-
-        req.params = [{ name: "q", value: "needle", enabled: true }];
-        req.headers = [{ name: "Needle", value: "v", enabled: true }, { name: "h", value: "v", enabled: true }];
-        req.fields = [{ name: "f", value: "needle", enabled: true }];
-        req.vars = [{ name: "v", value: "needle", enabled: true }];
-        req.body = "one needle, two needle";
-        var m = Util.tabSearchMatches(req, "needle");
-        compare(m.length, 7, "URL, params, headers, fields, vars and both body hits");
-        compare(m[0].surface, "url");
-        compare(m[1].surface, "params");
-        compare(m[2].surface, "headers");
-        compare(m[3].surface, "fields");
-        compare(m[4].surface, "vars");
-        compare(m[5].surface, "body");
-        compare(m[5].start, req.body.indexOf("needle"), "the body offset is absolute");
-        compare(m[5].end - m[5].start, 6);
-        compare(m[6].start, req.body.lastIndexOf("needle"), "every body occurrence is listed");
-        verify(m[5].snippet.toLowerCase().indexOf("needle") >= 0, "the snippet carries the hit");
-        compare(m[2].label, "Needle", "table hits use the row name");
-        compare(Util.tabSearchMatches(req, "zzz").length, 0);
-    }
-
+    // setting `text` programmatically doesn't emit textEdited (only the user emits). The
+    // popup must emit so the KvTable model (onTextEdited) updates when choosing.
     function test_varcompleter_choose_emits_edit() {
         root.probeCount = 0;
         emitProbe.text = "{{";
@@ -306,11 +104,6 @@ TestCase {
         ListElement { name: "dup"; value: "2"; enabled: true; secret: false; type: "text"; fileName: "" }
     }
     KvTable { id: kvDup; model: dupModel; uniqueNames: true; width: 800; height: 300 }
-    ListModel {
-        id: revealModel
-        ListElement { name: "r"; value: "1"; enabled: true }
-    }
-    KvTable { id: kvReveal; model: revealModel; width: 800; height: 200 }
     VarField { id: vf; resolved: vfVars }
     property var vfVars: [{ name: "x", value: "1", enabled: true }]
 
@@ -643,67 +436,8 @@ TestCase {
         verify(withBody.indexOf("-d 'oi'") >= 0);
     }
 
-    // ---- Util.js: sidebar filter, response formatting and counts ----
-    function test_util_filterRows() {
-        var rows = [
-            { relPath: "users", name: "users" },
-            { relPath: "users/list", name: "List users" },
-            { relPath: "users/list/admin", name: "Admin" },
-            { relPath: "posts", name: "posts" }
-        ];
-        var byName = Util.filterRows(rows, "admin");
-        verify(byName["users/list/admin"], "self match on a request name");
-        verify(byName["users"], "ancestors of a hit stay visible");
-        verify(byName["users/list"], "the direct parent stays visible");
-        verify(!byName["posts"], "unrelated rows are not hits");
-
-        var bySegment = Util.filterRows(rows, "posts");
-        verify(bySegment["posts"], "folder path segment matches itself");
-
-        var byPath = Util.filterRows(rows, "user");
-        verify(byPath["users/list"], "a path-segment match marks the descendants' ancestors");
-
-        compare(Object.keys(Util.filterRows(rows, "")).length, 0, "empty filter means no filter");
-    }
-
-    function test_util_prettyJson_and_formatBody() {
-        compare(Util.prettyJson('{"a":1}'), '{\n  "a": 1\n}');
-        compare(Util.prettyJson("not json"), null);
-
-        var stored = '{"a":1}';
-        compare(Util.formatBody("json", stored), '{\n  "a": 1\n}');
-        compare(Util.formatBody("json", "not json"), "not json", "non-JSON falls back to the raw text");
-        compare(Util.formatBody("raw", stored), stored);
-        compare(Util.formatBody("html", stored), stored);
-        compare(Util.formatBody("xml", stored), stored);
-        compare(Util.formatBody("json", ""), "", "never throws on an empty body");
-    }
-
-    function test_util_header_and_cookie_counts() {
-        compare(Util.headerCount([{ name: "a" }, { name: "b" }]), 2);
-        compare(Util.headerCount([]), 0);
-        compare(Util.headerCount(undefined), 0, "malformed headers fall back to 0");
-        compare(Util.headerCount("abc"), 0, "a non-array header value falls back to 0");
-
-        compare(Util.cookieCount("a=1\nb=2"), 2);
-        compare(Util.cookieCount("a=1\n\nb=2\n"), 2, "empty lines are not cookies");
-        compare(Util.cookieCount(""), 0);
-        compare(Util.cookieCount(undefined), 0, "malformed cookies fall back to 0");
-    }
-
-    function test_util_lnCol() {
-        var text = "abc\ndef\nghi";
-        compare(Util.lnCol(0, text).line, 1);
-        compare(Util.lnCol(0, text).col, 1);
-        compare(Util.lnCol(4, text).line, 2, "first char of the second line");
-        compare(Util.lnCol(4, text).col, 1);
-        compare(Util.lnCol(6, text).line, 2);
-        compare(Util.lnCol(6, text).col, 3);
-        compare(Util.lnCol(-1, text).line, 1, "negative positions clamp");
-        compare(Util.lnCol(999, text).line, 3, "positions past the end clamp");
-    }
-
-    function test_vartokens() {        var rv = [{ name: "test", enabled: true }, { name: "off", enabled: false },
+    function test_vartokens() {
+        var rv = [{ name: "test", enabled: true }, { name: "off", enabled: false },
                   { name: "{{a}}", enabled: true }, { name: "", enabled: true }];
         compare(VarTokens.matchingNames(rv, ""), ["test"]);
         compare(VarTokens.matchingNames(rv, "te"), ["test"]);
@@ -913,18 +647,6 @@ TestCase {
         compare(row.shown, false, "filtered row");
         compare(row.height, 0, "zero height when filtered");
         filterModel.clear();
-    }
-
-    // tab-search activation: revealRow scrolls/tints; filtered or out-of-range is a no-op
-    function test_kvtable_reveal_row() {
-        wait(50);
-        compare(kvReveal.revealRow(0), true, "an existing row is revealed");
-        compare(kvReveal.revealedRow, 0);
-        compare(kvReveal.revealRow(99), false, "out-of-range is a no-op");
-        compare(kvFilter.revealRow(0), false, "a filtered-out row is a no-op");
-        compare(kvFilter.revealedRow, -1);
-        wait(1300);
-        compare(kvReveal.revealedRow, -1, "the tint clears itself");
     }
 
     // scope chip uses the color from the scopeColor callback

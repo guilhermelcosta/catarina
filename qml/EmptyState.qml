@@ -9,8 +9,6 @@ import org.kde.kirigami as Kirigami
 // Use centered: `anchors.centerIn: parent` + `width: Math.min(parent.width - largeSpacing*2, 340)`.
 ColumnLayout {
     id: root
-    // design tokens (this component takes no `app`; the token source is shared)
-    Theme { id: tokens }
     property string iconSource: ""
     property bool iconIsMask: false       // monochrome icon (follows the theme color)
     property real iconOpacity: 0.35
@@ -43,7 +41,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         text: root.title
         font.bold: true
-        font.pixelSize: tokens.fontSizeScreenTitle
+        font.pointSize: Kirigami.Theme.defaultFont.pointSize + 2
         visible: root.title.length > 0
     }
     Label {
@@ -67,7 +65,7 @@ ColumnLayout {
             color: Kirigami.Theme.alternateBackgroundColor
             border.width: 1
             border.color: Kirigami.Theme.disabledTextColor
-            Label { id: keyLabel; anchors.centerIn: parent; text: root.shortcut; font.bold: true; font.pixelSize: tokens.fontSizeMeta }
+            Label { id: keyLabel; anchors.centerIn: parent; text: root.shortcut; font.bold: true; font.pixelSize: 11 }
         }
         Label { text: root.shortcutLabel; opacity: 0.75 }
     }

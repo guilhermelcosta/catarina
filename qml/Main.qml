@@ -31,55 +31,8 @@ Kirigami.ApplicationWindow {
     // exposed for screen behavior tests (tests/tst_app.qml)
     readonly property var appController: controller
 
-    // design tokens, reachable from every view as `app.theme`
-    Theme {
-        id: theme
-        uiScale: settings.uiScale
-        density: settings.density
-        // resolved from the palette Backend::applyColorScheme installs
-        systemPalette: SystemPalette { colorGroup: SystemPalette.Active }
-        systemDisabledPalette: SystemPalette { colorGroup: SystemPalette.Disabled }
-    }
-
-    // QtQuick Controls resolve their palette from the window, and the platform
-    // theme supplies that palette independently of QGuiApplication::setPalette.
-    // Bind it to the same resolved palette the Kirigami theme uses, so the
-    // style-painted surfaces (fields, buttons, labels) follow a forced scheme.
-    palette.window: theme.systemPalette.window
-    palette.windowText: theme.systemPalette.windowText
-    palette.base: theme.systemPalette.base
-    palette.alternateBase: theme.systemPalette.alternateBase
-    palette.text: theme.systemPalette.text
-    palette.button: theme.systemPalette.button
-    palette.buttonText: theme.systemPalette.buttonText
-    palette.brightText: theme.systemPalette.brightText
-    palette.highlight: theme.systemPalette.highlight
-    palette.highlightedText: theme.systemPalette.highlightedText
-    palette.placeholderText: theme.systemPalette.placeholderText
-    palette.light: theme.systemPalette.light
-    palette.midlight: theme.systemPalette.midlight
-    palette.dark: theme.systemPalette.dark
-    palette.mid: theme.systemPalette.mid
-    palette.shadow: theme.systemPalette.shadow
-    palette.disabled.windowText: theme.systemDisabledPalette.windowText
-    palette.disabled.text: theme.systemDisabledPalette.text
-    palette.disabled.buttonText: theme.systemDisabledPalette.buttonText
-
-    // a forced light/dark scheme is also pushed into the live Kirigami theme
-    Connections {
-        target: backend
-        function onColorSchemeChanged() { theme.applyScheme(root, "system", ""); }
-    }
-    // accent/scale/density ride the generic settings signal; applyScheme is
-    // idempotent and cheap, so it can re-run on any settings change
-    Connections {
-        target: settings
-        function onSettingsChanged() { theme.applyScheme(root, "system", ""); }
-    }
-
     AppController {
         id: controller
-        theme: theme
         window: root
         tabsModel: tabsModel
         paramsModel: paramsModel
@@ -108,8 +61,6 @@ Kirigami.ApplicationWindow {
         discardEnvDialog: discardEnvDialog
         scopePopup: scopePopup
         fileDialog: fileDialog
-        mainSplit: mainSplitView
-        innerSplit: innerSplitView
     }
 
     title: Strings.t.appName + (controller.currentTab >= 0 && controller.currentTab < tabsModel.count
@@ -118,28 +69,7 @@ Kirigami.ApplicationWindow {
 
 
     // ================= lifecycle =================
-    // Ctrl+F routes by focus: sidebar filter inside the sidebar; body find while
-    // a response is displayed elsewhere; otherwise the sidebar filter.
-    function focusIsInSidebar() {
-        var item = root.activeFocusItem;
-        while (item) {
-            if (item === sidebar) return true;
-            item = item.parent;
-        }
-        return false;
-    }
-    function routeFind() {
-        if (controller.showingSettings) { settingsPage.focusSearch(); return; }
-        if (root.focusIsInSidebar()) { sidebar.focusFilter(); return; }
-        if (responsePane.hasBody()) { responsePane.openFind(); return; }
-        if (controller.sidebarVisible) sidebar.focusFilter();
-    }
-    // Ctrl+/ and the status-bar hint open the shortcuts overlay.
-    function openShortcuts() {
-        shortcutsOverlay.openOverlay();
-    }
     Component.onCompleted: {
-        theme.applyScheme(root, "system", "");   // saved scheme, before the first frame
         controller.rebuildTree();      // immediate (restoration uses the already populated model)
         controller.reloadEnvs();
         // Kirigami registers Alt+Left/Right (StandardKey Back/Forward) on the pageStack,
@@ -156,8 +86,6 @@ Kirigami.ApplicationWindow {
         }
         // no saved tabs: we stay on the "No request open" placeholder
         // (we don't open the tree's first collection automatically)
-        // one frame after the first layout: restoring earlier clamps against 0
-        Qt.callLater(function () { controller.restorePanes(); });
     }
 
 
@@ -167,14 +95,10 @@ Kirigami.ApplicationWindow {
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("reopenTab"); onActivated: controller.reopenClosed() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("newRequest"); onActivated: newReqDialog.openIn(controller.targetFolder()) }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("palette"); onActivated: cmdPalette.openPalette() }
-    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: root.routeFind() }
-    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("tabSearch"); onActivated: requestEditor.openTabSearch() }
+    Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("findInResponse"); onActivated: responsePane.openFind() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("prevTab"); onActivated: controller.prevTab() }
     Shortcut { enabled: !controller.recordingShortcut; sequence: controller.shortcutSeq("nextTab"); onActivated: controller.nextTab() }
-    // Ctrl+/ is a hint shortcut, not part of the remappable map (spec non-goal).
-    Shortcut { enabled: !controller.recordingShortcut; sequence: "Ctrl+/"; onActivated: root.openShortcuts() }
     onClosing: function (close) {
-        controller.persistPanes();
         controller.persistSession();
         if (!controller.forceQuit && controller.hasDirtyTabs()) { close.accepted = false; quitDialog.open(); }
     }
@@ -189,13 +113,106 @@ Kirigami.ApplicationWindow {
             spacing: 0
 
             // ---------- top bar ----------
-            TopBar {
-                id: topBar
-                app: controller
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Icon { source: "qrc:/icons/catarina-badge.svg"; implicitWidth: 22; implicitHeight: 22 }
+                Label { text: Strings.t.appName; font.bold: true }
+                Item { Layout.fillWidth: true }
+                // panel group: left (collections) and right (response)
+                RowLayout {
+                    spacing: 0
+                    ToolButton {
+                        checkable: true; checked: controller.sidebarVisible
+                        icon.name: controller.sidebarVisible ? "view-left-close" : "view-left-new"
+                        onToggled: controller.sidebarVisible = checked
+                        ToolTip.text: controller.sidebarVisible ? Strings.t.hideCollections : Strings.t.showCollections
+                        ToolTip.visible: hovered
+                    }
+                    ToolButton {
+                        checkable: true; checked: controller.responseVisible
+                        icon.name: controller.responseVisible ? "view-right-close" : "view-right-new"
+                        onToggled: controller.responseVisible = checked
+                        ToolTip.text: controller.responseVisible ? Strings.t.hideResponse : Strings.t.showResponse
+                        ToolTip.visible: hovered
+                    }
+                }
+                ToolButton {
+                    icon.name: "view-history"; text: Strings.t.history
+                    display: AbstractButton.TextBesideIcon
+                    onClicked: historyDialog.openAndLoad()
+                }
+                Button {
+                    id: envButton
+                    icon.name: "vcs-branch"
+                    text: controller.activeEnv.length > 0 ? controller.activeEnv : Strings.t.noEnvironment
+                    onClicked: envPopup.open()
+                }
+                ToolButton {
+                    icon.name: "configure"
+                    onClicked: controller.openSettingsTab()
+                    ToolTip.text: Strings.t.settings; ToolTip.visible: hovered
+                }
+                Popup {
+                    id: envPopup
+                    x: mainPage.width - width - 12
+                    y: 46
+                    width: 260
+                    padding: Kirigami.Units.smallSpacing
+                    onOpened: controller.reloadEnvs()
+                    ColumnLayout {
+                        width: envPopup.availableWidth
+                        spacing: Kirigami.Units.smallSpacing
+
+                        Label {
+                            visible: controller.envList.length > 0
+                            text: Strings.t.activeEnvironment
+                            font.bold: true
+                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                        }
+                        Repeater {
+                            model: controller.envList
+                            delegate: ItemDelegate {
+                                Layout.fillWidth: true
+                                text: modelData.name
+                                font.bold: modelData.name === controller.activeEnv
+                                icon.name: modelData.name === controller.activeEnv ? "checkmark" : ""
+                                onClicked: {
+                                    controller.activateEnv(modelData.name);
+                                    envPopup.close();
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            visible: controller.envList.length === 0
+                            spacing: Kirigami.Units.smallSpacing
+                            Label { text: Strings.t.readyToStart; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                            Label {
+                                text: Strings.t.createEnvHint
+                                wrapMode: Text.WordWrap; Layout.fillWidth: true
+                                horizontalAlignment: Text.AlignHCenter; opacity: 0.75
+                            }
+                        }
+
+                        Kirigami.Separator { Layout.fillWidth: true }
+                        ItemDelegate {
+                            Layout.fillWidth: true; text: Strings.t.createEnvironment; icon.name: "list-add"
+                            onClicked: { envPopup.close(); createEnvDialog.open(); }
+                        }
+                        ItemDelegate {
+                            Layout.fillWidth: true; text: Strings.t.manageVariables; icon.name: "configure"
+                            visible: controller.envList.length > 0
+                            onClicked: { envPopup.close(); controller.openEnvTab(controller.activeEnv); }
+                        }
+                    }
+                }
             }
 
+            Kirigami.Separator { Layout.fillWidth: true }
+
             SplitView {
-                id: mainSplitView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 orientation: Qt.Horizontal
@@ -208,7 +225,6 @@ Kirigami.ApplicationWindow {
                     treeModel: treeModel
                     addMenu: addMenu
                     ctxMenu: ctxMenu
-                    overflowMenu: sidebarOverflowMenu
                 }
 
                 // ================= MAIN AREA =================
@@ -233,11 +249,7 @@ Kirigami.ApplicationWindow {
 
                         // ---- 0: editor + response ----
                         SplitView {
-                            id: innerSplitView
-                            // recorded decision: stack at the window floor (<= 1000 px).
-                            // The width > 0 guard keeps the first layout (width 0) horizontal.
-                            orientation: mainPage.width > 0 && mainPage.width <= 1000
-                                         ? Qt.Vertical : Qt.Horizontal
+                            orientation: Qt.Horizontal
                             handle: SplitGrip {}
 
                             RequestEditor {
@@ -253,9 +265,6 @@ Kirigami.ApplicationWindow {
                             ResponsePane {
                                 id: responsePane
                                 app: controller
-                                // stacked: response below, ~40 % of the inner height
-                                SplitView.preferredHeight: innerSplitView.orientation === Qt.Vertical
-                                                           ? innerSplitView.height * 0.4 : 0
                             }
                         }
 
@@ -304,13 +313,6 @@ Kirigami.ApplicationWindow {
                     }
                 }
             }
-
-            // ---------- status bar ----------
-            StatusBar {
-                id: statusBar
-                app: controller
-                onShortcutsRequested: root.openShortcuts()
-            }
         }
 
         // "block" that follows the mouse during the drag
@@ -335,7 +337,7 @@ Kirigami.ApplicationWindow {
                     implicitHeight: 15
                     radius: 3
                     color: Qt.rgba(1, 1, 1, 0.25)
-                    Text { id: ghostBadge; anchors.centerIn: parent; text: controller.dragMethod; color: Kirigami.Theme.highlightedTextColor; font.pixelSize: theme.fontSizeMeta; font.bold: true }
+                    Text { id: ghostBadge; anchors.centerIn: parent; text: controller.dragMethod; color: Kirigami.Theme.highlightedTextColor; font.pixelSize: 9; font.bold: true }
                 }
                 Kirigami.Icon {
                     visible: controller.dragMethod.length === 0
@@ -355,29 +357,6 @@ Kirigami.ApplicationWindow {
         MenuItem { text: Strings.t.newRequest; icon.name: "document-new"; onTriggered: newReqDialog.openIn(controller.selectedIsFolder ? controller.selectedPath : "") }
         MenuSeparator {}
         MenuItem { text: Strings.t.importCurl; icon.name: "document-import"; onTriggered: curlImportDialog.openFresh() }
-    }
-    Menu {
-        id: sidebarOverflowMenu
-        MenuItem {
-            text: Strings.t.delete; icon.name: "edit-delete"
-            enabled: controller.selectedPath.length > 0
-            onTriggered: controller.askDelete()
-        }
-        MenuItem {
-            text: Strings.t.rename; icon.name: "edit-rename"
-            enabled: controller.selectedPath.length > 0
-            onTriggered: renameDialog.openFor(controller.selectedPath)
-        }
-        MenuSeparator {}
-        MenuItem {
-            text: Strings.t.collapseAll; icon.name: "collapse-all"
-            onTriggered: controller.collapseAll()
-        }
-        MenuItem {
-            text: Strings.t.reveal; icon.name: "folder-open"
-            enabled: controller.selectedPath.length > 0
-            onTriggered: controller.revealPath(controller.selectedPath)
-        }
     }
     Menu {
         id: ctxMenu
@@ -415,55 +394,6 @@ Kirigami.ApplicationWindow {
     RenameEnvDialog { id: renameEnvDialog; app: controller; envScreen: envScreen }
     ScopePopup { id: scopePopup; app: controller; envVarsModel: envScreen.varsModel; envScreen: envScreen }
     FilePickDialog { id: fileDialog; fieldsModel: fieldsModel }
-    ShortcutsOverlay { id: shortcutsOverlay; app: controller }
-
-    // The first restore runs before the splits have a width at startup; retry as
-    // soon as the layout gives them one (after that, resizes must not reset it).
-    Connections {
-        target: mainSplitView
-        function onWidthChanged() {
-            if (!controller.panesRestored)
-                controller.restorePanes();
-        }
-    }
-
-    Connections {
-        target: innerSplitView
-        function onWidthChanged() {
-            if (!controller.panesRestored)
-                controller.restorePanes();
-        }
-    }
-
-    // Orientation swap: the saved widths stay untouched while stacked and are
-    // re-applied (clamped) when the window widens again. The live widths are
-    // not captured on the way down: at the window floor they are squeezed by
-    // the layout, not chosen by the user.
-    Connections {
-        target: innerSplitView
-        function onOrientationChanged() {
-            if (innerSplitView.orientation === Qt.Horizontal)
-                Qt.callLater(function () { controller.restorePanes(); });
-        }
-    }
-
-    // Pane widths persist the moment the user releases a splitter handle, so
-    // closing at the window floor cannot write a layout-squeezed width.
-    Connections {
-        target: mainSplitView
-        function onResizingChanged() {
-            if (!mainSplitView.resizing)
-                controller.commitUserSidebarWidth();
-        }
-    }
-
-    Connections {
-        target: innerSplitView
-        function onResizingChanged() {
-            if (!innerSplitView.resizing)
-                controller.commitUserSplitPosition();
-        }
-    }
 
     Connections {
         target: backend
@@ -480,7 +410,6 @@ Kirigami.ApplicationWindow {
 
     CommandPalette {
         id: cmdPalette
-        objectName: "commandPalette"
         app: controller
         newReqDialog: newReqDialog
         curlImportDialog: curlImportDialog

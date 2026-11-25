@@ -6,8 +6,6 @@ import org.kde.kirigami as Kirigami
 // with color/icon per scope. Used by ResolvedVarsTable and VarCompleter.
 Item {
     id: chip
-    // design tokens (this component takes no `app`; the token source is shared)
-    Theme { id: tokens }
     property string source: ""
     implicitWidth: row.implicitWidth + 10
     implicitHeight: row.implicitHeight + 6
@@ -42,7 +40,7 @@ Item {
             }
             Text {
                 text: chip.source
-                font.pixelSize: tokens.fontSizeMeta
+                font.pixelSize: 9
                 font.bold: true
                 color: chip.sourceColor(chip.source)
             }
